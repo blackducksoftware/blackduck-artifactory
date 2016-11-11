@@ -1,3 +1,3 @@
-def a = ["pig":"oink", "cow":"moo", "horse":"neigh", "Ari":"I'm stupid"]
+def a = ["pig":"oink", "cow":"moo", "horse":"neigh"]
 
 a.each{ println "The ${it.key} says ${it.value}" }
