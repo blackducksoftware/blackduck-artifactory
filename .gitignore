@@ -1,0 +1,7 @@
+.settings/
+.classpath
+.project
+target/
+bin/
+pom.xml.bak
+.DS_Store
