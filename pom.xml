@@ -33,6 +33,11 @@
       <version>2.0.0</version>
     </dependency>
     <dependency>
+      <groupId>org.artifactory</groupId>
+      <artifactId>artifactory-papi</artifactId>
+      <version>4.14.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.21</version>
