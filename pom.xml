@@ -30,12 +30,13 @@
     <dependency>
       <groupId>com.blackducksoftware.integration</groupId>
       <artifactId>hub-common</artifactId>
-      <version>2.0.0</version>
+      <version>2.0.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.artifactory</groupId>
       <artifactId>artifactory-papi</artifactId>
       <version>4.14.0</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

@@ -1,8 +1,20 @@
+import groovy.transform.Field
+
 import org.apache.commons.io.IOUtils
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.math.NumberUtils
 import org.artifactory.exception.CancelException
+import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.repo.RepoPath
 import org.artifactory.resource.ResourceStreamHandle
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 
+import com.blackducksoftware.integration.hub.HubSupportHelper
+import com.blackducksoftware.integration.hub.SimpleScanExecutor
+import com.blackducksoftware.integration.hub.ScanExecutor.Result
+import com.blackducksoftware.integration.hub.api.HubVersionRestService
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.cli.CLIInstaller
 import com.blackducksoftware.integration.hub.cli.CLILocation
@@ -12,21 +24,77 @@ import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.util.CIEnvironmentVariables
 
+@Field final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss:SSS"
+@Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
+@Field final String BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME = "blackDuckScanResult"
+
 executions {
     scanForHub(version:"0.0.1", description:"what the execution does", httpMethod: "GET") { params ->
-        log.warn("Hello from the Hub")
+        log.info("Starting scanForHub REST request...")
 
         initializeConfiguration()
-        List<RepoPath> repoPaths = searchForRepoPaths()
+        Set<RepoPath> repoPaths = searchForRepoPaths()
         scanArtifactPaths(repoPaths)
+
+        log.info("...completed scanForHub REST request.")
     }
 }
 
+jobs {
+    scanForHub(cron: "0 0/2 * 1/1 * ?") {
+        log.info("Starting scanForHub cron job...")
+
+        initializeConfiguration()
+        Set<RepoPath> repoPaths = searchForRepoPaths()
+        scanArtifactPaths(repoPaths)
+
+        log.info("...completed scanForHub cron job.")
+    }
+}
+
+storage {
+    afterCreate { itemInfo ->
+        RepoPath repoPath = itemInfo.repoPath
+        if (!repoPath.isFile()) {
+            return
+        }
+
+        initializeConfiguration()
+
+        String repoKey = itemInfo.repoKey
+        if (!reposToSearch.contains(repoKey)) {
+            return
+        }
+
+
+        boolean foundRepoPath
+        for (String pattern : artifactPatternsToFind) {
+            def foundRepoPaths = searches.artifactsByName(pattern, repoKey)
+            if (repoPath in foundRepoPaths) {
+                foundRepoPath = true
+                break
+            }
+        }
+
+        if (!foundRepoPath) {
+            return
+        }
+
+        //we now know that we have a file, in a repo we care about matching a pattern we care about
+        //scanArtifactPaths(new HashSet([repoPath]))
+    }
+}
+
+def Slf4jIntLogger slf4jIntLogger
 def File etcDir
 def File blackDuckDirectory
 def Properties properties
-def List<String> reposToSearch
-def List<String> artifactPatternsToFind
+def HubServerConfig hubServerConfig
+def CIEnvironmentVariables ciEnvironmentVariables
+def CLILocation cliLocation
+def HubSupportHelper hubSupportHelper
+def Set<String> reposToSearch
+def Set<String> artifactPatternsToFind
 
 def searchForRepoPaths() {
     def repoPaths = []
@@ -34,32 +102,93 @@ def searchForRepoPaths() {
         repoPaths.addAll(searches.artifactsByName(it, reposToSearch.toArray(new String[reposToSearch.size()])))
     }
 
-    repoPaths.each {
-        log.warn(it.getName())
-        log.warn(it.getPath())
-        log.warn(it.getRepoKey())
-        log.warn(Boolean.toString(it.isFile()))
-    }
-    repoPaths
+    repoPaths.toSet()
 }
 
-def scanArtifactPaths(List<RepoPath> repoPaths) {
+def scanArtifactPaths(Set<RepoPath> repoPaths) {
+    def filenamesToLayout = [:]
+    def filenamesToRepoPath = [:]
+
+    repoPaths = repoPaths.findAll {shouldRepoPathBeScannedNow(it)}
     repoPaths.each {
         ResourceStreamHandle resourceStream = repositories.getContent(it)
+        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(it)
         def inputStream
         def fileOutputStream
         try {
-            inputStream = resourceStream.getInputStream()
-            fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, it.getName()))
+            inputStream = resourceStream.inputStream
+            fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, it.name))
             fileOutputStream << inputStream
+            filenamesToLayout.put(it.name, fileLayoutInfo)
+            filenamesToRepoPath.put(it.name, it)
+        } catch (Exception e) {
+            log.error("There was an error getting ${it.name}: ${e.message}", e)
         } finally {
             IOUtils.closeQuietly(inputStream)
             IOUtils.closeQuietly(fileOutputStream)
         }
     }
+
+    String workingDirectoryPath = blackDuckDirectory.absolutePath
+    int scanMemory = NumberUtils.toInt(properties.getProperty("hub.scan.memory"), 4096)
+    boolean verboseRun = Boolean.parseBoolean(properties.getProperty("hub.scan.verbose"))
+    boolean dryRun = Boolean.parseBoolean(properties.getProperty("hub.scan.dry.run"))
+    filenamesToLayout.each { key, value ->
+        try {
+            String project = value.module
+            String version = value.baseRevision
+            def scanFile = new File(workingDirectoryPath, key)
+            def scanTargetPaths = [scanFile.absolutePath]
+
+            SimpleScanExecutor simpleScanExecutor = new SimpleScanExecutor(slf4jIntLogger, hubServerConfig, hubSupportHelper, ciEnvironmentVariables, cliLocation, scanMemory, verboseRun, dryRun, project, version, scanTargetPaths, workingDirectoryPath)
+            Result result = simpleScanExecutor.setupAndRunScan()
+            if (Result.SUCCESS == result) {
+                log.info("${key} was successfully scanned by the BlackDuck CLI.")
+                String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC());
+                repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
+            } else {
+                log.error("The BlackDuck Scan did not complete successfully. Please investigate the scan logs for details.")
+            }
+            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, result.toString())
+        } catch (Exception e) {
+            log.error("The BlackDuck Scan did not complete successfully: ${e.message}", e)
+            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, Result.FAILURE.toString())
+        }
+
+        try {
+            boolean deleteOk = new File(blackDuckDirectory, key).delete()
+            log.info("Successfully deleted temporary ${key}: ${Boolean.toString(deleteOk)}")
+        } catch (Exception e) {
+            log.error("Exception deleting ${key}: ${e.message}", e)
+        }
+    }
+}
+
+/**
+ * If artifact's last modified time is newer than the scan time, or we have no record of the scan time, we should scan now.
+ */
+def shouldRepoPathBeScannedNow(RepoPath repoPath) {
+    String blackDuckScanTimeProperty = repositories.getProperty(repoPath, BLACK_DUCK_SCAN_TIME_PROPERTY_NAME)
+    if (StringUtils.isBlank(blackDuckScanTimeProperty)) {
+        return true
+    }
+
+    def itemInfo = repositories.getItemInfo(repoPath)
+    long lastModifiedTime = itemInfo.lastModified
+    try {
+        long blackDuckScanTime = DateTime.parse(blackDuckScanTimeProperty, DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC()).toDate().time
+        return lastModifiedTime >= blackDuckScanTime
+    } catch (Exception e) {
+        //if the date format changes, the old format won't parse, so just cleanup the property by returning true and re-scanning
+        log.error("Exception parsing the scan date (most likely the format changed): ${e.message}")
+    }
+
+    return true
 }
 
 def initializeConfiguration() {
+    slf4jIntLogger = new Slf4jIntLogger(log)
+
     etcDir = ctx.artifactoryHome.etcDir
     blackDuckDirectory = new File(etcDir, "plugins/blackducksoftware")
     File cliDirectory = new File(blackDuckDirectory, "cli")
@@ -74,24 +203,20 @@ def initializeConfiguration() {
     properties = new Properties()
     properties.load(new FileReader(propertiesFile))
 
-    reposToSearch = properties.getProperty("artifactory.repos.to.search").tokenize(",")
-    artifactPatternsToFind = properties.getProperty("artifact.name.patterns").tokenize(",")
-    log.warn("properties")
-    reposToSearch.each {
-        log.warn("${it}")
-    }
-    artifactPatternsToFind.each {
-        log.warn("${it}")
-    }
-    log.warn("done with properties")
+    reposToSearch = properties.getProperty("artifactory.repos.to.search").tokenize(",").toSet()
+    artifactPatternsToFind = properties.getProperty("artifact.name.patterns").tokenize(",").toSet()
 
-    HubServerConfig hubServerConfig = getHubServerConfig(properties)
+    hubServerConfig = getHubServerConfig(properties)
 
     CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
     DataServicesFactory dataServicesFactory = new DataServicesFactory(credentialsRestConnection)
+    HubVersionRestService hubVersionRestService = dataServicesFactory.hubVersionRestService
 
-    String hubUrl = credentialsRestConnection.getBaseUrl()
-    String hubVersion = dataServicesFactory.getHubVersionRestService().getHubVersion()
+    hubSupportHelper = new HubSupportHelper()
+    hubSupportHelper.checkHubSupport(hubVersionRestService, slf4jIntLogger)
+
+    String hubUrl = credentialsRestConnection.baseUrl
+    String hubVersion = hubVersionRestService.hubVersion
     installOrUpdateCli(cliDirectory, hubServerConfig, hubUrl, hubVersion)
 }
 
@@ -122,21 +247,19 @@ def getHubServerConfig(Properties properties) {
 }
 
 def installOrUpdateCli(File cliDirectory, HubServerConfig hubServerConfig, String hubUrl, String hubVersion) {
-    def localHostName = InetAddress.getLocalHost().getHostName()
-
-    CIEnvironmentVariables ciEnvironmentVariables = new CIEnvironmentVariables()
+    ciEnvironmentVariables = new CIEnvironmentVariables()
     ciEnvironmentVariables.putAll(System.getenv())
 
-    CLILocation cliLocation = new CLILocation(cliDirectory)
-
-    Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(log)
+    cliLocation = new CLILocation(cliDirectory)
 
     CLIInstaller cliInstaller = new CLIInstaller(cliLocation, ciEnvironmentVariables)
-    if (hubServerConfig.getProxyInfo().shouldUseProxyForUrl(hubServerConfig.getHubUrl())) {
-        cliInstaller.setProxyHost(hubServerConfig.getProxyInfo().getHost())
-        cliInstaller.setProxyPort(hubServerConfig.getProxyInfo().getPort())
-        cliInstaller.setProxyUserName(hubServerConfig.getProxyInfo().getUsername())
-        cliInstaller.setProxyPassword(hubServerConfig.getProxyInfo().getDecryptedPassword())
+    if (hubServerConfig.proxyInfo.shouldUseProxyForUrl(hubServerConfig.hubUrl)) {
+        cliInstaller.setProxyHost(hubServerConfig.proxyInfo.host)
+        cliInstaller.setProxyPort(hubServerConfig.proxyInfo.port)
+        cliInstaller.setProxyUserName(hubServerConfig.proxyInfo.username)
+        cliInstaller.setProxyPassword(hubServerConfig.proxyInfo.decryptedPassword)
     }
+
+    def localHostName = InetAddress.localHost.hostName
     cliInstaller.performInstallation(slf4jIntLogger, hubUrl, hubVersion, localHostName)
 }
