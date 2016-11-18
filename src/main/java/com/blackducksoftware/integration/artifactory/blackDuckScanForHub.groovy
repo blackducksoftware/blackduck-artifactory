@@ -15,6 +15,9 @@ import com.blackducksoftware.integration.hub.HubSupportHelper
 import com.blackducksoftware.integration.hub.SimpleScanExecutor
 import com.blackducksoftware.integration.hub.ScanExecutor.Result
 import com.blackducksoftware.integration.hub.api.HubVersionRestService
+import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationItem
+import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationRestService
+import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.cli.CLIInstaller
 import com.blackducksoftware.integration.hub.cli.CLILocation
@@ -23,13 +26,16 @@ import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.util.CIEnvironmentVariables
+import com.google.gson.Gson
 
-@Field final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss:SSS"
+@Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 @Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
 @Field final String BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME = "blackDuckScanResult"
+@Field final String BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME = "blackDuckScanCodeLocationUrl"
+@Field final String BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME = "blackDuckProjectVersionUrl"
 
 executions {
-    scanForHub(version:"0.0.1", description:"what the execution does", httpMethod: "GET") { params ->
+    scanForHub(httpMethod: "GET") { params ->
         log.info("Starting scanForHub REST request...")
 
         initializeConfiguration()
@@ -41,7 +47,7 @@ executions {
 }
 
 jobs {
-    scanForHub(cron: "0 0/2 * 1/1 * ?") {
+    scanForHub(cron: "0 0/3 * 1/1 * ?") {
         log.info("Starting scanForHub cron job...")
 
         initializeConfiguration()
@@ -50,38 +56,15 @@ jobs {
 
         log.info("...completed scanForHub cron job.")
     }
-}
 
-storage {
-    afterCreate { itemInfo ->
-        RepoPath repoPath = itemInfo.repoPath
-        if (!repoPath.isFile()) {
-            return
-        }
+    addProjectVersionUrl(cron: "0 0/5 * 1/1 * ?") {
+        log.info("Starting addProjectVersionUrl cron job...")
 
         initializeConfiguration()
+        Set<RepoPath> repoPaths = searchForRepoPaths()
+        populateProjectVersionUrls(repoPaths)
 
-        String repoKey = itemInfo.repoKey
-        if (!reposToSearch.contains(repoKey)) {
-            return
-        }
-
-
-        boolean foundRepoPath
-        for (String pattern : artifactPatternsToFind) {
-            def foundRepoPaths = searches.artifactsByName(pattern, repoKey)
-            if (repoPath in foundRepoPaths) {
-                foundRepoPath = true
-                break
-            }
-        }
-
-        if (!foundRepoPath) {
-            return
-        }
-
-        //we now know that we have a file, in a repo we care about matching a pattern we care about
-        //scanArtifactPaths(new HashSet([repoPath]))
+        log.info("...completed addProjectVersionUrl cron job.")
     }
 }
 
@@ -90,6 +73,8 @@ def File etcDir
 def File blackDuckDirectory
 def Properties properties
 def HubServerConfig hubServerConfig
+def Gson gson
+def CodeLocationRestService codeLocationRestService
 def CIEnvironmentVariables ciEnvironmentVariables
 def CLILocation cliLocation
 def HubSupportHelper hubSupportHelper
@@ -102,66 +87,9 @@ def searchForRepoPaths() {
         repoPaths.addAll(searches.artifactsByName(it, reposToSearch.toArray(new String[reposToSearch.size()])))
     }
 
-    repoPaths.toSet()
-}
-
-def scanArtifactPaths(Set<RepoPath> repoPaths) {
-    def filenamesToLayout = [:]
-    def filenamesToRepoPath = [:]
-
     repoPaths = repoPaths.findAll {shouldRepoPathBeScannedNow(it)}
-    repoPaths.each {
-        ResourceStreamHandle resourceStream = repositories.getContent(it)
-        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(it)
-        def inputStream
-        def fileOutputStream
-        try {
-            inputStream = resourceStream.inputStream
-            fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, it.name))
-            fileOutputStream << inputStream
-            filenamesToLayout.put(it.name, fileLayoutInfo)
-            filenamesToRepoPath.put(it.name, it)
-        } catch (Exception e) {
-            log.error("There was an error getting ${it.name}: ${e.message}", e)
-        } finally {
-            IOUtils.closeQuietly(inputStream)
-            IOUtils.closeQuietly(fileOutputStream)
-        }
-    }
 
-    String workingDirectoryPath = blackDuckDirectory.absolutePath
-    int scanMemory = NumberUtils.toInt(properties.getProperty("hub.scan.memory"), 4096)
-    boolean verboseRun = Boolean.parseBoolean(properties.getProperty("hub.scan.verbose"))
-    boolean dryRun = Boolean.parseBoolean(properties.getProperty("hub.scan.dry.run"))
-    filenamesToLayout.each { key, value ->
-        try {
-            String project = value.module
-            String version = value.baseRevision
-            def scanFile = new File(workingDirectoryPath, key)
-            def scanTargetPaths = [scanFile.absolutePath]
-
-            SimpleScanExecutor simpleScanExecutor = new SimpleScanExecutor(slf4jIntLogger, hubServerConfig, hubSupportHelper, ciEnvironmentVariables, cliLocation, scanMemory, verboseRun, dryRun, project, version, scanTargetPaths, workingDirectoryPath)
-            Result result = simpleScanExecutor.setupAndRunScan()
-            if (Result.SUCCESS == result) {
-                log.info("${key} was successfully scanned by the BlackDuck CLI.")
-                String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC());
-                repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
-            } else {
-                log.error("The BlackDuck Scan did not complete successfully. Please investigate the scan logs for details.")
-            }
-            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, result.toString())
-        } catch (Exception e) {
-            log.error("The BlackDuck Scan did not complete successfully: ${e.message}", e)
-            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, Result.FAILURE.toString())
-        }
-
-        try {
-            boolean deleteOk = new File(blackDuckDirectory, key).delete()
-            log.info("Successfully deleted temporary ${key}: ${Boolean.toString(deleteOk)}")
-        } catch (Exception e) {
-            log.error("Exception deleting ${key}: ${e.message}", e)
-        }
-    }
+    repoPaths.toSet()
 }
 
 /**
@@ -186,6 +114,90 @@ def shouldRepoPathBeScannedNow(RepoPath repoPath) {
     return true
 }
 
+def scanArtifactPaths(Set<RepoPath> repoPaths) {
+    def filenamesToLayout = [:]
+    def filenamesToRepoPath = [:]
+
+    repoPaths.each {
+        ResourceStreamHandle resourceStream = repositories.getContent(it)
+        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(it)
+        def inputStream
+        def fileOutputStream
+        try {
+            inputStream = resourceStream.inputStream
+            fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, it.name))
+            fileOutputStream << inputStream
+            filenamesToLayout.put(it.name, fileLayoutInfo)
+            filenamesToRepoPath.put(it.name, it)
+        } catch (Exception e) {
+            log.error("There was an error getting ${it.name}: ${e.message}")
+        } finally {
+            IOUtils.closeQuietly(inputStream)
+            IOUtils.closeQuietly(fileOutputStream)
+        }
+    }
+
+    String workingDirectoryPath = blackDuckDirectory.absolutePath
+    int scanMemory = NumberUtils.toInt(properties.getProperty("hub.scan.memory"), 4096)
+    boolean verboseRun = Boolean.parseBoolean(properties.getProperty("hub.scan.verbose"))
+    boolean dryRun = Boolean.parseBoolean(properties.getProperty("hub.scan.dry.run"))
+    filenamesToLayout.each { key, value ->
+        try {
+            String project = value.module
+            String version = value.baseRevision
+            def scanFile = new File(workingDirectoryPath, key)
+            def scanTargetPaths = [scanFile.absolutePath]
+
+            SimpleScanExecutor simpleScanExecutor = new SimpleScanExecutor(slf4jIntLogger, gson, hubServerConfig, hubSupportHelper, ciEnvironmentVariables, cliLocation, scanMemory, verboseRun, dryRun, project, version, scanTargetPaths, workingDirectoryPath)
+            Result result = simpleScanExecutor.setupAndRunScan()
+            if (Result.SUCCESS == result) {
+                log.info("${key} was successfully scanned by the BlackDuck CLI.")
+                String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
+                repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
+                List<ScanSummaryItem> scanSummaryItems = simpleScanExecutor.scanSummaryItems
+                if (null != scanSummaryItems && scanSummaryItems.size() == 1) {
+                    try {
+                        String codeLocationUrl = scanSummaryItems.get(0).getLink(ScanSummaryItem.CODE_LOCATION_LINK)
+                        repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
+                    } catch (Exception e) {
+                        log.error("Exception getting code location url: ${e.message}")
+                    }
+                }
+            } else {
+                log.error("The BlackDuck Scan did not complete successfully. Please investigate the scan logs for details.")
+            }
+            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, result.toString())
+        } catch (Exception e) {
+            log.error("The BlackDuck Scan did not complete successfully: ${e.message}")
+            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, Result.FAILURE.toString())
+        }
+
+        try {
+            boolean deleteOk = new File(blackDuckDirectory, key).delete()
+            log.info("Successfully deleted temporary ${key}: ${Boolean.toString(deleteOk)}")
+        } catch (Exception e) {
+            log.error("Exception deleting ${key}: ${e.message}")
+        }
+    }
+}
+
+def populateProjectVersionUrls(Set<RepoPath> repoPaths) {
+    repoPaths.each {
+        String codeLocationUrl = repositories.getProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME)
+        if (StringUtils.isNotBlank(codeLocationUrl)) {
+            CodeLocationItem codeLocationItem = codeLocationRestService.getItem(codeLocationUrl)
+            String mappedProjectVersionUrl = codeLocationItem.mappedProjectVersion
+            if (StringUtils.isNotBlank(mappedProjectVersionUrl)) {
+                String hubUrl = hubServerConfig.getHubUrl().toString()
+                String versionId = mappedProjectVersionUrl.substring(mappedProjectVersionUrl.indexOf("/versions/") + "/versions/".length());
+                String uiUrl = hubUrl + "/#versions/id:"+ versionId + "/view:bom";
+                repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, uiUrl)
+                repositories.deleteProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME)
+                log.info("Added ${mappedProjectVersionUrl} to ${it.name}")
+            }
+        }
+    }
+}
 def initializeConfiguration() {
     slf4jIntLogger = new Slf4jIntLogger(log)
 
@@ -210,7 +222,9 @@ def initializeConfiguration() {
 
     CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
     DataServicesFactory dataServicesFactory = new DataServicesFactory(credentialsRestConnection)
+    gson = dataServicesFactory.getGson()
     HubVersionRestService hubVersionRestService = dataServicesFactory.hubVersionRestService
+    codeLocationRestService = dataServicesFactory.getCodeLocationRestService()
 
     hubSupportHelper = new HubSupportHelper()
     hubSupportHelper.checkHubSupport(hubVersionRestService, slf4jIntLogger)
