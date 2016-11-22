@@ -17,10 +17,14 @@ import com.blackducksoftware.integration.hub.api.HubServicesFactory
 import com.blackducksoftware.integration.hub.api.HubVersionRestService
 import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationItem
 import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationRestService
+import com.blackducksoftware.integration.hub.api.policy.PolicyStatusItem
+import com.blackducksoftware.integration.hub.api.policy.PolicyStatusRestService
+import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionItem
+import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionRestService
 import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
-import com.blackducksoftware.integration.hub.cli.CLIDownloadService
 import com.blackducksoftware.integration.hub.cli.SimpleScanService
+import com.blackducksoftware.integration.hub.dataservices.policystatus.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.log.Slf4jIntLogger
@@ -31,6 +35,9 @@ import com.blackducksoftware.integration.util.CIEnvironmentVariables
 @Field final String BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME = "blackDuckScanResult"
 @Field final String BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME = "blackDuckScanCodeLocationUrl"
 @Field final String BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME = "blackDuckProjectVersionUrl"
+@Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME = "blackDuckProjectVersionUiUrl"
+@Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME = "blackDuckPolicyStatus"
+@Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME = "blackDuckOverallPolicyStatus"
 
 executions {
     /**
@@ -109,6 +116,16 @@ jobs {
 
         log.info("...completed addProjectVersionUrl cron job.")
     }
+
+    addPolicyStatus(cron: "0 0/1 * 1/1 * ?") {
+        log.info("Starting addPolicyStatus cron job...")
+
+        initializeConfiguration()
+        Set<RepoPath> repoPaths = searchForRepoPaths()
+        populatePolicyStatuses(repoPaths)
+
+        log.info("...completed addPolicyStatus cron job.")
+    }
 }
 
 def Slf4jIntLogger slf4jIntLogger
@@ -119,9 +136,10 @@ def Properties properties
 def CIEnvironmentVariables ciEnvironmentVariables
 def HubServerConfig hubServerConfig
 def HubSupportHelper hubSupportHelper
+def HubServicesFactory hubServicesFactory
+def ProjectVersionRestService projectVersionRestService
 def CodeLocationRestService codeLocationRestService
-def CLIDownloadService cliDownloadService
-def SimpleScanService simpleScanService
+def PolicyStatusRestService policyStatusRestService
 def Set<String> reposToSearch
 def Set<String> artifactPatternsToFind
 
@@ -191,18 +209,16 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
             def scanFile = new File(workingDirectoryPath, key)
             def scanTargetPaths = [scanFile.canonicalPath]
 
-            Result result = simpleScanService.setupAndExecuteScan(hubServerConfig, hubSupportHelper, ciEnvironmentVariables, cliDirectory, scanMemory, verboseRun, dryRun, project,version, scanTargetPaths, workingDirectoryPath)
+            def SimpleScanService simpleScanService = hubServicesFactory.createSimpleScanService(slf4jIntLogger, hubServicesFactory.restConnection, hubServerConfig,hubSupportHelper,ciEnvironmentVariables, cliDirectory, scanMemory, verboseRun, dryRun, project,version, scanTargetPaths, workingDirectoryPath)
+            Result result = simpleScanService.setupAndExecuteScan()
 
             if (Result.SUCCESS == result) {
                 log.info("${key} was successfully scanned by the BlackDuck CLI.")
-                String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
-                repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
-                List<ScanSummaryItem> scanSummaryItems = simpleScanExecutor.scanSummaryItems
+                List<ScanSummaryItem> scanSummaryItems = simpleScanService.scanSummaryItems
                 if (null != scanSummaryItems && scanSummaryItems.size() == 1) {
                     try {
                         String codeLocationUrl = scanSummaryItems.get(0).getLink(ScanSummaryItem.CODE_LOCATION_LINK)
                         repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
-                        repositories.deleteProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
                     } catch (Exception e) {
                         log.error("Exception getting code location url: ${e.message}")
                     }
@@ -215,6 +231,12 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
             log.error("The BlackDuck Scan did not complete successfully: ${e.message}", e)
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, Result.FAILURE.toString())
         }
+
+        String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
+        repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
+        repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
+        repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME)
+        repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME)
 
         try {
             boolean deleteOk = new File(blackDuckDirectory, key).delete()
@@ -235,10 +257,26 @@ def populateProjectVersionUrls(Set<RepoPath> repoPaths) {
                 String hubUrl = hubServerConfig.getHubUrl().toString()
                 String versionId = mappedProjectVersionUrl.substring(mappedProjectVersionUrl.indexOf("/versions/") + "/versions/".length())
                 String uiUrl = hubUrl + "/#versions/id:"+ versionId + "/view:bom"
-                repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, uiUrl)
+                repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, mappedProjectVersionUrl)
+                repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME, uiUrl)
                 repositories.deleteProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME)
                 log.info("Added ${mappedProjectVersionUrl} to ${it.name}")
             }
+        }
+    }
+}
+
+def populatePolicyStatuses(Set<RepoPath> repoPaths) {
+    repoPaths.each {
+        String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
+        if (StringUtils.isNotBlank(projectVersionUrl)) {
+            ProjectVersionItem projectVersionItem = projectVersionRestService.getItem(projectVersionUrl)
+            String policyStatusUrl = projectVersionItem.getLink("policy-status")
+            PolicyStatusItem policyStatusItem = policyStatusRestService.getItem(policyStatusUrl)
+            PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(policyStatusItem)
+            repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
+            repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, policyStatusItem.overallStatus.toString())
+            log.info("Added policy status to ${it.name}")
         }
     }
 }
@@ -268,12 +306,13 @@ def initializeConfiguration() {
     hubServerConfig = hubServerConfigBuilder.build()
 
     CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
-    HubServicesFactory hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+    hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
 
     HubVersionRestService hubVersionRestService = hubServicesFactory.createHubVersionRestService()
+    projectVersionRestService = hubServicesFactory.createProjectVersionRestService()
     codeLocationRestService = hubServicesFactory.createCodeLocationRestService()
+    policyStatusRestService = hubServicesFactory.createPolicyStatusRestService()
     cliDownloadService = hubServicesFactory.createCliDownloadService(slf4jIntLogger)
-    simpleScanService = hubServicesFactory.createSimpleScanService(slf4jIntLogger)
 
     hubSupportHelper = new HubSupportHelper()
     hubSupportHelper.checkHubSupport(hubVersionRestService, slf4jIntLogger)
