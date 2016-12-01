@@ -12,21 +12,19 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import com.blackducksoftware.integration.hub.HubSupportHelper
-import com.blackducksoftware.integration.hub.ScanExecutor.Result
-import com.blackducksoftware.integration.hub.api.HubServicesFactory
-import com.blackducksoftware.integration.hub.api.HubVersionRestService
 import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationItem
-import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationRestService
+import com.blackducksoftware.integration.hub.api.nonpublic.HubVersionRequestService
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusItem
-import com.blackducksoftware.integration.hub.api.policy.PolicyStatusRestService
 import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionItem
-import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionRestService
 import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.cli.SimpleScanService
-import com.blackducksoftware.integration.hub.dataservices.policystatus.PolicyStatusDescription
+import com.blackducksoftware.integration.hub.cli.SimpleScanService.Result
+import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
+import com.blackducksoftware.integration.hub.service.HubRequestService
+import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.util.CIEnvironmentVariables
 
@@ -45,7 +43,7 @@ executions {
      * For example, if the properties are set:
      *
      * artifactory.repos.to.search=my-releases
-     * artifact.name.patterns=*.war
+     * artifact.name.patterns.to.scan=*.war
      *
      * then this REST call will search 'my-releases' for all .war (web archive) files, scan them, and publish the BOM to the provided Hub server.
      *
@@ -65,13 +63,6 @@ executions {
         scanArtifactPaths(repoPaths)
 
         log.info("...completed scanForHub REST request.")
-    }
-
-    clearAllScanResults() { params ->
-        log.info("Starting clearAllScanResults REST request...")
-        initializeConfiguration()
-
-        log.info("...completed clearAllScanResults REST request.")
     }
 }
 
@@ -137,9 +128,7 @@ def CIEnvironmentVariables ciEnvironmentVariables
 def HubServerConfig hubServerConfig
 def HubSupportHelper hubSupportHelper
 def HubServicesFactory hubServicesFactory
-def ProjectVersionRestService projectVersionRestService
-def CodeLocationRestService codeLocationRestService
-def PolicyStatusRestService policyStatusRestService
+def HubRequestService hubRequestService
 def Set<String> reposToSearch
 def Set<String> artifactPatternsToFind
 
@@ -251,7 +240,7 @@ def populateProjectVersionUrls(Set<RepoPath> repoPaths) {
     repoPaths.each {
         String codeLocationUrl = repositories.getProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(codeLocationUrl)) {
-            CodeLocationItem codeLocationItem = codeLocationRestService.getItem(codeLocationUrl)
+            CodeLocationItem codeLocationItem = hubRequestService.getItem(codeLocationUrl, CodeLocationItem.class)
             String mappedProjectVersionUrl = codeLocationItem.mappedProjectVersion
             if (StringUtils.isNotBlank(mappedProjectVersionUrl)) {
                 String hubUrl = hubServerConfig.getHubUrl().toString()
@@ -270,9 +259,9 @@ def populatePolicyStatuses(Set<RepoPath> repoPaths) {
     repoPaths.each {
         String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(projectVersionUrl)) {
-            ProjectVersionItem projectVersionItem = projectVersionRestService.getItem(projectVersionUrl)
+            ProjectVersionItem projectVersionItem = hubRequestService.getItem(projectVersionUrl, ProjectVersionItem.class)
             String policyStatusUrl = projectVersionItem.getLink("policy-status")
-            PolicyStatusItem policyStatusItem = policyStatusRestService.getItem(policyStatusUrl)
+            PolicyStatusItem policyStatusItem = hubRequestService.getItem(policyStatusUrl, PolicyStatusItem.class)
             PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(policyStatusItem)
             repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
             repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, policyStatusItem.overallStatus.toString())
@@ -308,7 +297,7 @@ def initializeConfiguration() {
     CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
     hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
 
-    HubVersionRestService hubVersionRestService = hubServicesFactory.createHubVersionRestService()
+    HubVersionRequestService hubVersionRequestService = hubServicesFactory.createHubVe
     projectVersionRestService = hubServicesFactory.createProjectVersionRestService()
     codeLocationRestService = hubServicesFactory.createCodeLocationRestService()
     policyStatusRestService = hubServicesFactory.createPolicyStatusRestService()
