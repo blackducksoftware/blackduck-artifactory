@@ -11,22 +11,21 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
-import com.blackducksoftware.integration.hub.HubSupportHelper
 import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationItem
-import com.blackducksoftware.integration.hub.api.nonpublic.HubVersionRequestService
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusItem
 import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionItem
 import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem
+import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
-import com.blackducksoftware.integration.hub.cli.SimpleScanService
-import com.blackducksoftware.integration.hub.cli.SimpleScanService.Result
+import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
+import com.blackducksoftware.integration.hub.scan.HubScanConfig
 import com.blackducksoftware.integration.hub.service.HubRequestService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
-import com.blackducksoftware.integration.util.CIEnvironmentVariables
+import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
 @Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 @Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
@@ -124,11 +123,9 @@ def File etcDir
 def File blackDuckDirectory
 def File cliDirectory
 def Properties properties
-def CIEnvironmentVariables ciEnvironmentVariables
 def HubServerConfig hubServerConfig
-def HubSupportHelper hubSupportHelper
-def HubServicesFactory hubServicesFactory
 def HubRequestService hubRequestService
+def CLIDataService cliDataService
 def Set<String> reposToSearch
 def Set<String> artifactPatternsToFind
 
@@ -187,38 +184,48 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
         }
     }
 
-    String workingDirectoryPath = blackDuckDirectory.canonicalPath
+    File toolsDirectory = cliDirectory
+    File workingDirectory = blackDuckDirectory
     int scanMemory = NumberUtils.toInt(properties.getProperty("hub.scan.memory"), 4096)
-    boolean verboseRun = Boolean.parseBoolean(properties.getProperty("hub.scan.verbose"))
     boolean dryRun = Boolean.parseBoolean(properties.getProperty("hub.scan.dry.run"))
+    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder(false);
+    hubScanConfigBuilder.setScanMemory(scanMemory);
+    hubScanConfigBuilder.setDryRun(dryRun);
+    hubScanConfigBuilder.setToolsDir(toolsDirectory);
+    hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
+    hubScanConfigBuilder.setPluginVersion("0.0.1");
+    hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.ARTIFACTORY);
+    hubScanConfigBuilder.setThirdPartyVersion("????");
+
     filenamesToLayout.each { key, value ->
         try {
             String project = value.module
             String version = value.baseRevision
-            def scanFile = new File(workingDirectoryPath, key)
-            def scanTargetPaths = [scanFile.canonicalPath]
+            def scanFile = new File(workingDirectory, key)
+            def scanTargetPath = scanFile.canonicalPath
+            hubScanConfigBuilder.setProjectName(project);
+            hubScanConfigBuilder.setVersion(version);
+            hubScanConfigBuilder.addScanTargetPath(scanTargetPath);
 
-            def SimpleScanService simpleScanService = hubServicesFactory.createSimpleScanService(slf4jIntLogger, hubServicesFactory.restConnection, hubServerConfig,hubSupportHelper,ciEnvironmentVariables, cliDirectory, scanMemory, verboseRun, dryRun, project,version, scanTargetPaths, workingDirectoryPath)
-            Result result = simpleScanService.setupAndExecuteScan()
+            HubScanConfig hubScanConfig = hubScanConfigBuilder.build();
 
-            if (Result.SUCCESS == result) {
-                log.info("${key} was successfully scanned by the BlackDuck CLI.")
-                List<ScanSummaryItem> scanSummaryItems = simpleScanService.scanSummaryItems
-                if (null != scanSummaryItems && scanSummaryItems.size() == 1) {
-                    try {
-                        String codeLocationUrl = scanSummaryItems.get(0).getLink(ScanSummaryItem.CODE_LOCATION_LINK)
-                        repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
-                    } catch (Exception e) {
-                        log.error("Exception getting code location url: ${e.message}")
-                    }
+            List<ScanSummaryItem> scanSummaryItems = cliDataService.installAndRunScan(hubServerConfig, hubScanConfig)
+            log.info("${key} was successfully scanned by the BlackDuck CLI.")
+            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
+            //we only scanned one path, so only one result is expected
+            if (null != scanSummaryItems && scanSummaryItems.size() == 1) {
+                try {
+                    String codeLocationUrl = scanSummaryItems.get(0).getLink(ScanSummaryItem.CODE_LOCATION_LINK)
+                    repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
+                } catch (Exception e) {
+                    log.error("Exception getting code location url: ${e.message}")
                 }
             } else {
-                log.error("The BlackDuck Scan did not complete successfully. Please investigate the scan logs for details.")
+                log.warn("No scan summaries were available for a successful scan - if this was a dry run, this is expected, but otherwise, there should be summaries.")
             }
-            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, result.toString())
         } catch (Exception e) {
-            log.error("The BlackDuck Scan did not complete successfully: ${e.message}", e)
-            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, Result.FAILURE.toString())
+            log.error("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully: ${e.message}", e)
+            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "FAILURE")
         }
 
         String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
@@ -238,7 +245,7 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
 
 def populateProjectVersionUrls(Set<RepoPath> repoPaths) {
     repoPaths.each {
-        String codeLocationUrl = repositories.getProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME)
+        String codeLocationUrl = updateUrlPropertyToCurrentHubServer(repositories.getProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME))
         if (StringUtils.isNotBlank(codeLocationUrl)) {
             CodeLocationItem codeLocationItem = hubRequestService.getItem(codeLocationUrl, CodeLocationItem.class)
             String mappedProjectVersionUrl = codeLocationItem.mappedProjectVersion
@@ -257,7 +264,7 @@ def populateProjectVersionUrls(Set<RepoPath> repoPaths) {
 
 def populatePolicyStatuses(Set<RepoPath> repoPaths) {
     repoPaths.each {
-        String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
+        String projectVersionUrl = updateUrlPropertyToCurrentHubServer(repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME))
         if (StringUtils.isNotBlank(projectVersionUrl)) {
             ProjectVersionItem projectVersionItem = hubRequestService.getItem(projectVersionUrl, ProjectVersionItem.class)
             String policyStatusUrl = projectVersionItem.getLink("policy-status")
@@ -268,6 +275,27 @@ def populatePolicyStatuses(Set<RepoPath> repoPaths) {
             log.info("Added policy status to ${it.name}")
         }
     }
+}
+
+/**
+ * If the hub server being used changes, the existing properties in artifactory could be inaccurate so we will update them when they differ from the hub url established in the properties file.
+ */
+def String updateUrlPropertyToCurrentHubServer(String urlProperty) {
+    String hubUrl = properties.getProperty("hub.url")
+    if (urlProperty.startsWith(hubUrl)) {
+        return urlProperty
+    }
+
+    //get the old hub url from the existing property
+    URL urlFromProperty = new URL(urlProperty)
+    String hubUrlFromProperty = urlFromProperty.protocol + "://" + urlFromProperty.host
+    if (urlFromProperty.port > 0) {
+        hubUrlFromProperty += ":" + Integer.toString(urlFromProperty.port)
+    }
+    String urlEndpoint = urlProperty.replace(hubUrlFromProperty, "")
+
+    String updatedProperty = properties.getProperty("hub.url") + urlEndpoint
+    updatedProperty
 }
 
 def initializeConfiguration() {
@@ -295,22 +323,7 @@ def initializeConfiguration() {
     hubServerConfig = hubServerConfigBuilder.build()
 
     CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
-    hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
-
-    HubVersionRequestService hubVersionRequestService = hubServicesFactory.createHubVe
-    projectVersionRestService = hubServicesFactory.createProjectVersionRestService()
-    codeLocationRestService = hubServicesFactory.createCodeLocationRestService()
-    policyStatusRestService = hubServicesFactory.createPolicyStatusRestService()
-    cliDownloadService = hubServicesFactory.createCliDownloadService(slf4jIntLogger)
-
-    hubSupportHelper = new HubSupportHelper()
-    hubSupportHelper.checkHubSupport(hubVersionRestService, slf4jIntLogger)
-
-    String hubUrl = credentialsRestConnection.baseUrl
-    String hubVersion = hubVersionRestService.hubVersion
-    ciEnvironmentVariables = new CIEnvironmentVariables()
-    ciEnvironmentVariables.putAll(System.getenv())
-
-    def localHostName = InetAddress.localHost.hostName
-    cliDownloadService.performInstallation(hubServerConfig.getProxyInfo(), cliDirectory, ciEnvironmentVariables, hubUrl, hubVersion, localHostName)
+    HubServicesFactory hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+    hubRequestService = hubServicesFactory.createHubRequestService()
+    cliDataService = hubServicesFactory.createCLIDataService(slf4jIntLogger)
 }
