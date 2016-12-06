@@ -27,6 +27,7 @@ import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
+@Field boolean initialized = false
 @Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 @Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
 @Field final String BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME = "blackDuckScanResult"
@@ -245,8 +246,10 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
 
 def populateProjectVersionUrls(Set<RepoPath> repoPaths) {
     repoPaths.each {
-        String codeLocationUrl = updateUrlPropertyToCurrentHubServer(repositories.getProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME))
+        String codeLocationUrl = repositories.getProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(codeLocationUrl)) {
+            codeLocationUrl = updateUrlPropertyToCurrentHubServer(codeLocationUrl)
+            repositories.setProperty(it, BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
             CodeLocationItem codeLocationItem = hubRequestService.getItem(codeLocationUrl, CodeLocationItem.class)
             String mappedProjectVersionUrl = codeLocationItem.mappedProjectVersion
             if (StringUtils.isNotBlank(mappedProjectVersionUrl)) {
@@ -264,8 +267,10 @@ def populateProjectVersionUrls(Set<RepoPath> repoPaths) {
 
 def populatePolicyStatuses(Set<RepoPath> repoPaths) {
     repoPaths.each {
-        String projectVersionUrl = updateUrlPropertyToCurrentHubServer(repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME))
+        String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(projectVersionUrl)) {
+            projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
+            repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
             ProjectVersionItem projectVersionItem = hubRequestService.getItem(projectVersionUrl, ProjectVersionItem.class)
             String policyStatusUrl = projectVersionItem.getLink("policy-status")
             PolicyStatusItem policyStatusItem = hubRequestService.getItem(policyStatusUrl, PolicyStatusItem.class)
@@ -299,6 +304,10 @@ def String updateUrlPropertyToCurrentHubServer(String urlProperty) {
 }
 
 def initializeConfiguration() {
+    if (initialized) {
+        resetServices()
+        return
+    }
     slf4jIntLogger = new Slf4jIntLogger(log)
 
     etcDir = ctx.artifactoryHome.etcDir
@@ -322,6 +331,11 @@ def initializeConfiguration() {
     hubServerConfigBuilder.setFromProperties(properties)
     hubServerConfig = hubServerConfigBuilder.build()
 
+    initialized = true
+    resetServices()
+}
+
+def resetServices() {
     CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
     HubServicesFactory hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
     hubRequestService = hubServicesFactory.createHubRequestService()
