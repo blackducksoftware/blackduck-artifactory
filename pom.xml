@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>hub-artifactory</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0-RC</version>
 
   <name>Hub Artifactory Plugin</name>
   <url>https://www.github.com/blackducksoftware/hub-artifactory</url>
