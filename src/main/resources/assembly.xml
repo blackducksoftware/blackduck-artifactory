@@ -7,7 +7,7 @@
 	<fileSets>
 		<fileSet>
 			<directory>${project.basedir}/src/main/resources</directory>
-			<outputDirectory>properties</outputDirectory>
+			<outputDirectory></outputDirectory>
 			<includes>
 				<include>*</include>
 			</includes>
