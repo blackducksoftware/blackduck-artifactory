@@ -95,16 +95,6 @@ executions {
 
         log.info("...completed scanForHub REST request.")
     }
-
-    testConfig(httpMethod: "GET") { params ->
-        log.info("Starting testConfig REST request...")
-
-        initializeConfiguration()
-        Set<RepoPath> repoPaths = searchForRepoPaths()
-        scanArtifactPaths(repoPaths)
-
-        log.info("...completed testConfig REST request.")
-    }
 }
 
 jobs {
@@ -240,7 +230,7 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
     hubScanConfigBuilder.setDryRun(HUB_SCAN_DRY_RUN);
     hubScanConfigBuilder.setToolsDir(toolsDirectory);
     hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
-    hubScanConfigBuilder.setPluginVersion("0.0.1");
+    hubScanConfigBuilder.setPluginVersion("1.1.1");
     hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.ARTIFACTORY);
     hubScanConfigBuilder.setThirdPartyVersion("????");
 
