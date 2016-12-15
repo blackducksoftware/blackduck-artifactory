@@ -27,8 +27,8 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
 @Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME="sysadmin"
-@Field final String HUB_PASSWORD="blackduck"
+@Field final String HUB_USERNAME=""
+@Field final String HUB_PASSWORD=""
 
 @Field final String HUB_PROXY_HOST=""
 //this is a String because right now, an int 0 is considered a valid port so results in an error if port=0 is combined with host=""
@@ -51,7 +51,7 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
     "*.hpi"
 ]
 
-@Field boolean logVerboseCronLog = false
+@Field final boolean logVerboseCronLog = false
 
 @Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 @Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
@@ -94,6 +94,16 @@ executions {
         scanArtifactPaths(repoPaths)
 
         log.info("...completed scanForHub REST request.")
+    }
+
+    testConfig(httpMethod: "GET") { params ->
+        log.info("Starting testConfig REST request...")
+
+        initializeConfiguration()
+        Set<RepoPath> repoPaths = searchForRepoPaths()
+        scanArtifactPaths(repoPaths)
+
+        log.info("...completed testConfig REST request.")
     }
 }
 
@@ -167,6 +177,7 @@ jobs {
     }
 }
 
+//PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
 def searchForRepoPaths() {
     def repoPaths = []
     ARTIFACT_NAME_PATTERNS_TO_SCAN.each {
