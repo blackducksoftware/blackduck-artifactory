@@ -6,16 +6,6 @@
 	<id>${project.version}</id>
 	<fileSets>
 		<fileSet>
-			<directory>${project.basedir}/src/main/resources</directory>
-			<outputDirectory></outputDirectory>
-			<includes>
-				<include>*</include>
-			</includes>
-			<excludes>
-				<exclude>*assembly*</exclude>
-			</excludes>
-		</fileSet>
-		<fileSet>
 			<directory>${project.basedir}/src/main/java/com/blackducksoftware/integration/artifactory</directory>
 			<outputDirectory></outputDirectory>
 			<includes>
