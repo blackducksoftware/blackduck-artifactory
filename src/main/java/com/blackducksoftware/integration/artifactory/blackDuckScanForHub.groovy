@@ -25,10 +25,10 @@ import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
-@Field final String HUB_URL="http://int-hub01.dc1.lan:8080"
+@Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME="sysadmin"
-@Field final String HUB_PASSWORD="blackduck"
+@Field final String HUB_USERNAME=""
+@Field final String HUB_PASSWORD=""
 
 @Field final String HUB_PROXY_HOST=""
 //this is a String because right now, an int 0 is considered a valid port so results in an error if port=0 is combined with host=""
@@ -38,7 +38,7 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field final String HUB_PROXY_PASSWORD=""
 
 @Field final int HUB_SCAN_MEMORY=4096
-@Field final boolean HUB_SCAN_DRY_RUN=true
+@Field final boolean HUB_SCAN_DRY_RUN=false
 
 @Field final List<String> ARTIFACTORY_REPOS_TO_SEARCH=[
     "ext-release-local",
@@ -50,6 +50,8 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
     "*.tar.gz",
     "*.hpi"
 ]
+
+@Field final boolean logVerboseCronLog = false
 
 @Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 @Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
@@ -65,7 +67,6 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field File blackDuckDirectory
 @Field File cliDirectory
 @Field HubServerConfig hubServerConfig
-@Field boolean logVerboseCronLog = true
 
 executions {
     /**
@@ -93,6 +94,16 @@ executions {
         scanArtifactPaths(repoPaths)
 
         log.info("...completed scanForHub REST request.")
+    }
+
+    testConfig(httpMethod: "GET") { params ->
+        log.info("Starting testConfig REST request...")
+
+        initializeConfiguration()
+        Set<RepoPath> repoPaths = searchForRepoPaths()
+        scanArtifactPaths(repoPaths)
+
+        log.info("...completed testConfig REST request.")
     }
 }
 
@@ -166,6 +177,7 @@ jobs {
     }
 }
 
+//PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
 def searchForRepoPaths() {
     def repoPaths = []
     ARTIFACT_NAME_PATTERNS_TO_SCAN.each {
