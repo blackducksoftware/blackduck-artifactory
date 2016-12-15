@@ -95,16 +95,6 @@ executions {
 
         log.info("...completed scanForHub REST request.")
     }
-
-    testConfig(httpMethod: "GET") { params ->
-        log.info("Starting testConfig REST request...")
-
-        initializeConfiguration()
-        Set<RepoPath> repoPaths = searchForRepoPaths()
-        scanArtifactPaths(repoPaths)
-
-        log.info("...completed testConfig REST request.")
-    }
 }
 
 jobs {
