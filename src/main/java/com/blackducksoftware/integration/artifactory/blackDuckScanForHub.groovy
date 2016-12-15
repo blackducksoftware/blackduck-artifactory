@@ -31,7 +31,8 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field final String HUB_PASSWORD="blackduck"
 
 @Field final String HUB_PROXY_HOST=""
-@Field final int HUB_PROXY_PORT= 0
+//this is a String because right now, an int 0 is considered a valid port so results in an error if port=0 is combined with host=""
+@Field final String HUB_PROXY_PORT= ""
 @Field final String HUB_PROXY_IGNORED_PROXY_HOSTS=""
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
@@ -168,7 +169,7 @@ jobs {
 def searchForRepoPaths() {
     def repoPaths = []
     ARTIFACT_NAME_PATTERNS_TO_SCAN.each {
-        repoPaths.addAll(searches.artifactsByName(it, ARTIFACTORY_REPOS_TO_SEARCH))
+        repoPaths.addAll(searches.artifactsByName(it, ARTIFACTORY_REPOS_TO_SEARCH.toArray(new String[ARTIFACTORY_REPOS_TO_SEARCH.size])))
     }
 
     repoPaths.toSet()
