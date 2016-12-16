@@ -25,10 +25,10 @@ import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
-@Field final String HUB_URL=""
+@Field final String HUB_URL="http://int-hub01.dc1.lan:8080"
 @Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME=""
-@Field final String HUB_PASSWORD=""
+@Field final String HUB_USERNAME="sysadmin"
+@Field final String HUB_PASSWORD="blackduck"
 
 @Field final String HUB_PROXY_HOST=""
 //this is a String because right now, an int 0 is considered a valid port so results in an error if port=0 is combined with host=""
@@ -51,7 +51,7 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
     "*.hpi"
 ]
 
-@Field final boolean logVerboseCronLog = false
+@Field final boolean logVerboseCronLog = true
 
 @Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 @Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
@@ -66,7 +66,6 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field File etcDir
 @Field File blackDuckDirectory
 @Field File cliDirectory
-@Field HubServerConfig hubServerConfig
 
 executions {
     /**
@@ -94,6 +93,34 @@ executions {
         scanArtifactPaths(repoPaths)
 
         log.info("...completed scanForHub REST request.")
+    }
+
+    testConfig(httpMethod: "GET") { params ->
+        log.info("Starting testConfig REST request...")
+
+        initializeConfiguration()
+        def connectMessage = "OK"
+        try {
+            HubServicesFactory hubServicesFactory = createHubServicesFactory()
+            if (hubServicesFactory == null) {
+                connectMessage = "Could not create the connection to the Hub - you will have to check the artifactory logs."
+            }
+        } catch (Exception e) {
+            connectMessage = e.getMessage()
+        }
+        Set<RepoPath> repoPaths = searchForRepoPaths()
+        List<String> cronLogItems = getLatestCronLogItems()
+        def cronLogResults = StringUtils.join(cronLogItems, "\n")
+
+        def configResults = """
+canConnectToHub: ${connectMessage}
+artifactsFound: ${repoPaths.size()}
+loggedCronRuns:
+${cronLogResults}
+"""
+
+        message = configResults
+        log.info("...completed testConfig REST request.")
     }
 }
 
@@ -140,8 +167,7 @@ jobs {
         logCronRun("addProjectVersionUrl")
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
-        CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
-        HubServicesFactory hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+        HubServicesFactory hubServicesFactory = createHubServicesFactory()
         HubRequestService hubRequestService = hubServicesFactory.createHubRequestService()
 
         populateProjectVersionUrls(hubRequestService, repoPaths)
@@ -157,8 +183,7 @@ jobs {
         logCronRun("addPolicyStatus")
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
-        CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
-        HubServicesFactory hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+        HubServicesFactory hubServicesFactory = createHubServicesFactory()
         HubRequestService hubRequestService = hubServicesFactory.createHubRequestService()
 
         populatePolicyStatuses(hubRequestService, repoPaths)
@@ -225,14 +250,14 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
 
     File toolsDirectory = cliDirectory
     File workingDirectory = blackDuckDirectory
-    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder(false);
-    hubScanConfigBuilder.setScanMemory(HUB_SCAN_MEMORY);
-    hubScanConfigBuilder.setDryRun(HUB_SCAN_DRY_RUN);
-    hubScanConfigBuilder.setToolsDir(toolsDirectory);
-    hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
-    hubScanConfigBuilder.setPluginVersion("1.1.1");
-    hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.ARTIFACTORY);
-    hubScanConfigBuilder.setThirdPartyVersion("????");
+    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder(false)
+    hubScanConfigBuilder.setScanMemory(HUB_SCAN_MEMORY)
+    hubScanConfigBuilder.setDryRun(HUB_SCAN_DRY_RUN)
+    hubScanConfigBuilder.setToolsDir(toolsDirectory)
+    hubScanConfigBuilder.setWorkingDirectory(workingDirectory)
+    hubScanConfigBuilder.setPluginVersion("1.2.0")
+    hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.ARTIFACTORY)
+    hubScanConfigBuilder.setThirdPartyVersion("????")
 
     filenamesToLayout.each { key, value ->
         try {
@@ -240,16 +265,16 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
             String version = value.baseRevision
             def scanFile = new File(workingDirectory, key)
             def scanTargetPath = scanFile.canonicalPath
-            hubScanConfigBuilder.setProjectName(project);
-            hubScanConfigBuilder.setVersion(version);
-            hubScanConfigBuilder.addScanTargetPath(scanTargetPath);
+            hubScanConfigBuilder.setProjectName(project)
+            hubScanConfigBuilder.setVersion(version)
+            hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
-            HubScanConfig hubScanConfig = hubScanConfigBuilder.build();
+            HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
 
-            CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
-            HubServicesFactory hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+            HubServicesFactory hubServicesFactory = createHubServicesFactory()
             CLIDataService cliDataService = hubServicesFactory.createCLIDataService(new Slf4jIntLogger(log))
 
+            HubServerConfig hubServerConfig = createHubServerConfig()
             List<ScanSummaryItem> scanSummaryItems = cliDataService.installAndRunScan(hubServerConfig, hubScanConfig)
             log.info("${key} was successfully scanned by the BlackDuck CLI.")
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
@@ -293,6 +318,7 @@ def populateProjectVersionUrls(HubRequestService hubRequestService, Set<RepoPath
             CodeLocationItem codeLocationItem = hubRequestService.getItem(codeLocationUrl, CodeLocationItem.class)
             String mappedProjectVersionUrl = codeLocationItem.mappedProjectVersion
             if (StringUtils.isNotBlank(mappedProjectVersionUrl)) {
+                HubServerConfig hubServerConfig = createHubServerConfig()
                 String hubUrl = hubServerConfig.getHubUrl().toString()
                 String versionId = mappedProjectVersionUrl.substring(mappedProjectVersionUrl.indexOf("/versions/") + "/versions/".length())
                 String uiUrl = hubUrl + "/#versions/id:"+ versionId + "/view:bom"
@@ -346,8 +372,49 @@ def logCronRun(String methodName) {
     if (logVerboseCronLog) {
         String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
         def cronLogFile = new File(blackDuckDirectory, "blackduck_cron_history")
+        if (cronLogFile.length() > 10000) {
+            cronLogFile.delete()
+            cronLogFile.createNewFile()
+        }
         cronLogFile << "${methodName}\t${timeString}${System.lineSeparator}"
     }
+}
+
+def getLatestCronLogItems() {
+    def cronLogFile = new File(blackDuckDirectory, "blackduck_cron_history")
+    def List<String> lastTenLines = new ArrayList<>()
+    cronLogFile.withReader {reader ->
+        while (line = reader.readLine()) {
+            if (lastTenLines.size() == 10) {
+                lastTenLines.remove(0)
+            }
+            lastTenLines.add(line)
+        }
+    }
+
+    return lastTenLines
+}
+
+def HubServerConfig createHubServerConfig() {
+    HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
+    hubServerConfigBuilder.setHubUrl(HUB_URL)
+    hubServerConfigBuilder.setUsername(HUB_USERNAME)
+    hubServerConfigBuilder.setPassword(HUB_PASSWORD)
+    hubServerConfigBuilder.setTimeout(HUB_TIMEOUT)
+    hubServerConfigBuilder.setProxyHost(HUB_PROXY_HOST)
+    hubServerConfigBuilder.setProxyPort(HUB_PROXY_PORT)
+    hubServerConfigBuilder.setIgnoredProxyHosts(HUB_PROXY_IGNORED_PROXY_HOSTS)
+    hubServerConfigBuilder.setProxyUsername(HUB_PROXY_USERNAME)
+    hubServerConfigBuilder.setProxyPassword(HUB_PROXY_PASSWORD)
+
+    return hubServerConfigBuilder.build()
+}
+
+def HubServicesFactory createHubServicesFactory() {
+    HubServerConfig hubServerConfig = createHubServerConfig()
+
+    CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
+    new HubServicesFactory(credentialsRestConnection)
 }
 
 def initializeConfiguration() {
@@ -359,18 +426,6 @@ def initializeConfiguration() {
 
         File cronLogFile = new File(blackDuckDirectory, "blackduck_cron_history")
         cronLogFile.createNewFile()
-
-        HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
-        hubServerConfigBuilder.setHubUrl(HUB_URL)
-        hubServerConfigBuilder.setUsername(HUB_USERNAME)
-        hubServerConfigBuilder.setPassword(HUB_PASSWORD)
-        hubServerConfigBuilder.setTimeout(HUB_TIMEOUT)
-        hubServerConfigBuilder.setProxyHost(HUB_PROXY_HOST)
-        hubServerConfigBuilder.setProxyPort(HUB_PROXY_PORT)
-        hubServerConfigBuilder.setIgnoredProxyHosts(HUB_PROXY_IGNORED_PROXY_HOSTS)
-        hubServerConfigBuilder.setProxyUsername(HUB_PROXY_USERNAME)
-        hubServerConfigBuilder.setProxyPassword(HUB_PROXY_PASSWORD)
-        hubServerConfig = hubServerConfigBuilder.build()
 
         initialized = true
     }
