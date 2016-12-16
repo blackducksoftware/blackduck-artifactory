@@ -26,7 +26,7 @@ import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
-@Field final String HUB_URL="http://int-hub01.dc1.lan:8080"
+@Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
 @Field final String HUB_USERNAME="sysadmin"
 @Field final String HUB_PASSWORD="blackduck"
@@ -52,7 +52,7 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
     "*.hpi"
 ]
 
-@Field final boolean logVerboseCronLog = true
+@Field final boolean logVerboseCronLog = false
 
 @Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 @Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
@@ -62,6 +62,10 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME = "blackDuckProjectVersionUiUrl"
 @Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME = "blackDuckPolicyStatus"
 @Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME = "blackDuckOverallPolicyStatus"
+
+//if this is set, only artifacts with a modified date later than the CUTOFF will be scanned
+//ex: 2016-01-01T00:00:00.000
+@Field final String ARTIFACT_CUTOFF_DATE = ""
 
 @Field boolean initialized = false
 @Field File etcDir
@@ -218,16 +222,28 @@ def searchForRepoPaths() {
 }
 
 /**
- * If artifact's last modified time is newer than the scan time, or we have no record of the scan time, we should scan now.
+ * If artifact's last modified time is newer than the scan time, or we have no record of the scan time, we should scan now, unless, if the cutoff date is set, only scan if the modified date is greater than or equal to the cutoff.
  */
 def shouldRepoPathBeScannedNow(RepoPath repoPath) {
+    def itemInfo = repositories.getItemInfo(repoPath)
+    long lastModifiedTime = itemInfo.lastModified
+
+    boolean shouldCutoffPreventScanning = false
+    if (StringUtils.isNotBlank(ARTIFACT_CUTOFF_DATE)) {
+        long cutoffTime = DateTime.parse(ARTIFACT_CUTOFF_DATE, DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC()).toDate().getTime()
+        shouldCutoffPreventScanning = lastModifiedTime < cutoffTime
+    }
+
+    if (shouldCutoffPreventScanning) {
+        log.warn("${itemInfo.name} was not scanned because the cutoff was set and the artifact is too old")
+        return false
+    }
+
     String blackDuckScanTimeProperty = repositories.getProperty(repoPath, BLACK_DUCK_SCAN_TIME_PROPERTY_NAME)
     if (StringUtils.isBlank(blackDuckScanTimeProperty)) {
         return true
     }
 
-    def itemInfo = repositories.getItemInfo(repoPath)
-    long lastModifiedTime = itemInfo.lastModified
     try {
         long blackDuckScanTime = DateTime.parse(blackDuckScanTimeProperty, DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC()).toDate().time
         return lastModifiedTime >= blackDuckScanTime
