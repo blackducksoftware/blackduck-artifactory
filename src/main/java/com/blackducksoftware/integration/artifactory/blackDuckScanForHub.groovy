@@ -1,5 +1,6 @@
 import groovy.transform.Field
 
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
@@ -121,6 +122,20 @@ ${cronLogResults}
 
         message = configResults
         log.info("...completed testConfig REST request.")
+    }
+
+    /**
+     * This will delete, then recreate, the blackducksoftware directory which includes the cli, the cron job log, as well as all the cli logs.
+     */
+    clearBlackDuckDirectory() { params ->
+        log.info("Starting clearLogs REST request...")
+
+        initializeConfiguration()
+
+        FileUtils.deleteDirectory(blackDuckDirectory)
+        blackDuckDirectory.mkdirs()
+
+        log.info("...completed clearLogs REST request.")
     }
 }
 
