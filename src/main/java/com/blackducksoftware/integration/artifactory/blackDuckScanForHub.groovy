@@ -1,3 +1,26 @@
+/**
+ * Hub Artifactory Plugin
+ *
+ * Copyright (C) 2016 Black Duck Software, Inc.
+ * http://www.blackducksoftware.com/
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 import groovy.transform.Field
 
 import org.apache.commons.io.FileUtils
@@ -11,6 +34,7 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationItem
+import com.blackducksoftware.integration.hub.api.item.MetaService
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusItem
 import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionItem
 import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem
@@ -23,6 +47,7 @@ import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.scan.HubScanConfig
 import com.blackducksoftware.integration.hub.service.HubRequestService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
+import com.blackducksoftware.integration.log.IntLogger
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
@@ -32,8 +57,7 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field final String HUB_PASSWORD="blackduck"
 
 @Field final String HUB_PROXY_HOST=""
-//this is a String because right now, an int 0 is considered a valid port so results in an error if port=0 is combined with host=""
-@Field final String HUB_PROXY_PORT= ""
+@Field final int HUB_PROXY_PORT= 0
 @Field final String HUB_PROXY_IGNORED_PROXY_HOSTS=""
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
@@ -204,8 +228,9 @@ jobs {
         Set<RepoPath> repoPaths = searchForRepoPaths()
         HubServicesFactory hubServicesFactory = createHubServicesFactory()
         HubRequestService hubRequestService = hubServicesFactory.createHubRequestService()
+        MetaService metaService = hubServicesFactory.createMetaService(new Slf4jIntLogger(log))
 
-        populatePolicyStatuses(hubRequestService, repoPaths)
+        populatePolicyStatuses(hubRequestService, metaService, repoPaths)
 
         log.info("...completed addPolicyStatus cron job.")
     }
@@ -281,7 +306,7 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
 
     File toolsDirectory = cliDirectory
     File workingDirectory = blackDuckDirectory
-    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder(false)
+    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
     hubScanConfigBuilder.setScanMemory(HUB_SCAN_MEMORY)
     hubScanConfigBuilder.setDryRun(HUB_SCAN_DRY_RUN)
     hubScanConfigBuilder.setToolsDir(toolsDirectory)
@@ -302,8 +327,10 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
 
             HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
 
+            IntLogger logger = new Slf4jIntLogger(log)
             HubServicesFactory hubServicesFactory = createHubServicesFactory()
-            CLIDataService cliDataService = hubServicesFactory.createCLIDataService(new Slf4jIntLogger(log))
+            CLIDataService cliDataService = hubServicesFactory.createCLIDataService(logger)
+            MetaService metaService = hubServicesFactory.createMetaService(logger)
 
             HubServerConfig hubServerConfig = createHubServerConfig()
             List<ScanSummaryItem> scanSummaryItems = cliDataService.installAndRunScan(hubServerConfig, hubScanConfig)
@@ -312,7 +339,7 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
             //we only scanned one path, so only one result is expected
             if (null != scanSummaryItems && scanSummaryItems.size() == 1) {
                 try {
-                    String codeLocationUrl = scanSummaryItems.get(0).getLink(ScanSummaryItem.CODE_LOCATION_LINK)
+                    String codeLocationUrl = metaService.getLink(scanSummaryItems.get(0), MetaService.CODE_LOCATION_LINK)
                     repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
                 } catch (Exception e) {
                     log.error("Exception getting code location url: ${e.message}")
@@ -362,14 +389,14 @@ def populateProjectVersionUrls(HubRequestService hubRequestService, Set<RepoPath
     }
 }
 
-def populatePolicyStatuses(HubRequestService hubRequestService, Set<RepoPath> repoPaths) {
+def populatePolicyStatuses(HubRequestService hubRequestService, MetaService metaService, Set<RepoPath> repoPaths) {
     repoPaths.each {
         String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(projectVersionUrl)) {
             projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
             repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
             ProjectVersionItem projectVersionItem = hubRequestService.getItem(projectVersionUrl, ProjectVersionItem.class)
-            String policyStatusUrl = projectVersionItem.getLink("policy-status")
+            String policyStatusUrl = metaService.getLink(projectVersionItem, MetaService.POLICY_STATUS_LINK)
             PolicyStatusItem policyStatusItem = hubRequestService.getItem(policyStatusUrl, PolicyStatusItem.class)
             PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(policyStatusItem)
             repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
