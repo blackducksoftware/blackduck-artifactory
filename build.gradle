@@ -22,6 +22,7 @@ eclipse.project { natures 'org.springsource.ide.eclipse.gradle.core.nature' }
 
 repositories {
     mavenCentral()
+    jcenter()
     mavenLocal()
 }
 
