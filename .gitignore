@@ -1,7 +1,7 @@
 .settings/
 .classpath
 .project
-target/
+build/
+.gradle/
 bin/
-pom.xml.bak
 .DS_Store

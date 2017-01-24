@@ -1,7 +1,7 @@
 /**
  * Hub Artifactory Plugin
  *
- * Copyright (C) 2016 Black Duck Software, Inc.
+ * Copyright (C) 2017 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,6 +21,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package com.blackducksoftware.integration.hub.artifactory.scan
+
 import groovy.transform.Field
 
 import org.apache.commons.io.FileUtils
@@ -50,7 +52,6 @@ import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.IntLogger
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
-
 @Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
 @Field final String HUB_USERNAME="sysadmin"
@@ -301,6 +302,7 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
         } finally {
             IOUtils.closeQuietly(inputStream)
             IOUtils.closeQuietly(fileOutputStream)
+            resourceStream.close()
         }
     }
 
