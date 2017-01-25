@@ -2,27 +2,31 @@ package com.blackducksoftware.integration.hub.artifactory
 
 import javax.annotation.PostConstruct
 
-import org.apache.commons.lang3.StringUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.context.annotation.Bean
-import org.springframework.http.client.support.BasicAuthorizationInterceptor
-import org.springframework.web.client.RestTemplate
 
 import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactoryInspector
 
 @SpringBootApplication
 class Application {
+    private final Logger logger = LoggerFactory.getLogger(Application.class)
+
     @Autowired
     ConfigurationManager configurationManager
+
+    @Autowired
+    ConfigurationProperties configurationProperties
 
     @Autowired
     ArtifactoryInspector artifactoryInspector
 
     static void main(final String[] args) {
-        SpringApplication.run(Application.class, args)
+        new SpringApplicationBuilder(Application.class).logStartupInfo(false).run(args);
     }
 
     @PostConstruct
@@ -41,21 +45,11 @@ class Application {
             }
         }
 
-        if ('inspect' == configurationManager.hubArtifactoryMode) {
+        if (configurationManager.needsHubConfigUpdate() || configurationManager.needsArtifactoryUpdate() || configurationManager.needsArtifactoryInspectUpdate()) {
+            logger.error("You have not provided enough configuration to run either an inspection or a scan - please edit the 'config/application.properties' file directly, or run from a command line to configure the properties.")
+        } else if ('inspect' == configurationProperties.hubArtifactoryMode) {
             artifactoryInspector.performInspect()
         }
-    }
-
-    @Bean
-    RestTemplate restTemplate() {
-        def restTemplate = new RestTemplate()
-
-        if (StringUtils.isNotBlank(configurationManager.artifactoryUsername) && StringUtils.isNotBlank(configurationManager.artifactoryPassword)) {
-            def basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(configurationManager.artifactoryUsername, configurationManager.artifactoryPassword)
-            restTemplate.getInterceptors().add(basicAuthorizationInterceptor)
-        }
-
-        restTemplate
     }
 
     @Bean

@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.integration.hub.artifactory.ConfigurationManager
+import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 
 @Component
 class ComponentExtractor implements Extractor {
@@ -26,12 +26,12 @@ class ComponentExtractor implements Extractor {
     GemExtractor gemExtractor
 
     @Autowired
-    ConfigurationManager configurationManager
+    ConfigurationProperties configurationProperties
 
     boolean shouldExtractComponent(String filename, Map jsonObject) {
         def lastUpdatedString = jsonObject.lastUpdated
         long lastUpdated = Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(lastUpdatedString)).epochSecond
-        long cutoffTime = ZonedDateTime.parse(configurationManager.hubArtifactoryInspectLatestUpdatedCutoff ,DateTimeFormatter.ofPattern(configurationManager.hubArtifactoryDateTimePattern)).toEpochSecond()
+        long cutoffTime = ZonedDateTime.parse(configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff ,DateTimeFormatter.ofPattern(configurationProperties.hubArtifactoryDateTimePattern)).toEpochSecond()
         return lastUpdated >= cutoffTime
     }
 

@@ -11,7 +11,7 @@ class ArtifactoryDownloader {
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryDownloader.class)
 
     @Autowired
-    ConfigurationManager configurationManager
+    ConfigurationProperties configurationProperties
 
     File download(String downloadUri, String artifactName) {
         download(new URI(downloadUri), artifactName)
@@ -23,7 +23,7 @@ class ArtifactoryDownloader {
 
     File download(URL downloadUrl, String artifactName) {
         def inputStream = downloadUrl.openStream()
-        File outputFile = new File(configurationManager.hubArtifactoryWorkingDirectoryPath)
+        File outputFile = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
         outputFile = new File(outputFile, artifactName)
         try {
             FileUtils.copyInputStreamToFile(inputStream, outputFile)

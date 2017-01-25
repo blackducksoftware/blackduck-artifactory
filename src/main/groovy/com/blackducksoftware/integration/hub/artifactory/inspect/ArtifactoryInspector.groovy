@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 import com.blackducksoftware.bdio.io.BdioWriter
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryRestClient
-import com.blackducksoftware.integration.hub.artifactory.ConfigurationManager
+import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.artifactory.inspect.extractor.ComponentExtractor
 
 @Component
@@ -27,15 +27,16 @@ class ArtifactoryInspector {
     HubProjectDetails hubProjectDetails
 
     @Autowired
-    HubUploader hubUploader
+    HubClient hubClient
 
     @Autowired
-    ConfigurationManager configurationManager
+    ConfigurationProperties configurationProperties
 
     void performInspect() {
-        def workingDirectory = new File(configurationManager.hubArtifactoryWorkingDirectoryPath)
+        def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
         workingDirectory.mkdirs()
         def outputFile = new File(workingDirectory, "${hubProjectDetails.hubProjectName}_bdio.jsonld")
+        logger.info("Starting bdio creation using file: ${outputFile.canonicalPath}")
         new FileOutputStream(outputFile).withStream {
             def bdioWriter = bdioFileWriter.createBdioWriter(it, hubProjectDetails.hubProjectName, hubProjectDetails.hubProjectVersionName, outputFile.toURI())
             try {
@@ -45,14 +46,17 @@ class ArtifactoryInspector {
             }
         }
 
-        if (hubUploader.isValid()) {
-            hubUploader.uploadBdioToHub(outputFile)
+        logger.info("Completed bdio file: ${outputFile.canonicalPath}")
+
+        if (hubClient.isValid()) {
+            hubClient.uploadBdioToHub(outputFile)
+            logger.info("Uploaded bdio to ${configurationProperties.hubUrl}")
         }
     }
 
     private void walkFolderStructure(String repoPath, BdioWriter bdioWriter) {
         logger.trace("walking ${repoPath}")
-        def jsonObject = artifactoryRestClient.getInfoForPath(configurationManager.hubArtifactoryInspectRepoKey, repoPath)
+        def jsonObject = artifactoryRestClient.getInfoForPath(configurationProperties.hubArtifactoryInspectRepoKey, repoPath)
         if (jsonObject.children != null) {
             jsonObject.children.each {
                 walkFolderStructure(repoPath + it.uri, bdioWriter)

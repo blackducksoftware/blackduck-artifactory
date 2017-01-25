@@ -7,26 +7,26 @@ import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.integration.hub.artifactory.ConfigurationManager
+import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 
 @Component
 class HubProjectDetails {
     @Autowired
-    ConfigurationManager configurationManager
+    ConfigurationProperties configurationProperties
 
     String getHubProjectName() {
-        if (StringUtils.isBlank(configurationManager.hubArtifactoryProjectName)) {
-            return configurationManager.hubArtifactoryInspectRepoKey
+        if (StringUtils.isBlank(configurationProperties.hubArtifactoryProjectName)) {
+            return configurationProperties.hubArtifactoryInspectRepoKey
         } else {
-            return configurationManager.hubArtifactoryProjectName
+            return configurationProperties.hubArtifactoryProjectName
         }
     }
 
     String getHubProjectVersionName() {
-        if (StringUtils.isBlank(configurationManager.hubArtifactoryProjectVersionName)) {
+        if (StringUtils.isBlank(configurationProperties.hubArtifactoryProjectVersionName)) {
             return DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDate.now())
         } else {
-            return configurationManager.hubArtifactoryProjectVersionName
+            return configurationProperties.hubArtifactoryProjectVersionName
         }
     }
 }
