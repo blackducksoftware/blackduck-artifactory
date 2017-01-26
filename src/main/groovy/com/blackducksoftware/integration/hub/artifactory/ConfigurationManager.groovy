@@ -82,7 +82,7 @@ class ConfigurationManager {
         configurationProperties.artifactoryPassword = setPasswordFromInput(console, out, "Artifactory Password", configurationProperties.artifactoryPassword)
         configurationProperties.artifactoryUrl = setValueFromInput(console, out, "Artifactory Url", configurationProperties.artifactoryUrl)
         configurationProperties.hubArtifactoryMode = setValueFromInput(console, out, "Hub Artifactory Mode (inspect or scan)", configurationProperties.hubArtifactoryMode)
-        configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, "Hub Artifactory Working Directory Path", configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, "Local Working Directory", configurationProperties.hubArtifactoryWorkingDirectoryPath)
 
         restTemplateContainer.init()
         persistValues()
