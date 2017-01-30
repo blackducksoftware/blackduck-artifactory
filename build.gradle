@@ -26,7 +26,7 @@ repositories {
 
 dependencies {
     compile 'com.blackducksoftware.bdio:bdio:2.0.1'
-    compile 'com.blackducksoftware.integration:hub-common:7.0.0'
+    compile 'com.blackducksoftware.integration:hub-common:7.0.2'
 
     compile 'org.apache.commons:commons-lang3:3.5'
     compile 'commons-io:commons-io:2.5'
@@ -55,9 +55,10 @@ task produceFinalZip(type: Zip, dependsOn: build) {
         exclude 'artifactory-papi*.jar'
         exclude 'commons-compress*.jar'
         exclude 'groovy-all*.jar'
-        exclude 'spring*.jar'
-        exclude 'snakeyaml*.jar'
+        exclude 'gson*.jar'
         exclude 'logback*.jar'
+        exclude 'snakeyaml*.jar'
+        exclude 'spring*.jar'
         into 'scanner/lib'
     }
 }

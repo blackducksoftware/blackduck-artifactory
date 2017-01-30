@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean
 
 import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactoryInspector
+import com.blackducksoftware.integration.hub.artifactory.scan.ArtifactoryScanConfigurer
 
 @SpringBootApplication
 class Application {
@@ -24,6 +25,9 @@ class Application {
 
     @Autowired
     ArtifactoryInspector artifactoryInspector
+
+    @Autowired
+    ArtifactoryScanConfigurer artifactoryScanConfigurer
 
     static void main(final String[] args) {
         new SpringApplicationBuilder(Application.class).logStartupInfo(false).run(args);
@@ -49,6 +53,9 @@ class Application {
             logger.error("You have not provided enough configuration to run either an inspection or a scan - please edit the 'config/application.properties' file directly, or run from a command line to configure the properties.")
         } else if ('inspect' == configurationProperties.hubArtifactoryMode) {
             artifactoryInspector.performInspect()
+        } else if ('scan_config' == configurationProperties.hubArtifactoryMode) {
+            configurationManager.updateArtifactoryScanValues(System.console, System.out)
+            artifactoryScanConfigurer.createScanPluginFile()
         }
     }
 

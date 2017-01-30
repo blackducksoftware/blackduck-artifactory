@@ -70,7 +70,4 @@ class ConfigurationProperties {
 
     @Value('${hub.artifactory.scan.name.patterns}')
     String hubArtifactoryScanNamePatterns
-
-    @Value('${hub.artifactory.scan.latest.modified.cutoff}')
-    String hubArtifactoryScanLatestModifiedCutoff
 }

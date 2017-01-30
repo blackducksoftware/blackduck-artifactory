@@ -52,13 +52,14 @@ import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.IntLogger
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
+
 @Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
 @Field final String HUB_USERNAME="sysadmin"
 @Field final String HUB_PASSWORD="blackduck"
 
 @Field final String HUB_PROXY_HOST=""
-@Field final int HUB_PROXY_PORT= 0
+@Field final int HUB_PROXY_PORT=0
 @Field final String HUB_PROXY_IGNORED_PROXY_HOSTS=""
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
@@ -66,33 +67,25 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field final int HUB_SCAN_MEMORY=4096
 @Field final boolean HUB_SCAN_DRY_RUN=false
 
-@Field final List<String> ARTIFACTORY_REPOS_TO_SEARCH=[
-    "ext-release-local",
-    "libs-release"
-]
-@Field final List<String> ARTIFACT_NAME_PATTERNS_TO_SCAN=[
-    "*.war",
-    "*.zip",
-    "*.tar.gz",
-    "*.hpi"
-]
+@Field final String ARTIFACTORY_REPOS_TO_SEARCH="ext-release-local,libs-release"
+@Field final String ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip,*.tar.gz,*.hpi"
 
-@Field final boolean logVerboseCronLog = false
+@Field final boolean logVerboseCronLog=false
 
-@Field final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS"
-@Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME = "blackDuckScanTime"
-@Field final String BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME = "blackDuckScanResult"
-@Field final String BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME = "blackDuckScanCodeLocationUrl"
-@Field final String BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME = "blackDuckProjectVersionUrl"
-@Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME = "blackDuckProjectVersionUiUrl"
-@Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME = "blackDuckPolicyStatus"
-@Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME = "blackDuckOverallPolicyStatus"
+@Field final String DATE_TIME_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSS"
+@Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME="blackDuckScanTime"
+@Field final String BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME="blackDuckScanResult"
+@Field final String BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME="blackDuckScanCodeLocationUrl"
+@Field final String BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME="blackDuckProjectVersionUrl"
+@Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME="blackDuckProjectVersionUiUrl"
+@Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME="blackDuckPolicyStatus"
+@Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME="blackDuckOverallPolicyStatus"
 
 //if this is set, only artifacts with a modified date later than the CUTOFF will be scanned
 //ex: 2016-01-01T00:00:00.000
-@Field final String ARTIFACT_CUTOFF_DATE = ""
+@Field final String ARTIFACT_CUTOFF_DATE="2016-01-01T00:00:00.000"
 
-@Field boolean initialized = false
+@Field boolean initialized=false
 @Field File etcDir
 @Field File blackDuckDirectory
 @Field File cliDirectory
@@ -102,10 +95,10 @@ executions {
      * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
      * For example:
      *
-     * ARTIFACTORY_REPOS_TO_SEARCH=["my-releases"]
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN=["*.war"]
+     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
+     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
      *
-     * then this REST call will search 'my-releases' for all .war (web archive) files, scan them, and publish the BOM to the provided Hub server.
+     * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided Hub server.
      *
      * The scanning process will add several properties to your artifacts in artifactory. Namely:
      *
@@ -173,10 +166,10 @@ jobs {
      * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
      * For example:
      *
-     * ARTIFACTORY_REPOS_TO_SEARCH=["my-releases"]
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN=["*.war"]
+     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
+     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
      *
-     * then this cron job will search 'my-releases' for all .war (web archive) files, scan them, and publish the BOM to the provided Hub server.
+     * then this cron job will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided Hub server.
      *
      * The scanning process will add several properties to your artifacts in artifactory. Namely:
      *
@@ -239,9 +232,12 @@ jobs {
 
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
 def searchForRepoPaths() {
+    def reposToSearch = ARTIFACTORY_REPOS_TO_SEARCH.tokenize(',')
+    def patternsToScan = ARTIFACT_NAME_PATTERNS_TO_SCAN.tokenize(',')
+
     def repoPaths = []
-    ARTIFACT_NAME_PATTERNS_TO_SCAN.each {
-        repoPaths.addAll(searches.artifactsByName(it, ARTIFACTORY_REPOS_TO_SEARCH.toArray(new String[ARTIFACTORY_REPOS_TO_SEARCH.size])))
+    patternsToScan.each {
+        repoPaths.addAll(searches.artifactsByName(it, reposToSearch.toArray(new String[reposToSearch.size])))
     }
 
     repoPaths.toSet()

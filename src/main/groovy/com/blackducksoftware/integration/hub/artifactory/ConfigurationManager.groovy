@@ -135,6 +135,35 @@ class ConfigurationManager {
         }
     }
 
+    void updateArtifactoryScanValues(Console console, PrintStream out) {
+        def repositoryNames = []
+        out.println('Enter Artifactory repositories to search, one at a time. If you are finished, just press <enter>.')
+        out.print "Enter repository name (current repositories=${configurationProperties.hubArtifactoryScanReposToSearch}): "
+        String userValue = StringUtils.trimToEmpty(console.readLine())
+        while (StringUtils.isNotBlank(userValue)) {
+            repositoryNames.add(userValue)
+            out.print "Enter repository name: "
+            userValue = StringUtils.trimToEmpty(console.readLine())
+        }
+
+        def namePatterns = []
+        out.println('Enter Artifactory artifact filename patterns to scan, one at a time. If you are finished, just press <enter>.')
+        out.print "Enter pattern (current patterns=${configurationProperties.hubArtifactoryScanNamePatterns}): "
+        userValue = StringUtils.trimToEmpty(console.readLine())
+        while (StringUtils.isNotBlank(userValue)) {
+            namePatterns.add(userValue)
+            out.print "Enter pattern: "
+            userValue = StringUtils.trimToEmpty(console.readLine())
+        }
+
+        out.println('These repositories () will be searched for these artifact name patterns () which will then be scanned.')
+        out.print("If this is incorrect, enter 'n' to enter new values, otherwise, if they are correct, just press <enter>.")
+        userValue = StringUtils.trimToEmpty(console.readLine())
+        if ('n' == userValue) {
+            updateArtifactoryScanValues(console, out)
+        }
+    }
+
     private persistValues() {
         Properties properties = new Properties()
         properties.setProperty("hub.url", configurationProperties.hubUrl)
@@ -158,7 +187,6 @@ class ConfigurationManager {
         properties.setProperty("hub.artifactory.inspect.latest.updated.cutoff", configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
         properties.setProperty("hub.artifactory.scan.repos.to.search", configurationProperties.hubArtifactoryScanReposToSearch)
         properties.setProperty("hub.artifactory.scan.name.patterns", configurationProperties.hubArtifactoryScanNamePatterns)
-        properties.setProperty("hub.artifactory.scan.latest.modified.cutoff", configurationProperties.hubArtifactoryScanLatestModifiedCutoff)
 
         def defaultPropertiesPersister = new DefaultPropertiesPersister()
         new FileOutputStream(userSpecifiedProperties).withStream {
