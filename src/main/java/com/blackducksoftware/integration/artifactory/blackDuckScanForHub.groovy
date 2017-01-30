@@ -1,7 +1,7 @@
 /**
  * Hub Artifactory Plugin
  *
- * Copyright (C) 2016 Black Duck Software, Inc.
+ * Copyright (C) 2017 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -87,8 +87,9 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 @Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME = "blackDuckPolicyStatus"
 @Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME = "blackDuckOverallPolicyStatus"
 
-//if this is set, only artifacts with a modified date later than the CUTOFF will be scanned
-//ex: 2016-01-01T00:00:00.000
+//if this is set, only artifacts with a modified date later than the CUTOFF will be scanned. You will have to use the
+//DATE_TIME_PATTERN defined above for the cutoff to work properly. With the default pattern, to scan only artifacts newer than January 01, 2016 you would use
+//the cutoff string = "2016-01-01T00:00:00.000"
 @Field final String ARTIFACT_CUTOFF_DATE = ""
 
 @Field boolean initialized = false
@@ -135,15 +136,28 @@ executions {
                 connectMessage = "Could not create the connection to the Hub - you will have to check the artifactory logs."
             }
         } catch (Exception e) {
-            connectMessage = e.getMessage()
+            connectMessage = e.message
         }
+
         Set<RepoPath> repoPaths = searchForRepoPaths()
+
+        def cutoffMessage = "The date cutoff is not specified so all artifacts that are found will be scanned."
+        if (StringUtils.isNotBlank(ARTIFACT_CUTOFF_DATE)) {
+            try {
+                getTimeFromString(ARTIFACT_CUTOFF_DATE)
+                cutoffMessage = "The date cutoff is specified correctly."
+            } catch (Exception e) {
+                cutoffMessage = "The pattern: ${DATE_TIME_PATTERN} does not match the date string: ${ARTIFACT_CUTOFF_DATE}: ${e.message}"
+            }
+        }
+
         List<String> cronLogItems = getLatestCronLogItems()
         def cronLogResults = StringUtils.join(cronLogItems, "\n")
 
         def configResults = """
 canConnectToHub: ${connectMessage}
 artifactsFound: ${repoPaths.size()}
+dateCutoffStatus: ${cutoffMessage}
 loggedCronRuns:
 ${cronLogResults}
 """
@@ -255,8 +269,13 @@ def shouldRepoPathBeScannedNow(RepoPath repoPath) {
 
     boolean shouldCutoffPreventScanning = false
     if (StringUtils.isNotBlank(ARTIFACT_CUTOFF_DATE)) {
-        long cutoffTime = DateTime.parse(ARTIFACT_CUTOFF_DATE, DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC()).toDate().getTime()
-        shouldCutoffPreventScanning = lastModifiedTime < cutoffTime
+        try {
+            long cutoffTime = getTimeFromString(ARTIFACT_CUTOFF_DATE)
+            shouldCutoffPreventScanning = lastModifiedTime < cutoffTime
+        } catch (Exception e) {
+            log.error("The pattern: ${DATE_TIME_PATTERN} does not match the date string: ${ARTIFACT_CUTOFF_DATE}: ${e.message}")
+            shouldCutoffPreventScanning = false
+        }
     }
 
     if (shouldCutoffPreventScanning) {
@@ -270,7 +289,7 @@ def shouldRepoPathBeScannedNow(RepoPath repoPath) {
     }
 
     try {
-        long blackDuckScanTime = DateTime.parse(blackDuckScanTimeProperty, DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC()).toDate().time
+        long blackDuckScanTime = getTimeFromString(blackDuckScanTimeProperty)
         return lastModifiedTime >= blackDuckScanTime
     } catch (Exception e) {
         //if the date format changes, the old format won't parse, so just cleanup the property by returning true and re-scanning
@@ -487,4 +506,12 @@ def initializeConfiguration() {
 
         initialized = true
     }
+}
+
+private String getNowString() {
+    DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
+}
+
+private long getTimeFromString(String dateTimeString) {
+    DateTime.parse(dateTimeString, DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC()).toDate().time
 }

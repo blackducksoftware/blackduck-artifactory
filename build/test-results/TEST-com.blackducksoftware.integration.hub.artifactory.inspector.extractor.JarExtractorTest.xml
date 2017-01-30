@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.blackducksoftware.integration.hub.artifactory.inspector.extractor.JarExtractorTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2017-01-26T16:37:55" hostname="bds01059.bds-ad.lc" time="0.083">
+  <properties/>
+  <testcase name="testExtractingBadGav" classname="com.blackducksoftware.integration.hub.artifactory.inspector.extractor.JarExtractorTest" time="0.08"/>
+  <testcase name="testExtractingGav" classname="com.blackducksoftware.integration.hub.artifactory.inspector.extractor.JarExtractorTest" time="0.003"/>
+  <system-out><![CDATA[11:37:56.068 [Test worker] ERROR com.blackducksoftware.integration.hub.artifactory.inspect.extractor.JarExtractor - Couldn't parse the gav from 1.0.7/integration-common-1.0.7.jar
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

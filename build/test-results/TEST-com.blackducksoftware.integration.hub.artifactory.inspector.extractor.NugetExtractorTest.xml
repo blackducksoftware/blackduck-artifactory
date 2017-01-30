@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.blackducksoftware.integration.hub.artifactory.inspector.extractor.NugetExtractorTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2017-01-26T16:37:56" hostname="bds01059.bds-ad.lc" time="0.179">
+  <properties/>
+  <testcase name="testExtractingComponent" classname="com.blackducksoftware.integration.hub.artifactory.inspector.extractor.NugetExtractorTest" time="0.179"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

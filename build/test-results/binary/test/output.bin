@@ -1,0 +1,1 @@
+³11:37:56.068 [Test worker] ERROR com.blackducksoftware.integration.hub.artifactory.inspect.extractor.JarExtractor - Couldn't parse the gav from 1.0.7/integration-common-1.0.7.jar
