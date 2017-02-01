@@ -36,25 +36,26 @@ class Application {
     @PostConstruct
     void init() {
         if (null != System.console() && null != System.out) {
-            if (configurationManager.needsHubConfigUpdate()) {
-                configurationManager.updateHubConfigValues(System.console(), System.out)
+            if (configurationManager.needsBaseConfigUpdate()) {
+                configurationManager.updateBaseConfigValues(System.console(), System.out)
             }
 
-            if (configurationManager.needsArtifactoryUpdate()) {
-                configurationManager.updateArtifactoryValues(System.console(), System.out)
-            }
-
-            if (configurationManager.needsArtifactoryInspectUpdate()) {
+            if ('inspect' == configurationProperties.hubArtifactoryMode && configurationManager.needsArtifactoryInspectUpdate()) {
                 configurationManager.updateArtifactoryInspectValues(System.console(), System.out)
+            } else if ('config-scan' == configurationProperties.hubArtifactoryMode) {
+                configurationManager.updateArtifactoryScanValues(System.console(), System.out)
             }
         }
 
-        if (configurationManager.needsHubConfigUpdate() || configurationManager.needsArtifactoryUpdate() || configurationManager.needsArtifactoryInspectUpdate()) {
-            logger.error("You have not provided enough configuration to run either an inspection or a scan - please edit the 'config/application.properties' file directly, or run from a command line to configure the properties.")
+        if (configurationManager.needsBaseConfigUpdate()) {
+            logger.error('You have not provided enough configuration to run either an inspection or a scan - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
+        } else if ('inspect' == configurationProperties.hubArtifactoryMode && configurationManager.needsArtifactoryInspectUpdate()) {
+            logger.error('You have not provided enough configuration to run an inspection - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
+        } else if ('config-scan' == configurationProperties.hubArtifactoryMode && configurationManager.needsArtifactoryScanUpdate()) {
+            logger.error('You have not provided enough configuration to configure the scan plugin - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
         } else if ('inspect' == configurationProperties.hubArtifactoryMode) {
             artifactoryInspector.performInspect()
-        } else if ('scan_config' == configurationProperties.hubArtifactoryMode) {
-            configurationManager.updateArtifactoryScanValues(System.console, System.out)
+        } else if ('config-scan' == configurationProperties.hubArtifactoryMode) {
             artifactoryScanConfigurer.createScanPluginFile()
         }
     }

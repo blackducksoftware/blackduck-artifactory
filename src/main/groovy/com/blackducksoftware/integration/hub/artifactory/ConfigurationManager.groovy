@@ -37,25 +37,27 @@ class ConfigurationManager {
         }
     }
 
-    boolean needsHubConfigUpdate() {
-        StringUtils.isBlank(configurationProperties.hubUrl) || StringUtils.isBlank(configurationProperties.hubUsername) || StringUtils.isBlank(configurationProperties.hubPassword)
-    }
-
-    boolean needsArtifactoryUpdate() {
-        StringUtils.isBlank(configurationProperties.artifactoryUrl) || StringUtils.isBlank(configurationProperties.artifactoryUsername) || StringUtils.isBlank(configurationProperties.artifactoryPassword) || StringUtils.isBlank(configurationProperties.hubArtifactoryMode) || StringUtils.isBlank(configurationProperties.hubArtifactoryWorkingDirectoryPath)
+    boolean needsBaseConfigUpdate() {
+        StringUtils.isBlank(configurationProperties.hubUrl) || StringUtils.isBlank(configurationProperties.hubUsername) || StringUtils.isBlank(configurationProperties.hubPassword) || StringUtils.isBlank(configurationProperties.hubArtifactoryMode) || StringUtils.isBlank(configurationProperties.hubArtifactoryWorkingDirectoryPath)
     }
 
     boolean needsArtifactoryInspectUpdate() {
-        StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepoKey)
+        StringUtils.isBlank(configurationProperties.artifactoryUrl) || StringUtils.isBlank(configurationProperties.artifactoryUsername) || StringUtils.isBlank(configurationProperties.artifactoryPassword) || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepoKey)
     }
 
-    void updateHubConfigValues(Console console, PrintStream out) {
-        out.println('Updating Hub Server Config - just hit enter to make no change to a value:')
+    boolean needsArtifactoryScanUpdate() {
+        StringUtils.isBlank(configurationProperties.hubArtifactoryScanReposToSearch) || StringUtils.isBlank(configurationProperties.hubArtifactoryScanNamePatterns)
+    }
+
+    void updateBaseConfigValues(Console console, PrintStream out) {
+        out.println('Updating Config - just hit enter to make no change to a value:')
 
         configurationProperties.hubUrl = setValueFromInput(console, out, "Hub Server Url", configurationProperties.hubUrl)
         configurationProperties.hubTimeout = setValueFromInput(console, out, "Hub Server Timeout", configurationProperties.hubTimeout)
         configurationProperties.hubUsername = setValueFromInput(console, out, "Hub Server Username", configurationProperties.hubUsername)
         configurationProperties.hubPassword = setPasswordFromInput(console, out, "Hub Server Password", configurationProperties.hubPassword)
+        configurationProperties.hubArtifactoryMode = setValueFromInput(console, out, "Hub Artifactory Mode (inspect or config-scan)", configurationProperties.hubArtifactoryMode)
+        configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, "Local Working Directory", configurationProperties.hubArtifactoryWorkingDirectoryPath)
 
         persistValues()
 
@@ -69,20 +71,21 @@ class ConfigurationManager {
         }
 
         if (!ok) {
-            out.println("You may need to manually edit the 'config/application.properties' file to provide proxy details. If you wish to re-enter the Hub configuration, enter 'y', otherwise, just press <enter> to continue.")
+            out.println("You may need to manually edit the 'config/application.properties' file to provide proxy details. If you wish to re-enter the base configuration, enter 'y', otherwise, just press <enter> to continue.")
             String userValue = StringUtils.trimToEmpty(console.readLine())
             if ('y' == userValue) {
-                updateHubConfigValues(console, out)
+                updateBaseConfigValues(console, out)
             }
         }
     }
 
-    void updateArtifactoryValues(Console console, PrintStream out) {
+    void updateArtifactoryInspectValues(Console console, PrintStream out) {
         configurationProperties.artifactoryUsername = setValueFromInput(console, out, "Artifactory Username", configurationProperties.artifactoryUsername)
         configurationProperties.artifactoryPassword = setPasswordFromInput(console, out, "Artifactory Password", configurationProperties.artifactoryPassword)
         configurationProperties.artifactoryUrl = setValueFromInput(console, out, "Artifactory Url", configurationProperties.artifactoryUrl)
-        configurationProperties.hubArtifactoryMode = setValueFromInput(console, out, "Hub Artifactory Mode (inspect or scan)", configurationProperties.hubArtifactoryMode)
-        configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, "Local Working Directory", configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        configurationProperties.hubArtifactoryProjectName = setValueFromInput(console, out, "Hub Artifactory Project Name (optional)", configurationProperties.hubArtifactoryProjectName)
+        configurationProperties.hubArtifactoryProjectVersionName = setValueFromInput(console, out, "Hub Artifactory Project Version Name (optional)", configurationProperties.hubArtifactoryProjectVersionName)
+        configurationProperties.hubArtifactoryInspectRepoKey = setValueFromInput(console, out, "Artifactory Repository To Inspect", configurationProperties.hubArtifactoryInspectRepoKey)
 
         restTemplateContainer.init()
         persistValues()
@@ -100,34 +103,22 @@ class ConfigurationManager {
             out.println("A successful connection could not be established to the Artifactory server: ${e.message}")
         }
 
-        if (!ok) {
-            out.println("You may need to manually edit the 'config/application.properties' file but if you wish to re-enter the Artifactory configuration, enter 'y', otherwise, just press <enter> to continue.")
-            String userValue = StringUtils.trimToEmpty(console.readLine())
-            if ('y' == userValue) {
-                updateArtifactoryValues(console, out)
+        if (ok) {
+            ok = false
+            try {
+                def jsonResponse = artifactoryRestClient.getInfoForPath(configurationProperties.hubArtifactoryInspectRepoKey, "")
+                if (jsonResponse != null && jsonResponse.children != null && jsonResponse.children.size() > 0) {
+                    ok = true
+                } else {
+                    out.println("Could not get information for the ${configurationProperties.hubArtifactoryInspectRepoKey} repo. The response was: ${jsonResponse}")
+                }
+            } catch (Exception e) {
+                out.println("Could not get information for the ${configurationProperties.hubArtifactoryInspectRepoKey} repo: ${e.message}")
             }
-        }
-    }
-
-    void updateArtifactoryInspectValues(Console console, PrintStream out) {
-        configurationProperties.hubArtifactoryProjectName = setValueFromInput(console, out, "Hub Artifactory Project Name (optional)", configurationProperties.hubArtifactoryProjectName)
-        configurationProperties.hubArtifactoryProjectVersionName = setValueFromInput(console, out, "Hub Artifactory Project Version Name (optional)", configurationProperties.hubArtifactoryProjectVersionName)
-        configurationProperties.hubArtifactoryInspectRepoKey = setValueFromInput(console, out, "Artifactory Repository To Inspect", configurationProperties.hubArtifactoryInspectRepoKey)
-
-        persistValues()
-
-        boolean ok = false
-        try {
-            Map jsonResponse = artifactoryRestClient.getInfoForPath(configurationProperties.hubArtifactoryInspectRepoKey, "")
-            if (jsonResponse != null && jsonResponse.children != null && jsonResponse.children.size() > 0) {
-                ok = true
-            }
-        } catch (Exception e) {
-            out.println("Could not get information for the ${configurationProperties.hubArtifactoryInspectRepoKey} repo: ${e.message}")
         }
 
         if (!ok) {
-            out.println("No information for the ${configurationProperties.hubArtifactoryInspectRepoKey} repo could be found. You may need to manually edit the 'config/application.properties' file but if you wish to re-enter the Artifactory inspect configuration, enter 'y', otherwise, just press <enter> to continue.")
+            out.println("You may need to manually edit the 'config/application.properties' file but if you wish to re-enter the Artifactory inspect configuration, enter 'y', otherwise, just press <enter> to continue.")
             String userValue = StringUtils.trimToEmpty(console.readLine())
             if ('y' == userValue) {
                 updateArtifactoryInspectValues(console, out)
@@ -156,7 +147,9 @@ class ConfigurationManager {
             userValue = StringUtils.trimToEmpty(console.readLine())
         }
 
-        out.println('These repositories () will be searched for these artifact name patterns () which will then be scanned.')
+        persistValues()
+
+        out.println('These repositories (${configurationProperties.hubArtifactoryScanReposToSearch}) will be searched for these artifact name patterns (${configurationProperties.hubArtifactoryScanNamePatterns}) which will then be scanned.')
         out.print("If this is incorrect, enter 'n' to enter new values, otherwise, if they are correct, just press <enter>.")
         userValue = StringUtils.trimToEmpty(console.readLine())
         if ('n' == userValue) {

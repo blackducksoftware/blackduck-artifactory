@@ -1,5 +1,8 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect.extractor
 
+import groovy.json.JsonSlurper
+
+import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -10,8 +13,6 @@ import org.springframework.stereotype.Component
 
 import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 
 @Component
 class NpmExtractor implements Extractor {
@@ -36,19 +37,19 @@ class NpmExtractor implements Extractor {
                     logger.warn("package.json is too large to consume for ${artifactName}")
                     return null
                 }
-                int fileSize = (int)entrySize
-                def entryBuffer = new byte[fileSize]
-                int entryBytes = tarArchiveInputStream.read(entryBuffer, 0, fileSize)
-                def entryContent = new String(entryBuffer, 0, entryBytes)
-                println entryContent
 
-                JsonParser jsonParser = new JsonParser()
-                JsonObject json = jsonParser.parse(entryContent)
-                def packageName = json.get("name").getAsString()
-                def version = json.get("version").getAsString()
-                //                def npmPackageJson = new JsonSlurper().parseText(entryContent)
-                //                def packageName = npmPackageJson.name
-                //                def version = npmPackageJson.version
+                int fileSize = (int)entrySize
+                byte[] entryBuffer = new byte[fileSize]
+                int offset = 0
+                while (offset < fileSize) {
+                    int entryBytes = tarArchiveInputStream.read(entryBuffer, offset, fileSize - offset)
+                    offset += entryBytes
+                }
+
+                String entryContent = new String(entryBuffer, StandardCharsets.UTF_8)
+                def npmPackageJson = new JsonSlurper().parseText(entryContent)
+                def packageName = npmPackageJson.name
+                def version = npmPackageJson.version
 
                 def component = new com.blackducksoftware.bdio.model.Component()
                 component.id = downloadUri
