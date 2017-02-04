@@ -356,8 +356,10 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
             //we only scanned one path, so only one result is expected
             if (null != scanSummaryItems && scanSummaryItems.size() == 1) {
                 try {
-                    String codeLocationUrl = metaService.getLink(scanSummaryItems.get(0), MetaService.CODE_LOCATION_LINK)
-                    repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
+                    String codeLocationUrl = metaService.getFirstLink(scanSummaryItems.get(0), MetaService.CODE_LOCATION_LINK)
+                    if (StringUtils.isNotBlank(codeLocationUrl)) {
+                        repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
+                    }
                 } catch (Exception e) {
                     log.error("Exception getting code location url: ${e.message}")
                 }
@@ -407,18 +409,24 @@ def populateProjectVersionUrls(HubRequestService hubRequestService, Set<RepoPath
 }
 
 def populatePolicyStatuses(HubRequestService hubRequestService, MetaService metaService, Set<RepoPath> repoPaths) {
+    log.error('populating policy statuses')
+    log.error("for ${repoPaths.size()} paths")
     repoPaths.each {
         String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(projectVersionUrl)) {
             projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
             repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
             ProjectVersionItem projectVersionItem = hubRequestService.getItem(projectVersionUrl, ProjectVersionItem.class)
-            String policyStatusUrl = metaService.getLink(projectVersionItem, MetaService.POLICY_STATUS_LINK)
-            PolicyStatusItem policyStatusItem = hubRequestService.getItem(policyStatusUrl, PolicyStatusItem.class)
-            PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(policyStatusItem)
-            repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
-            repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, policyStatusItem.overallStatus.toString())
-            log.info("Added policy status to ${it.name}")
+            String policyStatusUrl = metaService.getFirstLink(projectVersionItem, MetaService.POLICY_STATUS_LINK)
+            if (StringUtils.isNotBlank(policyStatusUrl)) {
+                log.info("Looking up policy status: ${policyStatusUrl}")
+                PolicyStatusItem policyStatusItem = hubRequestService.getItem(policyStatusUrl, PolicyStatusItem.class)
+                log.info("policy status json: ${policyStatusItem.json}")
+                PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(policyStatusItem)
+                repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
+                repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, policyStatusItem.overallStatus.toString())
+                log.info("Added policy status to ${it.name}")
+            }
         }
     }
 }

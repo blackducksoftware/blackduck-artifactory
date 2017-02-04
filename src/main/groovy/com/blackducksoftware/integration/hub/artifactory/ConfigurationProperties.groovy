@@ -44,9 +44,6 @@ class ConfigurationProperties {
     @Value('${artifactory.url}')
     String artifactoryUrl
 
-    @Value('${hub.artifactory.mode}')
-    String hubArtifactoryMode
-
     @Value('${hub.artifactory.working.directory.path}')
     String hubArtifactoryWorkingDirectoryPath
 

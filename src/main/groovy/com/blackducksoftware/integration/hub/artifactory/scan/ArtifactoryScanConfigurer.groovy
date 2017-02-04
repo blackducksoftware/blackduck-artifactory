@@ -22,31 +22,31 @@ class ArtifactoryScanConfigurer {
     ConfigurationProperties configurationProperties
 
     void createScanPluginFile() {
-        String path = Application.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        String decodedPath = URLDecoder.decode(path, "UTF-8");
-        decodedPath = decodedPath.replace("!/BOOT-INF/classes!/", "");
-        decodedPath = decodedPath.replaceFirst("file:", "");
+        String path = Application.class.getProtectionDomain().getCodeSource().getLocation().getPath()
+        String decodedPath = URLDecoder.decode(path, 'UTF-8')
+        decodedPath = decodedPath.replace('!/BOOT-INF/classes!/', '')
+        decodedPath = decodedPath.replaceFirst('file:', '')
 
-        def jarFile = new File(decodedPath);
+        def jarFile = new File(decodedPath)
         def jarFileParentDirectory = new File(jarFile.parent)
-        def scannerDirectory = new File(jarFileParentDirectory, "scanner")
-        def scriptFile = new File(scannerDirectory, "blackDuckScanForHub.groovy")
+        def scannerDirectory = new File(jarFileParentDirectory, 'scanner')
+        def scriptFile = new File(scannerDirectory, 'blackDuckScanForHub.groovy')
         String scanFileText = scriptFile.text
 
-        String stringPrefix = "@Field final String "
-        String intPrefix = "@Field final int "
+        String stringPrefix = '@Field final String '
+        String intPrefix = '@Field final int '
 
-        scanFileText = replaceText(scanFileText, stringPrefix, "HUB_URL", configurationProperties.hubUrl)
-        scanFileText = replaceValue(scanFileText, intPrefix, "HUB_TIMEOUT", configurationProperties.hubTimeout)
-        scanFileText = replaceText(scanFileText, stringPrefix, "HUB_USERNAME", configurationProperties.hubUsername)
-        scanFileText = replaceText(scanFileText, stringPrefix, "HUB_PASSWORD", configurationProperties.hubPassword)
-        scanFileText = replaceText(scanFileText, stringPrefix, "HUB_PROXY_HOST", configurationProperties.hubProxyHost)
-        scanFileText = replaceValue(scanFileText, intPrefix, "HUB_PROXY_PORT", configurationProperties.hubProxyPort)
-        scanFileText = replaceText(scanFileText, stringPrefix, "HUB_PROXY_IGNORED_PROXY_HOSTS", configurationProperties.hubProxyIgnoredProxyHosts)
-        scanFileText = replaceText(scanFileText, stringPrefix, "HUB_PROXY_USERNAME", configurationProperties.hubProxyUsername)
-        scanFileText = replaceText(scanFileText, stringPrefix, "HUB_PROXY_PASSWORD", configurationProperties.hubProxyPassword)
-        scanFileText = replaceText(scanFileText, stringPrefix, "ARTIFACTORY_REPOS_TO_SEARCH", configurationProperties.hubArtifactoryScanReposToSearch)
-        scanFileText = replaceText(scanFileText, stringPrefix, "ARTIFACT_NAME_PATTERNS_TO_SCAN", configurationProperties.hubArtifactoryScanNamePatterns)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_URL', configurationProperties.hubUrl)
+        scanFileText = replaceValue(scanFileText, intPrefix, 'HUB_TIMEOUT', '' == configurationProperties.hubTimeout ? '120' : configurationProperties.hubTimeout)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_USERNAME', configurationProperties.hubUsername)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PASSWORD', configurationProperties.hubPassword)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_HOST', configurationProperties.hubProxyHost)
+        scanFileText = replaceValue(scanFileText, intPrefix, 'HUB_PROXY_PORT', '' == configurationProperties.hubProxyPort ? '0' : configurationProperties.hubProxyPort)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_IGNORED_PROXY_HOSTS', configurationProperties.hubProxyIgnoredProxyHosts)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_USERNAME', configurationProperties.hubProxyUsername)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_PASSWORD', configurationProperties.hubProxyPassword)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'ARTIFACTORY_REPOS_TO_SEARCH', configurationProperties.hubArtifactoryScanReposToSearch)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'ARTIFACT_NAME_PATTERNS_TO_SCAN', configurationProperties.hubArtifactoryScanNamePatterns)
 
         constructScanZip(scanFileText, scannerDirectory)
     }
@@ -60,19 +60,21 @@ class ArtifactoryScanConfigurer {
     }
 
     private void constructScanZip(String scanFileText, File scannerDirectory) {
-        File zipFile = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath, "blackDuckScanForHub.zip")
+        File zipFile = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath, 'blackDuckScanForHub.zip')
+        logger.info("Creating zip file: ${zipFile.absolutePath}")
         ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)))
 
         InputStream scriptInputStream = new ByteArrayInputStream(scanFileText.getBytes(StandardCharsets.UTF_8))
-        copyInputStream("blackDuckScanForHub.groovy", scriptInputStream, zipOutputStream)
+        copyInputStream('blackDuckScanForHub.groovy', scriptInputStream, zipOutputStream)
 
-        File libDirectory = new File(scannerDirectory, "lib")
+        File libDirectory = new File(scannerDirectory, 'lib')
         for (File lib : libDirectory.listFiles()) {
             String libName = FilenameUtils.getName(lib.name)
             copyInputStream("lib/${libName}", new FileInputStream(lib), zipOutputStream)
         }
 
         IOUtils.closeQuietly(zipOutputStream)
+        logger.info("Zip file: ${zipFile.absolutePath} created successfully.")
     }
 
     private void copyInputStream(String entryName, InputStream inputStream, ZipOutputStream zipOutputStream) {

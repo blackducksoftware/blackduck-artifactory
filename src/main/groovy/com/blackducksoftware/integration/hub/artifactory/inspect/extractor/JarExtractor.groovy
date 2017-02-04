@@ -14,9 +14,13 @@ class JarExtractor implements Extractor {
     @Autowired
     ExternalIdentifierBuilder externalIdentifierBuilder
 
+    boolean shouldAttemptExtract(String artifactName, String extension, Map jsonObject) {
+        "jar" == extension
+    }
+
     com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
         def jarPath = jsonObject.path
-        if (jarPath.endsWith("-javadoc.jar") || jarPath.endsWith("-sources.jar")) {
+        if (jarPath.endsWith('-javadoc.jar') || jarPath.endsWith('-sources.jar')) {
             return null
         }
 

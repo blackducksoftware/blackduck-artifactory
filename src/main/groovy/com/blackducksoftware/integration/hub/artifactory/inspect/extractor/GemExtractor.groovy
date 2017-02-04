@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
@@ -25,6 +24,10 @@ class GemExtractor implements Extractor {
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
 
+    boolean shouldAttemptExtract(String artifactName, String extension, Map jsonObject) {
+        "gem" == extension
+    }
+
     com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
         def downloadUri = jsonObject.downloadUri
         def gemFile = artifactoryDownloader.download(downloadUri, artifactName)
@@ -32,7 +35,7 @@ class GemExtractor implements Extractor {
         def tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream(gemFile))
         def tarArchiveEntry
         while (null != (tarArchiveEntry = tarArchiveInputStream.getNextTarEntry())) {
-            if ("metadata.gz" == tarArchiveEntry.name) {
+            if ('metadata.gz' == tarArchiveEntry.name) {
                 def entryBuffer = new byte[tarArchiveEntry.size]
                 int entryByteCount = tarArchiveInputStream.read(entryBuffer, 0, entryBuffer.length)
                 def gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(entryBuffer))
@@ -44,9 +47,9 @@ class GemExtractor implements Extractor {
                 def version = null
                 while (currentLineIndex < metadataLines.size() && (gem == null || version == null)) {
                     def line = metadataLines[currentLineIndex]
-                    if (line.startsWith("name:")) {
+                    if (line.startsWith('name:')) {
                         gem = StringUtils.trimToNull(line[5..-1])
-                    } else if (line.startsWith("  version:")) {
+                    } else if (line.startsWith('  version:')) {
                         version = StringUtils.trimToNull(line[10..-1])
                     }
                     currentLineIndex++

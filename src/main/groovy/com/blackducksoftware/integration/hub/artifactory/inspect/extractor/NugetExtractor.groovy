@@ -16,6 +16,10 @@ class NugetExtractor implements Extractor {
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
 
+    boolean shouldAttemptExtract(String artifactName, String extension, Map jsonObject) {
+        "nupkg" == extension
+    }
+
     com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
         def downloadUri = jsonObject.downloadUri
         def file = artifactoryDownloader.download(downloadUri, artifactName)

@@ -80,4 +80,22 @@ class NpmExtractorTest {
         Assert.assertEquals("6.3.14", component.version)
         Assert.assertEquals("babel-polyfill@6.3.14", component.externalIdentifiers.first().externalId)
     }
+
+    @Test
+    void testExtractingUnderscoreString2_0_0() {
+        URL url = this.getClass().getResource("/underscore.string-2.0.0.tgz")
+        File file = new File(url.getFile())
+
+        def mockDownloader = [download: {String downloadUri, String artifactName -> file}] as ArtifactoryDownloader
+
+        NpmExtractor npmExtractor = new NpmExtractor()
+        npmExtractor.artifactoryDownloader = mockDownloader
+        npmExtractor.externalIdentifierBuilder = ExternalIdentifierBuilder.create()
+
+        Map jsonObject = ["downloadUri":"test"]
+        Component component = npmExtractor.extract("underscore.string-2.0.0", jsonObject)
+        Assert.assertEquals("underscore.string", component.name)
+        Assert.assertEquals("2.0.0", component.version)
+        Assert.assertEquals("underscore.string@2.0.0", component.externalIdentifiers.first().externalId)
+    }
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 import org.springframework.util.DefaultPropertiesPersister
 
 import com.blackducksoftware.integration.hub.artifactory.inspect.HubClient
+import com.blackducksoftware.integration.hub.artifactory.inspect.HubProjectDetails
 
 @Component
 class ConfigurationManager {
@@ -23,22 +24,25 @@ class ConfigurationManager {
     @Autowired
     ConfigurationProperties configurationProperties
 
+    @Autowired
+    HubProjectDetails hubProjectDetails
+
     File userSpecifiedProperties
 
     @PostConstruct
     void init() {
-        File configDirectory = new File (configurationProperties.currentUserDirectory, "config")
+        File configDirectory = new File (configurationProperties.currentUserDirectory, 'config')
         if (!configDirectory.exists()) {
             configDirectory.mkdirs()
         }
-        userSpecifiedProperties = new File (configDirectory, "application.properties")
+        userSpecifiedProperties = new File (configDirectory, 'application.properties')
         if (!userSpecifiedProperties.exists()) {
             persistValues()
         }
     }
 
     boolean needsBaseConfigUpdate() {
-        StringUtils.isBlank(configurationProperties.hubUrl) || StringUtils.isBlank(configurationProperties.hubUsername) || StringUtils.isBlank(configurationProperties.hubPassword) || StringUtils.isBlank(configurationProperties.hubArtifactoryMode) || StringUtils.isBlank(configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        StringUtils.isBlank(configurationProperties.hubUrl) || StringUtils.isBlank(configurationProperties.hubUsername) || StringUtils.isBlank(configurationProperties.hubPassword) || StringUtils.isBlank(configurationProperties.hubArtifactoryWorkingDirectoryPath)
     }
 
     boolean needsArtifactoryInspectUpdate() {
@@ -52,12 +56,11 @@ class ConfigurationManager {
     void updateBaseConfigValues(Console console, PrintStream out) {
         out.println('Updating Config - just hit enter to make no change to a value:')
 
-        configurationProperties.hubUrl = setValueFromInput(console, out, "Hub Server Url", configurationProperties.hubUrl)
-        configurationProperties.hubTimeout = setValueFromInput(console, out, "Hub Server Timeout", configurationProperties.hubTimeout)
-        configurationProperties.hubUsername = setValueFromInput(console, out, "Hub Server Username", configurationProperties.hubUsername)
-        configurationProperties.hubPassword = setPasswordFromInput(console, out, "Hub Server Password", configurationProperties.hubPassword)
-        configurationProperties.hubArtifactoryMode = setValueFromInput(console, out, "Hub Artifactory Mode (inspect or config-scan)", configurationProperties.hubArtifactoryMode)
-        configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, "Local Working Directory", configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        configurationProperties.hubUrl = setValueFromInput(console, out, 'Hub Server Url', configurationProperties.hubUrl)
+        configurationProperties.hubUsername = setValueFromInput(console, out, 'Hub Server Username', configurationProperties.hubUsername)
+        configurationProperties.hubPassword = setPasswordFromInput(console, out, 'Hub Server Password', configurationProperties.hubPassword)
+        configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', configurationProperties.hubTimeout)
+        configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, 'Local Working Directory', configurationProperties.hubArtifactoryWorkingDirectoryPath)
 
         persistValues()
 
@@ -71,7 +74,7 @@ class ConfigurationManager {
         }
 
         if (!ok) {
-            out.println("You may need to manually edit the 'config/application.properties' file to provide proxy details. If you wish to re-enter the base configuration, enter 'y', otherwise, just press <enter> to continue.")
+            out.println('You may need to manually edit the \'config/application.properties\' file to provide proxy details. If you wish to re-enter the base configuration, enter \'y\', otherwise, just press <enter> to continue.')
             String userValue = StringUtils.trimToEmpty(console.readLine())
             if ('y' == userValue) {
                 updateBaseConfigValues(console, out)
@@ -80,12 +83,13 @@ class ConfigurationManager {
     }
 
     void updateArtifactoryInspectValues(Console console, PrintStream out) {
-        configurationProperties.artifactoryUsername = setValueFromInput(console, out, "Artifactory Username", configurationProperties.artifactoryUsername)
-        configurationProperties.artifactoryPassword = setPasswordFromInput(console, out, "Artifactory Password", configurationProperties.artifactoryPassword)
-        configurationProperties.artifactoryUrl = setValueFromInput(console, out, "Artifactory Url", configurationProperties.artifactoryUrl)
-        configurationProperties.hubArtifactoryProjectName = setValueFromInput(console, out, "Hub Artifactory Project Name (optional)", configurationProperties.hubArtifactoryProjectName)
-        configurationProperties.hubArtifactoryProjectVersionName = setValueFromInput(console, out, "Hub Artifactory Project Version Name (optional)", configurationProperties.hubArtifactoryProjectVersionName)
-        configurationProperties.hubArtifactoryInspectRepoKey = setValueFromInput(console, out, "Artifactory Repository To Inspect", configurationProperties.hubArtifactoryInspectRepoKey)
+        configurationProperties.artifactoryUrl = setValueFromInput(console, out, 'Artifactory Url', configurationProperties.artifactoryUrl)
+        configurationProperties.artifactoryUsername = setValueFromInput(console, out, 'Artifactory Username', configurationProperties.artifactoryUsername)
+        configurationProperties.artifactoryPassword = setPasswordFromInput(console, out, 'Artifactory Password', configurationProperties.artifactoryPassword)
+        configurationProperties.hubArtifactoryInspectRepoKey = setValueFromInput(console, out, 'Artifactory Repository To Inspect', configurationProperties.hubArtifactoryInspectRepoKey)
+
+        configurationProperties.hubArtifactoryProjectName = setValueFromInput(console, out, 'Hub Artifactory Project Name (optional)', hubProjectDetails.hubProjectName)
+        configurationProperties.hubArtifactoryProjectVersionName = setValueFromInput(console, out, 'Hub Artifactory Project Version Name (optional)', hubProjectDetails.hubProjectVersionName)
 
         restTemplateContainer.init()
         persistValues()
@@ -93,8 +97,8 @@ class ConfigurationManager {
         boolean ok = false
         try {
             String response = artifactoryRestClient.checkSystem()
-            if ("OK" == response) {
-                out.println("Your Artifactory configuration is valid and a successful connection to the Artifactory server was established.")
+            if ('OK' == response) {
+                out.println('Your Artifactory configuration is valid and a successful connection to the Artifactory server was established.')
                 ok = true
             } else {
                 out.println("A successful connection could not be established to the Artifactory server. The response was: ${response}")
@@ -118,7 +122,7 @@ class ConfigurationManager {
         }
 
         if (!ok) {
-            out.println("You may need to manually edit the 'config/application.properties' file but if you wish to re-enter the Artifactory inspect configuration, enter 'y', otherwise, just press <enter> to continue.")
+            out.println('You may need to manually edit the \'config/application.properties\' file but if you wish to re-enter the Artifactory inspect configuration, enter \'y\', otherwise, just press <enter> to continue.')
             String userValue = StringUtils.trimToEmpty(console.readLine())
             if ('y' == userValue) {
                 updateArtifactoryInspectValues(console, out)
@@ -128,12 +132,12 @@ class ConfigurationManager {
 
     void updateArtifactoryScanValues(Console console, PrintStream out) {
         def repositoryNames = []
-        out.println('Enter Artifactory repositories to search, one at a time. If you are finished, just press <enter>.')
+        out.println('Enter Artifactory repositories to search for artifacts, one at a time. If you are finished, just press <enter>.')
         out.print "Enter repository name (current repositories=${configurationProperties.hubArtifactoryScanReposToSearch}): "
         String userValue = StringUtils.trimToEmpty(console.readLine())
         while (StringUtils.isNotBlank(userValue)) {
             repositoryNames.add(userValue)
-            out.print "Enter repository name: "
+            out.print 'Enter repository name: '
             userValue = StringUtils.trimToEmpty(console.readLine())
         }
 
@@ -143,14 +147,14 @@ class ConfigurationManager {
         userValue = StringUtils.trimToEmpty(console.readLine())
         while (StringUtils.isNotBlank(userValue)) {
             namePatterns.add(userValue)
-            out.print "Enter pattern: "
+            out.print 'Enter pattern: '
             userValue = StringUtils.trimToEmpty(console.readLine())
         }
 
         persistValues()
 
-        out.println('These repositories (${configurationProperties.hubArtifactoryScanReposToSearch}) will be searched for these artifact name patterns (${configurationProperties.hubArtifactoryScanNamePatterns}) which will then be scanned.')
-        out.print("If this is incorrect, enter 'n' to enter new values, otherwise, if they are correct, just press <enter>.")
+        out.println("These repositories (${configurationProperties.hubArtifactoryScanReposToSearch}) will be searched for these artifact name patterns (${configurationProperties.hubArtifactoryScanNamePatterns}) which will then be scanned.")
+        out.print('If this is incorrect, enter \'n\' to enter new values, otherwise, if they are correct, just press <enter>.')
         userValue = StringUtils.trimToEmpty(console.readLine())
         if ('n' == userValue) {
             updateArtifactoryScanValues(console, out)
@@ -159,27 +163,26 @@ class ConfigurationManager {
 
     private persistValues() {
         Properties properties = new Properties()
-        properties.setProperty("hub.url", configurationProperties.hubUrl)
-        properties.setProperty("hub.timeout", configurationProperties.hubTimeout)
-        properties.setProperty("hub.username", configurationProperties.hubUsername)
-        properties.setProperty("hub.password", configurationProperties.hubPassword)
-        properties.setProperty("hub.proxy.host", configurationProperties.hubProxyHost)
-        properties.setProperty("hub.proxy.port", configurationProperties.hubProxyPort)
-        properties.setProperty("hub.proxy.ignored.proxy.hosts", configurationProperties.hubProxyIgnoredProxyHosts)
-        properties.setProperty("hub.proxy.username", configurationProperties.hubProxyUsername)
-        properties.setProperty("hub.proxy.password", configurationProperties.hubProxyPassword)
-        properties.setProperty("artifactory.url", configurationProperties.artifactoryUrl)
-        properties.setProperty("artifactory.username", configurationProperties.artifactoryUsername)
-        properties.setProperty("artifactory.password", configurationProperties.artifactoryPassword)
-        properties.setProperty("hub.artifactory.mode", configurationProperties.hubArtifactoryMode)
-        properties.setProperty("hub.artifactory.working.directory.path", configurationProperties.hubArtifactoryWorkingDirectoryPath)
-        properties.setProperty("hub.artifactory.project.name", configurationProperties.hubArtifactoryProjectName)
-        properties.setProperty("hub.artifactory.project.version.name", configurationProperties.hubArtifactoryProjectVersionName)
-        properties.setProperty("hub.artifactory.date.time.pattern", configurationProperties.hubArtifactoryDateTimePattern)
-        properties.setProperty("hub.artifactory.inspect.repo.key", configurationProperties.hubArtifactoryInspectRepoKey)
-        properties.setProperty("hub.artifactory.inspect.latest.updated.cutoff", configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
-        properties.setProperty("hub.artifactory.scan.repos.to.search", configurationProperties.hubArtifactoryScanReposToSearch)
-        properties.setProperty("hub.artifactory.scan.name.patterns", configurationProperties.hubArtifactoryScanNamePatterns)
+        properties.setProperty('hub.url', configurationProperties.hubUrl)
+        properties.setProperty('hub.timeout', configurationProperties.hubTimeout)
+        properties.setProperty('hub.username', configurationProperties.hubUsername)
+        properties.setProperty('hub.password', configurationProperties.hubPassword)
+        properties.setProperty('hub.proxy.host', configurationProperties.hubProxyHost)
+        properties.setProperty('hub.proxy.port', configurationProperties.hubProxyPort)
+        properties.setProperty('hub.proxy.ignored.proxy.hosts', configurationProperties.hubProxyIgnoredProxyHosts)
+        properties.setProperty('hub.proxy.username', configurationProperties.hubProxyUsername)
+        properties.setProperty('hub.proxy.password', configurationProperties.hubProxyPassword)
+        properties.setProperty('artifactory.url', configurationProperties.artifactoryUrl)
+        properties.setProperty('artifactory.username', configurationProperties.artifactoryUsername)
+        properties.setProperty('artifactory.password', configurationProperties.artifactoryPassword)
+        properties.setProperty('hub.artifactory.working.directory.path', configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        properties.setProperty('hub.artifactory.project.name', configurationProperties.hubArtifactoryProjectName)
+        properties.setProperty('hub.artifactory.project.version.name', configurationProperties.hubArtifactoryProjectVersionName)
+        properties.setProperty('hub.artifactory.date.time.pattern', configurationProperties.hubArtifactoryDateTimePattern)
+        properties.setProperty('hub.artifactory.inspect.repo.key', configurationProperties.hubArtifactoryInspectRepoKey)
+        properties.setProperty('hub.artifactory.inspect.latest.updated.cutoff', configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
+        properties.setProperty('hub.artifactory.scan.repos.to.search', configurationProperties.hubArtifactoryScanReposToSearch)
+        properties.setProperty('hub.artifactory.scan.name.patterns', configurationProperties.hubArtifactoryScanNamePatterns)
 
         def defaultPropertiesPersister = new DefaultPropertiesPersister()
         new FileOutputStream(userSpecifiedProperties).withStream {

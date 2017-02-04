@@ -33,7 +33,7 @@ class HubClient {
         HubServerConfig hubServerConfig = createBuilder().build()
         CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
         credentialsRestConnection.connect()
-        logger.info("Successful connection to the Hub!")
+        logger.info('Successful connection to the Hub!')
     }
 
     void uploadBdioToHub(File bdioFile) {

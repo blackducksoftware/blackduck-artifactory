@@ -12,18 +12,9 @@ import org.springframework.stereotype.Component
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 
 @Component
-class ComponentExtractor implements Extractor {
+class ComponentExtractor {
     @Autowired
-    NugetExtractor nugetExtractor
-
-    @Autowired
-    JarExtractor jarExtractor
-
-    @Autowired
-    NpmExtractor npmExtractor
-
-    @Autowired
-    GemExtractor gemExtractor
+    List<Extractor> extractors
 
     @Autowired
     ConfigurationProperties configurationProperties
@@ -31,27 +22,27 @@ class ComponentExtractor implements Extractor {
     boolean shouldExtractComponent(String filename, Map jsonObject) {
         def lastUpdatedString = jsonObject.lastUpdated
         long lastUpdated = Instant.from(DateTimeFormatter.ISO_DATE_TIME.parse(lastUpdatedString)).epochSecond
-        long cutoffTime = ZonedDateTime.parse(configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff ,DateTimeFormatter.ofPattern(configurationProperties.hubArtifactoryDateTimePattern)).toEpochSecond()
+        long cutoffTime = ZonedDateTime.parse(configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff, DateTimeFormatter.ofPattern(configurationProperties.hubArtifactoryDateTimePattern)).toEpochSecond()
         return lastUpdated >= cutoffTime
     }
 
-    com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
-        def extension = getExtension(artifactName)
+    List<com.blackducksoftware.bdio.model.Component> extract(String artifactName, Map jsonObject) {
+        def components = []
 
-        if ("nupkg".equals(extension)) {
-            return nugetExtractor.extract(artifactName, jsonObject)
-        } else if ("jar".equals(extension)) {
-            return jarExtractor.extract(artifactName, jsonObject)
-        } else if ("tgz".equals(extension)) {
-            return npmExtractor.extract(artifactName, jsonObject)
-        } else if ("gem".equals(extension)) {
-            return gemExtractor.extract(artifactName, jsonObject)
+        def extension = getExtension(artifactName)
+        for (Extractor extractor : extractors) {
+            if (extractor.shouldAttemptExtract(artifactName, extension, jsonObject)) {
+                def component = extractor.extract(artifactName, jsonObject)
+                if (component != null) {
+                    components.add(component)
+                }
+            }
         }
 
-        return null
+        return components
     }
 
-    private String getExtension(String filename) {
+    public String getExtension(String filename) {
         StringUtils.trimToEmpty(FilenameUtils.getExtension(filename)).toLowerCase()
     }
 }

@@ -24,6 +24,10 @@ class NpmExtractor implements Extractor {
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
 
+    boolean shouldAttemptExtract(String artifactName, String extension, Map jsonObject) {
+        "tgz" == extension
+    }
+
     com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
         def downloadUri = jsonObject.downloadUri
         def tgzFile = artifactoryDownloader.download(downloadUri, artifactName)
