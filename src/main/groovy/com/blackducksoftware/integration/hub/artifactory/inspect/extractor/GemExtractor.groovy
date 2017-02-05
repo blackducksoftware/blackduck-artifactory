@@ -13,9 +13,10 @@ import org.springframework.stereotype.Component
 
 import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
+import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
 
 @Component
-class GemExtractor implements Extractor {
+class GemExtractor extends Extractor {
     private final Logger logger = LoggerFactory.getLogger(GemExtractor.class)
 
     @Autowired
@@ -24,45 +25,51 @@ class GemExtractor implements Extractor {
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
 
-    boolean shouldAttemptExtract(String artifactName, String extension, Map jsonObject) {
-        "gem" == extension
+    boolean shouldAttemptExtract(String artifactName, Map jsonObject) {
+        def extension = getExtension(artifactName)
+        'gem' == extension
     }
 
-    com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
+    BdioComponentDetails extract(String artifactName, Map jsonObject) {
         def downloadUri = jsonObject.downloadUri
         def gemFile = artifactoryDownloader.download(downloadUri, artifactName)
 
         def tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream(gemFile))
-        def tarArchiveEntry
-        while (null != (tarArchiveEntry = tarArchiveInputStream.getNextTarEntry())) {
-            if ('metadata.gz' == tarArchiveEntry.name) {
-                def entryBuffer = new byte[tarArchiveEntry.size]
-                int entryByteCount = tarArchiveInputStream.read(entryBuffer, 0, entryBuffer.length)
-                def gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(entryBuffer))
-                String metadataYaml = IOUtils.toString(gzipInputStream, StandardCharsets.UTF_8)
-                def metadataLines = metadataYaml.tokenize('\n')
+        def details = null
+        try {
+            def tarArchiveEntry
+            while (null != (tarArchiveEntry = tarArchiveInputStream.getNextTarEntry())) {
+                if ('metadata.gz' == tarArchiveEntry.name) {
+                    def entryBuffer = decompressTarContents(logger, 'metadata.gz', artifactName, tarArchiveInputStream, tarArchiveEntry)
 
-                def currentLineIndex = 0
-                def gem = null
-                def version = null
-                while (currentLineIndex < metadataLines.size() && (gem == null || version == null)) {
-                    def line = metadataLines[currentLineIndex]
-                    if (line.startsWith('name:')) {
-                        gem = StringUtils.trimToNull(line[5..-1])
-                    } else if (line.startsWith('  version:')) {
-                        version = StringUtils.trimToNull(line[10..-1])
+                    def gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(entryBuffer))
+                    try {
+                        String metadataYaml = IOUtils.toString(gzipInputStream, StandardCharsets.UTF_8)
+                        def metadataLines = metadataYaml.tokenize('\n')
+
+                        def currentLineIndex = 0
+                        def gem = null
+                        def version = null
+                        while (currentLineIndex < metadataLines.size() && (gem == null || version == null)) {
+                            def line = metadataLines[currentLineIndex]
+                            if (line.startsWith('name:')) {
+                                gem = StringUtils.trimToNull(line[5..-1])
+                            } else if (line.startsWith('  version:')) {
+                                version = StringUtils.trimToNull(line[10..-1])
+                            }
+                            currentLineIndex++
+                        }
+
+                        def externalIdentifier = externalIdentifierBuilder.rubygem(gem, version).build().get()
+                        details = new BdioComponentDetails(name: gem, version: version, externalIdentifier: externalIdentifier)
+                        return details
+                    } finally {
+                        IOUtils.closeQuietly(gzipInputStream)
                     }
-                    currentLineIndex++
                 }
-
-                def component = new com.blackducksoftware.bdio.model.Component()
-                component.id = jsonObject.downloadUri
-                component.name = gem
-                component.version = version
-                component.addExternalIdentifier(externalIdentifierBuilder.rubygem(gem, version).build().get())
-
-                return component
             }
+        } finally {
+            IOUtils.closeQuietly(tarArchiveInputStream)
         }
     }
 }

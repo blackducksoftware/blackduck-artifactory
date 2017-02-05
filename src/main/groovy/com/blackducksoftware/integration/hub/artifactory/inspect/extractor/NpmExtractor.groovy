@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.io.IOUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,9 +14,10 @@ import org.springframework.stereotype.Component
 
 import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
+import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
 
 @Component
-class NpmExtractor implements Extractor {
+class NpmExtractor extends Extractor {
     private final Logger logger = LoggerFactory.getLogger(NpmExtractor.class)
 
     @Autowired
@@ -24,45 +26,34 @@ class NpmExtractor implements Extractor {
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
 
-    boolean shouldAttemptExtract(String artifactName, String extension, Map jsonObject) {
-        "tgz" == extension
+    boolean shouldAttemptExtract(String artifactName, Map jsonObject) {
+        def extension = getExtension(artifactName)
+        'tgz' == extension || 'tar.gz' == extension
     }
 
-    com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
-        def downloadUri = jsonObject.downloadUri
-        def tgzFile = artifactoryDownloader.download(downloadUri, artifactName)
+    BdioComponentDetails extract(String artifactName, Map jsonObject) {
+        def tgzFile = artifactoryDownloader.download(jsonObject, artifactName)
 
         def tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(new FileInputStream(tgzFile)))
-        def tarArchiveEntry
-        while (null != (tarArchiveEntry = tarArchiveInputStream.getNextTarEntry())) {
-            if ('package/package.json' == tarArchiveEntry.name) {
-                long entrySize = tarArchiveEntry.size
-                if (entrySize > Integer.MAX_VALUE) {
-                    logger.warn("package.json is too large to consume for ${artifactName}")
-                    return null
+        def details = null
+        try {
+            def tarArchiveEntry
+            while (null != (tarArchiveEntry = tarArchiveInputStream.getNextTarEntry())) {
+                if ('package/package.json' == tarArchiveEntry.name) {
+                    byte[] entryBuffer = decompressTarContents(logger, 'package/package.json', artifactName, tarArchiveInputStream, tarArchiveEntry)
+                    String entryContent = new String(entryBuffer, StandardCharsets.UTF_8)
+
+                    def npmPackageJson = new JsonSlurper().parseText(entryContent)
+                    def packageName = npmPackageJson.name
+                    def version = npmPackageJson.version
+
+                    def externalIdentifier = externalIdentifierBuilder.npm(packageName, version).build().get()
+                    details = new BdioComponentDetails(name: packageName, version: version, externalIdentifier: externalIdentifier)
+                    return details
                 }
-
-                int fileSize = (int)entrySize
-                byte[] entryBuffer = new byte[fileSize]
-                int offset = 0
-                while (offset < fileSize) {
-                    int entryBytes = tarArchiveInputStream.read(entryBuffer, offset, fileSize - offset)
-                    offset += entryBytes
-                }
-
-                String entryContent = new String(entryBuffer, StandardCharsets.UTF_8)
-                def npmPackageJson = new JsonSlurper().parseText(entryContent)
-                def packageName = npmPackageJson.name
-                def version = npmPackageJson.version
-
-                def component = new com.blackducksoftware.bdio.model.Component()
-                component.id = downloadUri
-                component.name = packageName
-                component.version = version
-                component.addExternalIdentifier(externalIdentifierBuilder.npm(packageName, version).build().get())
-
-                return component
             }
+        } finally {
+            IOUtils.closeQuietly(tarArchiveInputStream)
         }
     }
 }

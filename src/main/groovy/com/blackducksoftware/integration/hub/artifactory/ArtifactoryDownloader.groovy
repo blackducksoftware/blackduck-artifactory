@@ -13,6 +13,11 @@ class ArtifactoryDownloader {
     @Autowired
     ConfigurationProperties configurationProperties
 
+    File download(Map jsonObject, String artifactName) {
+        def downloadUri = jsonObject.downloadUri
+        download(downloadUri, artifactName)
+    }
+
     File download(String downloadUri, String artifactName) {
         download(new URI(downloadUri), artifactName)
     }

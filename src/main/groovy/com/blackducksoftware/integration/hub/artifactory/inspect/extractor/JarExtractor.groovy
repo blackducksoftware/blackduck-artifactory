@@ -6,19 +6,21 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
+import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
 
 @Component
-class JarExtractor implements Extractor {
+class JarExtractor extends Extractor {
     private final Logger logger = LoggerFactory.getLogger(JarExtractor.class)
 
     @Autowired
     ExternalIdentifierBuilder externalIdentifierBuilder
 
-    boolean shouldAttemptExtract(String artifactName, String extension, Map jsonObject) {
-        "jar" == extension
+    boolean shouldAttemptExtract(String artifactName, Map jsonObject) {
+        def extension = getExtension(artifactName)
+        'jar' == extension
     }
 
-    com.blackducksoftware.bdio.model.Component extract(String artifactName, Map jsonObject) {
+    BdioComponentDetails extract(String artifactName, Map jsonObject) {
         def jarPath = jsonObject.path
         if (jarPath.endsWith('-javadoc.jar') || jarPath.endsWith('-sources.jar')) {
             return null
@@ -29,13 +31,9 @@ class JarExtractor implements Extractor {
             return null
         }
 
-        def component = new com.blackducksoftware.bdio.model.Component()
-        component.id = jsonObject.downloadUri
-        component.name = gavPieces[1]
-        component.version = gavPieces[2]
-        component.addExternalIdentifier(externalIdentifierBuilder.maven(gavPieces[0], gavPieces[1], gavPieces[2]).build().get())
-
-        component
+        def externalIdentifier = externalIdentifierBuilder.maven(gavPieces[0], gavPieces[1], gavPieces[2]).build().get()
+        def details = new BdioComponentDetails(name: gavPieces[1], version: gavPieces[2], externalIdentifier: externalIdentifier)
+        details
     }
 
     def parseGav(String path) {

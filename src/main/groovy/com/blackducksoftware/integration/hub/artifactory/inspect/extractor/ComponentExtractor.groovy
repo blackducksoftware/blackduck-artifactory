@@ -4,12 +4,11 @@ import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-import org.apache.commons.io.FilenameUtils
-import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
+import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
 
 @Component
 class ComponentExtractor {
@@ -29,11 +28,11 @@ class ComponentExtractor {
     List<com.blackducksoftware.bdio.model.Component> extract(String artifactName, Map jsonObject) {
         def components = []
 
-        def extension = getExtension(artifactName)
         for (Extractor extractor : extractors) {
-            if (extractor.shouldAttemptExtract(artifactName, extension, jsonObject)) {
-                def component = extractor.extract(artifactName, jsonObject)
-                if (component != null) {
+            if (extractor.shouldAttemptExtract(artifactName, jsonObject)) {
+                def componentDetails = extractor.extract(artifactName, jsonObject)
+                if (componentDetails != null) {
+                    def component = buildComponent(jsonObject, componentDetails)
                     components.add(component)
                 }
             }
@@ -42,7 +41,13 @@ class ComponentExtractor {
         return components
     }
 
-    public String getExtension(String filename) {
-        StringUtils.trimToEmpty(FilenameUtils.getExtension(filename)).toLowerCase()
+    private com.blackducksoftware.bdio.model.Component buildComponent(Map jsonObject, BdioComponentDetails bdioComponentDetails) {
+        def component = new com.blackducksoftware.bdio.model.Component()
+        component.id = jsonObject.downloadUri
+        component.name = bdioComponentDetails.name
+        component.version = bdioComponentDetails.version
+        component.addExternalIdentifier(bdioComponentDetails.externalIdentifier)
+
+        component
     }
 }

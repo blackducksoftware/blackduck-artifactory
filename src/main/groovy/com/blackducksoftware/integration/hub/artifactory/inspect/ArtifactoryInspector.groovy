@@ -33,6 +33,7 @@ class ArtifactoryInspector {
     ConfigurationProperties configurationProperties
 
     void performInspect() {
+        def inspectionResults = new InspectionResults()
         def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
         workingDirectory.mkdirs()
         def outputFile = new File(workingDirectory, "${hubProjectDetails.hubProjectName}_bdio.jsonld")
@@ -40,7 +41,7 @@ class ArtifactoryInspector {
         new FileOutputStream(outputFile).withStream {
             def bdioWriter = bdioFileWriter.createBdioWriter(it, hubProjectDetails.hubProjectName, hubProjectDetails.hubProjectVersionName, outputFile.toURI())
             try {
-                walkFolderStructure('', bdioWriter)
+                walkFolderStructure('', bdioWriter, inspectionResults)
             } finally {
                 bdioWriter.close()
             }
@@ -48,38 +49,58 @@ class ArtifactoryInspector {
 
         logger.info("Completed bdio file: ${outputFile.canonicalPath}")
 
+        logger.info("Total Artifacts Found: ${inspectionResults.totalArtifactsFound}")
+        logger.info("Total BDIO Component Nodes Created: ${inspectionResults.totalBdioNodesCreated}")
+        logger.info("Count of Artifacts that were extracted by only one extractor: ${inspectionResults.singlesFound}")
+        logger.info("Count of Artifacts that were extracted by MORE than one extractor: ${inspectionResults.multiplesFound}")
+        logger.info("Count of Artifacts that were NOT extracted: ${inspectionResults.artifactsNotExtracted}")
+        logger.info("Count of Artifacts that were skipped because they are too old: ${inspectionResults.skippedArtifacts}")
+
         if (hubClient.isValid()) {
             hubClient.uploadBdioToHub(outputFile)
             logger.info("Uploaded bdio to ${configurationProperties.hubUrl}")
         }
     }
 
-    private void walkFolderStructure(String repoPath, BdioWriter bdioWriter) {
+    private void walkFolderStructure(String repoPath, BdioWriter bdioWriter, InspectionResults inspectionResults) {
         logger.trace("walking ${repoPath}")
         def jsonObject = artifactoryRestClient.getInfoForPath(configurationProperties.hubArtifactoryInspectRepoKey, repoPath)
         if (jsonObject.children != null) {
             jsonObject.children.each {
-                walkFolderStructure(repoPath + it.uri, bdioWriter)
+                walkFolderStructure(repoPath + it.uri, bdioWriter, inspectionResults)
             }
         } else {
             try {
-                writeComponent(repoPath, jsonObject, bdioWriter)
+                writeComponent(repoPath, jsonObject, bdioWriter, inspectionResults)
             } catch (Exception e) {
                 logger.error("Could not write the component ${repoPath}: ${e.message}")
             }
         }
     }
 
-    private void writeComponent(String artifactRepoPath, Map jsonObject, BdioWriter bdioWriter) {
+    private void writeComponent(String artifactRepoPath, Map jsonObject, BdioWriter bdioWriter, InspectionResults inspectionResults) {
+        inspectionResults.totalArtifactsFound++
         def artifactName = new File(new URI(artifactRepoPath).path).name
         if (!componentExtractor.shouldExtractComponent(artifactName, jsonObject)) {
+            inspectionResults.skippedArtifacts++
             return
         }
 
-        def component = componentExtractor.extract(artifactName, jsonObject)
-        if (component != null) {
-            bdioWriter.write(component)
-            logger.info("wrote ${artifactName}")
+        def components = componentExtractor.extract(artifactName, jsonObject)
+        if (components.size() == 0) {
+            inspectionResults.artifactsNotExtracted++
+            logger.warn("Artifact can not currently be extracted: ${artifactName}")
+        } else {
+            if (components.size() == 1) {
+                inspectionResults.singlesFound++
+            } else {
+                inspectionResults.multiplesFound++
+            }
+            inspectionResults.totalBdioNodesCreated += components.size()
+            components.each {
+                bdioWriter.write(it)
+                logger.info("wrote ${artifactName}")
+            }
         }
     }
 }
