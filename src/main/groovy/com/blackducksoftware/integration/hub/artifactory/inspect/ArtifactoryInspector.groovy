@@ -54,7 +54,7 @@ class ArtifactoryInspector {
         logger.info("Total BDIO component nodes created: ${inspectionResults.totalBdioNodesCreated}")
         logger.info("Count of artifacts that were extracted by only one extractor: ${inspectionResults.singlesFound}")
         logger.info("Count of artifacts that were extracted by MORE than one extractor: ${inspectionResults.multiplesFound}")
-        logger.info("Count of artifacts that were NOT extracted: ${inspectionResults.artifactsNotExtracted}")
+        logger.trace("Count of artifacts that were NOT extracted: ${inspectionResults.artifactsNotExtracted}")
         logger.info("Count of artifacts that were skipped because they are too old: ${inspectionResults.skippedArtifacts}")
 
         if (hubClient.isValid()) {

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component
 
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
+import com.blackducksoftware.integration.hub.artifactory.inspect.InspectionResults
 
 @Component
 class ComponentExtractor {
@@ -25,17 +26,23 @@ class ComponentExtractor {
         return lastUpdated >= cutoffTime
     }
 
-    List<com.blackducksoftware.bdio.model.Component> extract(String artifactName, Map jsonObject) {
+    List<com.blackducksoftware.bdio.model.Component> extract(String artifactName, Map jsonObject, InspectionResults inspectionResults) {
         def components = []
 
+        boolean extractAttempted = false
         for (Extractor extractor : extractors) {
             if (extractor.shouldAttemptExtract(artifactName, jsonObject)) {
+                extractAttempted = true
                 def componentDetails = extractor.extract(artifactName, jsonObject)
                 if (componentDetails != null) {
                     def component = buildComponent(jsonObject, componentDetails)
                     components.add(component)
                 }
             }
+        }
+
+        if (extractAttempted) {
+            inspectionResults.totalExtractAttempts++
         }
 
         return components
