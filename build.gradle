@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:7.2.1'
+    compile 'com.blackducksoftware.integration:hub-common:7.3.0'
 
     compile 'org.apache.commons:commons-lang3:3.5'
     compile 'commons-io:commons-io:2.5'

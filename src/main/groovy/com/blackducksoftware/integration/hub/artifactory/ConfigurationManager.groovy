@@ -88,8 +88,13 @@ class ConfigurationManager {
         configurationProperties.artifactoryPassword = setPasswordFromInput(console, out, 'Artifactory Password', configurationProperties.artifactoryPassword)
         configurationProperties.hubArtifactoryInspectRepoKey = setValueFromInput(console, out, 'Artifactory Repository To Inspect', configurationProperties.hubArtifactoryInspectRepoKey)
 
-        configurationProperties.hubArtifactoryProjectName = setValueFromInput(console, out, 'Hub Artifactory Project Name (optional)', hubProjectDetails.hubProjectName)
-        configurationProperties.hubArtifactoryProjectVersionName = setValueFromInput(console, out, 'Hub Artifactory Project Version Name (optional)', hubProjectDetails.hubProjectVersionName)
+        out.println('')
+        out.println("If no value is supplied for the Hub Artifactory Project Name, the repository name, ${configurationProperties.hubArtifactoryInspectRepoKey}, will be used.")
+        configurationProperties.hubArtifactoryProjectName = setValueFromInput(console, out, 'Hub Artifactory Project Name', configurationProperties.hubArtifactoryProjectName)
+
+        out.println('')
+        out.println('If no value is supplied for the Hub Artifactory Project Version Name, today\'s date will be used.')
+        configurationProperties.hubArtifactoryProjectVersionName = setValueFromInput(console, out, 'Hub Artifactory Project Version Name', configurationProperties.hubArtifactoryProjectVersionName)
 
         restTemplateContainer.init()
         persistValues()

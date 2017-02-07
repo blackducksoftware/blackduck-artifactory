@@ -49,12 +49,13 @@ class ArtifactoryInspector {
 
         logger.info("Completed bdio file: ${outputFile.canonicalPath}")
 
-        logger.info("Total Artifacts Found: ${inspectionResults.totalArtifactsFound}")
-        logger.info("Total BDIO Component Nodes Created: ${inspectionResults.totalBdioNodesCreated}")
-        logger.info("Count of Artifacts that were extracted by only one extractor: ${inspectionResults.singlesFound}")
-        logger.info("Count of Artifacts that were extracted by MORE than one extractor: ${inspectionResults.multiplesFound}")
-        logger.info("Count of Artifacts that were NOT extracted: ${inspectionResults.artifactsNotExtracted}")
-        logger.info("Count of Artifacts that were skipped because they are too old: ${inspectionResults.skippedArtifacts}")
+        logger.trace("Total artifacts found: ${inspectionResults.totalArtifactsFound}")
+        logger.info("Total attempts to extract a component: ${inspectionResults.totalExtractAttempts}")
+        logger.info("Total BDIO component nodes created: ${inspectionResults.totalBdioNodesCreated}")
+        logger.info("Count of artifacts that were extracted by only one extractor: ${inspectionResults.singlesFound}")
+        logger.info("Count of artifacts that were extracted by MORE than one extractor: ${inspectionResults.multiplesFound}")
+        logger.info("Count of artifacts that were NOT extracted: ${inspectionResults.artifactsNotExtracted}")
+        logger.info("Count of artifacts that were skipped because they are too old: ${inspectionResults.skippedArtifacts}")
 
         if (hubClient.isValid()) {
             hubClient.uploadBdioToHub(outputFile)
@@ -86,10 +87,10 @@ class ArtifactoryInspector {
             return
         }
 
-        def components = componentExtractor.extract(artifactName, jsonObject)
+        def components = componentExtractor.extract(artifactName, jsonObject, inspectionResults)
         if (components.size() == 0) {
             inspectionResults.artifactsNotExtracted++
-            logger.warn("Artifact can not currently be extracted: ${artifactName}")
+            logger.trace("Artifact can not currently be extracted: ${artifactName}")
         } else {
             if (components.size() == 1) {
                 inspectionResults.singlesFound++
