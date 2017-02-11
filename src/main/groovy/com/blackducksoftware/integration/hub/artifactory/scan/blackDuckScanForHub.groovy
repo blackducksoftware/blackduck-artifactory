@@ -323,23 +323,25 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
 
     File toolsDirectory = cliDirectory
     File workingDirectory = blackDuckDirectory
-    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
-    hubScanConfigBuilder.setScanMemory(HUB_SCAN_MEMORY)
-    hubScanConfigBuilder.setDryRun(HUB_SCAN_DRY_RUN)
-    hubScanConfigBuilder.setToolsDir(toolsDirectory)
-    hubScanConfigBuilder.setWorkingDirectory(workingDirectory)
-    hubScanConfigBuilder.setPluginVersion("1.2.0")
-    hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.ARTIFACTORY)
-    hubScanConfigBuilder.setThirdPartyVersion("????")
 
     filenamesToLayout.each { key, value ->
         try {
+            HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
+            hubScanConfigBuilder.scanMemory = HUB_SCAN_MEMORY
+            hubScanConfigBuilder.dryRun = HUB_SCAN_DRY_RUN
+            hubScanConfigBuilder.toolsDir = toolsDirectory
+            hubScanConfigBuilder.workingDirectory = workingDirectory
+            hubScanConfigBuilder.pluginVersion = "2.0.1"
+            hubScanConfigBuilder.thirdPartyName = ThirdPartyName.ARTIFACTORY
+            hubScanConfigBuilder.thirdPartyVersion = "????"
+            hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
+
             String project = value.module
             String version = value.baseRevision
             def scanFile = new File(workingDirectory, key)
             def scanTargetPath = scanFile.canonicalPath
-            hubScanConfigBuilder.setProjectName(project)
-            hubScanConfigBuilder.setVersion(version)
+            hubScanConfigBuilder.projectName = project
+            hubScanConfigBuilder.version = version
             hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
             HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
@@ -356,7 +358,7 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
             //we only scanned one path, so only one result is expected
             if (null != scanSummaryItems && scanSummaryItems.size() == 1) {
                 try {
-                    String codeLocationUrl = metaService.getFirstLink(scanSummaryItems.get(0), MetaService.CODE_LOCATION_LINK)
+                    String codeLocationUrl = metaService.getFirstLink(scanSummaryItems.get(0), MetaService.CODE_LOCATION_BOM_STATUS_LINK)
                     if (StringUtils.isNotBlank(codeLocationUrl)) {
                         repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
                     }

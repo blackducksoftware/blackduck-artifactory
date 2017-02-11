@@ -136,19 +136,33 @@ class ConfigurationManager {
     }
 
     void updateArtifactoryScanValues(Console console, PrintStream out) {
-        def repositoryNames = []
-        out.println('Enter Artifactory repositories to search for artifacts, one at a time. If you are finished, just press <enter>.')
-        out.print "Enter repository name (current repositories=${configurationProperties.hubArtifactoryScanReposToSearch}): "
+        String reposToSearch = configurationProperties.hubArtifactoryScanReposToSearch
+        def repositoryNames = reposToSearch ? reposToSearch.tokenize(',') : []
+        out.println("The current set of repositories to search is ${reposToSearch}. You will be prompted to add new repositories. If you would first like to clear the currently configured repositories, type 'clear'.")
         String userValue = StringUtils.trimToEmpty(console.readLine())
+        if ('clear' == userValue) {
+            repositoryNames = []
+        }
+
+        out.println('Enter Artifactory repositories to search for artifacts, one at a time. If you are finished, just press <enter>.')
+        out.print "Enter repository name (current repositories=${repositoryNames.join(',')}): "
+        userValue = StringUtils.trimToEmpty(console.readLine())
         while (StringUtils.isNotBlank(userValue)) {
             repositoryNames.add(userValue)
             out.print 'Enter repository name: '
             userValue = StringUtils.trimToEmpty(console.readLine())
         }
 
-        def namePatterns = []
+        String namePatternsToScan = configurationProperties.hubArtifactoryScanNamePatterns
+        def namePatterns = namePatternsToScan ? namePatternsToScan.tokenize(',') : []
+        out.println("The current set of patterns to scan is ${namePatternsToScan}. You will be prompted to add new patterns. If you would first like to clear the currently configured patterns, type 'clear'.")
+        userValue = StringUtils.trimToEmpty(console.readLine())
+        if ('clear' == userValue) {
+            namePatterns = []
+        }
+
         out.println('Enter Artifactory artifact filename patterns to scan, one at a time. If you are finished, just press <enter>.')
-        out.print "Enter pattern (current patterns=${configurationProperties.hubArtifactoryScanNamePatterns}): "
+        out.print "Enter pattern (current patterns=${namePatterns.join(',')}): "
         userValue = StringUtils.trimToEmpty(console.readLine())
         while (StringUtils.isNotBlank(userValue)) {
             namePatterns.add(userValue)
@@ -156,6 +170,8 @@ class ConfigurationManager {
             userValue = StringUtils.trimToEmpty(console.readLine())
         }
 
+        configurationProperties.hubArtifactoryScanReposToSearch = repositoryNames.join(',')
+        configurationProperties.hubArtifactoryScanNamePatterns = namePatterns.join(',')
         persistValues()
 
         out.println("These repositories (${configurationProperties.hubArtifactoryScanReposToSearch}) will be searched for these artifact name patterns (${configurationProperties.hubArtifactoryScanNamePatterns}) which will then be scanned.")
