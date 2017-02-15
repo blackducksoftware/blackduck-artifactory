@@ -12,4 +12,4 @@ notifications:
 
 install: true
 script:
-  - mvn clean package -DskipTests
+  - gradle build
