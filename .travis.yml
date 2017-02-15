@@ -12,4 +12,4 @@ notifications:
 
 install: true
 script:
-  - gradle build
+  ./gradlew clean build
