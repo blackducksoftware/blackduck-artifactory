@@ -411,8 +411,6 @@ def populateProjectVersionUrls(HubRequestService hubRequestService, Set<RepoPath
 }
 
 def populatePolicyStatuses(HubRequestService hubRequestService, MetaService metaService, Set<RepoPath> repoPaths) {
-    log.error('populating policy statuses')
-    log.error("for ${repoPaths.size()} paths")
     repoPaths.each {
         String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(projectVersionUrl)) {
