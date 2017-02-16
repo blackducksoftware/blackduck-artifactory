@@ -54,7 +54,6 @@ class HubClient {
         hubServerConfigBuilder.setTimeout(configurationProperties.hubTimeout)
         hubServerConfigBuilder.setProxyHost(configurationProperties.hubProxyHost)
         hubServerConfigBuilder.setProxyPort(configurationProperties.hubProxyPort)
-        hubServerConfigBuilder.setIgnoredProxyHosts(configurationProperties.hubProxyIgnoredProxyHosts)
         hubServerConfigBuilder.setProxyUsername(configurationProperties.hubProxyUsername)
         hubServerConfigBuilder.setProxyPassword(configurationProperties.hubProxyPassword)
 

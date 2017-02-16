@@ -5,7 +5,6 @@
 
 @Field final String HUB_PROXY_HOST=""
 @Field final int HUB_PROXY_PORT=0
-@Field final String HUB_PROXY_IGNORED_PROXY_HOSTS=""
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
 

@@ -42,7 +42,6 @@ class ArtifactoryScanConfigurer {
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PASSWORD', configurationProperties.hubPassword)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_HOST', configurationProperties.hubProxyHost)
         scanFileText = replaceValue(scanFileText, intPrefix, 'HUB_PROXY_PORT', '' == configurationProperties.hubProxyPort ? '0' : configurationProperties.hubProxyPort)
-        scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_IGNORED_PROXY_HOSTS', configurationProperties.hubProxyIgnoredProxyHosts)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_USERNAME', configurationProperties.hubProxyUsername)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_PASSWORD', configurationProperties.hubProxyPassword)
         scanFileText = replaceText(scanFileText, stringPrefix, 'ARTIFACTORY_REPOS_TO_SEARCH', configurationProperties.hubArtifactoryScanReposToSearch)

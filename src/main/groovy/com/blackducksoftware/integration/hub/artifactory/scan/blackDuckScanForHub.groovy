@@ -60,7 +60,6 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
 
 @Field final String HUB_PROXY_HOST=""
 @Field final int HUB_PROXY_PORT=0
-@Field final String HUB_PROXY_IGNORED_PROXY_HOSTS=""
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
 
@@ -486,7 +485,6 @@ def HubServerConfig createHubServerConfig() {
     hubServerConfigBuilder.setTimeout(HUB_TIMEOUT)
     hubServerConfigBuilder.setProxyHost(HUB_PROXY_HOST)
     hubServerConfigBuilder.setProxyPort(HUB_PROXY_PORT)
-    hubServerConfigBuilder.setIgnoredProxyHosts(HUB_PROXY_IGNORED_PROXY_HOSTS)
     hubServerConfigBuilder.setProxyUsername(HUB_PROXY_USERNAME)
     hubServerConfigBuilder.setProxyPassword(HUB_PROXY_PASSWORD)
 

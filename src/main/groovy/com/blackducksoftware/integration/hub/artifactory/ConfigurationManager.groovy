@@ -190,7 +190,6 @@ class ConfigurationManager {
         properties.setProperty('hub.password', configurationProperties.hubPassword)
         properties.setProperty('hub.proxy.host', configurationProperties.hubProxyHost)
         properties.setProperty('hub.proxy.port', configurationProperties.hubProxyPort)
-        properties.setProperty('hub.proxy.ignored.proxy.hosts', configurationProperties.hubProxyIgnoredProxyHosts)
         properties.setProperty('hub.proxy.username', configurationProperties.hubProxyUsername)
         properties.setProperty('hub.proxy.password', configurationProperties.hubProxyPassword)
         properties.setProperty('artifactory.url', configurationProperties.artifactoryUrl)
