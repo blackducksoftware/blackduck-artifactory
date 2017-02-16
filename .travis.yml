@@ -1,0 +1,18 @@
+language: java
+
+jdk:
+  - oraclejdk8
+
+cache:
+  directories:
+    - $HOME/.m2
+
+notifications:
+  email:
+    recipients:
+      - akamen@blackducksoftware.com
+      - ekerwin@blackducksoftware.com
+
+install: true
+script:
+  ./gradlew clean build
