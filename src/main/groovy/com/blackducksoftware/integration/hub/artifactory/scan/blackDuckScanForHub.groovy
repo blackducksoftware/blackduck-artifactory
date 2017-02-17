@@ -370,13 +370,18 @@ def scanArtifactPaths(Set<RepoPath> repoPaths) {
         } catch (Exception e) {
             log.error("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully: ${e.message}", e)
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "FAILURE")
+        } finally {
+            //by this time, if no success has occurred, treat it as a failure
+            //we do this property updating in 'finally' so that any uncaught error will simply prevent this one file from being scanned again
+            if ("SUCCESS" != repositories.getProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME)) {
+                repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "FAILURE")
+            }
+            String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
+            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
+            repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
+            repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME)
+            repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME)
         }
-
-        String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
-        repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
-        repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
-        repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME)
-        repositories.deleteProperty(filenamesToRepoPath[key], BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME)
 
         try {
             boolean deleteOk = new File(blackDuckDirectory, key).delete()
