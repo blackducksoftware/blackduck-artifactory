@@ -35,7 +35,6 @@ class ArtifactoryInspector {
     void performInspect() {
         def inspectionResults = new InspectionResults()
         def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
-        workingDirectory.mkdirs()
         def outputFile = new File(workingDirectory, "${hubProjectDetails.hubProjectName}_bdio.jsonld")
         logger.info("Starting bdio creation using file: ${outputFile.canonicalPath}")
         new FileOutputStream(outputFile).withStream {

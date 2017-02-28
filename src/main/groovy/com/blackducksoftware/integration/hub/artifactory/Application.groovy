@@ -66,10 +66,14 @@ class Application {
             logger.error('You have not provided enough configuration to run an inspection - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
         } else if ('configure-scanner' == mode && configurationManager.needsArtifactoryScanUpdate()) {
             logger.error('You have not provided enough configuration to configure the scan plugin - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
-        } else if ('run-inspector' == mode) {
-            artifactoryInspector.performInspect()
-        } else if ('configure-scanner' == mode) {
-            artifactoryScanConfigurer.createScanPluginFile()
+        } else if('run-inspector' == mode || 'configure-scanner' == mode) {
+            def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
+            workingDirectory.mkdirs()
+            if ('run-inspector' == mode) {
+                artifactoryInspector.performInspect()
+            } else {
+                artifactoryScanConfigurer.createScanPluginFile()
+            }
         }
     }
 
