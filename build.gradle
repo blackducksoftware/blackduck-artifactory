@@ -7,13 +7,13 @@ apply plugin: 'groovy'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
 buildscript{
-	repositories {
-		mavenCentral()
-		maven { url 'http://jcenter.bintray.com' }
-	}
-	dependencies {
-		classpath group: 'com.blackducksoftware.integration', name: 'hub-gradle-plugin', version: '3.4.1'
-	}
+    repositories {
+        mavenCentral()
+        maven { url 'http://jcenter.bintray.com' }
+    }
+    dependencies {
+        classpath group: 'com.blackducksoftware.integration', name: 'hub-gradle-plugin', version: '3.4.1'
+    }
 }
 
 apply plugin: 'com.blackducksoftware.hub'
