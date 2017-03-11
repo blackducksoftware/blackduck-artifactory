@@ -5,20 +5,27 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.bdio.io.BdioWriter
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryRestClient
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.artifactory.inspect.extractor.ComponentExtractor
+import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.simple.BdioWriter
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioProject
+import com.google.gson.Gson
 
 @Component
 class ArtifactoryInspector {
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryInspector.class)
 
     @Autowired
-    ArtifactoryRestClient artifactoryRestClient
+    BdioPropertyHelper bdioPropertyHelper;
 
     @Autowired
-    BdioFileWriter bdioFileWriter
+    BdioNodeFactory bdioNodeFactory;
+
+    @Autowired
+    ArtifactoryRestClient artifactoryRestClient
 
     @Autowired
     ComponentExtractor componentExtractor
@@ -33,17 +40,23 @@ class ArtifactoryInspector {
     ConfigurationProperties configurationProperties
 
     void performInspect() {
+        def projectName = hubProjectDetails.hubProjectName
+        def projectVersionName = hubProjectDetails.hubProjectVersionName
         def inspectionResults = new InspectionResults()
         def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
-        def outputFile = new File(workingDirectory, "${hubProjectDetails.hubProjectName}_bdio.jsonld")
+        def outputFile = new File(workingDirectory, "${projectName}_bdio.jsonld")
         logger.info("Starting bdio creation using file: ${outputFile.canonicalPath}")
-        new FileOutputStream(outputFile).withStream {
-            def bdioWriter = bdioFileWriter.createBdioWriter(it, hubProjectDetails.hubProjectName, hubProjectDetails.hubProjectVersionName, outputFile.toURI())
-            try {
-                walkFolderStructure('', bdioWriter, inspectionResults)
-            } finally {
-                bdioWriter.close()
-            }
+        new BdioWriter(new Gson(), new FileOutputStream(outputFile)).withCloseable {
+            def bdioBillOfMaterialsNode = bdioNodeFactory.createBillOfMaterials("${projectName} Black Duck I/O Export")
+            it.writeBdioNode(bdioBillOfMaterials)
+
+            def bdioProjectNode = new BdioProject();
+            bdioProjectNode.id = outputFile.toURI().toString();
+            bdioProjectNode.name = projectName;
+            bdioProjectNode.version = projectVersionName;
+            it.writeBdioNode(bdioProjectNode)
+
+            walkFolderStructure('', it, inspectionResults)
         }
 
         logger.info("Completed bdio file: ${outputFile.canonicalPath}")
@@ -98,7 +111,7 @@ class ArtifactoryInspector {
             }
             inspectionResults.totalBdioNodesCreated += components.size()
             components.each {
-                bdioWriter.write(it)
+                bdioWriter.writeBdioNode(it)
                 logger.info("wrote ${artifactName}")
             }
         }

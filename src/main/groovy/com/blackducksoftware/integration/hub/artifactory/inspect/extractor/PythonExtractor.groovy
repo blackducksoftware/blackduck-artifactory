@@ -12,17 +12,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.bdio.model.ExternalIdentifier
-import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
-import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
 
 @Component
 class PythonExtractor extends Extractor {
     private final Logger logger = LoggerFactory.getLogger(PythonExtractor.class)
-
-    @Autowired
-    ExternalIdentifierBuilder externalIdentifierBuilder
 
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
@@ -32,18 +28,18 @@ class PythonExtractor extends Extractor {
         'whl' == extension || artifactName.endsWith('.tar.gz') || 'tgz' == extension
     }
 
-    BdioComponentDetails extract(String artifactName, Map jsonObject) {
+    BdioComponent extract(String artifactName, Map jsonObject) {
         def pythonArchive = artifactoryDownloader.download(jsonObject, artifactName)
 
         def extension = getExtension(artifactName)
-        def details = null
+        BdioComponent bdioComponent = null
         if ('whl' == extension) {
             def wheelFile = new ZipFile(pythonArchive)
             try {
                 def metadataEntry = wheelFile.entries().find { it.name.endsWith('/METADATA') }
                 String metadata = IOUtils.toString(wheelFile.getInputStream(metadataEntry), StandardCharsets.UTF_8)
-                details = extractDetails(metadata)
-                return details
+                bdioComponent = extractComponent(metadata)
+                return bdioComponent
             } finally {
                 IOUtils.closeQuietly(wheelFile)
             }
@@ -55,8 +51,8 @@ class PythonExtractor extends Extractor {
                     if (tarArchiveEntry.name.endsWith('/PKG-INFO')) {
                         byte[] entryBuffer = decompressTarContents(logger, 'PKG-INFO', artifactName, tarArchiveInputStream, tarArchiveEntry)
                         String metadata = new String(entryBuffer, StandardCharsets.UTF_8)
-                        details = extractDetails(metadata)
-                        return details
+                        bdioComponent = extractComponent(metadata)
+                        return bdioComponent
                     }
                 }
             } finally {
@@ -65,7 +61,7 @@ class PythonExtractor extends Extractor {
         }
     }
 
-    private BdioComponentDetails extractDetails(String metadata) {
+    private BdioComponent extractComponent(String metadata) {
         def metadataLines = metadata.tokenize('\n')
 
         def currentLineIndex = 0
@@ -81,10 +77,9 @@ class PythonExtractor extends Extractor {
             currentLineIndex++
         }
 
-        def externalIdentifier = new ExternalIdentifier();
-        externalIdentifier.setExternalSystemTypeId('pypi');
-        externalIdentifier.setExternalId("${name}/${version}");
-
-        new BdioComponentDetails(name: name, version: version, externalIdentifier: externalIdentifier)
+        String bdioId = bdioPropertyHelper.createBdioId(name, version)
+        BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createPypiExternalIdentifier(name, version)
+        BdioComponent bdioComponent = bdioNodeFactory.createComponent(name, version, bdioId, bdioExternalIdentifier)
+        return bdioComponent
     }
 }

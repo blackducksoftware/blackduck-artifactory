@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
-import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
 import com.blackducksoftware.integration.hub.artifactory.inspect.InspectionResults
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
 
 @Component
 class ComponentExtractor {
@@ -26,17 +26,17 @@ class ComponentExtractor {
         return lastUpdated >= cutoffTime
     }
 
-    List<com.blackducksoftware.bdio.model.Component> extract(String artifactName, Map jsonObject, InspectionResults inspectionResults) {
+    List<BdioComponent> extract(String artifactName, Map jsonObject, InspectionResults inspectionResults) {
         def components = []
 
         boolean extractAttempted = false
         for (Extractor extractor : extractors) {
             if (extractor.shouldAttemptExtract(artifactName, jsonObject)) {
                 extractAttempted = true
-                def componentDetails = extractor.extract(artifactName, jsonObject)
-                if (componentDetails != null) {
-                    def component = buildComponent(jsonObject, componentDetails)
-                    components.add(component)
+                BdioComponent bdioComponent = extractor.extract(artifactName, jsonObject)
+                if (bdioComponent != null) {
+                    bdioComponent.id = jsonObject.downloadUri
+                    components.add(bdioComponent)
                 }
             }
         }
@@ -46,15 +46,5 @@ class ComponentExtractor {
         }
 
         return components
-    }
-
-    private com.blackducksoftware.bdio.model.Component buildComponent(Map jsonObject, BdioComponentDetails bdioComponentDetails) {
-        def component = new com.blackducksoftware.bdio.model.Component()
-        component.id = jsonObject.downloadUri
-        component.name = bdioComponentDetails.name
-        component.version = bdioComponentDetails.version
-        component.addExternalIdentifier(bdioComponentDetails.externalIdentifier)
-
-        component
     }
 }

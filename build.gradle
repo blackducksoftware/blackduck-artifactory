@@ -22,7 +22,7 @@ tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 tasks.withType(GroovyCompile) { options.encoding = 'UTF-8' }
 
 group = 'com.blackducksoftware.integration'
-version = '2.0.3-SNAPSHOT'
+version = '2.1.0-SNAPSHOT'
 description = ''
 
 sourceCompatibility = 1.8
@@ -35,7 +35,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:7.3.1'
+    compile 'com.blackducksoftware.integration:hub-common:8.1.0'
 
     compile 'org.apache.commons:commons-lang3:3.5'
     compile 'commons-io:commons-io:2.5'

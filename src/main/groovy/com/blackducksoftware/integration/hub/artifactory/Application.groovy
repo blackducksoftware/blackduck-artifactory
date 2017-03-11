@@ -11,13 +11,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.context.annotation.Bean
 
-import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactoryInspector
 import com.blackducksoftware.integration.hub.artifactory.scan.ArtifactoryScanConfigurer
+import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
 
 @SpringBootApplication
 class Application {
     private final Logger logger = LoggerFactory.getLogger(Application.class)
+
+    @Autowired
+    BdioPropertyHelper bdioPropertyHelper
 
     @Autowired
     ConfigurationManager configurationManager
@@ -78,7 +82,12 @@ class Application {
     }
 
     @Bean
-    ExternalIdentifierBuilder externalIdentifierBuilder() {
-        ExternalIdentifierBuilder.create()
+    BdioNodeFactory bdioNodeFactory() {
+        new BdioNodeFactory(bdioPropertyHelper)
+    }
+
+    @Bean
+    BdioPropertyHelper bdioPropertyHelper() {
+        new BdioPropertyHelper()
     }
 }

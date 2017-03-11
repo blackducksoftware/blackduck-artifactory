@@ -11,16 +11,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
-import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
 
 @Component
 class GemExtractor extends Extractor {
     private final Logger logger = LoggerFactory.getLogger(GemExtractor.class)
-
-    @Autowired
-    ExternalIdentifierBuilder externalIdentifierBuilder
 
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
@@ -30,12 +27,12 @@ class GemExtractor extends Extractor {
         'gem' == extension
     }
 
-    BdioComponentDetails extract(String artifactName, Map jsonObject) {
+    BdioComponent extract(String artifactName, Map jsonObject) {
         def downloadUri = jsonObject.downloadUri
         def gemFile = artifactoryDownloader.download(downloadUri, artifactName)
 
         def tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream(gemFile))
-        def details = null
+        def bdioComponent = null
         try {
             def tarArchiveEntry
             while (null != (tarArchiveEntry = tarArchiveInputStream.getNextTarEntry())) {
@@ -60,9 +57,10 @@ class GemExtractor extends Extractor {
                             currentLineIndex++
                         }
 
-                        def externalIdentifier = externalIdentifierBuilder.rubygem(gem, version).build().get()
-                        details = new BdioComponentDetails(name: gem, version: version, externalIdentifier: externalIdentifier)
-                        return details
+                        String bdioId = bdioPropertyHelper.createBdioId(gem, version)
+                        BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createRubygemsExternalIdentifier(gem, version)
+                        bdioComponent = bdioNodeFactory.createComponent(gem, version, bdioId, bdioExternalIdentifier)
+                        return bdioComponent
                     } finally {
                         IOUtils.closeQuietly(gzipInputStream)
                     }

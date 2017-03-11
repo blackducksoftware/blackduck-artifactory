@@ -5,12 +5,21 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
+import org.springframework.beans.factory.annotation.Autowired
 
-import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
+import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
 
 abstract class Extractor {
+    @Autowired
+    BdioPropertyHelper bdioPropertyHelper;
+
+    @Autowired
+    BdioNodeFactory bdioNodeFactory;
+
     abstract boolean shouldAttemptExtract(String artifactName, Map jsonObject)
-    abstract BdioComponentDetails extract(String artifactName, Map jsonObject)
+    abstract BdioComponent extract(String artifactName, Map jsonObject)
 
     String getExtension(String artifactName) {
         StringUtils.trimToEmpty(FilenameUtils.getExtension(artifactName)).toLowerCase()

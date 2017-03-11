@@ -1,7 +1,5 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect.extractor
 
-import groovy.json.JsonSlurper
-
 import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 
@@ -12,16 +10,15 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
-import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
+
+import groovy.json.JsonSlurper
 
 @Component
 class NpmExtractor extends Extractor {
     private final Logger logger = LoggerFactory.getLogger(NpmExtractor.class)
-
-    @Autowired
-    ExternalIdentifierBuilder externalIdentifierBuilder
 
     @Autowired
     ArtifactoryDownloader artifactoryDownloader
@@ -31,11 +28,11 @@ class NpmExtractor extends Extractor {
         'tgz' == extension || 'tar.gz' == extension
     }
 
-    BdioComponentDetails extract(String artifactName, Map jsonObject) {
+    BdioComponent extract(String artifactName, Map jsonObject) {
         def tgzFile = artifactoryDownloader.download(jsonObject, artifactName)
 
         def tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(new FileInputStream(tgzFile)))
-        def details = null
+        BdioComponent bdioComponent = null
         try {
             def tarArchiveEntry
             while (null != (tarArchiveEntry = tarArchiveInputStream.getNextTarEntry())) {
@@ -47,9 +44,10 @@ class NpmExtractor extends Extractor {
                     def packageName = npmPackageJson.name
                     def version = npmPackageJson.version
 
-                    def externalIdentifier = externalIdentifierBuilder.npm(packageName, version).build().get()
-                    details = new BdioComponentDetails(name: packageName, version: version, externalIdentifier: externalIdentifier)
-                    return details
+                    String bdioId = bdioPropertyHelper.createBdioId(packageName, version)
+                    BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createNpmExternalIdentifier(packageName, version)
+                    bdioComponent = bdioNodeFactory.createComponent(packageName, version, bdioId, bdioExternalIdentifier)
+                    return bdioComponent
                 }
             }
         } finally {

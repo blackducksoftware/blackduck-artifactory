@@ -3,10 +3,11 @@ package com.blackducksoftware.integration.hub.artifactory.inspector.extractor
 import org.junit.Assert
 import org.junit.Test
 
-import com.blackducksoftware.bdio.model.ExternalIdentifierBuilder
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
-import com.blackducksoftware.integration.hub.artifactory.inspect.BdioComponentDetails
 import com.blackducksoftware.integration.hub.artifactory.inspect.extractor.NpmExtractor
+import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
 
 class NpmExtractorTest {
     @Test
@@ -18,13 +19,14 @@ class NpmExtractorTest {
 
         NpmExtractor npmExtractor = new NpmExtractor()
         npmExtractor.artifactoryDownloader = mockDownloader
-        npmExtractor.externalIdentifierBuilder = ExternalIdentifierBuilder.create()
+        npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
+        npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
 
         Map jsonObject = ["downloadUri":"test"]
-        BdioComponentDetails bdioComponentDetails = npmExtractor.extract("grunt-1.0.0.tgz", jsonObject)
+        BdioComponent bdioComponentDetails = npmExtractor.extract("grunt-1.0.0.tgz", jsonObject)
         Assert.assertEquals("grunt", bdioComponentDetails.name)
         Assert.assertEquals("1.0.0", bdioComponentDetails.version)
-        Assert.assertEquals("grunt@1.0.0", bdioComponentDetails.externalIdentifier.externalId)
+        Assert.assertEquals("grunt@1.0.0", bdioComponentDetails.bdioExternalIdentifier.externalId)
     }
 
     @Test
@@ -36,13 +38,14 @@ class NpmExtractorTest {
 
         NpmExtractor npmExtractor = new NpmExtractor()
         npmExtractor.artifactoryDownloader = mockDownloader
-        npmExtractor.externalIdentifierBuilder = ExternalIdentifierBuilder.create()
+        npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
+        npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
 
         Map jsonObject = ["downloadUri":"test"]
-        BdioComponentDetails bdioComponentDetails = npmExtractor.extract("angular-1.6.1.tgz", jsonObject)
+        BdioComponent bdioComponentDetails = npmExtractor.extract("angular-1.6.1.tgz", jsonObject)
         Assert.assertEquals("angular", bdioComponentDetails.name)
         Assert.assertEquals("1.6.1", bdioComponentDetails.version)
-        Assert.assertEquals("angular@1.6.1", bdioComponentDetails.externalIdentifier.externalId)
+        Assert.assertEquals("angular@1.6.1", bdioComponentDetails.bdioExternalIdentifier.externalId)
     }
 
     @Test
@@ -54,13 +57,14 @@ class NpmExtractorTest {
 
         NpmExtractor npmExtractor = new NpmExtractor()
         npmExtractor.artifactoryDownloader = mockDownloader
-        npmExtractor.externalIdentifierBuilder = ExternalIdentifierBuilder.create()
+        npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
+        npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
 
         Map jsonObject = ["downloadUri":"test"]
-        BdioComponentDetails bdioComponentDetails = npmExtractor.extract("babel-polyfill-6.22.0", jsonObject)
+        BdioComponent bdioComponentDetails = npmExtractor.extract("babel-polyfill-6.22.0", jsonObject)
         Assert.assertEquals("babel-polyfill", bdioComponentDetails.name)
         Assert.assertEquals("6.22.0", bdioComponentDetails.version)
-        Assert.assertEquals("babel-polyfill@6.22.0", bdioComponentDetails.externalIdentifier.externalId)
+        Assert.assertEquals("babel-polyfill@6.22.0", bdioComponentDetails.bdioExternalIdentifier.externalId)
     }
 
     @Test
@@ -72,13 +76,14 @@ class NpmExtractorTest {
 
         NpmExtractor npmExtractor = new NpmExtractor()
         npmExtractor.artifactoryDownloader = mockDownloader
-        npmExtractor.externalIdentifierBuilder = ExternalIdentifierBuilder.create()
+        npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
+        npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
 
         Map jsonObject = ["downloadUri":"test"]
-        BdioComponentDetails bdioComponentDetails = npmExtractor.extract("babel-polyfill-6.3.14", jsonObject)
+        BdioComponent bdioComponentDetails = npmExtractor.extract("babel-polyfill-6.3.14", jsonObject)
         Assert.assertEquals("babel-polyfill", bdioComponentDetails.name)
         Assert.assertEquals("6.3.14", bdioComponentDetails.version)
-        Assert.assertEquals("babel-polyfill@6.3.14", bdioComponentDetails.externalIdentifier.externalId)
+        Assert.assertEquals("babel-polyfill@6.3.14", bdioComponentDetails.bdioExternalIdentifier.externalId)
     }
 
     @Test
@@ -90,12 +95,13 @@ class NpmExtractorTest {
 
         NpmExtractor npmExtractor = new NpmExtractor()
         npmExtractor.artifactoryDownloader = mockDownloader
-        npmExtractor.externalIdentifierBuilder = ExternalIdentifierBuilder.create()
+        npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
+        npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
 
         Map jsonObject = ["downloadUri":"test"]
-        BdioComponentDetails bdioComponentDetails = npmExtractor.extract("underscore.string-2.0.0", jsonObject)
+        BdioComponent bdioComponentDetails = npmExtractor.extract("underscore.string-2.0.0", jsonObject)
         Assert.assertEquals("underscore.string", bdioComponentDetails.name)
         Assert.assertEquals("2.0.0", bdioComponentDetails.version)
-        Assert.assertEquals("underscore.string@2.0.0", bdioComponentDetails.externalIdentifier.externalId)
+        Assert.assertEquals("underscore.string@2.0.0", bdioComponentDetails.bdioExternalIdentifier.externalId)
     }
 }
