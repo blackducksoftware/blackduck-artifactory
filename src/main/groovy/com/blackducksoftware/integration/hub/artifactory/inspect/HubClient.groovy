@@ -13,6 +13,7 @@ import com.blackducksoftware.integration.hub.exception.HubIntegrationException
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
+import com.blackducksoftware.integration.log.Slf4jIntLogger
 
 @Component
 class HubClient {
@@ -31,15 +32,14 @@ class HubClient {
 
     void testHubConnection() throws HubIntegrationException {
         HubServerConfig hubServerConfig = createBuilder().build()
-        CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
+        CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(logger))
         credentialsRestConnection.connect()
         logger.info('Successful connection to the Hub!')
     }
 
     void uploadBdioToHub(File bdioFile) {
         HubServerConfig hubServerConfig = createBuilder().build()
-
-        CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
+        CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(logger))
         HubServicesFactory hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
         BomImportRequestService bomImportRequestService = hubServicesFactory.createBomImportRequestService()
         bomImportRequestService.importBomFile(bdioFile, BuildToolConstants.BDIO_FILE_MEDIA_TYPE)

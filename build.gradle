@@ -1,21 +1,17 @@
 buildscript {
-    repositories { mavenCentral() }
-    dependencies { classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE") }
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath('org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE')
+        classpath('com.blackducksoftware.integration:hub-gradle-plugin:4.0.0')
+    }
 }
 
 apply plugin: 'groovy'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
-buildscript{
-    repositories {
-        mavenCentral()
-        maven { url 'http://jcenter.bintray.com' }
-    }
-    dependencies {
-        classpath group: 'com.blackducksoftware.integration', name: 'hub-gradle-plugin', version: '3.4.1'
-    }
-}
-
 apply plugin: 'com.blackducksoftware.hub'
 
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
@@ -29,21 +25,23 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
-    mavenCentral()
-    jcenter()
     mavenLocal()
+    mavenCentral()
+}
+
+buildBom {
+    hubUrl=project.hubUrl
+    hubUsername=project.hubUsername
+    hubPassword=project.hubPassword
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:8.1.0'
-
-    compile 'org.apache.commons:commons-lang3:3.5'
-    compile 'commons-io:commons-io:2.5'
-    compile 'org.apache.commons:commons-compress:1.13'
+    compile 'com.blackducksoftware.integration:hub-common:9.0.0'
 
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
     compile 'org.codehaus.groovy:groovy-all:2.4.7'
+    compile 'org.apache.commons:commons-compress:1.13'
 
     compileOnly 'org.artifactory:artifactory-papi:4.14.0'
 

@@ -39,11 +39,13 @@ import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
+import com.blackducksoftware.integration.hub.exception.HubIntegrationException
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.model.view.CodeLocationView
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.model.view.ScanSummaryView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
+import com.blackducksoftware.integration.hub.phonehome.IntegrationInfo
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.scan.HubScanConfig
 import com.blackducksoftware.integration.hub.service.HubResponseService
@@ -142,7 +144,7 @@ executions {
      * This will delete, then recreate, the blackducksoftware directory which includes the cli, the cron job log, as well as all the cli logs.
      *
      * This can be triggered with the following curl command:
-     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/clearBlackDuckDirectory"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/clearBlackDuckDirectory"
      */
     clearBlackDuckDirectory() { params ->
         log.info("Starting clearBlackDuckDirectory REST request...")
@@ -165,7 +167,7 @@ executions {
      * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and delete all the properties that the plugin sets.
      *
      * This can be triggered with the following curl command:
-     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/deleteBlackDuckProperties"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/deleteBlackDuckProperties"
      */
     deleteBlackDuckProperties() { params ->
         log.info("Starting deleteBlackDuckProperties REST request...")
@@ -238,7 +240,7 @@ jobs {
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
         HubServicesFactory hubServicesFactory = createHubServicesFactory()
-        HubResponseService hubResponseService = hubServicesFactory.createHubRequestService()
+        HubResponseService hubResponseService = hubServicesFactory.createHubResponseService()
         MetaService metaService = hubServicesFactory.createMetaService(new Slf4jIntLogger(log))
 
         populatePolicyStatuses(hubResponseService, metaService, repoPaths)
@@ -334,9 +336,6 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
             hubScanConfigBuilder.dryRun = HUB_SCAN_DRY_RUN
             hubScanConfigBuilder.toolsDir = toolsDirectory
             hubScanConfigBuilder.workingDirectory = workingDirectory
-            hubScanConfigBuilder.pluginVersion = "2.1.0"
-            hubScanConfigBuilder.thirdPartyName = ThirdPartyName.ARTIFACTORY
-            hubScanConfigBuilder.thirdPartyVersion = "????"
             hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
 
             String project = value.module
@@ -365,13 +364,19 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
             deleteAllBlackDuckProperties(filenamesToRepoPath[key])
 
             HubServerConfig hubServerConfig = createHubServerConfig()
-            List<ScanSummaryView> scanSummaryViews = cliDataService.installAndRunScan(hubServerConfig, hubScanConfig)
+            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY.toString(), "???", "2.1.0")
+            List<ScanSummaryView> scanSummaryViews = cliDataService.installAndRunScan(hubServerConfig, hubScanConfig, integrationInfo)
             log.info("${key} was successfully scanned by the BlackDuck CLI.")
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
             //we only scanned one path, so only one result is expected
             if (null != scanSummaryViews && scanSummaryViews.size() == 1) {
                 try {
-                    String codeLocationUrl = metaService.getFirstLink(scanSummaryViews.get(0), MetaService.CODE_LOCATION_BOM_STATUS_LINK)
+                    String codeLocationUrl = ""
+                    try {
+                        codeLocationUrl = metaService.getFirstLink(scanSummaryViews.get(0), MetaService.CODE_LOCATION_BOM_STATUS_LINK)
+                    } catch (HubIntegrationException e) {
+                        log.info(e.message)
+                    }
                     if (StringUtils.isNotBlank(codeLocationUrl)) {
                         repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
                     }
@@ -432,11 +437,16 @@ private void populatePolicyStatuses(HubResponseService hubResponseService, MetaS
             projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
             repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
             ProjectVersionView projectVersionView = hubResponseService.getItem(projectVersionUrl, ProjectVersionView.class)
-            String policyStatusUrl = metaService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
+            String policyStatusUrl = ""
+            try {
+                policyStatusUrl = metaService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
+            } catch (HubIntegrationException e) {
+                log.info(e.message)
+            }
             if (StringUtils.isNotBlank(policyStatusUrl)) {
                 log.info("Looking up policy status: ${policyStatusUrl}")
                 VersionBomPolicyStatusView versionBomPolicyStatusView = hubResponseService.getItem(policyStatusUrl, VersionBomPolicyStatusView.class)
-                log.info("policy status json: ${policyStatusView.json}")
+                log.info("policy status json: ${versionBomPolicyStatusView.json}")
                 PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
                 repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
                 repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, versionBomPolicyStatusView.overallStatus.toString())
@@ -554,7 +564,7 @@ private HubServerConfig createHubServerConfig() {
 private HubServicesFactory createHubServicesFactory() {
     HubServerConfig hubServerConfig = createHubServerConfig()
 
-    CredentialsRestConnection credentialsRestConnection = new CredentialsRestConnection(hubServerConfig)
+    CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
     new HubServicesFactory(credentialsRestConnection)
 }
 

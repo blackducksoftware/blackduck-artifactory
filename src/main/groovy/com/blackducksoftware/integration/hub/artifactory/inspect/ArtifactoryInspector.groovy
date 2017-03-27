@@ -48,7 +48,7 @@ class ArtifactoryInspector {
         logger.info("Starting bdio creation using file: ${outputFile.canonicalPath}")
         new BdioWriter(new Gson(), new FileOutputStream(outputFile)).withCloseable {
             def bdioBillOfMaterialsNode = bdioNodeFactory.createBillOfMaterials("${projectName} Black Duck I/O Export")
-            it.writeBdioNode(bdioBillOfMaterials)
+            it.writeBdioNode(bdioBillOfMaterialsNode)
 
             def bdioProjectNode = new BdioProject();
             bdioProjectNode.id = outputFile.toURI().toString();
