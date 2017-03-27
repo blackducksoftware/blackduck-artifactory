@@ -375,7 +375,7 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
                     try {
                         codeLocationUrl = metaService.getFirstLink(scanSummaryViews.get(0), MetaService.CODE_LOCATION_BOM_STATUS_LINK)
                     } catch (HubIntegrationException e) {
-                        log.info(e.message)
+                        log.warn(e.message)
                     }
                     if (StringUtils.isNotBlank(codeLocationUrl)) {
                         repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_CODE_LOCATION_URL_PROPERTY_NAME, codeLocationUrl)
@@ -441,7 +441,7 @@ private void populatePolicyStatuses(HubResponseService hubResponseService, MetaS
             try {
                 policyStatusUrl = metaService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
             } catch (HubIntegrationException e) {
-                log.info(e.message)
+                log.warn(e.message)
             }
             if (StringUtils.isNotBlank(policyStatusUrl)) {
                 log.info("Looking up policy status: ${policyStatusUrl}")
