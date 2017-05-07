@@ -364,7 +364,7 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
             deleteAllBlackDuckProperties(filenamesToRepoPath[key])
 
             HubServerConfig hubServerConfig = createHubServerConfig()
-            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY.toString(), "???", "2.1.0")
+            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, "???", "2.1.1")
             List<ScanSummaryView> scanSummaryViews = cliDataService.installAndRunScan(hubServerConfig, hubScanConfig, integrationInfo)
             log.info("${key} was successfully scanned by the BlackDuck CLI.")
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
