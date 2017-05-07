@@ -10,4 +10,4 @@ Hub-artifactory plugin lets the user to specify repo(s) and file extensions that
 Download the latest from release page: https://github.com/blackducksoftware/hub-artifactory/releases
 
 ## Documentation ##
-All documentation for hub-common can be found on the base project:  https://github.com/blackducksoftware/hub-artifactory/wiki
+All documentation for hub-artifactory can be found on our public [Black Duck Confluence](https://blackducksoftware.atlassian.net/wiki/display/INTDOCS/)
