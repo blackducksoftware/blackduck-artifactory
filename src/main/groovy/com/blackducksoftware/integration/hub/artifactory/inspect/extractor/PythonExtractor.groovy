@@ -15,6 +15,9 @@ import org.springframework.stereotype.Component
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
 import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
 import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
+import com.blackducksoftware.integration.hub.bdio.simple.model.Forge
+import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.ExternalId
+import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.NameVersionExternalId
 
 @Component
 class PythonExtractor extends Extractor {
@@ -76,9 +79,9 @@ class PythonExtractor extends Extractor {
             }
             currentLineIndex++
         }
-
-        String bdioId = bdioPropertyHelper.createBdioId(name, version)
-        BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createPypiExternalIdentifier(name, version)
+        ExternalId externalId = new NameVersionExternalId(Forge.pypi, name, version)
+        String bdioId = externalId.createDataId()
+        BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createExternalIdentifier(externalId)
         BdioComponent bdioComponent = bdioNodeFactory.createComponent(name, version, bdioId, bdioExternalIdentifier)
         return bdioComponent
     }

@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
 import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
 import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
+import com.blackducksoftware.integration.hub.bdio.simple.model.Forge
+import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.ExternalId
+import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.NameVersionExternalId
 
 @Component
 class NugetExtractor extends Extractor {
@@ -34,8 +37,9 @@ class NugetExtractor extends Extractor {
             def packageName = nuspecPackage.metadata.id.toString()
             def version = nuspecPackage.metadata.version.toString()
 
-            String bdioId = bdioPropertyHelper.createBdioId(packageName, version)
-            BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createNugetExternalIdentifier(packageName, version)
+            ExternalId externalId = new NameVersionExternalId(Forge.nuget, packageName, version)
+            String bdioId = externalId.createDataId()
+            BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createExternalIdentifier(externalId)
             bdioComponent = bdioNodeFactory.createComponent(packageName, version, bdioId, bdioExternalIdentifier)
             return bdioComponent
         } finally {
