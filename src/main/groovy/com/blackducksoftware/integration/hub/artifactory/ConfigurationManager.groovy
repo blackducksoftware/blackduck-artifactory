@@ -61,6 +61,7 @@ class ConfigurationManager {
         configurationProperties.hubPassword = setPasswordFromInput(console, out, 'Hub Server Password', configurationProperties.hubPassword)
         configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', configurationProperties.hubTimeout)
         configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, 'Local Working Directory', configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        configurationProperties.hubArtifactoryCacheDirectoryPath = setValueFromInput(console, out, 'Plugin Cache Directory', configurationProperties.hubArtifactoryCacheDirectoryPath)
 
         persistValues()
 
@@ -203,6 +204,7 @@ class ConfigurationManager {
         properties.setProperty('hub.artifactory.inspect.latest.updated.cutoff', configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
         properties.setProperty('hub.artifactory.scan.repos.to.search', configurationProperties.hubArtifactoryScanReposToSearch)
         properties.setProperty('hub.artifactory.scan.name.patterns', configurationProperties.hubArtifactoryScanNamePatterns)
+        properties.setProperty('hub.artifactory.cache.directory.path', configurationProperties.hubArtifactoryCacheDirectoryPath)
 
         def defaultPropertiesPersister = new DefaultPropertiesPersister()
         new FileOutputStream(userSpecifiedProperties).withStream {
