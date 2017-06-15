@@ -37,7 +37,7 @@ class NugetExtractor extends Extractor {
             def packageName = nuspecPackage.metadata.id.toString()
             def version = nuspecPackage.metadata.version.toString()
 
-            ExternalId externalId = new NameVersionExternalId(Forge.nuget, packageName, version)
+            ExternalId externalId = new NameVersionExternalId(Forge.NUGET, packageName, version)
             String bdioId = externalId.createDataId()
             BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createExternalIdentifier(externalId)
             bdioComponent = bdioNodeFactory.createComponent(packageName, version, bdioId, bdioExternalIdentifier)

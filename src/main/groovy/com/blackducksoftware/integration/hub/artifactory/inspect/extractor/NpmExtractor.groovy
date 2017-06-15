@@ -46,7 +46,7 @@ class NpmExtractor extends Extractor {
                     def npmPackageJson = new JsonSlurper().parseText(entryContent)
                     def packageName = npmPackageJson.name
                     def version = npmPackageJson.version
-                    ExternalId externalId = new NameVersionExternalId(Forge.npm, packageName, version)
+                    ExternalId externalId = new NameVersionExternalId(Forge.NPM, packageName, version)
                     String bdioId = externalId.createDataId()
                     BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createExternalIdentifier(externalId)
                     bdioComponent = bdioNodeFactory.createComponent(packageName, version, bdioId, bdioExternalIdentifier)

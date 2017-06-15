@@ -79,7 +79,7 @@ class PythonExtractor extends Extractor {
             }
             currentLineIndex++
         }
-        ExternalId externalId = new NameVersionExternalId(Forge.pypi, name, version)
+        ExternalId externalId = new NameVersionExternalId(Forge.PYPI, name, version)
         String bdioId = externalId.createDataId()
         BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createExternalIdentifier(externalId)
         BdioComponent bdioComponent = bdioNodeFactory.createComponent(name, version, bdioId, bdioExternalIdentifier)
