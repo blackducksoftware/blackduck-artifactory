@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component
 
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
 import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
 import com.blackducksoftware.integration.hub.bdio.simple.model.Forge
 import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.ExternalId
 import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.NameVersionExternalId
@@ -46,10 +45,9 @@ class NpmExtractor extends Extractor {
                     def npmPackageJson = new JsonSlurper().parseText(entryContent)
                     def packageName = npmPackageJson.name
                     def version = npmPackageJson.version
+
                     ExternalId externalId = new NameVersionExternalId(Forge.NPM, packageName, version)
-                    String bdioId = externalId.createDataId()
-                    BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createExternalIdentifier(externalId)
-                    bdioComponent = bdioNodeFactory.createComponent(packageName, version, bdioId, bdioExternalIdentifier)
+                    bdioComponent = bdioNodeFactory.createComponent(packageName, version, externalId)
                     return bdioComponent
                 }
             }
