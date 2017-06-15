@@ -84,7 +84,7 @@ import groovy.transform.Field
 @Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME="blackDuckProjectVersionUiUrl"
 @Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME="blackDuckPolicyStatus"
 @Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME="blackDuckOverallPolicyStatus"
-@Field final String BLACK_DUCK_DIRECTORY_PATH=""
+@Field final String BLACK_DUCK_CACHE_DIRECTORY_PATH=""
 
 //if this is set, only artifacts with a modified date later than the CUTOFF will be scanned. You will have to use the
 //DATE_TIME_PATTERN defined above for the cutoff to work properly. With the default pattern, to scan only artifacts newer than January 01, 2016 you would use
@@ -248,6 +248,32 @@ jobs {
 
         log.info("...completed addPolicyStatus cron job.")
     }
+
+    /**
+     * Takes a FileLayoutInfo object and returns the project name as it will appear in the Hub. (By default, this returns the module of the FileLayoutInfo object)
+     *
+     * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project name.
+     */
+    getProjectNameFromFileLayoutInfo(fileLayoutInfo){
+        log.info("Constructing project name...")
+
+        fileLayoutInfo.module
+
+        log.info("...project name constructed")
+    }
+
+    /**
+     * Takes a FileLayoutInfo object and returns the project version name for as it will appear in the Hub. (By default, this returns the baseRevision of the FileLayoutInfo object)
+     *
+     * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project version name.
+     */
+    getProjectVersionNameFromFileLayoutInfo(fileLayoutInfo){
+        log.info("Constructing project version name...")
+
+        fileLayoutInfo.baseRevision
+
+        log.info("...project version constructed")
+    }
 }
 
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
@@ -339,8 +365,8 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
             hubScanConfigBuilder.workingDirectory = workingDirectory
             hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
 
-            String project = value.module
-            String version = value.baseRevision
+            String project = getProjectNameFromFileLayoutInfo(value)
+            String version = getProjectVersionNameFromFileLayoutInfo(value)
             if (StringUtils.isBlank(project) || StringUtils.isBlank(version)) {
                 String filenameWithoutExtension = FilenameUtils.getBaseName(key)
                 ProjectNameVersionGuesser guesser = new ProjectNameVersionGuesser()
@@ -571,8 +597,8 @@ private HubServicesFactory createHubServicesFactory() {
 
 private void initializeConfiguration() {
     if (!initialized) {
-        if (BLACK_DUCK_DIRECTORY_PATH) {
-            blackDuckDirectory = new File(BLACK_DUCK_DIRECTORY_PATH)
+        if (BLACK_DUCK_CACHE_DIRECTORY_PATH) {
+            blackDuckDirectory = new File(BLACK_DUCK_CACHE_DIRECTORY_PATH)
         } else {
             etcDir = ctx.artifactoryHome.etcDir
             blackDuckDirectory = new File(etcDir, "plugin/blackducksoftware")
