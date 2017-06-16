@@ -1,11 +1,11 @@
 package com.blackducksoftware.integration.hub.artifactory
 
-import groovy.json.JsonSlurper
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpStatusCodeException
+
+import groovy.json.JsonSlurper
 
 @Component
 class ArtifactoryRestClient {
@@ -39,9 +39,10 @@ class ArtifactoryRestClient {
         getJsonResponse(apiUrl)
     }
 
-    void setPropertiesForPath(String repoKey, String repoPath, Map properties) {
+    void setPropertiesForPath(String repoKey, String repoPath, Map properties, boolean recursive) {
         def propertiesParameter = properties.collect { key, value -> "${key}=${value}" }.join('|')
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}?properties=${propertiesParameter}"
+        def recursiveNum = recursive ? "1" : "0"
+        def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}?properties=${propertiesParameter}&recursive=${recursiveNum}"
         restTemplate.put(apiUrl, "")
     }
 
