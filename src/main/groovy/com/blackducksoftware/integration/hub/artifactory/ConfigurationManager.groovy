@@ -61,8 +61,6 @@ class ConfigurationManager {
         configurationProperties.hubPassword = setPasswordFromInput(console, out, 'Hub Server Password', configurationProperties.hubPassword)
         configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', configurationProperties.hubTimeout)
         configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, 'Local Working Directory', configurationProperties.hubArtifactoryWorkingDirectoryPath)
-        configurationProperties.hubArtifactoryCacheDirectoryPath = setValueFromInput(console, out, 'Plugin Cache Directory', configurationProperties.hubArtifactoryCacheDirectoryPath)
-
         persistValues()
 
         boolean ok = false
@@ -138,6 +136,7 @@ class ConfigurationManager {
     }
 
     void updateArtifactoryScanValues(Console console, PrintStream out) {
+        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
         String reposToSearch = configurationProperties.hubArtifactoryScanReposToSearch
         def repositoryNames = reposToSearch ? reposToSearch.tokenize(',') : []
         out.println("The current set of repositories to search is ${reposToSearch}. You will be prompted to add new repositories. If you would first like to clear the currently configured repositories, type 'clear'.")
@@ -198,15 +197,15 @@ class ConfigurationManager {
         properties.setProperty('artifactory.username', configurationProperties.artifactoryUsername)
         properties.setProperty('artifactory.password', configurationProperties.artifactoryPassword)
         properties.setProperty('hub.artifactory.working.directory.path', configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        properties.setProperty('hub.artifactory.scan.binaries.directory.path', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
         properties.setProperty('hub.artifactory.project.name', configurationProperties.hubArtifactoryProjectName)
         properties.setProperty('hub.artifactory.project.version.name', configurationProperties.hubArtifactoryProjectVersionName)
         properties.setProperty('hub.artifactory.date.time.pattern', configurationProperties.hubArtifactoryDateTimePattern)
         properties.setProperty('hub.artifactory.inspect.repo.key', configurationProperties.hubArtifactoryInspectRepoKey)
         properties.setProperty('hub.artifactory.inspect.latest.updated.cutoff', configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
-        properties.setProperty('hub.artifactory.inspect.skip.bom.calc', String.valueOf(configurationProperties.hubArtifactoryInspectSkipBomCalc))
+        properties.setProperty('hub.artifactory.inspect.skip.bom.calculation', String.valueOf(configurationProperties.hubArtifactoryInspectSkipBomCalculation))
         properties.setProperty('hub.artifactory.scan.repos.to.search', configurationProperties.hubArtifactoryScanReposToSearch)
         properties.setProperty('hub.artifactory.scan.name.patterns', configurationProperties.hubArtifactoryScanNamePatterns)
-        properties.setProperty('hub.artifactory.cache.directory.path', configurationProperties.hubArtifactoryCacheDirectoryPath)
 
         def defaultPropertiesPersister = new DefaultPropertiesPersister()
         new FileOutputStream(userSpecifiedProperties).withStream {

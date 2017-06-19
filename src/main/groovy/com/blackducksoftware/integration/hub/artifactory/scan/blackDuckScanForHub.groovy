@@ -60,8 +60,8 @@ import groovy.transform.Field
 
 @Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME="sysadmin"
-@Field final String HUB_PASSWORD="blackduck"
+@Field final String HUB_USERNAME=""
+@Field final String HUB_PASSWORD=""
 
 @Field final String HUB_PROXY_HOST=""
 @Field final int HUB_PROXY_PORT=0
@@ -73,6 +73,7 @@ import groovy.transform.Field
 
 @Field final String ARTIFACTORY_REPOS_TO_SEARCH="ext-release-local,libs-release"
 @Field final String ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip,*.tar.gz,*.hpi"
+@Field final String BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH="plugin/blackducksoftware"
 
 @Field final boolean logVerboseCronLog=false
 
@@ -84,7 +85,6 @@ import groovy.transform.Field
 @Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME="blackDuckProjectVersionUiUrl"
 @Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME="blackDuckPolicyStatus"
 @Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME="blackDuckOverallPolicyStatus"
-@Field final String BLACK_DUCK_CACHE_DIRECTORY_PATH=""
 
 //if this is set, only artifacts with a modified date later than the CUTOFF will be scanned. You will have to use the
 //DATE_TIME_PATTERN defined above for the cutoff to work properly. With the default pattern, to scan only artifacts newer than January 01, 2016 you would use
@@ -597,8 +597,8 @@ private HubServicesFactory createHubServicesFactory() {
 
 private void initializeConfiguration() {
     if (!initialized) {
-        if (BLACK_DUCK_CACHE_DIRECTORY_PATH) {
-            blackDuckDirectory = new File(BLACK_DUCK_CACHE_DIRECTORY_PATH)
+        if (BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH) {
+            blackDuckDirectory = new File(BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH)
         } else {
             etcDir = ctx.artifactoryHome.etcDir
             blackDuckDirectory = new File(etcDir, "plugin/blackducksoftware")

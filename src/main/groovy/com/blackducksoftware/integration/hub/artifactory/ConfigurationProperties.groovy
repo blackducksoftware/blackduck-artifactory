@@ -68,6 +68,6 @@ class ConfigurationProperties {
     @Value('${hub.artifactory.scan.name.patterns}')
     String hubArtifactoryScanNamePatterns
 
-    @Value('${hub.artifactory.cache.directory.path}')
-    String hubArtifactoryCacheDirectoryPath
+    @Value('${hub.artifactory.scan.binaries.directory.path}')
+    String hubArtifactoryScanBinariesDirectoryPath
 }
