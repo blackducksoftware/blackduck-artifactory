@@ -88,6 +88,7 @@ class ConfigurationManager {
         configurationProperties.artifactoryUsername = setValueFromInput(console, out, 'Artifactory Username', configurationProperties.artifactoryUsername)
         configurationProperties.artifactoryPassword = setPasswordFromInput(console, out, 'Artifactory Password', configurationProperties.artifactoryPassword)
         configurationProperties.hubArtifactoryInspectRepoKey = setValueFromInput(console, out, 'Artifactory Repository To Inspect', configurationProperties.hubArtifactoryInspectRepoKey)
+        configurationProperties.hubArtifactoryInspectSkipBomCalculation = setValueFromInput(console, out, 'Skip Post-Inspection BOM Calculation', configurationProperties.hubArtifactoryInspectSkipBomCalculation)
 
         out.println('')
         out.println("If no value is supplied for the Hub Artifactory Project Name, the repository name, ${configurationProperties.hubArtifactoryInspectRepoKey}, will be used.")
@@ -202,6 +203,7 @@ class ConfigurationManager {
         properties.setProperty('hub.artifactory.date.time.pattern', configurationProperties.hubArtifactoryDateTimePattern)
         properties.setProperty('hub.artifactory.inspect.repo.key', configurationProperties.hubArtifactoryInspectRepoKey)
         properties.setProperty('hub.artifactory.inspect.latest.updated.cutoff', configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
+        properties.setProperty('hub.artifactory.inspect.skip.bom.calc', String.valueOf(configurationProperties.hubArtifactoryInspectSkipBomCalc))
         properties.setProperty('hub.artifactory.scan.repos.to.search', configurationProperties.hubArtifactoryScanReposToSearch)
         properties.setProperty('hub.artifactory.scan.name.patterns', configurationProperties.hubArtifactoryScanNamePatterns)
         properties.setProperty('hub.artifactory.cache.directory.path', configurationProperties.hubArtifactoryCacheDirectoryPath)

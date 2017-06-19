@@ -1,6 +1,6 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,6 +19,11 @@ import com.google.gson.Gson
 @Component
 class ArtifactoryInspector {
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryInspector.class)
+
+    static final String PROJECT_VERSION_UI_URL_PROPERTY="blackDuckProjectVersionUiUrl"
+    static final String POLICY_STATUS_PROPERTY="blackDuckPolicyStatus"
+    static final String OVERALL_POLICY_STATUS_PROPERTY="blackDuckOverallPolicyStatus"
+    static final String INSPECTION_TIME_PROPERTY="blackDuckInspectionTime"
 
     @Autowired
     BdioPropertyHelper bdioPropertyHelper
@@ -61,7 +66,7 @@ class ArtifactoryInspector {
             walkFolderStructure('', it, inspectionResults)
         }
 
-        logger.info("Completed bdio file: ${outputFile.canonicalPath}")
+        logger.info("Completed BDIO file: ${outputFile.canonicalPath}")
 
         logger.trace("Total artifacts found: ${inspectionResults.totalArtifactsFound}")
         logger.info("Total attempts to extract a component: ${inspectionResults.totalExtractAttempts}")
@@ -72,26 +77,31 @@ class ArtifactoryInspector {
         logger.info("Count of artifacts that were skipped because they are too old: ${inspectionResults.skippedArtifacts}")
 
         if (hubClient.isValid()) {
+            String repoKey = configurationProperties.hubArtifactoryInspectRepoKey
             hubClient.uploadBdioToHub(outputFile)
-            logger.info("Uploaded bdio to ${configurationProperties.hubUrl}")
-            writeRepoProperties(configurationProperties.hubArtifactoryInspectRepoKey, "", projectName, projectVersionName)
-            logger.info("Updated properties for artifactory project ${configurationProperties.hubArtifactoryInspectRepoKey}")
+            logger.info("Uploaded BDIO to ${configurationProperties.hubUrl}")
+            LocalDateTime dateTime = LocalDateTime.now()
+            artifactoryRestClient.setPropertiesForPath(repoKey,  "", ["${INSPECTION_TIME_PROPERTY}": dateTime.toString()], false)
+            logger.info("Inspection complete")
+            logger.info("${repoKey} inspection timestamp updated (Now ${dateTime.toString()})")
+            if(!configurationProperties.hubArtifactoryInspectSkipBomCalculation){
+                logger.info("Waiting for BOM calculation to populate the properties for the corresponding Hub project in artifactory (this may take a while)...")
+                hubClient.waitForBomCalculation(projectName, projectVersionName)
+                logger.info("...BOM calculation complete")
+                String overallPolicyStatus = hubProjectDetails.getHubProjectOverallPolicyStatus(projectName, projectVersionName).toString()
+                logger.info("Hub Overall Policy Status: ${overallPolicyStatus}")
+                String policyStatus = hubProjectDetails.getHubProjectPolicyStatus(projectName, projectVersionName)
+                logger.info("Hub Policy Status: ${policyStatus}")
+                String uiUrl = hubProjectDetails.getHubProjectVersionUIUrl(projectName, projectVersionName)
+                logger.info("Hub UI URL: ${uiUrl}")
+                Map properties = [ "${PROJECT_VERSION_UI_URL_PROPERTY}" : uiUrl,
+                    "${POLICY_STATUS_PROPERTY}" : policyStatus.replaceAll(",", "\\\\,"),
+                    "${OVERALL_POLICY_STATUS_PROPERTY}" : overallPolicyStatus
+                ]
+                artifactoryRestClient.setPropertiesForPath(repoKey, "", properties, false)
+                logger.info("Updated Hub data for artifactory repository ${repoKey}")
+            }
         }
-    }
-
-    private void writeRepoProperties(repoKey, repoPath, projectName, projectVersionName){
-        //String timestamp = ""+System.currentTimeMillis()
-        ZonedDateTime dateTime = ZonedDateTime.now()
-        String policyStatus = hubClient.getPolicyStatus(projectName, projectVersionName)
-        policyStatus = policyStatus.replaceAll(",", "\\\\,")
-        Map properties = ["blackduck.inspection.timestamp": dateTime.toString(),
-            "blackduck.policy.status": policyStatus
-        ]
-        //properties.putAt()
-        //TODO: fucking hub -- properties.putAt("blackduck.hub.project.url", "")
-        //TODO: properties.putAt("blackduck.scan.status", "wat")
-        //properties.putAt()
-        artifactoryRestClient.setPropertiesForPath(repoKey, repoPath, properties, false)
     }
 
     private void walkFolderStructure(String repoPath, BdioWriter bdioWriter, InspectionResults inspectionResults) {
