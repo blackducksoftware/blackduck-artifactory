@@ -73,7 +73,7 @@ import groovy.transform.Field
 
 @Field final String ARTIFACTORY_REPOS_TO_SEARCH="ext-release-local,libs-release"
 @Field final String ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip,*.tar.gz,*.hpi"
-@Field final String BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH="plugin/blackducksoftware"
+@Field final String BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH="etc/plugins/blackducksoftware"
 
 @Field final boolean logVerboseCronLog=false
 
@@ -248,32 +248,32 @@ jobs {
 
         log.info("...completed addPolicyStatus cron job.")
     }
+}
 
-    /**
-     * Takes a FileLayoutInfo object and returns the project name as it will appear in the Hub. (By default, this returns the module of the FileLayoutInfo object)
-     *
-     * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project name.
-     */
-    getProjectNameFromFileLayoutInfo(fileLayoutInfo){
-        log.info("Constructing project name...")
+/**
+ * Takes a FileLayoutInfo object and returns the project name as it will appear in the Hub. (By default, this returns the module of the FileLayoutInfo object)
+ *
+ * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project name.
+ */
+String getProjectNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo){
+    log.info("Constructing project name...")
 
-        fileLayoutInfo.module
+    fileLayoutInfo.module
 
-        log.info("...project name constructed")
-    }
+    log.info("...project name constructed")
+}
 
-    /**
-     * Takes a FileLayoutInfo object and returns the project version name for as it will appear in the Hub. (By default, this returns the baseRevision of the FileLayoutInfo object)
-     *
-     * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project version name.
-     */
-    getProjectVersionNameFromFileLayoutInfo(fileLayoutInfo){
-        log.info("Constructing project version name...")
+/**
+ * Takes a FileLayoutInfo object and returns the project version name for as it will appear in the Hub. (By default, this returns the baseRevision of the FileLayoutInfo object)
+ *
+ * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project version name.
+ */
+String getProjectVersionNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo){
+    log.info("Constructing project version name...")
 
-        fileLayoutInfo.baseRevision
+    fileLayoutInfo.baseRevision
 
-        log.info("...project version constructed")
-    }
+    log.info("...project version constructed")
 }
 
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!

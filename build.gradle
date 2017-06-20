@@ -5,21 +5,12 @@ buildscript {
 
     dependencies {
         classpath('org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE')
-        classpath 'com.blackducksoftware.integration:hub-gradle-plugin:5.0.0'
     }
 }
 
 apply plugin: 'groovy'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
-
-apply plugin: 'com.blackducksoftware.hub'
-
-buildBom {
-    hubUrl = 'http://int-hub01.dc1.lan:8080'
-    hubUsername = 'sysadmin'
-    hubPassword = 'blackduck'
-}
 
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 tasks.withType(GroovyCompile) { options.encoding = 'UTF-8' }
