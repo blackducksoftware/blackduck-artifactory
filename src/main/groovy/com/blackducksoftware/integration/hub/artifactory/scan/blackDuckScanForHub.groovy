@@ -96,6 +96,7 @@ import groovy.transform.Field
 @Field File etcDir
 @Field File blackDuckDirectory
 @Field File cliDirectory
+@Field File artifactoryHome
 
 executions {
     /**
@@ -399,7 +400,7 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
             HubServerConfig hubServerConfig = createHubServerConfig()
             ProjectRequest projectRequest = projectRequestBuilder.build()
             IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, "???", "2.2.0")
-            ProjectVersionView projectVersionView = cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, true, integrationInfo)
+            ProjectVersionView projectVersionView = cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, integrationInfo)
             log.info("${key} was successfully scanned by the BlackDuck CLI.")
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
             //we only scanned one path, so only one result is expected
@@ -604,7 +605,8 @@ private HubServicesFactory createHubServicesFactory() {
 private void initializeConfiguration() {
     if (!initialized) {
         if (BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH) {
-            blackDuckDirectory = new File(BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH)
+            artifactoryHome = ctx.artifactoryHome
+            blackDuckDirectory = new File(artifactoryHome, BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH)
         } else {
             etcDir = ctx.artifactoryHome.etcDir
             blackDuckDirectory = new File(etcDir, "plugin/blackducksoftware")
