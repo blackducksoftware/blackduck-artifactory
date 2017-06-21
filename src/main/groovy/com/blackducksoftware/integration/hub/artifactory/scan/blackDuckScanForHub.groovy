@@ -41,11 +41,12 @@ import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
 import com.blackducksoftware.integration.hub.global.HubServerConfig
+import com.blackducksoftware.integration.hub.model.request.ProjectRequest
 import com.blackducksoftware.integration.hub.model.view.CodeLocationView
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
-import com.blackducksoftware.integration.hub.model.view.ScanSummaryView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
 import com.blackducksoftware.integration.hub.phonehome.IntegrationInfo
+import com.blackducksoftware.integration.hub.request.builder.ProjectRequestBuilder
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.scan.HubScanConfig
 import com.blackducksoftware.integration.hub.service.HubResponseService
@@ -255,12 +256,13 @@ jobs {
  *
  * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project name.
  */
-String getProjectNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo){
+private String getProjectNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo){
     log.info("Constructing project name...")
 
-    fileLayoutInfo.module
+    String constructedProjectName = fileLayoutInfo.module
 
     log.info("...project name constructed")
+    return constructedProjectName
 }
 
 /**
@@ -268,15 +270,18 @@ String getProjectNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo){
  *
  * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project version name.
  */
-String getProjectVersionNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo){
+private String getProjectVersionNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo){
     log.info("Constructing project version name...")
 
-    fileLayoutInfo.baseRevision
+    String constructedProjectVersionName = fileLayoutInfo.baseRevision
 
     log.info("...project version constructed")
+    return constructedProjectVersionName
 }
 
+//####################################################
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
+//####################################################
 private Set<RepoPath> searchForRepoPaths() {
     def reposToSearch = ARTIFACTORY_REPOS_TO_SEARCH.tokenize(',')
     def patternsToScan = ARTIFACT_NAME_PATTERNS_TO_SCAN.tokenize(',')
@@ -358,6 +363,7 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
 
     filenamesToLayout.each { key, value ->
         try {
+            ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder()
             HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
             hubScanConfigBuilder.scanMemory = HUB_SCAN_MEMORY
             hubScanConfigBuilder.dryRun = HUB_SCAN_DRY_RUN
@@ -376,31 +382,32 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
             }
             def scanFile = new File(workingDirectory, key)
             def scanTargetPath = scanFile.canonicalPath
-            hubScanConfigBuilder.projectName = project
-            hubScanConfigBuilder.version = version
+            projectRequestBuilder.projectName = project
+            projectRequestBuilder.versionName = version
             hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
             HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
 
             IntLogger logger = new Slf4jIntLogger(log)
             HubServicesFactory hubServicesFactory = createHubServicesFactory()
-            CLIDataService cliDataService = hubServicesFactory.createCLIDataService(logger)
+            CLIDataService cliDataService = hubServicesFactory.createCLIDataService(logger, HUB_TIMEOUT*1000)
             MetaService metaService = hubServicesFactory.createMetaService(logger)
 
             //first clear all properties
             deleteAllBlackDuckProperties(filenamesToRepoPath[key])
 
             HubServerConfig hubServerConfig = createHubServerConfig()
-            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, "???", "2.1.1")
-            List<ScanSummaryView> scanSummaryViews = cliDataService.installAndRunScan(hubServerConfig, hubScanConfig, integrationInfo)
+            ProjectRequest projectRequest = projectRequestBuilder.build()
+            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, "???", "2.2.0")
+            ProjectVersionView projectVersionView = cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, true, integrationInfo)
             log.info("${key} was successfully scanned by the BlackDuck CLI.")
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
             //we only scanned one path, so only one result is expected
-            if (null != scanSummaryViews && scanSummaryViews.size() == 1) {
+            if (projectVersionView) {
                 try {
                     String codeLocationUrl = ""
                     try {
-                        codeLocationUrl = metaService.getFirstLink(scanSummaryViews.get(0), MetaService.CODE_LOCATION_BOM_STATUS_LINK)
+                        codeLocationUrl = metaService.getFirstLink(projectVersionView, MetaService.CODE_LOCATION_BOM_STATUS_LINK)
                     } catch (HubIntegrationException e) {
                         log.warn(e.message)
                     }
@@ -590,7 +597,6 @@ private HubServerConfig createHubServerConfig() {
 
 private HubServicesFactory createHubServicesFactory() {
     HubServerConfig hubServerConfig = createHubServerConfig()
-
     CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
     new HubServicesFactory(credentialsRestConnection)
 }
