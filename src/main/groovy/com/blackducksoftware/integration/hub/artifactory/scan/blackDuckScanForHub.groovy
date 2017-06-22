@@ -94,9 +94,10 @@ import groovy.transform.Field
 
 @Field boolean initialized=false
 @Field File etcDir
+@Field File homeDir
 @Field File blackDuckDirectory
 @Field File cliDirectory
-@Field File artifactoryHome
+
 
 executions {
     /**
@@ -605,8 +606,8 @@ private HubServicesFactory createHubServicesFactory() {
 private void initializeConfiguration() {
     if (!initialized) {
         if (BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH) {
-            artifactoryHome = ctx.artifactoryHome
-            blackDuckDirectory = new File(artifactoryHome, BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH)
+            homeDir = ctx.artifactoryHome.homeDir
+            blackDuckDirectory = new File(homeDir, BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH)
         } else {
             etcDir = ctx.artifactoryHome.etcDir
             blackDuckDirectory = new File(etcDir, "plugin/blackducksoftware")
