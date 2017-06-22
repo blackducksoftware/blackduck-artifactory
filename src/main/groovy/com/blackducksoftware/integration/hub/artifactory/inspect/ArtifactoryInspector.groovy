@@ -18,11 +18,11 @@ import com.google.gson.Gson
 
 @Component
 class ArtifactoryInspector {
-    static final String PROJECT_VERSION_UI_URL_PROPERTY="blackDuckProjectVersionUiUrl"
-    static final String POLICY_STATUS_PROPERTY="blackDuckPolicyStatus"
-    static final String OVERALL_POLICY_STATUS_PROPERTY="blackDuckOverallPolicyStatus"
-    static final String INSPECTION_TIME_PROPERTY="blackDuckInspectionTime"
-    static final String INSPECTION_STATUS_PROPERTY="blackDuckInspectionStatus"
+    static final String PROJECT_VERSION_UI_URL_PROPERTY="blackduck.uiUrl"
+    static final String POLICY_STATUS_PROPERTY="blackduck.policyStatus"
+    static final String OVERALL_POLICY_STATUS_PROPERTY="blackduck.overallPolicyStatus"
+    static final String INSPECTION_TIME_PROPERTY="blackduck.inspectionTime"
+    static final String INSPECTION_STATUS_PROPERTY="blackduck.inspectionStatus"
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryInspector.class)
 
     @Autowired
@@ -85,7 +85,7 @@ class ArtifactoryInspector {
                 artifactoryRestClient.setPropertiesForPath(repoKey,  "", ["${INSPECTION_TIME_PROPERTY}": dateTime.toString()], false)
                 logger.info("Inspection complete")
                 logger.info("${repoKey} inspection timestamp updated (Now ${dateTime.toString()})")
-                if(!configurationProperties.hubArtifactoryInspectSkipBomCalculation){
+                if(!Boolean.valueOf(configurationProperties.hubArtifactoryInspectSkipBomCalculation)){
                     logger.info("Waiting for BOM calculation to populate the properties for the corresponding Hub project in artifactory (this may take a while)...")
                     hubClient.waitForBomCalculation(projectName, projectVersionName)
                     logger.info("...BOM calculation complete")

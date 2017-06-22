@@ -203,7 +203,7 @@ class ConfigurationManager {
         properties.setProperty('hub.artifactory.date.time.pattern', configurationProperties.hubArtifactoryDateTimePattern)
         properties.setProperty('hub.artifactory.inspect.repo.key', configurationProperties.hubArtifactoryInspectRepoKey)
         properties.setProperty('hub.artifactory.inspect.latest.updated.cutoff', configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
-        properties.setProperty('hub.artifactory.inspect.skip.bom.calculation', String.valueOf(configurationProperties.hubArtifactoryInspectSkipBomCalculation))
+        properties.setProperty('hub.artifactory.inspect.skip.bom.calculation', configurationProperties.hubArtifactoryInspectSkipBomCalculation)
         properties.setProperty('hub.artifactory.scan.repos.to.search', configurationProperties.hubArtifactoryScanReposToSearch)
         properties.setProperty('hub.artifactory.scan.name.patterns', configurationProperties.hubArtifactoryScanNamePatterns)
 

@@ -60,7 +60,7 @@ class ConfigurationProperties {
     String hubArtifactoryInspectLatestUpdatedCutoff
 
     @Value('${hub.artifactory.inspect.skip.bom.calculation}')
-    boolean hubArtifactoryInspectSkipBomCalculation
+    String hubArtifactoryInspectSkipBomCalculation
 
     @Value('${hub.artifactory.scan.repos.to.search}')
     String hubArtifactoryScanReposToSearch
