@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
 import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
 import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
+import com.blackducksoftware.integration.hub.bdio.simple.model.Forge
+import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.ExternalId
+import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.NameVersionExternalId
 
 @Component
 class GemExtractor extends Extractor {
@@ -57,9 +60,8 @@ class GemExtractor extends Extractor {
                             currentLineIndex++
                         }
 
-                        String bdioId = bdioPropertyHelper.createBdioId(gem, version)
-                        BdioExternalIdentifier bdioExternalIdentifier = bdioPropertyHelper.createRubygemsExternalIdentifier(gem, version)
-                        bdioComponent = bdioNodeFactory.createComponent(gem, version, bdioId, bdioExternalIdentifier)
+                        ExternalId externalId = new NameVersionExternalId(Forge.RUBYGEMS, gem, version)
+                        bdioComponent = bdioNodeFactory.createComponent(gem, version, externalId)
                         return bdioComponent
                     } finally {
                         IOUtils.closeQuietly(gzipInputStream)

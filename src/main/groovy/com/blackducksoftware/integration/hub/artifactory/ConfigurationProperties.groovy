@@ -59,9 +59,15 @@ class ConfigurationProperties {
     @Value('${hub.artifactory.inspect.latest.updated.cutoff}')
     String hubArtifactoryInspectLatestUpdatedCutoff
 
+    @Value('${hub.artifactory.inspect.skip.bom.calculation}')
+    String hubArtifactoryInspectSkipBomCalculation
+
     @Value('${hub.artifactory.scan.repos.to.search}')
     String hubArtifactoryScanReposToSearch
 
     @Value('${hub.artifactory.scan.name.patterns}')
     String hubArtifactoryScanNamePatterns
+
+    @Value('${hub.artifactory.scan.binaries.directory.path}')
+    String hubArtifactoryScanBinariesDirectoryPath
 }

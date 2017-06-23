@@ -61,7 +61,6 @@ class ConfigurationManager {
         configurationProperties.hubPassword = setPasswordFromInput(console, out, 'Hub Server Password', configurationProperties.hubPassword)
         configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', configurationProperties.hubTimeout)
         configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, 'Local Working Directory', configurationProperties.hubArtifactoryWorkingDirectoryPath)
-
         persistValues()
 
         boolean ok = false
@@ -87,6 +86,7 @@ class ConfigurationManager {
         configurationProperties.artifactoryUsername = setValueFromInput(console, out, 'Artifactory Username', configurationProperties.artifactoryUsername)
         configurationProperties.artifactoryPassword = setPasswordFromInput(console, out, 'Artifactory Password', configurationProperties.artifactoryPassword)
         configurationProperties.hubArtifactoryInspectRepoKey = setValueFromInput(console, out, 'Artifactory Repository To Inspect', configurationProperties.hubArtifactoryInspectRepoKey)
+        configurationProperties.hubArtifactoryInspectSkipBomCalculation = setValueFromInput(console, out, 'Skip Post-Inspection BOM Calculation', configurationProperties.hubArtifactoryInspectSkipBomCalculation)
 
         out.println('')
         out.println("If no value is supplied for the Hub Artifactory Project Name, the repository name, ${configurationProperties.hubArtifactoryInspectRepoKey}, will be used.")
@@ -136,6 +136,7 @@ class ConfigurationManager {
     }
 
     void updateArtifactoryScanValues(Console console, PrintStream out) {
+        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
         String reposToSearch = configurationProperties.hubArtifactoryScanReposToSearch
         def repositoryNames = reposToSearch ? reposToSearch.tokenize(',') : []
         out.println("The current set of repositories to search is ${reposToSearch}. You will be prompted to add new repositories. If you would first like to clear the currently configured repositories, type 'clear'.")
@@ -196,11 +197,13 @@ class ConfigurationManager {
         properties.setProperty('artifactory.username', configurationProperties.artifactoryUsername)
         properties.setProperty('artifactory.password', configurationProperties.artifactoryPassword)
         properties.setProperty('hub.artifactory.working.directory.path', configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        properties.setProperty('hub.artifactory.scan.binaries.directory.path', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
         properties.setProperty('hub.artifactory.project.name', configurationProperties.hubArtifactoryProjectName)
         properties.setProperty('hub.artifactory.project.version.name', configurationProperties.hubArtifactoryProjectVersionName)
         properties.setProperty('hub.artifactory.date.time.pattern', configurationProperties.hubArtifactoryDateTimePattern)
         properties.setProperty('hub.artifactory.inspect.repo.key', configurationProperties.hubArtifactoryInspectRepoKey)
         properties.setProperty('hub.artifactory.inspect.latest.updated.cutoff', configurationProperties.hubArtifactoryInspectLatestUpdatedCutoff)
+        properties.setProperty('hub.artifactory.inspect.skip.bom.calculation', configurationProperties.hubArtifactoryInspectSkipBomCalculation)
         properties.setProperty('hub.artifactory.scan.repos.to.search', configurationProperties.hubArtifactoryScanReposToSearch)
         properties.setProperty('hub.artifactory.scan.name.patterns', configurationProperties.hubArtifactoryScanNamePatterns)
 

@@ -46,6 +46,7 @@ class ArtifactoryScanConfigurer {
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_PASSWORD', configurationProperties.hubProxyPassword)
         scanFileText = replaceText(scanFileText, stringPrefix, 'ARTIFACTORY_REPOS_TO_SEARCH', configurationProperties.hubArtifactoryScanReposToSearch)
         scanFileText = replaceText(scanFileText, stringPrefix, 'ARTIFACT_NAME_PATTERNS_TO_SCAN', configurationProperties.hubArtifactoryScanNamePatterns)
+        scanFileText = replaceText(scanFileText, stringPrefix, 'BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
 
         constructScanZip(scanFileText, scannerDirectory)
     }

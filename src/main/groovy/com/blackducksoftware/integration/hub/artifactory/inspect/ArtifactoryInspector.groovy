@@ -1,5 +1,7 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import java.time.LocalDateTime
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,13 +18,18 @@ import com.google.gson.Gson
 
 @Component
 class ArtifactoryInspector {
+    static final String PROJECT_VERSION_UI_URL_PROPERTY="blackduck.uiUrl"
+    static final String POLICY_STATUS_PROPERTY="blackduck.policyStatus"
+    static final String OVERALL_POLICY_STATUS_PROPERTY="blackduck.overallPolicyStatus"
+    static final String INSPECTION_TIME_PROPERTY="blackduck.inspectionTime"
+    static final String INSPECTION_STATUS_PROPERTY="blackduck.inspectionStatus"
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryInspector.class)
 
     @Autowired
-    BdioPropertyHelper bdioPropertyHelper;
+    BdioPropertyHelper bdioPropertyHelper
 
     @Autowired
-    BdioNodeFactory bdioNodeFactory;
+    BdioNodeFactory bdioNodeFactory
 
     @Autowired
     ArtifactoryRestClient artifactoryRestClient
@@ -40,38 +47,66 @@ class ArtifactoryInspector {
     ConfigurationProperties configurationProperties
 
     void performInspect() {
-        def projectName = hubProjectDetails.hubProjectName
-        def projectVersionName = hubProjectDetails.hubProjectVersionName
-        def inspectionResults = new InspectionResults()
-        def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
-        def outputFile = new File(workingDirectory, "${projectName}_bdio.jsonld")
-        logger.info("Starting bdio creation using file: ${outputFile.canonicalPath}")
-        new BdioWriter(new Gson(), new FileOutputStream(outputFile)).withCloseable {
-            def bdioBillOfMaterialsNode = bdioNodeFactory.createBillOfMaterials(null, projectName, projectVersionName)
-            it.writeBdioNode(bdioBillOfMaterialsNode)
+        String repoKey = configurationProperties.hubArtifactoryInspectRepoKey
+        try{
+            def projectName = hubProjectDetails.hubProjectName
+            def projectVersionName = hubProjectDetails.hubProjectVersionName
+            def inspectionResults = new InspectionResults()
+            def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
+            def outputFile = new File(workingDirectory, "${projectName}_bdio.jsonld")
+            logger.info("Starting bdio creation using file: ${outputFile.canonicalPath}")
+            new BdioWriter(new Gson(), new FileOutputStream(outputFile)).withCloseable {
+                def bdioBillOfMaterialsNode = bdioNodeFactory.createBillOfMaterials(null, projectName, projectVersionName)
+                it.writeBdioNode(bdioBillOfMaterialsNode)
 
-            def bdioProjectNode = new BdioProject();
-            bdioProjectNode.id = outputFile.toURI().toString();
-            bdioProjectNode.name = projectName;
-            bdioProjectNode.version = projectVersionName;
-            it.writeBdioNode(bdioProjectNode)
+                def bdioProjectNode = new BdioProject()
+                bdioProjectNode.id = outputFile.toURI().toString()
+                bdioProjectNode.name = projectName
+                bdioProjectNode.version = projectVersionName
+                it.writeBdioNode(bdioProjectNode)
 
-            walkFolderStructure('', it, inspectionResults)
-        }
+                walkFolderStructure('', it, inspectionResults)
+            }
 
-        logger.info("Completed bdio file: ${outputFile.canonicalPath}")
+            logger.info("Completed BDIO file: ${outputFile.canonicalPath}")
 
-        logger.trace("Total artifacts found: ${inspectionResults.totalArtifactsFound}")
-        logger.info("Total attempts to extract a component: ${inspectionResults.totalExtractAttempts}")
-        logger.info("Total BDIO component nodes created: ${inspectionResults.totalBdioNodesCreated}")
-        logger.info("Count of artifacts that were extracted by only one extractor: ${inspectionResults.singlesFound}")
-        logger.info("Count of artifacts that were extracted by MORE than one extractor: ${inspectionResults.multiplesFound}")
-        logger.trace("Count of artifacts that were NOT extracted: ${inspectionResults.artifactsNotExtracted}")
-        logger.info("Count of artifacts that were skipped because they are too old: ${inspectionResults.skippedArtifacts}")
+            logger.trace("Total artifacts found: ${inspectionResults.totalArtifactsFound}")
+            logger.info("Total attempts to extract a component: ${inspectionResults.totalExtractAttempts}")
+            logger.info("Total BDIO component nodes created: ${inspectionResults.totalBdioNodesCreated}")
+            logger.info("Count of artifacts that were extracted by only one extractor: ${inspectionResults.singlesFound}")
+            logger.info("Count of artifacts that were extracted by MORE than one extractor: ${inspectionResults.multiplesFound}")
+            logger.trace("Count of artifacts that were NOT extracted: ${inspectionResults.artifactsNotExtracted}")
+            logger.info("Count of artifacts that were skipped because they are too old: ${inspectionResults.skippedArtifacts}")
 
-        if (hubClient.isValid()) {
-            hubClient.uploadBdioToHub(outputFile)
-            logger.info("Uploaded bdio to ${configurationProperties.hubUrl}")
+            if (hubClient.isValid()) {
+                hubClient.uploadBdioToHub(outputFile)
+                logger.info("Uploaded BDIO to ${configurationProperties.hubUrl}")
+                LocalDateTime dateTime = LocalDateTime.now()
+                artifactoryRestClient.setPropertiesForPath(repoKey,  "", ["${INSPECTION_TIME_PROPERTY}": dateTime.toString()], false)
+                logger.info("Inspection complete")
+                logger.info("${repoKey} inspection timestamp updated (Now ${dateTime.toString()})")
+                if(!Boolean.valueOf(configurationProperties.hubArtifactoryInspectSkipBomCalculation)){
+                    logger.info("Waiting for BOM calculation to populate the properties for the corresponding Hub project in artifactory (this may take a while)...")
+                    hubClient.waitForBomCalculation(projectName, projectVersionName)
+                    logger.info("...BOM calculation complete")
+                    String overallPolicyStatus = hubProjectDetails.getHubProjectOverallPolicyStatus(projectName, projectVersionName).toString()
+                    logger.info("Hub Overall Policy Status: ${overallPolicyStatus}")
+                    String policyStatus = hubProjectDetails.getHubProjectPolicyStatus(projectName, projectVersionName)
+                    logger.info("Hub Policy Status: ${policyStatus}")
+                    String uiUrl = hubProjectDetails.getHubProjectVersionUIUrl(projectName, projectVersionName)
+                    logger.info("Hub UI URL: ${uiUrl}")
+                    Map properties = [ "${PROJECT_VERSION_UI_URL_PROPERTY}" : uiUrl,
+                        "${POLICY_STATUS_PROPERTY}" : policyStatus.replaceAll(",", "\\\\,"),
+                        "${OVERALL_POLICY_STATUS_PROPERTY}" : overallPolicyStatus
+                    ]
+                    artifactoryRestClient.setPropertiesForPath(repoKey, "", properties, false)
+                    logger.info("Updated Hub data for artifactory repository ${repoKey}")
+                }
+            }
+            artifactoryRestClient.setPropertiesForPath(repoKey, "", ["${INSPECTION_STATUS_PROPERTY}": "SUCCESS"], false)
+        }catch(Exception e){
+            logger.error("Please investigate the inspection logs for details - the Black Duck Inspection did not complete successfully: ${e.message}", e)
+            artifactoryRestClient.setPropertiesForPath(repoKey, "", ["${INSPECTION_STATUS_PROPERTY}": "FAILURE"], false)
         }
     }
 
