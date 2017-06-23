@@ -116,47 +116,47 @@ executions {
      * The same functionality is provided via the scanForHub cron job to enable scheduled scans to run consistently.
      *
      * This can be triggered with the following curl command:
-     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/scanForHub"
+     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
      */
-    scanForHub(httpMethod: "GET") { params ->
-        log.info("Starting scanForHub REST request...")
+    blackDuckScan(httpMethod: "GET") { params ->
+        log.info("Starting blackDuckScan REST request...")
 
         initializeConfiguration()
         Set<RepoPath> repoPaths = searchForRepoPaths()
         scanArtifactPaths(repoPaths)
 
-        log.info("...completed scanForHub REST request.")
+        log.info("...completed blackDuckScan REST request.")
     }
 
     /**
      * This will return a current status of the plugin's configuration to verify things are setup properly.
      *
      * This can be triggered with the following curl command:
-     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/testConfig"
+     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckTestConfig"
      */
-    testConfig(httpMethod: "GET") { params ->
-        log.info("Starting testConfig REST request...")
+    blackDuckTestConfig(httpMethod: "GET") { params ->
+        log.info("Starting blackDuckTestConfig REST request...")
 
         initializeConfiguration()
         message = buildStatusCheckMessage()
-        log.info("...completed testConfig REST request.")
+        log.info("...completed blackDuckTestConfig REST request.")
     }
 
     /**
      * This will delete, then recreate, the blackducksoftware directory which includes the cli, the cron job log, as well as all the cli logs.
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/clearBlackDuckDirectory"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
      */
-    clearBlackDuckDirectory() { params ->
-        log.info("Starting clearBlackDuckDirectory REST request...")
+    blackDuckReloadDirectory() { params ->
+        log.info("Starting blackDuckReloadDirectory REST request...")
 
         initializeConfiguration()
 
         FileUtils.deleteDirectory(blackDuckDirectory)
         blackDuckDirectory.mkdirs()
 
-        log.info("...completed clearBlackDuckDirectory REST request.")
+        log.info("...completed blackDuckReloadDirectory REST request.")
     }
 
     /**
@@ -169,16 +169,16 @@ executions {
      * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and delete all the properties that the plugin sets.
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/deleteBlackDuckProperties"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties"
      */
-    deleteBlackDuckProperties() { params ->
-        log.info("Starting deleteBlackDuckProperties REST request...")
+    blackDuckDeleteScanProperties() { params ->
+        log.info("Starting blackDuckDeleteScanProperties REST request...")
 
         initializeConfiguration()
         Set<RepoPath> repoPaths = searchForRepoPaths()
         repoPaths.each { deleteAllBlackDuckProperties(it) }
 
-        log.info("...completed deleteBlackDuckProperties REST request.")
+        log.info("...completed blackDuckDeleteScanProperties REST request.")
     }
 
     /**
@@ -192,10 +192,10 @@ executions {
      * if that property indicates a scan failure, it delete all the properties that the plugin set on it.
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/deleteBlackDuckPropertiesFromScanFailures"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures"
      */
-    deleteBlackDuckPropertiesFromScanFailures() { params ->
-        log.info("Starting deleteBlackDuckPropertiesFromScanFailures REST request...")
+    blackDuckDeleteScanPropertiesFromFailures() { params ->
+        log.info("Starting blackDuckDeleteScanPropertiesFromFailures REST request...")
 
         initializeConfiguration()
         Set<RepoPath> repoPaths = searchForRepoPaths()
@@ -205,7 +205,7 @@ executions {
             }
         }
 
-        log.info("...completed deleteBlackDuckPropertiesFromScanFailures REST request.")
+        log.info("...completed blackDuckDeleteScanPropertiesFromFailures REST request.")
     }
 }
 
@@ -228,25 +228,25 @@ jobs {
      *
      * The same functionality is provided via the scanForHub execution to enable a one-time scan triggered via a REST call.
      */
-    scanForHub(cron: "0 0/1 * 1/1 * ?") {
-        log.info("Starting scanForHub cron job...")
+    blackDuckScan(cron: "0 0/1 * 1/1 * ?") {
+        log.info("Starting blackDuckScan cron job...")
 
         initializeConfiguration()
 
-        logCronRun("scanForHub")
+        logCronRun("blackDuckScan")
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
         scanArtifactPaths(repoPaths)
 
-        log.info("...completed scanForHub cron job.")
+        log.info("...completed blackDuckScan cron job.")
     }
 
-    addPolicyStatus(cron: "0 0/1 * 1/1 * ?") {
-        log.info("Starting addPolicyStatus cron job...")
+    blackDuckAddPolicyStatus(cron: "0 0/1 * 1/1 * ?") {
+        log.info("Starting blackDuckAddPolicyStatus cron job...")
 
         initializeConfiguration()
 
-        logCronRun("addPolicyStatus")
+        logCronRun("blackDuckAddPolicyStatus")
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
         HubServicesFactory hubServicesFactory = createHubServicesFactory()
@@ -255,7 +255,7 @@ jobs {
 
         populatePolicyStatuses(hubResponseService, metaService, repoPaths)
 
-        log.info("...completed addPolicyStatus cron job.")
+        log.info("...completed blackDuckAddPolicyStatus cron job.")
     }
 }
 
