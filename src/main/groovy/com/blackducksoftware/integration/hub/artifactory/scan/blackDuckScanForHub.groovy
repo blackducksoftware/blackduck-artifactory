@@ -406,7 +406,7 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
 
             HubServerConfig hubServerConfig = createHubServerConfig()
             ProjectRequest projectRequest = projectRequestBuilder.build()
-            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, "???", "2.2.0")
+            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, "???", "3.0.0")
             ProjectVersionView projectVersionView = cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, integrationInfo)
             log.info("${key} was successfully scanned by the BlackDuck CLI.")
             repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
