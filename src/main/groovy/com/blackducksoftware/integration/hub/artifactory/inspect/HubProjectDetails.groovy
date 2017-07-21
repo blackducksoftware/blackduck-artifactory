@@ -73,15 +73,7 @@ class HubProjectDetails {
 
         ProjectView project = projectRequestService.getProjectByName(projectName)
         ProjectVersionView projectVersion = projectVersionRequestService.getProjectVersion(project, projectVersionName)
-        String projectVersionUIUrl = ""
-        try{
-            String projectVersionUrl = metaService.getHref(projectVersion)
-            String hubUrl = hubServerConfig.getHubUrl().toString()
-            String versionId = projectVersionUrl.substring(projectVersionUrl.indexOf("/versions/") + "/versions/".length())
-            projectVersionUIUrl = "${hubUrl}/ui/versions/id:${versionId}/view:bom"
-        } catch(Exception e){
-            logger.debug(e.getMessage())
-        }
+        String projectVersionUIUrl = metaService.getFirstLinkSafely(projectVersion, "components")
         projectVersionUIUrl
     }
 
