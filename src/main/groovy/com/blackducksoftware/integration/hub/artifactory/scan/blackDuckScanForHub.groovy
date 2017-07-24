@@ -139,6 +139,7 @@ executions {
 
         initializeConfiguration()
         message = buildStatusCheckMessage()
+
         log.info("...completed blackDuckTestConfig REST request.")
     }
 
@@ -175,6 +176,7 @@ executions {
         log.info("Starting blackDuckDeleteScanProperties REST request...")
 
         initializeConfiguration()
+
         Set<RepoPath> repoPaths = searchForRepoPaths()
         repoPaths.each { deleteAllBlackDuckProperties(it) }
 
@@ -198,6 +200,7 @@ executions {
         log.info("Starting blackDuckDeleteScanPropertiesFromFailures REST request...")
 
         initializeConfiguration()
+
         Set<RepoPath> repoPaths = searchForRepoPaths()
         repoPaths.each {
             if(repositories.getProperty(it, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME)?.equals("FAILURE")){
@@ -342,118 +345,118 @@ private boolean shouldRepoPathBeScannedNow(RepoPath repoPath) {
 }
 
 private void scanArtifactPaths(Set<RepoPath> repoPaths) {
-    def filenamesToLayout = [:]
-    def filenamesToRepoPath = [:]
-
     repoPaths = repoPaths.findAll {shouldRepoPathBeScannedNow(it)}
     repoPaths.each {
-        ResourceStreamHandle resourceStream = repositories.getContent(it)
-        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(it)
-        def inputStream
-        def fileOutputStream
-        try {
-            inputStream = resourceStream.inputStream
-            fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, it.name))
-            fileOutputStream << inputStream
-            filenamesToLayout.put(it.name, fileLayoutInfo)
-            filenamesToRepoPath.put(it.name, it)
+        try{
+            String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
+            repositories.setProperty(it, BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
+            FileLayoutInfo fileLayoutInfo = getArtifactFromPath(it)
+            ProjectVersionView projectVersionView = scanArtifact(it, it.name, fileLayoutInfo)
+            writeScanProperties(it, projectVersionView)
         } catch (Exception e) {
-            log.error("There was an error getting ${it.name}: ${e.message}")
+            log.error("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully on ${it.name}: ${e.message}", e)
+            repositories.setProperty(it, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "FAILURE")
         } finally {
-            IOUtils.closeQuietly(inputStream)
-            IOUtils.closeQuietly(fileOutputStream)
-            resourceStream.close()
+            deletePathArtifact(it)
         }
     }
+}
 
-    File toolsDirectory = cliDirectory
-    File workingDirectory = blackDuckDirectory
+private FileLayoutInfo getArtifactFromPath(RepoPath repoPath) {
+    ResourceStreamHandle resourceStream = repositories.getContent(repoPath)
+    FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+    def inputStream
+    def fileOutputStream
+    try {
+        inputStream = resourceStream.inputStream
+        fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, repoPath.name))
+        fileOutputStream << inputStream
+    } catch (Exception e) {
+        log.error("There was an error getting ${repoPath.name}: ${e.message}")
+    } finally {
+        IOUtils.closeQuietly(inputStream)
+        IOUtils.closeQuietly(fileOutputStream)
+        resourceStream.close()
+    }
+    fileLayoutInfo
+}
 
-    filenamesToLayout.each { key, value ->
+private void scanArtifact(RepoPath repoPath, String fileName, FileLayoutInfo fileLayoutInfo){
+    ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder()
+    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
+    hubScanConfigBuilder.scanMemory = HUB_SCAN_MEMORY
+    hubScanConfigBuilder.dryRun = HUB_SCAN_DRY_RUN
+    hubScanConfigBuilder.toolsDir = cliDirectory
+    hubScanConfigBuilder.workingDirectory = blackDuckDirectory
+    hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
+
+    String project = getProjectNameFromFileLayoutInfo(fileLayoutInfo)
+    String version = getProjectVersionNameFromFileLayoutInfo(fileLayoutInfo)
+    if (StringUtils.isBlank(project) || StringUtils.isBlank(version)) {
+        String filenameWithoutExtension = FilenameUtils.getBaseName(fileName)
+        ProjectNameVersionGuesser guesser = new ProjectNameVersionGuesser()
+        ProjectNameVersionGuess guess = guesser.guessNameAndVersion(filenameWithoutExtension)
+        project = guess.projectName
+        version = guess.versionName
+    }
+    def scanFile = new File(hubScanConfigBuilder.workingDirectory, fileName)
+    def scanTargetPath = scanFile.canonicalPath
+    projectRequestBuilder.projectName = project
+    projectRequestBuilder.versionName = version
+    hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
+
+    HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
+    IntLogger logger = new Slf4jIntLogger(log)
+    HubServicesFactory hubServicesFactory = createHubServicesFactory()
+    CLIDataService cliDataService = hubServicesFactory.createCLIDataService(logger, HUB_TIMEOUT * 1000)
+
+    HubServerConfig hubServerConfig = createHubServerConfig()
+    ProjectRequest projectRequest = projectRequestBuilder.build()
+    String artifactoryVersion
+    try{
+        artifactoryVersion = ctx.versionProvider.running.versionName
+    }catch(Exception e){
+        artifactoryVersion  = "???"
+    }
+    IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, artifactoryVersion, "3.1.0")
+    cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, integrationInfo)
+}
+
+private void deletePathArtifact(String fileName){
+    try {
+        boolean deleteOk = new File(blackDuckDirectory, fileName).delete()
+        log.info("Successfully deleted temporary ${fileName}: ${Boolean.toString(deleteOk)}")
+    } catch (Exception e) {
+        log.error("Exception deleting ${fileName}: ${e.message}")
+    }
+}
+
+private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVersionView){
+    HubServicesFactory hubServicesFactory = createHubServicesFactory()
+    IntLogger logger = new Slf4jIntLogger(log)
+    MetaService metaService = hubServicesFactory.createMetaService(logger)
+    log.info("${repoPath.name} was successfully scanned by the BlackDuck CLI.")
+    repositories.setProperty(repoPath, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
+
+    if (projectVersionView) {
+        String projectVersionUrl = ""
+        String projectVersionUIUrl = ""
         try {
-            ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder()
-            HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
-            hubScanConfigBuilder.scanMemory = HUB_SCAN_MEMORY
-            hubScanConfigBuilder.dryRun = HUB_SCAN_DRY_RUN
-            hubScanConfigBuilder.toolsDir = toolsDirectory
-            hubScanConfigBuilder.workingDirectory = workingDirectory
-            hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
-
-            String project = getProjectNameFromFileLayoutInfo(value)
-            String version = getProjectVersionNameFromFileLayoutInfo(value)
-            if (StringUtils.isBlank(project) || StringUtils.isBlank(version)) {
-                String filenameWithoutExtension = FilenameUtils.getBaseName(key)
-                ProjectNameVersionGuesser guesser = new ProjectNameVersionGuesser()
-                ProjectNameVersionGuess guess = guesser.guessNameAndVersion(filenameWithoutExtension)
-                project = guess.projectName
-                version = guess.versionName
+            projectVersionUrl = metaService.getHref(projectVersionView)
+            if (StringUtils.isNotEmpty(projectVersionUrl)) {
+                repositories.setProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
+                log.info("Added ${projectVersionUrl} to ${repoPath.name}")
             }
-            def scanFile = new File(workingDirectory, key)
-            def scanTargetPath = scanFile.canonicalPath
-            projectRequestBuilder.projectName = project
-            projectRequestBuilder.versionName = version
-            hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
-
-            HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
-
-            IntLogger logger = new Slf4jIntLogger(log)
-            HubServicesFactory hubServicesFactory = createHubServicesFactory()
-            CLIDataService cliDataService = hubServicesFactory.createCLIDataService(logger, HUB_TIMEOUT*1000)
-            MetaService metaService = hubServicesFactory.createMetaService(logger)
-
-            //first clear all properties
-            deleteAllBlackDuckProperties(filenamesToRepoPath[key])
-
-            HubServerConfig hubServerConfig = createHubServerConfig()
-            ProjectRequest projectRequest = projectRequestBuilder.build()
-            IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, "???", "3.0.0")
-            ProjectVersionView projectVersionView = cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, integrationInfo)
-            log.info("${key} was successfully scanned by the BlackDuck CLI.")
-            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "SUCCESS")
-            //we only scanned one path, so only one result is expected
-            if (projectVersionView) {
-                try {
-                    String projectVersionUrl = ""
-                    try {
-                        projectVersionUrl = metaService.getHref(projectVersionView)
-                    } catch (HubIntegrationException e) {
-                        log.warn(e.message)
-                    }
-                    if (StringUtils.isNotBlank(projectVersionUrl)) {
-                        String hubUrl = hubServerConfig.getHubUrl().toString()
-                        String versionId = projectVersionUrl.substring(projectVersionUrl.indexOf("/versions/") + "/versions/".length())
-                        String uiUrl = hubUrl + "/#versions/id:"+ versionId + "/view:bom"
-                        repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
-                        repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME, uiUrl)
-                        log.info("Added ${projectVersionUrl} to ${key}")
-                        log.info("Added ${uiUrl} to ${key}")
-
-                    }
-                } catch (Exception e) {
-                    log.error("Exception getting code location url: ${e.message}")
-                }
-            } else {
-                log.warn("No scan summaries were available for a successful scan - if this was a dry run, this is expected, but otherwise, there should be summaries.")
+            projectVersionUIUrl = metaService.getFirstLinkSafely(projectVersionView, "components")
+            if (StringUtils.isNotEmpty(projectVersionUIUrl)) {
+                repositories.setProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME, projectVersionUIUrl)
+                log.info("Added ${projectVersionUIUrl} to ${repoPath.name}")
             }
         } catch (Exception e) {
-            log.error("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully: ${e.message}", e)
-            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "FAILURE")
-        } finally {
-            //by this time, if no success has occurred, treat it as a failure
-            //we do this property updating in 'finally' so that any uncaught error will simply prevent this one file from being scanned again
-            if ("SUCCESS" != repositories.getProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME)) {
-                repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "FAILURE")
-            }
-            String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
-            repositories.setProperty(filenamesToRepoPath[key], BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
+            log.error("Exception getting code location url: ${e.message}")
         }
-
-        try {
-            boolean deleteOk = new File(blackDuckDirectory, key).delete()
-            log.info("Successfully deleted temporary ${key}: ${Boolean.toString(deleteOk)}")
-        } catch (Exception e) {
-            log.error("Exception deleting ${key}: ${e.message}")
-        }
+    } else {
+        log.warn("No scan summaries were available for a successful scan - if this was a dry run, this is expected, but otherwise, there should be summaries.")
     }
 }
 
