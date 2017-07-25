@@ -357,7 +357,7 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
             log.error("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully on ${it.name}: ${e.message}", e)
             repositories.setProperty(it, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, "FAILURE")
         } finally {
-            deletePathArtifact(it)
+            deletePathArtifact(it.name)
         }
     }
 }
@@ -381,7 +381,7 @@ private FileLayoutInfo getArtifactFromPath(RepoPath repoPath) {
     fileLayoutInfo
 }
 
-private void scanArtifact(RepoPath repoPath, String fileName, FileLayoutInfo fileLayoutInfo){
+private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, FileLayoutInfo fileLayoutInfo){
     ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder()
     HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
     hubScanConfigBuilder.scanMemory = HUB_SCAN_MEMORY
@@ -546,7 +546,7 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
     String urlEndpoint = urlProperty.replace(hubUrlFromProperty, "")
 
     String updatedProperty = HUB_URL + urlEndpoint
-    updatedProperty
+    updatedPropertyls
 }
 
 private void logCronRun(String methodName) {
