@@ -66,6 +66,8 @@ class HubClient {
         hubServerConfigBuilder.setProxyUsername(configurationProperties.hubProxyUsername)
         hubServerConfigBuilder.setProxyPassword(configurationProperties.hubProxyPassword)
 
+        hubServerConfigBuilder.setAutoImportHttpsCertificates(Boolean.parseBoolean(configurationProperties.hubAutoImportHttpsCertificates))
+
         hubServerConfigBuilder
     }
 }

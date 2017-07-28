@@ -68,6 +68,8 @@ import groovy.transform.Field
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
 
+@Field final boolean HUB_AUTO_IMPORT_HTTPS_CERTIFICATES=false
+
 @Field final int HUB_SCAN_MEMORY=4096
 @Field final boolean HUB_SCAN_DRY_RUN=false
 
@@ -84,6 +86,7 @@ import groovy.transform.Field
 @Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME="blackduck.uiUrl"
 @Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME="blackduck.policyStatus"
 @Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME="blackduck.overallPolicyStatus"
+
 
 //if this is set, only artifacts with a modified date later than the CUTOFF will be scanned. You will have to use the
 //DATE_TIME_PATTERN defined above for the cutoff to work properly. With the default pattern, to scan only artifacts newer than January 01, 2016 you would use
@@ -546,7 +549,7 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
     String urlEndpoint = urlProperty.replace(hubUrlFromProperty, "")
 
     String updatedProperty = HUB_URL + urlEndpoint
-    updatedPropertyls
+    updatedProperty
 }
 
 private void logCronRun(String methodName) {
@@ -586,6 +589,7 @@ private HubServerConfig createHubServerConfig() {
     hubServerConfigBuilder.setProxyPort(HUB_PROXY_PORT)
     hubServerConfigBuilder.setProxyUsername(HUB_PROXY_USERNAME)
     hubServerConfigBuilder.setProxyPassword(HUB_PROXY_PASSWORD)
+    hubServerConfigBuilder.setAutoImportHttpsCertificates(HUB_AUTO_IMPORT_HTTPS_CERTIFICATES)
 
     return hubServerConfigBuilder.build()
 }

@@ -42,7 +42,7 @@ class ConfigurationManager {
     }
 
     boolean needsBaseConfigUpdate() {
-        StringUtils.isBlank(configurationProperties.hubUrl) || StringUtils.isBlank(configurationProperties.hubUsername) || StringUtils.isBlank(configurationProperties.hubPassword) || StringUtils.isBlank(configurationProperties.hubArtifactoryWorkingDirectoryPath)
+        StringUtils.isBlank(configurationProperties.hubUrl) || StringUtils.isBlank(configurationProperties.hubUsername) || StringUtils.isBlank(configurationProperties.hubPassword) || StringUtils.isBlank(configurationProperties.hubArtifactoryWorkingDirectoryPath) || StringUtils.isBlank(configurationProperties.hubAutoImportHttpsCertificates)
     }
 
     boolean needsArtifactoryInspectUpdate() {
@@ -60,6 +60,7 @@ class ConfigurationManager {
         configurationProperties.hubUsername = setValueFromInput(console, out, 'Hub Server Username', configurationProperties.hubUsername)
         configurationProperties.hubPassword = setPasswordFromInput(console, out, 'Hub Server Password', configurationProperties.hubPassword)
         configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', configurationProperties.hubTimeout)
+        configurationProperties.hubAutoImportHttpsCertificates = setValueFromInput(console, out, 'Automatically Import HTTPS Certificates', configurationProperties.hubAutoImportHttpsCertificates)
         configurationProperties.hubArtifactoryWorkingDirectoryPath = setValueFromInput(console, out, 'Local Working Directory', configurationProperties.hubArtifactoryWorkingDirectoryPath)
         persistValues()
 
@@ -189,6 +190,7 @@ class ConfigurationManager {
         properties.setProperty('hub.timeout', configurationProperties.hubTimeout)
         properties.setProperty('hub.username', configurationProperties.hubUsername)
         properties.setProperty('hub.password', configurationProperties.hubPassword)
+        properties.setProperty('hub.auto.import.https.certificates', configurationProperties.hubAutoImportHttpsCertificates)
         properties.setProperty('hub.proxy.host', configurationProperties.hubProxyHost)
         properties.setProperty('hub.proxy.port', configurationProperties.hubProxyPort)
         properties.setProperty('hub.proxy.username', configurationProperties.hubProxyUsername)

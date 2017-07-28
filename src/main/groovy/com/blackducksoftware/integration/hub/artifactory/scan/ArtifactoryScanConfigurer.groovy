@@ -35,11 +35,13 @@ class ArtifactoryScanConfigurer {
 
         String stringPrefix = '@Field final String '
         String intPrefix = '@Field final int '
+        String boolPrefix = '@Field final boolean '
 
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_URL', configurationProperties.hubUrl)
         scanFileText = replaceValue(scanFileText, intPrefix, 'HUB_TIMEOUT', '' == configurationProperties.hubTimeout ? '120' : configurationProperties.hubTimeout)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_USERNAME', configurationProperties.hubUsername)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PASSWORD', configurationProperties.hubPassword)
+        scanFileText = replaceValue(scanFileText, boolPrefix, 'HUB_AUTO_IMPORT_HTTPS_CERTIFICATES', "${Boolean.parseBoolean(configurationProperties.hubAutoImportHttpsCertificates)}")
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_HOST', configurationProperties.hubProxyHost)
         scanFileText = replaceValue(scanFileText, intPrefix, 'HUB_PROXY_PORT', '' == configurationProperties.hubProxyPort ? '0' : configurationProperties.hubProxyPort)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_USERNAME', configurationProperties.hubProxyUsername)
