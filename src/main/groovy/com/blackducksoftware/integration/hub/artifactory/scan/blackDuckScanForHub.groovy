@@ -459,24 +459,20 @@ private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVe
             log.error("Exception getting code location url: ${e.message}")
         }
     } else {
-        log.warn("No scan summaries were available for a successful scan - if this was a dry run, this is expected, but otherwise, there should be summaries.")
+        log.warn("No scan summaries were available for a successful scan. This is expected if this was a dry run, but otherwise there should be summaries.")
     }
 }
 
 private void populatePolicyStatuses(HubResponseService hubResponseService, MetaService metaService, Set<RepoPath> repoPaths) {
+    boolean problemRetrievingPolicyStatus = false
     repoPaths.each {
         String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
         if (StringUtils.isNotBlank(projectVersionUrl)) {
             projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
             repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
             ProjectVersionView projectVersionView = hubResponseService.getItem(projectVersionUrl, ProjectVersionView.class)
-            String policyStatusUrl = ""
-            try {
-                policyStatusUrl = metaService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
-            } catch (HubIntegrationException e) {
-                log.warn(e.message)
-            }
-            if (StringUtils.isNotBlank(policyStatusUrl)) {
+            try{
+                String policyStatusUrl = metaService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
                 log.info("Looking up policy status: ${policyStatusUrl}")
                 VersionBomPolicyStatusView versionBomPolicyStatusView = hubResponseService.getItem(policyStatusUrl, VersionBomPolicyStatusView.class)
                 log.info("policy status json: ${versionBomPolicyStatusView.json}")
@@ -484,8 +480,13 @@ private void populatePolicyStatuses(HubResponseService hubResponseService, MetaS
                 repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
                 repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, versionBomPolicyStatusView.overallStatus.toString())
                 log.info("Added policy status to ${it.name}")
+            }catch(HubIntegrationException e){
+                problemRetrievingPolicyStatus = true
             }
         }
+    }
+    if(problemRetrievingPolicyStatus){
+        log.warn("There was a problem retrieving policy status for one or more repos. This is expected if you do not have policy management.")
     }
 }
 
