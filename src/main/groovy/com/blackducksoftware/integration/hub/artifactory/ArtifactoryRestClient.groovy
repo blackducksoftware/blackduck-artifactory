@@ -15,6 +15,11 @@ class ArtifactoryRestClient {
     @Autowired
     ConfigurationProperties configurationProperties
 
+    Map getVersionInfoForArtifactory() {
+        def apiUrl = "${configurationProperties.artifactoryUrl}/api/system/version"
+        getJsonResponse(apiUrl)
+    }
+
     String checkSystem() {
         def apiUrl = "${configurationProperties.artifactoryUrl}/api/system/ping"
         restTemplate.getForObject(apiUrl, String.class)

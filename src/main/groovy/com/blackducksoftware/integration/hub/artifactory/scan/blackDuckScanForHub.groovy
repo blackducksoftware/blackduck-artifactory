@@ -38,13 +38,13 @@ import com.blackducksoftware.integration.hub.api.item.MetaService
 import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
+import com.blackducksoftware.integration.hub.dataservice.phonehome.PhoneHomeDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.model.request.ProjectRequest
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
-import com.blackducksoftware.integration.hub.phonehome.IntegrationInfo
 import com.blackducksoftware.integration.hub.request.builder.ProjectRequestBuilder
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.scan.HubScanConfig
@@ -54,7 +54,9 @@ import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuesser
 import com.blackducksoftware.integration.log.IntLogger
 import com.blackducksoftware.integration.log.Slf4jIntLogger
-import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName
+import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBody
+import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBodyBuilder
+import com.blackducksoftware.integration.phonehome.enums.ThirdPartyName
 
 import groovy.transform.Field
 
@@ -412,17 +414,25 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     IntLogger logger = new Slf4jIntLogger(log)
     HubServicesFactory hubServicesFactory = createHubServicesFactory()
     CLIDataService cliDataService = hubServicesFactory.createCLIDataService(logger, HUB_TIMEOUT * 1000)
+    PhoneHomeDataService phoneHomeDataService = hubServicesFactory.createPhoneHomeDataService(logger)
 
     HubServerConfig hubServerConfig = createHubServerConfig()
     ProjectRequest projectRequest = projectRequestBuilder.build()
-    String artifactoryVersion
+    PhoneHomeRequestBody phoneHomeRequestBody = PhoneHomeRequestBody.DO_NOT_PHONE_HOME
     try{
-        artifactoryVersion = ctx.versionProvider.running.versionName
+        PhoneHomeRequestBodyBuilder phoneHomeRequestBodyBuilder = phoneHomeDataService.createInitialPhoneHomeRequestBodyBuilder()
+        phoneHomeRequestBodyBuilder.thirdPartyName = ThirdPartyName.ARTIFACTORY
+        try{
+            phoneHomeRequestBodyBuilder.thirdPartyVersion = ctx?.versionProvider?.running?.versionName
+        }catch(Exception artifactoryVersionException){
+            phoneHomeRequestBodyBuilder.thirdPartyVersion  = "???"
+        }
+        phoneHomeRequestBodyBuilder.pluginVersion = "3.1.0"
+        phoneHomeRequestBodyBuilder.addToMetaDataMap("mode", "scanner")
+        phoneHomeRequestBody = phoneHomeRequestBodyBuilder.build()
     }catch(Exception e){
-        artifactoryVersion  = "???"
     }
-    IntegrationInfo integrationInfo = new IntegrationInfo(ThirdPartyName.ARTIFACTORY, artifactoryVersion, "3.1.0")
-    cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, integrationInfo)
+    cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, phoneHomeRequestBody)
 }
 
 private void deletePathArtifact(String fileName){

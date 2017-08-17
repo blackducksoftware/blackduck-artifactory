@@ -47,6 +47,7 @@ class ArtifactoryInspector {
     ConfigurationProperties configurationProperties
 
     void performInspect() {
+        hubClient.phoneHome()
         String repoKey = configurationProperties.hubArtifactoryInspectRepoKey
         try{
             def projectName = hubProjectDetails.hubProjectName
