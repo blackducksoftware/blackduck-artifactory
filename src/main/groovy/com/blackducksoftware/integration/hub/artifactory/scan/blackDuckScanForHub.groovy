@@ -491,12 +491,12 @@ private void populatePolicyStatuses(HubResponseService hubResponseService, MetaS
                     repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
                     repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, versionBomPolicyStatusView.overallStatus.toString())
                     log.info("Added policy status to ${it.name}")
-                } catch(HubIntegrationException e){
+                } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
                 }
             }
-        } catch(Exception e){
-            log.warn("There was a problem trying to access repository properties.")
+        } catch (Exception e) {
+            log.error("There was a problem trying to access repository properties: ${e.message}")
             problemRetrievingPolicyStatus = true;
         }
     }
