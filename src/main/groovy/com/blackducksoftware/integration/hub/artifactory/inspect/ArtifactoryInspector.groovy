@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryRestClient
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.artifactory.inspect.extractor.ComponentExtractor
-import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
-import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
-import com.blackducksoftware.integration.hub.bdio.simple.BdioWriter
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioProject
+import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.BdioWriter
+import com.blackducksoftware.integration.hub.bdio.model.BdioProject
 import com.google.gson.Gson
 
 @Component

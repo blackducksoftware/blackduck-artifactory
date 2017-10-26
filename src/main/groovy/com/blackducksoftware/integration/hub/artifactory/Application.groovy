@@ -13,8 +13,9 @@ import org.springframework.context.annotation.Bean
 
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactoryInspector
 import com.blackducksoftware.integration.hub.artifactory.scan.ArtifactoryScanConfigurer
-import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
-import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 
 @SpringBootApplication
 class Application {
@@ -89,5 +90,10 @@ class Application {
     @Bean
     BdioPropertyHelper bdioPropertyHelper() {
         new BdioPropertyHelper()
+    }
+
+    @Bean
+    ExternalIdFactory externalIdFactory() {
+        new ExternalIdFactory()
     }
 }

@@ -4,10 +4,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
-import com.blackducksoftware.integration.hub.bdio.simple.model.externalId.*
-import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.ExternalId
-import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.MavenExternalId
+import com.blackducksoftware.integration.hub.bdio.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
 
 @Component
 class JarExtractor extends Extractor {
@@ -33,7 +31,7 @@ class JarExtractor extends Extractor {
         String artifact = gavPieces[1]
         String version = gavPieces[2]
 
-        ExternalId externalId = new MavenExternalId(group, artifact, version)
+        ExternalId externalId = externalIdFactory.createMavenExternalId(group, artifact, version)
         BdioComponent bdioComponent = bdioNodeFactory.createComponent(artifact, version, externalId)
 
         bdioComponent

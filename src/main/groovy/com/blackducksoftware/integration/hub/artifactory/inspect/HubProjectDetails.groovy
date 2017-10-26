@@ -21,7 +21,6 @@ import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.model.view.ProjectView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
-import com.blackducksoftware.integration.log.Slf4jIntLogger
 
 @Component
 class HubProjectDetails {
@@ -51,14 +50,14 @@ class HubProjectDetails {
 
     VersionBomPolicyStatusOverallStatusEnum getHubProjectOverallPolicyStatus(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        PolicyStatusDataService policyStatusDataService = hubServicesFactory.createPolicyStatusDataService(new Slf4jIntLogger(logger))
+        PolicyStatusDataService policyStatusDataService = hubServicesFactory.createPolicyStatusDataService()
         VersionBomPolicyStatusView versionBomPolicyStatusView = policyStatusDataService.getPolicyStatusForProjectAndVersion(projectName, projectVersionName)
         versionBomPolicyStatusView.overallStatus
     }
 
     String getHubProjectPolicyStatus(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        PolicyStatusDataService policyStatusDataService = hubServicesFactory.createPolicyStatusDataService(new Slf4jIntLogger(logger))
+        PolicyStatusDataService policyStatusDataService = hubServicesFactory.createPolicyStatusDataService()
         VersionBomPolicyStatusView versionBomPolicyStatusView = policyStatusDataService.getPolicyStatusForProjectAndVersion(projectName, projectVersionName)
         PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
         policyStatusDescription.getPolicyStatusMessage()
@@ -66,9 +65,9 @@ class HubProjectDetails {
 
     String getHubProjectVersionUIUrl(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        MetaService metaService = hubServicesFactory.createMetaService(new Slf4jIntLogger(logger))
-        ProjectRequestService projectRequestService = hubServicesFactory.createProjectRequestService(new Slf4jIntLogger(logger))
-        ProjectVersionRequestService projectVersionRequestService = hubServicesFactory.createProjectVersionRequestService(new Slf4jIntLogger(logger))
+        MetaService metaService = hubServicesFactory.createMetaService()
+        ProjectRequestService projectRequestService = hubServicesFactory.createProjectRequestService()
+        ProjectVersionRequestService projectVersionRequestService = hubServicesFactory.createProjectVersionRequestService()
         HubServerConfig hubServerConfig = hubClient.createBuilder().build()
 
         ProjectView project = projectRequestService.getProjectByName(projectName)
@@ -76,5 +75,4 @@ class HubProjectDetails {
         String projectVersionUIUrl = metaService.getFirstLinkSafely(projectVersion, "components")
         projectVersionUIUrl
     }
-
 }

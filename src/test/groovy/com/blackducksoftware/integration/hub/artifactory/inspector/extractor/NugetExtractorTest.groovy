@@ -5,9 +5,10 @@ import org.junit.Test
 
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
 import com.blackducksoftware.integration.hub.artifactory.inspect.extractor.NugetExtractor
-import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
-import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 
 class NugetExtractorTest {
     @Test
@@ -21,6 +22,7 @@ class NugetExtractorTest {
         nugetExtractor.artifactoryDownloader = mockDownloader
         nugetExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         nugetExtractor.bdioNodeFactory = new BdioNodeFactory(nugetExtractor.bdioPropertyHelper)
+        nugetExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = nugetExtractor.extract("Microsoft.Net.Http.2.2.29.nupkg", jsonObject)

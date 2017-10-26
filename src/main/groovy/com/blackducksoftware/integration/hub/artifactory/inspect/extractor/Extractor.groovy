@@ -7,16 +7,20 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 
-import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
-import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 
 abstract class Extractor {
     @Autowired
-    BdioPropertyHelper bdioPropertyHelper;
+    BdioPropertyHelper bdioPropertyHelper
 
     @Autowired
-    BdioNodeFactory bdioNodeFactory;
+    BdioNodeFactory bdioNodeFactory
+
+    @Autowired
+    ExternalIdFactory externalIdFactory
 
     abstract boolean shouldAttemptExtract(String artifactName, Map jsonObject)
     abstract BdioComponent extract(String artifactName, Map jsonObject)

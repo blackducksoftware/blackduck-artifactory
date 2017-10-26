@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:14.0.0'
+    compile 'com.blackducksoftware.integration:hub-common:18.3.0'
 
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'

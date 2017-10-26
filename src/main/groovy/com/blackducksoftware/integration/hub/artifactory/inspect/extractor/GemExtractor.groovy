@@ -12,11 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioExternalIdentifier
-import com.blackducksoftware.integration.hub.bdio.simple.model.Forge
-import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.ExternalId
-import com.blackducksoftware.integration.hub.bdio.simple.model.externalid.NameVersionExternalId
+import com.blackducksoftware.integration.hub.bdio.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.model.Forge
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
 
 @Component
 class GemExtractor extends Extractor {
@@ -60,7 +58,7 @@ class GemExtractor extends Extractor {
                             currentLineIndex++
                         }
 
-                        ExternalId externalId = new NameVersionExternalId(Forge.RUBYGEMS, gem, version)
+                        ExternalId externalId = externalIdFactory.createNameVersionExternalId(Forge.RUBYGEMS, gem, version)
                         bdioComponent = bdioNodeFactory.createComponent(gem, version, externalId)
                         return bdioComponent
                     } finally {

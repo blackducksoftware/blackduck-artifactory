@@ -27,15 +27,36 @@ class ArtifactoryDownloader {
     }
 
     File download(URL downloadUrl, String artifactName) {
-        def inputStream = downloadUrl.openStream()
+        URL connectionUrl = downloadUrl
+        HttpURLConnection  connection
+        InputStream inputStream
         File outputFile = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
-        outputFile = new File(outputFile, artifactName)
         try {
+            connection = (HttpURLConnection) downloadUrl.openConnection()
+            String userCredentials = "${configurationProperties.artifactoryUsername}:${configurationProperties.artifactoryPassword}"
+            String basicAuth = 'Basic ' + Base64.encoder.encodeToString(userCredentials.getBytes())
+            connection.setRequestProperty ('Authorization', basicAuth)
+            connection.connect()
+            inputStream = connection.getInputStream()
+            if (followRedirect(connection)) {
+                return download(new URL(connection.getHeaderField('Location')), artifactName)
+            }
+            outputFile = new File(outputFile, artifactName)
             FileUtils.copyInputStreamToFile(inputStream, outputFile)
-        } catch (IOException e) {
-            logger.error("There was an error downloading ${artifactName}: ${e.message}")
+        } catch (Exception e) {
+            logger.error("There was an error downloading ${artifactName} from ${downloadUrl}- ${e.message}")
+        } finally {
+            inputStream?.close()
+            connection?.disconnect()
         }
 
         outputFile
+    }
+
+    boolean followRedirect(HttpURLConnection connection) {
+        int connectionResponseCode = connection.getResponseCode()
+        return connectionResponseCode == HttpURLConnection.HTTP_MOVED_PERM ||
+                connectionResponseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                connectionResponseCode == HttpURLConnection.HTTP_SEE_OTHER
     }
 }

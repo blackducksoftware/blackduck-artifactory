@@ -5,9 +5,10 @@ import org.junit.Test
 
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
 import com.blackducksoftware.integration.hub.artifactory.inspect.extractor.PythonExtractor
-import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
-import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 
 class PythonExtractorTest {
     @Test
@@ -21,6 +22,7 @@ class PythonExtractorTest {
         pythonExtractor.artifactoryDownloader = mockDownloader
         pythonExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         pythonExtractor.bdioNodeFactory = new BdioNodeFactory(pythonExtractor.bdioPropertyHelper)
+        pythonExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = pythonExtractor.extract("valohai_yaml-0.4-py2.py3-none-any.whl", jsonObject)
@@ -40,6 +42,7 @@ class PythonExtractorTest {
         pythonExtractor.artifactoryDownloader = mockDownloader
         pythonExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         pythonExtractor.bdioNodeFactory = new BdioNodeFactory(pythonExtractor.bdioPropertyHelper)
+        pythonExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = pythonExtractor.extract("functools32-3.2.3-2.tar.gz", jsonObject)

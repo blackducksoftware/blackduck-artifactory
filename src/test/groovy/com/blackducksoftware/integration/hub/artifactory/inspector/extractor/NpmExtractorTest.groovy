@@ -5,9 +5,10 @@ import org.junit.Test
 
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryDownloader
 import com.blackducksoftware.integration.hub.artifactory.inspect.extractor.NpmExtractor
-import com.blackducksoftware.integration.hub.bdio.simple.BdioNodeFactory
-import com.blackducksoftware.integration.hub.bdio.simple.BdioPropertyHelper
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
+import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
+import com.blackducksoftware.integration.hub.bdio.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 
 class NpmExtractorTest {
     @Test
@@ -21,6 +22,7 @@ class NpmExtractorTest {
         npmExtractor.artifactoryDownloader = mockDownloader
         npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
+        npmExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = npmExtractor.extract("grunt-1.0.0.tgz", jsonObject)
@@ -40,6 +42,7 @@ class NpmExtractorTest {
         npmExtractor.artifactoryDownloader = mockDownloader
         npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
+        npmExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = npmExtractor.extract("angular-1.6.1.tgz", jsonObject)
@@ -59,6 +62,7 @@ class NpmExtractorTest {
         npmExtractor.artifactoryDownloader = mockDownloader
         npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
+        npmExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = npmExtractor.extract("babel-polyfill-6.22.0", jsonObject)
@@ -78,6 +82,7 @@ class NpmExtractorTest {
         npmExtractor.artifactoryDownloader = mockDownloader
         npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
+        npmExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = npmExtractor.extract("babel-polyfill-6.3.14", jsonObject)
@@ -97,6 +102,7 @@ class NpmExtractorTest {
         npmExtractor.artifactoryDownloader = mockDownloader
         npmExtractor.bdioPropertyHelper = new BdioPropertyHelper()
         npmExtractor.bdioNodeFactory = new BdioNodeFactory(npmExtractor.bdioPropertyHelper)
+        npmExtractor.externalIdFactory = new ExternalIdFactory()
 
         Map jsonObject = ["downloadUri":"test"]
         BdioComponent bdioComponentDetails = npmExtractor.extract("underscore.string-2.0.0", jsonObject)

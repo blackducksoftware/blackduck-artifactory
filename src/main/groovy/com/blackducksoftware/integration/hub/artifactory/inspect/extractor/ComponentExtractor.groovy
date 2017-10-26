@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.artifactory.inspect.InspectionResults
-import com.blackducksoftware.integration.hub.bdio.simple.model.BdioComponent
+import com.blackducksoftware.integration.hub.bdio.model.BdioComponent
 
 @Component
 class ComponentExtractor {
