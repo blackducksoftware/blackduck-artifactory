@@ -496,7 +496,7 @@ private void populatePolicyStatuses(HubResponseService hubResponseService, MetaS
                 }
             }
         } catch (Exception e) {
-            log.error("There was a problem trying to access repository properties: ${e.message}")
+            log.error("There was a problem trying to access repository ${it.name}: ", e)
             problemRetrievingPolicyStatus = true;
         }
     }
