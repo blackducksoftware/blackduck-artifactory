@@ -94,7 +94,7 @@ class HubClient {
             PhoneHomeRequestBodyBuilder phoneHomeRequestBodyBuilder = phoneHomeDataService.createInitialPhoneHomeRequestBodyBuilder()
             phoneHomeRequestBodyBuilder.thirdPartyName = ThirdPartyName.ARTIFACTORY
             phoneHomeRequestBodyBuilder.thirdPartyVersion = artifactoryRestClient.getVersionInfoForArtifactory()?.get(ARTIFACTORY_VERSION_KEY) ?: VERSION_UNKNOWN
-            def versionTxt = new File(System.getResource('src/main/resources/version.txt')?.toURI())
+            def versionTxt = new File(System.getResource('version.txt')?.toURI())
             def pluginVersion = versionTxt?.text
             phoneHomeRequestBodyBuilder.pluginVersion = pluginVersion
             phoneHomeRequestBodyBuilder.addToMetaDataMap('mode', 'inspector')

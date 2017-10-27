@@ -425,11 +425,9 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
         try {
             phoneHomeRequestBodyBuilder.thirdPartyVersion = ctx?.versionProvider?.running?.versionName
         } catch(Exception artifactoryVersionException) {
-            phoneHomeRequestBodyBuilder.thirdPartyVersion  = "???"
+            phoneHomeRequestBodyBuilder.thirdPartyVersion  = '???'
         }
-        def versionTxt = new File(System.getResource('src/main/resources/version.txt')?.toURI())
-        def pluginVersion = versionTxt?.text
-        phoneHomeRequestBodyBuilder.pluginVersion = pluginVersion
+        phoneHomeRequestBodyBuilder.pluginVersion = new File('lib/version.txt')?.text
         phoneHomeRequestBodyBuilder.addToMetaDataMap('mode', 'scanner')
         phoneHomeRequestBody = phoneHomeRequestBodyBuilder.build()
     } catch(Exception e) {

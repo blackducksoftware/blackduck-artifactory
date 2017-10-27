@@ -44,7 +44,15 @@ eclipse.project { natures 'org.springsource.ide.eclipse.gradle.core.nature' }
 
 springBoot { mainClass = 'com.blackducksoftware.integration.hub.artifactory.Application' }
 
+def versionFile = new File("${projectDir}/src/main/resources/version.txt")
+versionFile.delete()
+versionFile << version
+
 task produceFinalZip(type: Zip, dependsOn: build) {
+    from("${projectDir}/src/main/resources/") { 
+        include 'version.txt' 
+        into 'scanner/lib'
+    }
     from("${buildDir}/libs") { include '*.jar' }
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
         include 'blackDuckScanForHub.groovy'
@@ -61,7 +69,3 @@ task produceFinalZip(type: Zip, dependsOn: build) {
         into 'scanner/lib'
     }
 }
-
-def versionFile = new File("${projectDir}/src/main/resources/version.txt")
-versionFile.delete()
-versionFile << version
