@@ -479,23 +479,28 @@ private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVe
 private void populatePolicyStatuses(HubResponseService hubResponseService, MetaService metaService, Set<RepoPath> repoPaths) {
     boolean problemRetrievingPolicyStatus = false
     repoPaths.each {
-        String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
-        if (StringUtils.isNotBlank(projectVersionUrl)) {
-            projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
-            repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
-            ProjectVersionView projectVersionView = hubResponseService.getItem(projectVersionUrl, ProjectVersionView.class)
-            try{
-                String policyStatusUrl = metaService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
-                log.info("Looking up policy status: ${policyStatusUrl}")
-                VersionBomPolicyStatusView versionBomPolicyStatusView = hubResponseService.getItem(policyStatusUrl, VersionBomPolicyStatusView.class)
-                log.info("policy status json: ${versionBomPolicyStatusView.json}")
-                PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
-                repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
-                repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, versionBomPolicyStatusView.overallStatus.toString())
-                log.info("Added policy status to ${it.name}")
-            }catch(HubIntegrationException e){
-                problemRetrievingPolicyStatus = true
+        try {
+            String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
+            if (StringUtils.isNotBlank(projectVersionUrl)) {
+                projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
+                repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
+                ProjectVersionView projectVersionView = hubResponseService.getItem(projectVersionUrl, ProjectVersionView.class)
+                try{
+                    String policyStatusUrl = metaService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
+                    log.info("Looking up policy status: ${policyStatusUrl}")
+                    VersionBomPolicyStatusView versionBomPolicyStatusView = hubResponseService.getItem(policyStatusUrl, VersionBomPolicyStatusView.class)
+                    log.info("policy status json: ${versionBomPolicyStatusView.json}")
+                    PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
+                    repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
+                    repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, versionBomPolicyStatusView.overallStatus.toString())
+                    log.info("Added policy status to ${it.name}")
+                } catch (HubIntegrationException e) {
+                    problemRetrievingPolicyStatus = true
+                }
             }
+        } catch (Exception e) {
+            log.error("There was a problem trying to access repository ${it.name}: ", e)
+            problemRetrievingPolicyStatus = true;
         }
     }
     if(problemRetrievingPolicyStatus){
