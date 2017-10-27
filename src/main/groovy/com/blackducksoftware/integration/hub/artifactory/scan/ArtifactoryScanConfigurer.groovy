@@ -41,7 +41,7 @@ class ArtifactoryScanConfigurer {
         scanFileText = replaceValue(scanFileText, intPrefix, 'HUB_TIMEOUT', '' == configurationProperties.hubTimeout ? '120' : configurationProperties.hubTimeout)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_USERNAME', configurationProperties.hubUsername)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PASSWORD', configurationProperties.hubPassword)
-        scanFileText = replaceValue(scanFileText, boolPrefix, 'HUB_AUTO_IMPORT_HTTPS_CERTIFICATES', "${Boolean.parseBoolean(configurationProperties.hubAutoImportHttpsCertificates)}")
+        scanFileText = replaceValue(scanFileText, boolPrefix, 'HUB_ALWAYS_TRUST_CERTS', "${Boolean.parseBoolean(configurationProperties.hubAlwaysTrustCerts)}")
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_HOST', configurationProperties.hubProxyHost)
         scanFileText = replaceValue(scanFileText, intPrefix, 'HUB_PROXY_PORT', '' == configurationProperties.hubProxyPort ? '0' : configurationProperties.hubProxyPort)
         scanFileText = replaceText(scanFileText, stringPrefix, 'HUB_PROXY_USERNAME', configurationProperties.hubProxyUsername)

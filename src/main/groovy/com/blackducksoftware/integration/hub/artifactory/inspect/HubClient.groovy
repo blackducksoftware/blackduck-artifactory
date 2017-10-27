@@ -82,7 +82,7 @@ class HubClient {
         hubServerConfigBuilder.setProxyUsername(configurationProperties.hubProxyUsername)
         hubServerConfigBuilder.setProxyPassword(configurationProperties.hubProxyPassword)
 
-        hubServerConfigBuilder.setAlwaysTrustServerCertificate(Boolean.parseBoolean(configurationProperties.hubAutoImportHttpsCertificates))
+        hubServerConfigBuilder.setAlwaysTrustServerCertificate(Boolean.parseBoolean(configurationProperties.hubAlwaysTrustCerts))
 
         hubServerConfigBuilder
     }
@@ -94,8 +94,10 @@ class HubClient {
             PhoneHomeRequestBodyBuilder phoneHomeRequestBodyBuilder = phoneHomeDataService.createInitialPhoneHomeRequestBodyBuilder()
             phoneHomeRequestBodyBuilder.thirdPartyName = ThirdPartyName.ARTIFACTORY
             phoneHomeRequestBodyBuilder.thirdPartyVersion = artifactoryRestClient.getVersionInfoForArtifactory()?.get(ARTIFACTORY_VERSION_KEY) ?: VERSION_UNKNOWN
-            phoneHomeRequestBodyBuilder.pluginVersion = "3.1.0"
-            phoneHomeRequestBodyBuilder.addToMetaDataMap("mode", "inspector")
+            def versionTxt = new File(System.getResource('src/main/resources/version.txt')?.toURI())
+            def pluginVersion = versionTxt?.text
+            phoneHomeRequestBodyBuilder.pluginVersion = pluginVersion
+            phoneHomeRequestBodyBuilder.addToMetaDataMap('mode', 'inspector')
             phoneHomeRequestBody = phoneHomeRequestBodyBuilder.build()
         } catch(Exception e) {
         }

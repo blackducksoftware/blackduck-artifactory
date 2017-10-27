@@ -20,8 +20,8 @@ class ConfigurationProperties {
     @Value('${hub.password}')
     String hubPassword
 
-    @Value('${hub.auto.import.https.certificates}')
-    String hubAutoImportHttpsCertificates
+    @Value('${hub.trust.cert}')
+    String hubAlwaysTrustCerts
 
     @Value('${hub.proxy.host}')
     String hubProxyHost

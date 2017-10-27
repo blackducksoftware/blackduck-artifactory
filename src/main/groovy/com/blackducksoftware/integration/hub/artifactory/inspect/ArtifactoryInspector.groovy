@@ -18,11 +18,11 @@ import com.google.gson.Gson
 
 @Component
 class ArtifactoryInspector {
-    static final String PROJECT_VERSION_UI_URL_PROPERTY="blackduck.uiUrl"
-    static final String POLICY_STATUS_PROPERTY="blackduck.policyStatus"
-    static final String OVERALL_POLICY_STATUS_PROPERTY="blackduck.overallPolicyStatus"
-    static final String INSPECTION_TIME_PROPERTY="blackduck.inspectionTime"
-    static final String INSPECTION_STATUS_PROPERTY="blackduck.inspectionStatus"
+    static final String PROJECT_VERSION_UI_URL_PROPERTY='blackduck.uiUrl'
+    static final String POLICY_STATUS_PROPERTY='blackduck.policyStatus'
+    static final String OVERALL_POLICY_STATUS_PROPERTY='blackduck.overallPolicyStatus'
+    static final String INSPECTION_TIME_PROPERTY='blackduck.inspectionTime'
+    static final String INSPECTION_STATUS_PROPERTY='blackduck.inspectionStatus'
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryInspector.class)
 
     @Autowired
@@ -49,7 +49,7 @@ class ArtifactoryInspector {
     void performInspect() {
         hubClient.phoneHome()
         String repoKey = configurationProperties.hubArtifactoryInspectRepoKey
-        try{
+        try {
             def projectName = hubProjectDetails.hubProjectName
             def projectVersionName = hubProjectDetails.hubProjectVersionName
             def inspectionResults = new InspectionResults()
@@ -83,13 +83,13 @@ class ArtifactoryInspector {
                 hubClient.uploadBdioToHub(outputFile)
                 logger.info("Uploaded BDIO to ${configurationProperties.hubUrl}")
                 LocalDateTime dateTime = LocalDateTime.now()
-                artifactoryRestClient.setPropertiesForPath(repoKey,  "", ["${INSPECTION_TIME_PROPERTY}": dateTime.toString()], false)
-                logger.info("Inspection complete")
+                artifactoryRestClient.setPropertiesForPath(repoKey,  '', ["${INSPECTION_TIME_PROPERTY}": dateTime.toString()], false)
+                logger.info('Inspection complete')
                 logger.info("${repoKey} inspection timestamp updated (Now ${dateTime.toString()})")
                 if(!Boolean.valueOf(configurationProperties.hubArtifactoryInspectSkipBomCalculation)){
-                    logger.info("Waiting for BOM calculation to populate the properties for the corresponding Hub project in artifactory (this may take a while)...")
+                    logger.info('Waiting for BOM calculation to populate the properties for the corresponding Hub project in artifactory (this may take a while)...')
                     hubClient.waitForBomCalculation(projectName, projectVersionName)
-                    logger.info("...BOM calculation complete")
+                    logger.info('BOM calculation complete.')
                     String overallPolicyStatus = hubProjectDetails.getHubProjectOverallPolicyStatus(projectName, projectVersionName).toString()
                     logger.info("Hub Overall Policy Status: ${overallPolicyStatus}")
                     String policyStatus = hubProjectDetails.getHubProjectPolicyStatus(projectName, projectVersionName)
@@ -97,17 +97,17 @@ class ArtifactoryInspector {
                     String uiUrl = hubProjectDetails.getHubProjectVersionUIUrl(projectName, projectVersionName)
                     logger.info("Hub UI URL: ${uiUrl}")
                     Map properties = [ "${PROJECT_VERSION_UI_URL_PROPERTY}" : uiUrl,
-                        "${POLICY_STATUS_PROPERTY}" : policyStatus.replaceAll(",", "\\\\,"),
+                        "${POLICY_STATUS_PROPERTY}" : policyStatus.replaceAll(',', '\\\\,'),
                         "${OVERALL_POLICY_STATUS_PROPERTY}" : overallPolicyStatus
                     ]
-                    artifactoryRestClient.setPropertiesForPath(repoKey, "", properties, false)
+                    artifactoryRestClient.setPropertiesForPath(repoKey, '', properties, false)
                     logger.info("Updated Hub data for artifactory repository ${repoKey}")
                 }
             }
-            artifactoryRestClient.setPropertiesForPath(repoKey, "", ["${INSPECTION_STATUS_PROPERTY}": "SUCCESS"], false)
-        }catch(Exception e){
+            artifactoryRestClient.setPropertiesForPath(repoKey, '', ["${INSPECTION_STATUS_PROPERTY}": 'SUCCESS'], false)
+        } catch(Exception e) {
             logger.error("Please investigate the inspection logs for details - the Black Duck Inspection did not complete successfully: ${e.message}", e)
-            artifactoryRestClient.setPropertiesForPath(repoKey, "", ["${INSPECTION_STATUS_PROPERTY}": "FAILURE"], false)
+            artifactoryRestClient.setPropertiesForPath(repoKey, '', ["${INSPECTION_STATUS_PROPERTY}": 'FAILURE'], false)
         }
     }
 

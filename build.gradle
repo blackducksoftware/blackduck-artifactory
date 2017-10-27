@@ -16,7 +16,7 @@ tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 tasks.withType(GroovyCompile) { options.encoding = 'UTF-8' }
 
 group = 'com.blackducksoftware.integration'
-version = '3.1.1-SNAPSHOT'
+version = '4.0.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -61,3 +61,7 @@ task produceFinalZip(type: Zip, dependsOn: build) {
         into 'scanner/lib'
     }
 }
+
+def versionFile = new File("${projectDir}/src/main/resources/version.txt")
+versionFile.delete()
+versionFile << version

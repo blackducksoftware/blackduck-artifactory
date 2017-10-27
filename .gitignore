@@ -5,3 +5,4 @@ build/
 .gradle/
 bin/
 .DS_Store
+version.txt
