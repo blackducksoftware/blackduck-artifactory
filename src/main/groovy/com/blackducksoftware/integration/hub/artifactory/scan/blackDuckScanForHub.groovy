@@ -52,10 +52,7 @@ import com.blackducksoftware.integration.hub.service.HubResponseService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuesser
-import com.blackducksoftware.integration.log.IntLogger
 import com.blackducksoftware.integration.log.Slf4jIntLogger
-import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBody
-import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBodyBuilder
 import com.blackducksoftware.integration.phonehome.enums.ThirdPartyName
 
 import groovy.transform.Field
@@ -77,7 +74,7 @@ import groovy.transform.Field
 
 @Field final String ARTIFACTORY_REPOS_TO_SEARCH="ext-release-local,libs-release"
 @Field final String ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip,*.tar.gz,*.hpi"
-@Field final String BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH="etc/plugins/blackducksoftware"
+@Field final String BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH="etc/blackducksoftware"
 
 @Field final boolean logVerboseCronLog=false
 
@@ -259,7 +256,7 @@ jobs {
         Set<RepoPath> repoPaths = searchForRepoPaths()
         HubServicesFactory hubServicesFactory = createHubServicesFactory()
         HubResponseService hubResponseService = hubServicesFactory.createHubResponseService()
-        MetaService metaService = hubServicesFactory.createMetaService(new Slf4jIntLogger(log))
+        MetaService metaService = hubServicesFactory.createMetaService()
 
         populatePolicyStatuses(hubResponseService, metaService, repoPaths)
 
@@ -411,29 +408,21 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
     HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
-    IntLogger logger = new Slf4jIntLogger(log)
     HubServicesFactory hubServicesFactory = createHubServicesFactory()
-    CLIDataService cliDataService = hubServicesFactory.createCLIDataService(logger, HUB_TIMEOUT * 1000)
-    PhoneHomeDataService phoneHomeDataService = hubServicesFactory.createPhoneHomeDataService(logger)
+    CLIDataService cliDataService = hubServicesFactory.createCLIDataService(HUB_TIMEOUT * 1000)
+    PhoneHomeDataService phoneHomeDataService = hubServicesFactory.createPhoneHomeDataService()
 
     HubServerConfig hubServerConfig = createHubServerConfig()
     ProjectRequest projectRequest = projectRequestBuilder.build()
-    PhoneHomeRequestBody phoneHomeRequestBody = PhoneHomeRequestBody.DO_NOT_PHONE_HOME
+    String thirdPartyVersion = '???'
+    String pluginVersion = '???'
     try {
-        PhoneHomeRequestBodyBuilder phoneHomeRequestBodyBuilder = phoneHomeDataService.createInitialPhoneHomeRequestBodyBuilder()
-        phoneHomeRequestBodyBuilder.thirdPartyName = ThirdPartyName.ARTIFACTORY
-        try {
-            phoneHomeRequestBodyBuilder.thirdPartyVersion = ctx?.versionProvider?.running?.versionName
-        } catch(Exception artifactoryVersionException) {
-            phoneHomeRequestBodyBuilder.thirdPartyVersion  = '???'
-        }
-        phoneHomeRequestBodyBuilder.pluginVersion = new File('lib/version.txt')?.text
-        phoneHomeRequestBodyBuilder.addToMetaDataMap('mode', 'scanner')
-        phoneHomeRequestBody = phoneHomeRequestBodyBuilder.build()
+        thirdPartyVersion = ctx?.versionProvider?.running?.versionName
+        pluginVersion = new File('lib/version.txt')?.text
     } catch(Exception e) {
     }
 
-    cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, phoneHomeRequestBody)
+    cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, ThirdPartyName.ARTIFACTORY, thirdPartyVersion, pluginVersion)
 }
 
 private void deletePathArtifact(String fileName){
@@ -447,8 +436,7 @@ private void deletePathArtifact(String fileName){
 
 private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVersionView){
     HubServicesFactory hubServicesFactory = createHubServicesFactory()
-    IntLogger logger = new Slf4jIntLogger(log)
-    MetaService metaService = hubServicesFactory.createMetaService(logger)
+    MetaService metaService = hubServicesFactory.createMetaService()
     log.info("${repoPath.name} was successfully scanned by the BlackDuck CLI.")
     repositories.setProperty(repoPath, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, 'SUCCESS')
 
@@ -498,7 +486,7 @@ private void populatePolicyStatuses(HubResponseService hubResponseService, MetaS
             }
         } catch (Exception e) {
             log.error("There was a problem trying to access repository ${it.name}: ", e)
-            problemRetrievingPolicyStatus = true;
+            problemRetrievingPolicyStatus = true
         }
     }
     if(problemRetrievingPolicyStatus){
@@ -624,7 +612,7 @@ private void initializeConfiguration() {
             blackDuckDirectory = new File(homeDir, BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH)
         } else {
             etcDir = ctx.artifactoryHome.etcDir
-            blackDuckDirectory = new File(etcDir, 'plugins/blackducksoftware')
+            blackDuckDirectory = new File(etcDir, 'blackducksoftware')
         }
         cliDirectory = new File(blackDuckDirectory, 'cli')
         cliDirectory.mkdirs()
