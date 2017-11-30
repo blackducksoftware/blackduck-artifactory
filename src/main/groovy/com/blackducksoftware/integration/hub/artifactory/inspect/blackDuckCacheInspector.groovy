@@ -1,6 +1,9 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import org.artifactory.fs.FileInfo
 import org.artifactory.fs.FileLayoutInfo
+import org.artifactory.fs.ItemInfo
+import org.artifactory.fs.StatsInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
 
@@ -34,6 +37,9 @@ private Set<RepoPath> searchForRepoPaths(String repos, String patterns) {
 private String getForgeInformation(RepoPath repoPath) {
     FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
     Properties properties = repositories.getProperties(repoPath)
+    StatsInfo stats = repositories.getStats(repoPath)
+    FileInfo fileInfo = repositories.getFileInfo(repoPath)
+    ItemInfo itemInfo = repositories.getItemInfo(repoPath)
     String name;
     String version;
     String forge = repositories.getRepositoryConfiguration(repoPath.getRepoKey()).getPackageType();
@@ -46,8 +52,12 @@ private String getForgeInformation(RepoPath repoPath) {
             name = properties['npm.name'][0]
             version = properties['npm.version'][0]
             break;
+        case 'nuget':
+            name = properties['nuget.id'][0]
+            version = properties['nuget.version'][0]
+            break;
         default:
-            return "${forge}:${properties.dump()}"
+            return "${forge}:\n${properties.dump()}\n${repoPath.dump()}\n${fileLayoutInfo.dump()}\n${stats.dump()}\n${fileInfo.dump()}\n${itemInfo.dump()}\n"
             break;
     }
     return "${forge}:${name}:${version}"
