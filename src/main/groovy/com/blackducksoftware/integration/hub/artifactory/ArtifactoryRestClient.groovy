@@ -1,5 +1,7 @@
 package com.blackducksoftware.integration.hub.artifactory
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -9,15 +11,28 @@ import groovy.json.JsonSlurper
 
 @Component
 class ArtifactoryRestClient {
+    private final Logger logger = LoggerFactory.getLogger(ArtifactoryRestClient.class);
+
+    public static final String ARTIFACTORY_VERSION_KEY = "version";
+    public static final String VERSION_UNKNOWN = "???";
+
     @Autowired
     RestTemplateContainer restTemplate
 
     @Autowired
     ConfigurationProperties configurationProperties
 
-    Map getVersionInfoForArtifactory() {
+    String getVersionInfoForArtifactory() {
         def apiUrl = "${configurationProperties.artifactoryUrl}/api/system/version"
-        getJsonResponse(apiUrl)
+        try {
+            Map response = getJsonResponse(apiUrl)
+            if (response.containsKey(ARTIFACTORY_VERSION_KEY)) {
+                return response.get(ARTIFACTORY_VERSION_KEY)
+            }
+        } catch (Exception e) {
+            logger.debug("Error getting artifactory version: ${e.message}")
+        }
+        return VERSION_UNKNOWN
     }
 
     String checkSystem() {

@@ -4,19 +4,21 @@ buildscript {
     }
 
     dependencies {
-        classpath('org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE')
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE'
     }
 }
 
-apply plugin: 'groovy'
-apply plugin: 'eclipse'
-apply plugin: 'org.springframework.boot'
+plugins {
+    id 'groovy'
+    id 'eclipse'
+    id 'org.springframework.boot' version '1.5.8.RELEASE'
+}
 
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 tasks.withType(GroovyCompile) { options.encoding = 'UTF-8' }
 
 group = 'com.blackducksoftware.integration'
-version = '4.0.2-SNAPSHOT'
+version = '5.0.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -28,7 +30,10 @@ repositories {
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:18.4.0'
+    compile ('com.blackducksoftware.integration:hub-common:21.0.0') {
+        exclude module: 'integration-bdio'
+    }
+    compile 'com.blackducksoftware.integration:integration-bdio:9.0.0'
 
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
@@ -36,6 +41,7 @@ dependencies {
     compile 'org.apache.commons:commons-compress:1.13'
 
     compileOnly 'org.artifactory:artifactory-papi:4.14.0'
+    compileOnly 'com.google.guava:guava:18.0'
 
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
@@ -49,8 +55,8 @@ versionFile.delete()
 versionFile << version
 
 task produceFinalZip(type: Zip, dependsOn: build) {
-    from("${projectDir}/src/main/resources/") { 
-        include 'version.txt' 
+    from("${projectDir}/src/main/resources/") {
+        include 'version.txt'
         into 'scanner/lib'
     }
     from("${buildDir}/libs") { include '*.jar' }
