@@ -55,14 +55,24 @@ versionFile.delete()
 versionFile << version
 
 task produceFinalZip(type: Zip, dependsOn: build) {
+<<<<<<< HEAD
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
         into 'scanner/lib'
+=======
+    from("${projectDir}/src/main/resources/") {
+        include 'version.txt'
+        into 'plugins/lib'
+>>>>>>> 4e2043ea46958afa5de5d3ede7d7abbc3cc935f9
     }
     from("${buildDir}/libs") { include '*.jar' }
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
         include 'blackDuckScanForHub.groovy'
-        into 'scanner'
+        into 'plugins'
+    }
+    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/inspect") {
+        include 'blackDuckCacheInspector.groovy'
+        into 'plugins'
     }
     from(configurations.runtime) {
         exclude 'artifactory-papi*.jar'
@@ -72,6 +82,6 @@ task produceFinalZip(type: Zip, dependsOn: build) {
         exclude 'logback*.jar'
         exclude 'snakeyaml*.jar'
         exclude 'spring*.jar'
-        into 'scanner/lib'
+        into 'plugins/lib'
     }
 }
