@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:18.4.0'
+    compile 'com.blackducksoftware.integration:hub-common:21.0.0'
 
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
@@ -51,12 +51,16 @@ versionFile << version
 task produceFinalZip(type: Zip, dependsOn: build) {
     from("${projectDir}/src/main/resources/") { 
         include 'version.txt' 
-        into 'scanner/lib'
+        into 'plugins/lib'
     }
     from("${buildDir}/libs") { include '*.jar' }
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
         include 'blackDuckScanForHub.groovy'
-        into 'scanner'
+        into 'plugins'
+    }
+    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/inspect") {
+        include 'blackDuckCacheInspector.groovy'
+        into 'plugins'
     }
     from(configurations.runtime) {
         exclude 'artifactory-papi*.jar'
@@ -66,6 +70,6 @@ task produceFinalZip(type: Zip, dependsOn: build) {
         exclude 'logback*.jar'
         exclude 'snakeyaml*.jar'
         exclude 'spring*.jar'
-        into 'scanner/lib'
+        into 'plugins/lib'
     }
 }
