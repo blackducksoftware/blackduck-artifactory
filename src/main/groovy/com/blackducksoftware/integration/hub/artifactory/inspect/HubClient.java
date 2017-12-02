@@ -2,9 +2,6 @@ package com.blackducksoftware.integration.hub.artifactory.inspect;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -20,8 +17,6 @@ import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.dataservice.phonehome.PhoneHomeDataService;
 import com.blackducksoftware.integration.hub.dataservice.scan.ScanStatusDataService;
-import com.blackducksoftware.integration.hub.dataservice.versionbomcomponent.VersionBomComponentDataService;
-import com.blackducksoftware.integration.hub.dataservice.versionbomcomponent.model.VersionBomComponentModel;
 import com.blackducksoftware.integration.hub.exception.HubTimeoutExceededException;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection;
@@ -72,26 +67,6 @@ public class HubClient {
         }
     }
 
-    public void updateArtifactoryComponentDetails(final String projectName, final String projectVersionName) throws IntegrationException {
-        final Map<String, String> externalIdToComponentVersionLink = new HashMap<>();
-        final VersionBomComponentDataService versionBomComponentDataService = getHubServicesFactory().createVersionBomComponentDataservice();
-        final List<VersionBomComponentModel> versionBomComponentModels = versionBomComponentDataService.getComponentsForProjectVersion(projectName, projectVersionName);
-        versionBomComponentModels.forEach(component -> {
-            final String componentVersionLink = component.getComponentVersion();
-            component.getOrigins().forEach(origin -> {
-                final String currentValue = externalIdToComponentVersionLink.get(origin.externalId);
-                if (currentValue != null && !currentValue.equals(componentVersionLink)) {
-                    logger.warn(String.format("The external id %s is already assigned to the component link %s so we will not assign it to %s", origin.externalId, currentValue, componentVersionLink));
-                } else {
-                    externalIdToComponentVersionLink.put(origin.externalId, componentVersionLink);
-                }
-            });
-        });
-
-        // for each component, using originId, find artifactory component(s)
-        // update artifactory component(s) with details
-    }
-
     public HubServicesFactory getHubServicesFactory() throws EncryptionException {
         final HubServerConfig hubServerConfig = this.createBuilder().build();
         final CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(logger));
@@ -130,4 +105,5 @@ public class HubClient {
         }
         phoneHomeDataService.phoneHome(phoneHomeRequestBody);
     }
+
 }
