@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
     }
 
     dependencies {
@@ -25,7 +25,6 @@ targetCompatibility = 1.8
 
 repositories {
     mavenLocal()
-    mavenCentral()
     jcenter()
 }
 
@@ -55,15 +54,9 @@ versionFile.delete()
 versionFile << version
 
 task produceFinalZip(type: Zip, dependsOn: build) {
-<<<<<<< HEAD
-    from("${projectDir}/src/main/resources/") {
-        include 'version.txt'
-        into 'scanner/lib'
-=======
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
         into 'plugins/lib'
->>>>>>> 4e2043ea46958afa5de5d3ede7d7abbc3cc935f9
     }
     from("${buildDir}/libs") { include '*.jar' }
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
