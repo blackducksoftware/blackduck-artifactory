@@ -1,6 +1,7 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
 import org.artifactory.fs.FileLayoutInfo
+import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepositoryConfiguration
 
