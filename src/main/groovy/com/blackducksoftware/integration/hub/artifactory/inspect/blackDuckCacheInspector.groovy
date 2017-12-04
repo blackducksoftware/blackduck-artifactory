@@ -82,7 +82,7 @@ private void populateHubOriginId(RepoPath repoPath) {
     ExternalId externalId = constructExternalIdFromRepoPath(repoPath)
     if (externalId) {
         String hubOriginId = externalId.createHubOriginId()
-        repositories.setProperty(repoPath, 'blackduck.hub.origin.id', externalId.createHubOriginId())
+        repositories.setProperty(repoPath, 'blackduck.hubOriginId', externalId.createHubOriginId())
     }
 }
 
@@ -147,7 +147,7 @@ private Map<String, String> transformVersionBomComponentViews(List<VersionBomCom
 private void addOriginIdProperties(String repoName, Map<String, String> externalIdToComponentVersionLink) {
     externalIdToComponentVersionLink.each { key, value ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put('blackduck.hub.origin.id', key);
+        setMultimap.put('blackduck.hubOriginId', key);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoName)
         artifactsWithOriginId.each { repoPath ->
             repositories.setProperty(repoPath, 'componentVersionLink', value)
