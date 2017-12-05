@@ -1,5 +1,6 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
@@ -22,10 +23,9 @@ import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.service.HubResponseService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
+import com.blackducksoftware.integration.util.IntegrationEscapeUtil
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.SetMultimap
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 
 import groovy.transform.Field
 
@@ -56,6 +56,12 @@ executions {
         def projectName = params['projectName'][0]
         def projectVersionName = params['projectVersionName'][0]
 
+        if (StringUtils.isBlank(projectName)) {
+            projectName = repoKey;
+        }
+        if (StringUtils.isBlank(projectVersionName)) {
+            projectVersionName = InetAddress.getLocalHost().getHostName();
+        }
         updateFromHubProject(repoKey, projectName, projectVersionName);
     }
 }
@@ -72,7 +78,6 @@ private void createHubProject(String repoKey, String patterns) {
     String packageType = repositoryConfiguration.getPackageType();
     SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
     MutableDependencyGraph mutableDependencyGraph = simpleBdioFactory.createMutableDependencyGraph();
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     repoPaths.each { repoPath ->
         Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType);
@@ -90,9 +95,10 @@ private void createHubProject(String repoKey, String patterns) {
     ExternalId projectExternalId = simpleBdioFactory.createNameVersionExternalId(artifactoryForge, projectName, projectVersionName)
     SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, repoKey, projectVersionName, projectExternalId, mutableDependencyGraph)
 
-    File bdioFile = new File('/tmp/bdio.jsonld');
+    IntegrationEscapeUtil integrationEscapeUtil = new IntegrationEscapeUtil()
+    File bdioFile = new File("/tmp/${integrationEscapeUtil.escapeForUri(codeLocationName)}");
     bdioFile.delete()
-    simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, gson, simpleBdioDocument);
+    simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
 
     BomImportRequestService bomImportRequestService = hubServicesFactory.createBomImportRequestService();
     bomImportRequestService.importBomFile(bdioFile);
@@ -137,13 +143,12 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
 
 private void updateFromHubProject(String repoKey, String projectName, String projectVersionName) {
     HubServicesFactory hubServicesFactory = createHubServicesFactory();
-    MetaService metaService = hubServicesFactory.createMetaService();
     HubResponseService hubResponseService = hubServicesFactory.createHubResponseService();
     ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
 
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    if (metaService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK)) {
-        String componentsLink = metaService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK);
+    if (hubResponseService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK)) {
+        String componentsLink = hubResponseService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK);
         List<VersionBomComponentView> versionBomComponents = hubResponseService.getAllItems(componentsLink, VersionBomComponentView.class);
 
         Map<String, String> externalIdToComponentVersionLink = transformVersionBomComponentViews(versionBomComponents);
