@@ -1,11 +1,7 @@
 buildscript {
-    repositories {
-        jcenter()
-    }
+    repositories { jcenter() }
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE'
-    }
+    dependencies { classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE' }
 }
 
 plugins {
@@ -29,10 +25,7 @@ repositories {
 }
 
 dependencies {
-    compile ('com.blackducksoftware.integration:hub-common:21.0.0') {
-        exclude module: 'integration-bdio'
-    }
-    compile 'com.blackducksoftware.integration:integration-bdio:9.0.0'
+    compile 'com.blackducksoftware.integration:hub-common:23.0.1'
 
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
@@ -58,15 +51,19 @@ task produceFinalZip(type: Zip, dependsOn: build) {
         include 'version.txt'
         into 'plugins/lib'
     }
+
     from("${buildDir}/libs") { include '*.jar' }
+
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
         include 'blackDuckScanForHub.groovy'
         into 'plugins'
     }
+
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/inspect") {
         include 'blackDuckCacheInspector.groovy'
         into 'plugins'
     }
+
     from(configurations.runtime) {
         exclude 'artifactory-papi*.jar'
         exclude 'commons-compress*.jar'

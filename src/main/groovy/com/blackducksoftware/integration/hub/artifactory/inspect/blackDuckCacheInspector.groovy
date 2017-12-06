@@ -1,13 +1,19 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
+import org.artifactory.repo.RepositoryConfiguration
 
+import com.blackducksoftware.integration.hub.api.bom.BomImportRequestService
 import com.blackducksoftware.integration.hub.api.item.MetaService
+import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
+import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
+import com.blackducksoftware.integration.hub.bdio.model.SimpleBdioDocument
+import com.blackducksoftware.integration.hub.bdio.model.dependency.Dependency
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
-import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
@@ -17,6 +23,7 @@ import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.service.HubResponseService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
+import com.blackducksoftware.integration.util.IntegrationEscapeUtil
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.SetMultimap
 
@@ -35,96 +42,119 @@ import groovy.transform.Field
 @Field final boolean HUB_ALWAYS_TRUST_CERTS=false
 
 executions {
-    inspectRepository(httpMethod: 'GET', params:[:]) { params ->
-        if(!params['repos'][0] && !params['patterns'][0]) {
-            message = 'You must provide a comma separated list of repos and patterns'
-        } else {
-            Set<RepoPath> repoPaths = searchForRepoPaths(params['repos'][0], params['patterns'][0])
-            message = ''
-            for(RepoPath repoPath: repoPaths) {
-                populateHubOriginId(repoPath)
-            }
+    inspectRepository(httpMethod: 'POST') { params ->
+        if (!params['repoKey'][0] && !params['patterns'][0]) {
+            message = 'You must provide a repoKey and comma-separated list of patterns'
+            return
+        }
+
+        createHubProject(params['repoKey'][0], params['patterns'][0])
+    }
+
+    updateInspectedRepository(httpMethod: 'POST') { params ->
+        def repoKey = params['repoKey'][0]
+        def projectName = repoKey
+        def projectVersionName = InetAddress.getLocalHost().getHostName();
+
+        if (params.containsKey('projectName')) {
+            projectName = params['projectName'][0]
+        }
+        if (params.containsKey('projectVersionName')) {
+            projectVersionName = params['projectVersionName'][0]
+        }
+
+        updateFromHubProject(repoKey, projectName, projectVersionName);
+    }
+}
+
+private void createHubProject(String repoKey, String patterns) {
+    Set repoPaths = new HashSet<>()
+    def patternsToFind = patterns.tokenize(',')
+    patternsToFind.each {
+        repoPaths.addAll(searches.artifactsByName(it, repoKey))
+    }
+
+    HubServicesFactory hubServicesFactory = createHubServicesFactory();
+    RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
+    String packageType = repositoryConfiguration.getPackageType();
+    SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
+    MutableDependencyGraph mutableDependencyGraph = simpleBdioFactory.createMutableDependencyGraph();
+
+    repoPaths.each { repoPath ->
+        Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType);
+        if (repoPathDependency != null) {
+            String hubOriginId = repoPathDependency.externalId.createHubOriginId()
+            repositories.setProperty(repoPath, 'blackduck.hubOriginId', hubOriginId)
+            mutableDependencyGraph.addChildToRoot(repoPathDependency);
         }
     }
 
-    populateRepository(httpMethod: 'GET') { params ->
-        def repoName = params['repoName'][0]
-        def projectName = params['projectName'][0]
-        def projectVersionName = params['projectVersionName'][0]
+    Forge artifactoryForge = new Forge('/', '/', 'artifactory');
+    String projectName = repoKey;
+    String projectVersionName = InetAddress.getLocalHost().getHostName();
+    String codeLocationName = "${projectName}/${projectVersionName}/${packageType}"
+    ExternalId projectExternalId = simpleBdioFactory.createNameVersionExternalId(artifactoryForge, projectName, projectVersionName)
+    SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, repoKey, projectVersionName, projectExternalId, mutableDependencyGraph)
 
-        HubServicesFactory hubServicesFactory = createHubServicesFactory();
-        MetaService metaService = hubServicesFactory.createMetaService();
-        HubResponseService hubResponseService = hubServicesFactory.createHubResponseService();
-        ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
+    IntegrationEscapeUtil integrationEscapeUtil = new IntegrationEscapeUtil()
+    File bdioFile = new File("/tmp/${integrationEscapeUtil.escapeForUri(codeLocationName)}");
+    bdioFile.delete()
+    simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
 
-        ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-        if (metaService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK)) {
-            String componentsLink = metaService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK);
-            List<VersionBomComponentView> versionBomComponents = hubResponseService.getAllItems(componentsLink, VersionBomComponentView.class);
-            populateArtifactoryDetails(repoName, versionBomComponents);
-        }
-    }
+    BomImportRequestService bomImportRequestService = hubServicesFactory.createBomImportRequestService();
+    bomImportRequestService.importBomFile(bdioFile);
 }
 
-private Set<RepoPath> searchForRepoPaths(String repos, String patterns) {
-    def reposToSearch = repos.tokenize(',')
-    def patternsToScan = patterns.tokenize(',')
-
-    def repoPaths = []
-    patternsToScan.each {
-        repoPaths.addAll(searches.artifactsByName(it, reposToSearch.toArray(new String[reposToSearch.size])))
-    }
-
-    repoPaths.toSet()
-}
-
-private void populateHubOriginId(RepoPath repoPath) {
-    ExternalId externalId = constructExternalIdFromRepoPath(repoPath)
-    if (externalId) {
-        String hubOriginId = externalId.createHubOriginId()
-        repositories.setProperty(repoPath, 'blackduck.hubOriginId', externalId.createHubOriginId())
-    }
-}
-
-private ExternalId constructExternalIdFromRepoPath(RepoPath repoPath) {
-    ExternalIdFactory externalIdFactory = new ExternalIdFactory()
-    String packageType = repositories.getRepositoryConfiguration(repoPath.getRepoKey()).getPackageType();
-    FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-    Properties properties = repositories.getProperties(repoPath)
-
+private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
     if ('nuget'.equals(packageType)) {
+        Properties properties = repositories.getProperties(repoPath)
         String name = properties['nuget.id'][0]
         String version = properties['nuget.version'][0]
-        return externalIdFactory.createNameVersionExternalId(Forge.NUGET, name, version)
+        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NUGET, name, version)
+        return new Dependency(name, version, externalId)
     }
 
     if ('npm'.equals(packageType)) {
+        Properties properties = repositories.getProperties(repoPath)
         String name = properties['npm.name'][0]
         String version = properties['npm.version'][0]
-        return externalIdFactory.createNameVersionExternalId(Forge.NPM, name, version)
+        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NPM, name, version)
+        return new Dependency(name, version, externalId)
     }
 
     if ('maven'.equals(packageType) || 'gradle'.equals(packageType)) {
+        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
         String name = fileLayoutInfo.module
         String version = fileLayoutInfo.baseRevision
         String group = fileLayoutInfo.organization
-        return externalIdFactory.createMavenExternalId(group, name, version)
+        ExternalId externalId = simpleBdioFactory.createMavenExternalId(group, name, version)
+        return new Dependency(name, version, externalId)
     }
 
-
     if ('gems'.equals(packageType)) {
+        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
         String name = fileLayoutInfo.module
         String version = fileLayoutInfo.baseRevision
-        return externalIdFactory.createNameVersionExternalId(Forge.RUBYGEMS, name, version)
+        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.RUBYGEMS, name, version)
+        return new Dependency(name, version, externalId)
     }
 
     return null
 }
 
-private void populateArtifactoryDetails(String repoName, List<VersionBomComponentView> versionBomComponents) {
-    Map<String, String> externalIdToComponentVersionLink = transformVersionBomComponentViews(versionBomComponents);
+private void updateFromHubProject(String repoKey, String projectName, String projectVersionName) {
+    HubServicesFactory hubServicesFactory = createHubServicesFactory();
+    HubResponseService hubResponseService = hubServicesFactory.createHubResponseService();
+    ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
 
-    addOriginIdProperties(repoName, externalIdToComponentVersionLink);
+    ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
+    if (hubResponseService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK)) {
+        String componentsLink = hubResponseService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK);
+        List<VersionBomComponentView> versionBomComponents = hubResponseService.getAllItems(componentsLink, VersionBomComponentView.class);
+
+        Map<String, String> externalIdToComponentVersionLink = transformVersionBomComponentViews(versionBomComponents);
+        addOriginIdProperties(repoKey, externalIdToComponentVersionLink);
+    }
 }
 
 private Map<String, String> transformVersionBomComponentViews(List<VersionBomComponentView> versionBomComponents) {
@@ -144,11 +174,11 @@ private Map<String, String> transformVersionBomComponentViews(List<VersionBomCom
     return externalIdToComponentVersionLink
 }
 
-private void addOriginIdProperties(String repoName, Map<String, String> externalIdToComponentVersionLink) {
+private void addOriginIdProperties(String repoKey, Map<String, String> externalIdToComponentVersionLink) {
     externalIdToComponentVersionLink.each { key, value ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
         setMultimap.put('blackduck.hubOriginId', key);
-        List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoName)
+        List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
             repositories.setProperty(repoPath, 'componentVersionLink', value)
         }
