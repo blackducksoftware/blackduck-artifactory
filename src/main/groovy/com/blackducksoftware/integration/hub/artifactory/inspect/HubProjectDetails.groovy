@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.integration.hub.api.item.MetaService
 import com.blackducksoftware.integration.hub.api.project.ProjectRequestService
 import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionRequestService
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
@@ -65,14 +64,13 @@ class HubProjectDetails {
 
     String getHubProjectVersionUIUrl(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        MetaService metaService = hubServicesFactory.createMetaService()
         ProjectRequestService projectRequestService = hubServicesFactory.createProjectRequestService()
         ProjectVersionRequestService projectVersionRequestService = hubServicesFactory.createProjectVersionRequestService()
         HubServerConfig hubServerConfig = hubClient.createBuilder().build()
 
         ProjectView project = projectRequestService.getProjectByName(projectName)
         ProjectVersionView projectVersion = projectVersionRequestService.getProjectVersion(project, projectVersionName)
-        String projectVersionUIUrl = metaService.getFirstLinkSafely(projectVersion, "components")
+        String projectVersionUIUrl = projectRequestService.getFirstLinkSafely(projectVersion, "components")
         projectVersionUIUrl
     }
 }
