@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.integration.hub.api.item.MetaService
 import com.blackducksoftware.integration.hub.api.project.ProjectRequestService
 import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionRequestService
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
@@ -20,6 +19,7 @@ import com.blackducksoftware.integration.hub.model.enumeration.VersionBomPolicyS
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.model.view.ProjectView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
+import com.blackducksoftware.integration.hub.service.HubResponseService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 
 @Component
@@ -65,14 +65,14 @@ class HubProjectDetails {
 
     String getHubProjectVersionUIUrl(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        MetaService metaService = hubServicesFactory.createMetaService()
+        HubResponseService hubResponseService = hubServicesFactory.createHubResponseService()
         ProjectRequestService projectRequestService = hubServicesFactory.createProjectRequestService()
         ProjectVersionRequestService projectVersionRequestService = hubServicesFactory.createProjectVersionRequestService()
         HubServerConfig hubServerConfig = hubClient.createBuilder().build()
 
         ProjectView project = projectRequestService.getProjectByName(projectName)
         ProjectVersionView projectVersion = projectVersionRequestService.getProjectVersion(project, projectVersionName)
-        String projectVersionUIUrl = metaService.getFirstLinkSafely(projectVersion, "components")
+        String projectVersionUIUrl = hubResponseService.getFirstLinkSafely(projectVersion, "components")
         projectVersionUIUrl
     }
 }
