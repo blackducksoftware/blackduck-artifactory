@@ -1,7 +1,7 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
-import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
+import org.artifactory.fs.ItemInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepositoryConfiguration
@@ -43,7 +43,7 @@ import groovy.transform.Field
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
-        if (!params['repoKey'][0] && !params['patterns'][0]) {
+        if (!params.containsKey('repoKey') || !params['repoKey'][0] || !params.containsKey('patterns') || !params['patterns'][0]) {
             message = 'You must provide a repoKey and comma-separated list of patterns'
             return
         }
@@ -64,6 +64,22 @@ executions {
         }
 
         updateFromHubProject(repoKey, projectName, projectVersionName);
+    }
+}
+
+storage {
+    afterCreate { ItemInfo item ->
+        if (!item.isFolder()) {
+            SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
+            RepoPath repoPath = item.getRepoPath()
+            String repoKey = item.getRepoKey()
+            String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
+            Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
+            if (repoPathDependency != null) {
+                String hubOriginId = repoPathDependency.externalId.createHubOriginId()
+                repositories.setProperty(repoPath, 'blackduck.hubOriginId', hubOriginId)
+            }
+        }
     }
 }
 
@@ -106,37 +122,77 @@ private void createHubProject(String repoKey, String patterns) {
 }
 
 private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
-    if ('nuget'.equals(packageType)) {
-        Properties properties = repositories.getProperties(repoPath)
-        String name = properties['nuget.id'][0]
-        String version = properties['nuget.version'][0]
-        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NUGET, name, version)
-        return new Dependency(name, version, externalId)
-    }
+    try {
+        if ('nuget'.equals(packageType)) {
+            Properties properties = repositories.getProperties(repoPath)
+            String name = properties['nuget.id'][0]
+            String version = properties['nuget.version'][0]
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NUGET, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
 
-    if ('npm'.equals(packageType)) {
-        Properties properties = repositories.getProperties(repoPath)
-        String name = properties['npm.name'][0]
-        String version = properties['npm.version'][0]
-        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NPM, name, version)
-        return new Dependency(name, version, externalId)
-    }
+        if ('npm'.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            Properties properties = repositories.getProperties(repoPath)
+            Forge forge = Forge.NPM
+            String name
+            String version
+            if (properties['npm.name'] && properties['npm.version']) {
+                name = properties['npm.name'][0]
+                version = properties['npm.version'][0]
+            } else {
+                name = fileLayoutInfo.module
+                version = fileLayoutInfo.baseRevision
+            }
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NPM, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
 
-    if ('maven'.equals(packageType) || 'gradle'.equals(packageType)) {
-        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-        String name = fileLayoutInfo.module
-        String version = fileLayoutInfo.baseRevision
-        String group = fileLayoutInfo.organization
-        ExternalId externalId = simpleBdioFactory.createMavenExternalId(group, name, version)
-        return new Dependency(name, version, externalId)
-    }
+        if ('pypi'.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            Properties properties = repositories.getProperties(repoPath)
+            Forge forge = Forge.PYPI
+            String name
+            String version
+            if (properties['pypi.name'] && properties['pypi.version']) {
+                name = properties['pypi.name'][0]
+                version = properties['pypi.version'][0]
+            } else {
+                name = fileLayoutInfo.module
+                version = fileLayoutInfo.baseRevision
+            }
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.PYPI, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
 
-    if ('gems'.equals(packageType)) {
-        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-        String name = fileLayoutInfo.module
-        String version = fileLayoutInfo.baseRevision
-        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.RUBYGEMS, name, version)
-        return new Dependency(name, version, externalId)
+        if ('maven'.equals(packageType) || 'gradle'.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            String name = fileLayoutInfo.module
+            String version = fileLayoutInfo.baseRevision
+            String group = fileLayoutInfo.organization
+            ExternalId externalId = simpleBdioFactory.createMavenExternalId(group, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
+
+        if ('gems'.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            String name = fileLayoutInfo.module
+            String version = fileLayoutInfo.baseRevision
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.RUBYGEMS, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
+    } catch (Exception e) {
+        log.debug("Could not resolve dependency: ${e.getMessage()}")
     }
 
     return null
