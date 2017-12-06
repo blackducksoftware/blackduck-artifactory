@@ -19,7 +19,6 @@ import com.blackducksoftware.integration.hub.model.enumeration.VersionBomPolicyS
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.model.view.ProjectView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
-import com.blackducksoftware.integration.hub.service.HubResponseService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 
 @Component
@@ -65,14 +64,13 @@ class HubProjectDetails {
 
     String getHubProjectVersionUIUrl(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        HubResponseService hubResponseService = hubServicesFactory.createHubResponseService()
         ProjectRequestService projectRequestService = hubServicesFactory.createProjectRequestService()
         ProjectVersionRequestService projectVersionRequestService = hubServicesFactory.createProjectVersionRequestService()
         HubServerConfig hubServerConfig = hubClient.createBuilder().build()
 
         ProjectView project = projectRequestService.getProjectByName(projectName)
         ProjectVersionView projectVersion = projectVersionRequestService.getProjectVersion(project, projectVersionName)
-        String projectVersionUIUrl = hubResponseService.getFirstLinkSafely(projectVersion, "components")
+        String projectVersionUIUrl = projectRequestService.getFirstLinkSafely(projectVersion, "components")
         projectVersionUIUrl
     }
 }
