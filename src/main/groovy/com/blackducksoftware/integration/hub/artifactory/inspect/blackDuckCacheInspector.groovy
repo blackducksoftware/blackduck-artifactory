@@ -4,6 +4,7 @@ import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
+import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
 
 import com.blackducksoftware.integration.hub.api.bom.BomImportRequestService
@@ -65,6 +66,16 @@ executions {
 
         updateFromHubProject(repoKey, projectName, projectVersionName);
     }
+
+    test(httpMethod: 'POST') { params ->
+        def repoKey = params['repoKey'][0]
+
+        message = ''
+        message += repositories.getProperty(repoKey, 'blackduck.projectName')
+        message += '\n'
+        message += repositories.getProperty(repoKey, 'blackduck.projectVersionName')
+        message += '\n'
+    }
 }
 
 storage {
@@ -73,6 +84,8 @@ storage {
             SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
             RepoPath repoPath = item.getRepoPath()
             String repoKey = item.getRepoKey()
+            String projectName = repositories.getProperty(RepoPathFactory.create(repoKey, '/'), 'blackduck.projectName')
+            String projectVersionName = repositories.getProperty(RepoPathFactory.create(repoKey, '/'), 'blackduck.projectVersionName')
             String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
             Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
             if (repoPathDependency != null) {
