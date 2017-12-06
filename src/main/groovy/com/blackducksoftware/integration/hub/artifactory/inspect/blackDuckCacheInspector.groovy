@@ -53,15 +53,16 @@ executions {
 
     updateInspectedRepository(httpMethod: 'POST') { params ->
         def repoKey = params['repoKey'][0]
-        def projectName = params['projectName'][0]
-        def projectVersionName = params['projectVersionName'][0]
+        def projectName = repoKey
+        def projectVersionName = InetAddress.getLocalHost().getHostName();
 
-        if (StringUtils.isBlank(projectName)) {
-            projectName = repoKey;
+        if (params.containsKey('projectName')) {
+            projectName = params['projectName'][0]
         }
-        if (StringUtils.isBlank(projectVersionName)) {
-            projectVersionName = InetAddress.getLocalHost().getHostName();
+        if (params.containsKey('projectVersionName')) {
+            projectVersionName = params['projectVersionName'][0]
         }
+
         updateFromHubProject(repoKey, projectName, projectVersionName);
     }
 }
