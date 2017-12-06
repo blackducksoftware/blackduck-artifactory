@@ -54,8 +54,8 @@ executions {
 
     updateInspectedRepository(httpMethod: 'POST') { params ->
         def repoKey = params['repoKey'][0]
-        def projectName = getDefaultProjectName(repoKey)
-        def projectVersionName = getDefaultProjectVersionName(repoKey)
+        def projectName = getRepoProjectName(repoKey)
+        def projectVersionName = getRepoProjectVersionName(repoKey)
 
         if (params.containsKey('projectName')) {
             projectName = params['projectName'][0]
@@ -68,7 +68,7 @@ executions {
     }
 }
 
-private String getDefaultProjectName(String repoKey) {
+private String getRepoProjectName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
     String projectNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectName')
     if (StringUtils.isNotBlank(projectNameProperty)) {
@@ -77,7 +77,7 @@ private String getDefaultProjectName(String repoKey) {
     return repoKey
 }
 
-private String getDefaultProjectVersionName(String repoKey) {
+private String getRepoProjectVersionName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
     String projectVersionNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectVersionName')
     if (StringUtils.isNotBlank(projectVersionNameProperty)) {
@@ -109,8 +109,8 @@ private void createHubProject(String repoKey, String patterns) {
     }
 
     Forge artifactoryForge = new Forge('/', '/', 'artifactory');
-    String projectName = getDefaultProjectName(repoKey);
-    String projectVersionName = getDefaultProjectVersionName(repoKey);
+    String projectName = getRepoProjectName(repoKey);
+    String projectVersionName = getRepoProjectVersionName(repoKey);
     String codeLocationName = "${projectName}/${projectVersionName}/${packageType}"
     ExternalId projectExternalId = simpleBdioFactory.createNameVersionExternalId(artifactoryForge, projectName, projectVersionName)
     SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, projectName, projectVersionName, projectExternalId, mutableDependencyGraph)
