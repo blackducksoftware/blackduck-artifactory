@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
+import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
 
 import com.blackducksoftware.integration.hub.api.bom.BomImportRequestService
@@ -53,8 +54,8 @@ executions {
 
     updateInspectedRepository(httpMethod: 'POST') { params ->
         def repoKey = params['repoKey'][0]
-        def projectName = repoKey
-        def projectVersionName = InetAddress.getLocalHost().getHostName();
+        def projectName = getDefaultProjectName(repoKey)
+        def projectVersionName = getDefaultProjectVersionName(repoKey)
 
         if (params.containsKey('projectName')) {
             projectName = params['projectName'][0]
@@ -65,6 +66,24 @@ executions {
 
         updateFromHubProject(repoKey, projectName, projectVersionName);
     }
+}
+
+private String getDefaultProjectName(String repoKey) {
+    RepoPath repoPath = RepoPathFactory.create(repoKey)
+    String projectNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectName')
+    if (StringUtils.isNotBlank(projectNameProperty)) {
+        return projectNameProperty
+    }
+    return repoKey
+}
+
+private String getDefaultProjectVersionName(String repoKey) {
+    RepoPath repoPath = RepoPathFactory.create(repoKey)
+    String projectVersionNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectVersionName')
+    if (StringUtils.isNotBlank(projectVersionNameProperty)) {
+        return projectVersionNameProperty
+    }
+    return InetAddress.getLocalHost().getHostName();
 }
 
 private void createHubProject(String repoKey, String patterns) {
@@ -90,11 +109,11 @@ private void createHubProject(String repoKey, String patterns) {
     }
 
     Forge artifactoryForge = new Forge('/', '/', 'artifactory');
-    String projectName = repoKey;
-    String projectVersionName = InetAddress.getLocalHost().getHostName();
+    String projectName = getDefaultProjectName(repoKey);
+    String projectVersionName = getDefaultProjectVersionName(repoKey);
     String codeLocationName = "${projectName}/${projectVersionName}/${packageType}"
     ExternalId projectExternalId = simpleBdioFactory.createNameVersionExternalId(artifactoryForge, projectName, projectVersionName)
-    SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, repoKey, projectVersionName, projectExternalId, mutableDependencyGraph)
+    SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, projectName, projectVersionName, projectExternalId, mutableDependencyGraph)
 
     IntegrationEscapeUtil integrationEscapeUtil = new IntegrationEscapeUtil()
     File bdioFile = new File("/tmp/${integrationEscapeUtil.escapeForUri(codeLocationName)}");
