@@ -66,16 +66,6 @@ executions {
 
         updateFromHubProject(repoKey, projectName, projectVersionName);
     }
-
-    test(httpMethod: 'POST') { params ->
-        def repoKey = params['repoKey'][0]
-
-        message = ''
-        message += repositories.getProperty(repoKey, 'blackduck.projectName')
-        message += '\n'
-        message += repositories.getProperty(repoKey, 'blackduck.projectVersionName')
-        message += '\n'
-    }
 }
 
 storage {
