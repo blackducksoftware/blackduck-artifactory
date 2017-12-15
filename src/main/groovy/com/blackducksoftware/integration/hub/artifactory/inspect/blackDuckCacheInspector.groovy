@@ -1,5 +1,6 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import org.apache.commons.lang.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
 import org.artifactory.md.Properties
@@ -7,8 +8,8 @@ import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
 
-import com.blackducksoftware.integration.hub.api.bom.BomImportRequestService
-import com.blackducksoftware.integration.hub.api.item.MetaService
+import com.blackducksoftware.integration.hub.api.bom.BomImportService
+import com.blackducksoftware.integration.hub.api.view.MetaHandler
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
@@ -16,12 +17,13 @@ import com.blackducksoftware.integration.hub.bdio.model.SimpleBdioDocument
 import com.blackducksoftware.integration.hub.bdio.model.dependency.Dependency
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
+import com.blackducksoftware.integration.hub.dataservice.component.ComponentDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.model.view.VersionBomComponentView
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
-import com.blackducksoftware.integration.hub.service.HubResponseService
+import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.util.IntegrationEscapeUtil
@@ -74,13 +76,16 @@ storage {
             SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
             RepoPath repoPath = item.getRepoPath()
             String repoKey = item.getRepoKey()
-            String projectName = repositories.getProperty(RepoPathFactory.create(repoKey, '/'), 'blackduck.projectName')
-            String projectVersionName = repositories.getProperty(RepoPathFactory.create(repoKey, '/'), 'blackduck.projectVersionName')
+            String projectName = getRepoProjectName(repoKey)
+            String projectVersionName = getRepoProjectVersionName(repoKey)
             String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
             Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
             if (repoPathDependency != null) {
                 String hubOriginId = repoPathDependency.externalId.createHubOriginId()
                 repositories.setProperty(repoPath, 'blackduck.hubOriginId', hubOriginId)
+                HubServicesFactory hubServicesFactory = createHubServicesFactory();
+                ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
+                componentDataService.addComponentToProjectVersion(repoPathDependency.externalId, projectName, projectVersionName);
             }
         }
     }
@@ -138,8 +143,8 @@ private void createHubProject(String repoKey, String patterns) {
     bdioFile.delete()
     simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
 
-    BomImportRequestService bomImportRequestService = hubServicesFactory.createBomImportRequestService();
-    bomImportRequestService.importBomFile(bdioFile);
+    BomImportService bomImportService = hubServicesFactory.createBomImportService();
+    bomImportService.importBomFile(bdioFile);
 }
 
 private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
@@ -221,13 +226,13 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
 
 private void updateFromHubProject(String repoKey, String projectName, String projectVersionName) {
     HubServicesFactory hubServicesFactory = createHubServicesFactory();
-    HubResponseService hubResponseService = hubServicesFactory.createHubResponseService();
+    HubService hubService = hubServicesFactory.createHubService();
     ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
 
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    if (hubResponseService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK)) {
-        String componentsLink = hubResponseService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK);
-        List<VersionBomComponentView> versionBomComponents = hubResponseService.getAllItems(componentsLink, VersionBomComponentView.class);
+    if (hubService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaHandler.COMPONENTS_LINK)) {
+        String componentsLink = hubService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaHandler.COMPONENTS_LINK);
+        List<VersionBomComponentView> versionBomComponents = hubService.getAllViews(componentsLink, VersionBomComponentView.class);
 
         Map<String, String> externalIdToComponentVersionLink = transformVersionBomComponentViews(versionBomComponents);
         addOriginIdProperties(repoKey, externalIdToComponentVersionLink);
