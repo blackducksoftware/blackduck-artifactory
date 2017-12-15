@@ -42,16 +42,37 @@ import groovy.transform.Field
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
 
-@Field final boolean HUB_ALWAYS_TRUST_CERTS=false
+@Field final boolean HUB_ALWAYS_TRUST_CERTS=true
+
+@Field final String RUBYGEMS_PACKAGE = 'gems'
+@Field final String MAVEN_PACKAGE = 'maven'
+@Field final String GRADLE_PACKAGE = 'gradle'
+@Field final String PYPI_PACKAGE = 'pypi'
+@Field final String NUGET_PACKAGE = 'nuget'
+@Field final String NPM_PACKAGE = 'npm'
+
+@Field final String RUBYGEMS_PATTERNS = '*.gem'
+@Field final String MAVEN_PATTERNS = '*.jar'
+@Field final String GRADLE_PATTERNS = '*.jar'
+@Field final String PYPI_PATTERNS = '*.whl,*.tar.gz,*.zip,*.egg'
+@Field final String NUGET_PATTERNS = '*.nupkg'
+@Field final String NPM_PATTERNS = '*.tgz'
+
+@Field final String HUB_ORIGIN_ID_PROPERTY_NAME = 'blackduck.hubOriginId'
+@Field final String HUB_PROJECT_NAME_PROPERTY_NAME = 'blackduck.hubProjectName'
+@Field final String HUB_PROJECT_VERSION_NAME_PROPERTY_NAME = 'blackduck.hubProjectVersionName'
+@Field final String HUB_COMPONENT_VERSION_LINK_PROPERTY_NAME = 'blackduck.hubComponentVersionLink'
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
-        if (!params.containsKey('repoKey') || !params['repoKey'][0] || !params.containsKey('patterns') || !params['patterns'][0]) {
-            message = 'You must provide a repoKey and comma-separated list of patterns'
+        if (!params.containsKey('repoKey') || !params['repoKey'][0]) {
+            message = 'You must provide a repoKey'
             return
         }
+        String repoKey = params['repoKey'][0]
+        String patterns = getPatternsFromPackageType(repositories.getRepositoryConfiguration(repoKey).getPackageType())
 
-        createHubProject(params['repoKey'][0], params['patterns'][0])
+        createHubProject(repoKey, patterns)
     }
 
     updateInspectedRepository(httpMethod: 'POST') { params ->
@@ -82,7 +103,7 @@ storage {
             Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
             if (repoPathDependency != null) {
                 String hubOriginId = repoPathDependency.externalId.createHubOriginId()
-                repositories.setProperty(repoPath, 'blackduck.hubOriginId', hubOriginId)
+                repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
                 HubServicesFactory hubServicesFactory = createHubServicesFactory();
                 ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
                 componentDataService.addComponentToProjectVersion(repoPathDependency.externalId, projectName, projectVersionName);
@@ -93,7 +114,7 @@ storage {
 
 private String getRepoProjectName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectName')
+    String projectNameProperty = repositories.getProperty(repoPath, HUB_PROJECT_NAME_PROPERTY_NAME)
     if (StringUtils.isNotBlank(projectNameProperty)) {
         return projectNameProperty
     }
@@ -102,7 +123,7 @@ private String getRepoProjectName(String repoKey) {
 
 private String getRepoProjectVersionName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectVersionNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectVersionName')
+    String projectVersionNameProperty = repositories.getProperty(repoPath, HUB_PROJECT_VERSION_NAME_PROPERTY_NAME)
     if (StringUtils.isNotBlank(projectVersionNameProperty)) {
         return projectVersionNameProperty
     }
@@ -126,7 +147,7 @@ private void createHubProject(String repoKey, String patterns) {
         Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType);
         if (repoPathDependency != null) {
             String hubOriginId = repoPathDependency.externalId.createHubOriginId()
-            repositories.setProperty(repoPath, 'blackduck.hubOriginId', hubOriginId)
+            repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
             mutableDependencyGraph.addChildToRoot(repoPathDependency);
         }
     }
@@ -147,9 +168,30 @@ private void createHubProject(String repoKey, String patterns) {
     bomImportService.importBomFile(bdioFile);
 }
 
+private String getPatternsFromPackageType(String packageType) {
+    if (RUBYGEMS_PACKAGE.equals(packageType)) {
+        return RUBYGEMS_PATTERNS
+    }
+    if (MAVEN_PACKAGE.equals(packageType)) {
+        return MAVEN_PATTERNS
+    }
+    if (GRADLE_PACKAGE.equals(packageType)) {
+        return GRADLE_PATTERNS
+    }
+    if (PYPI_PACKAGE.equals(packageType)) {
+        return PYPI_PATTERNS
+    }
+    if (NUGET_PACKAGE.equals(packageType)) {
+        return NUGET_PATTERNS
+    }
+    if (NPM_PACKAGE.equals(packageType)) {
+        return NPM_PATTERNS
+    }
+}
+
 private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
     try {
-        if ('nuget'.equals(packageType)) {
+        if (NUGET_PACKAGE.equals(packageType)) {
             Properties properties = repositories.getProperties(repoPath)
             String name = properties['nuget.id'][0]
             String version = properties['nuget.version'][0]
@@ -159,7 +201,7 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
             }
         }
 
-        if ('npm'.equals(packageType)) {
+        if (NPM_PACKAGE.equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             Properties properties = repositories.getProperties(repoPath)
             Forge forge = Forge.NPM
@@ -178,7 +220,7 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
             }
         }
 
-        if ('pypi'.equals(packageType)) {
+        if (PYPI_PACKAGE.equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             Properties properties = repositories.getProperties(repoPath)
             Forge forge = Forge.PYPI
@@ -197,7 +239,7 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
             }
         }
 
-        if ('maven'.equals(packageType) || 'gradle'.equals(packageType)) {
+        if (MAVEN_PACKAGE.equals(packageType) || GRADLE_PACKAGE.equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             String name = fileLayoutInfo.module
             String version = fileLayoutInfo.baseRevision
@@ -208,7 +250,7 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
             }
         }
 
-        if ('gems'.equals(packageType)) {
+        if (RUBYGEMS_PACKAGE.equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             String name = fileLayoutInfo.module
             String version = fileLayoutInfo.baseRevision
@@ -259,10 +301,10 @@ private Map<String, String> transformVersionBomComponentViews(List<VersionBomCom
 private void addOriginIdProperties(String repoKey, Map<String, String> externalIdToComponentVersionLink) {
     externalIdToComponentVersionLink.each { key, value ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put('blackduck.hubOriginId', key);
+        setMultimap.put(HUB_ORIGIN_ID_PROPERTY_NAME, key);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, 'componentVersionLink', value)
+            repositories.setProperty(repoPath, HUB_COMPONENT_VERSION_LINK_PROPERTY_NAME, value)
         }
     }
 }
