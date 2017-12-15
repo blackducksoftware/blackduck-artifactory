@@ -3,7 +3,7 @@ Hub-artifactory plugin lets the user to specify repo(s) and file extensions that
 
 ## Build ##
 [![Build Status](https://travis-ci.org/blackducksoftware/hub-artifactory.svg?branch=master)](https://travis-ci.org/blackducksoftware/hub-artifactory)
-[![Black Duck Security Risk](https://copilot.blackducksoftware.com/github/groups/blackducksoftware/locations/hub-artifactory/public/results/branches/master/badge-risk.svg)](https://copilot.blackducksoftware.com/github/groups/blackducksoftware/locations/hub-artifactory/public/results/branches/master)
+[![Black Duck Security Risk](https://copilot.blackducksoftware.com/github/repos/blackducksoftware/hub-artifactory/branches/master/badge-risk.svg)](https://copilot.blackducksoftware.com/github/repos/blackducksoftware/hub-artifactory/branches/master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Where can I get the latest release? ##
