@@ -18,5 +18,4 @@ script:
   ./gradlew clean build
   
 after_success:
-- ./gradlew createHubOutput
-- bash <(curl -s https://copilot.blackducksoftware.com/bash/travis) ./build/blackduck/*_bdio.jsonld
+  - bash <(curl -s https://copilot.blackducksoftware.com/ci/travis/scripts/upload)
