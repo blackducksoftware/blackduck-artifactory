@@ -1,12 +1,14 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
 import org.apache.commons.lang.StringUtils
+import org.artifactory.addon.pypi.*
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
+import org.springframework.context.ApplicationContext
 
 import com.blackducksoftware.integration.hub.api.bom.BomImportService
 import com.blackducksoftware.integration.hub.api.view.MetaHandler
@@ -32,7 +34,7 @@ import com.google.common.collect.SetMultimap
 
 import groovy.transform.Field
 
-@Field final String HUB_URL=""
+@Field final String HUB_URL="h"
 @Field final int HUB_TIMEOUT=120
 @Field final String HUB_USERNAME=""
 @Field final String HUB_PASSWORD=""
@@ -62,6 +64,9 @@ import groovy.transform.Field
 @Field final String HUB_PROJECT_NAME_PROPERTY_NAME = 'blackduck.hubProjectName'
 @Field final String HUB_PROJECT_VERSION_NAME_PROPERTY_NAME = 'blackduck.hubProjectVersionName'
 @Field final String HUB_COMPONENT_VERSION_LINK_PROPERTY_NAME = 'blackduck.hubComponentVersionLink'
+@Field final String HIGH_VULNERABILITIES_PROPERTY_NAME = 'blackduck.highVulnerabilities'
+@Field final String MEDIUM_VULNERABILITIES_PROPERTY_NAME = 'blackduck.mediumVulnerabilities'
+@Field final String LOW_VULNERABILITIES_PROPERTY_NAME = 'blackduck.lowVulnerabilities'
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
@@ -94,19 +99,25 @@ executions {
 storage {
     afterCreate { ItemInfo item ->
         if (!item.isFolder()) {
-            SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
             RepoPath repoPath = item.getRepoPath()
             String repoKey = item.getRepoKey()
+            String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
+            SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
             String projectName = getRepoProjectName(repoKey)
             String projectVersionName = getRepoProjectVersionName(repoKey)
-            String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
-            Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
-            if (repoPathDependency != null) {
-                String hubOriginId = repoPathDependency.externalId.createHubOriginId()
-                repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
-                HubServicesFactory hubServicesFactory = createHubServicesFactory();
-                ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
-                componentDataService.addComponentToProjectVersion(repoPathDependency.externalId, projectName, projectVersionName);
+
+            try {
+                Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
+                if (repoPathDependency != null) {
+                    HubServicesFactory hubServicesFactory = createHubServicesFactory();
+                    ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
+                    componentDataService.addComponentToProjectVersion(repoPathDependency.externalId, projectName, projectVersionName);
+
+                    String hubOriginId = repoPathDependency.externalId.createHubOriginId()
+                    repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
+                }
+            } catch (Exception e) {
+                log.debug("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub: ${e.getMessage()}")
             }
         }
     }
@@ -232,6 +243,15 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
             } else {
                 name = fileLayoutInfo.module
                 version = fileLayoutInfo.baseRevision
+            }
+            if (!name || !version) {
+                try {
+                    def pypiService = ((ApplicationContext) ctx).getBean('pypiService')
+                    def pypiMetadata = pypiService.getPypiMetadata(repoPath)
+                    name = pypiMetadata.name
+                    version = pypiMetadata.version
+                } catch (Exception e) {
+                }
             }
             ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.PYPI, name, version)
             if (name && version && externalId) {
