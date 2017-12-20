@@ -116,6 +116,8 @@ storage {
 
                     String hubOriginId = repoPathDependency.externalId.createHubOriginId()
                     repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
+                    String hubForge = repoPathDependency.externalId.forge.getName()
+                    repositories.setProperty(repoPath, HUB_FORGE_PROPERTY_NAME, hubForge)
                 }
             } catch (Exception e) {
                 log.debug("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub: ${e.getMessage()}")
