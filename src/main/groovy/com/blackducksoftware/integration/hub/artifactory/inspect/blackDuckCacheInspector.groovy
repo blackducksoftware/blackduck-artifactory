@@ -1,11 +1,14 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
-import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang.StringUtils
+import org.artifactory.addon.pypi.*
 import org.artifactory.fs.FileLayoutInfo
+import org.artifactory.fs.ItemInfo
 import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
+import org.springframework.context.ApplicationContext
 
 import com.blackducksoftware.integration.hub.api.bom.BomImportService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
@@ -17,6 +20,7 @@ import com.blackducksoftware.integration.hub.bdio.model.SimpleBdioDocument
 import com.blackducksoftware.integration.hub.bdio.model.dependency.Dependency
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
+import com.blackducksoftware.integration.hub.dataservice.component.ComponentDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
 import com.blackducksoftware.integration.hub.global.HubServerConfig
@@ -42,14 +46,38 @@ import groovy.transform.Field
 
 @Field final boolean HUB_ALWAYS_TRUST_CERTS=false
 
+@Field final String RUBYGEMS_PACKAGE = 'gems'
+@Field final String MAVEN_PACKAGE = 'maven'
+@Field final String GRADLE_PACKAGE = 'gradle'
+@Field final String PYPI_PACKAGE = 'pypi'
+@Field final String NUGET_PACKAGE = 'nuget'
+@Field final String NPM_PACKAGE = 'npm'
+
+@Field final String RUBYGEMS_PATTERNS = '*.gem'
+@Field final String MAVEN_PATTERNS = '*.jar'
+@Field final String GRADLE_PATTERNS = '*.jar'
+@Field final String PYPI_PATTERNS = '*.whl,*.tar.gz,*.zip,*.egg'
+@Field final String NUGET_PATTERNS = '*.nupkg'
+@Field final String NPM_PATTERNS = '*.tgz'
+
+@Field final String HUB_ORIGIN_ID_PROPERTY_NAME = 'blackduck.hubOriginId'
+@Field final String HUB_PROJECT_NAME_PROPERTY_NAME = 'blackduck.hubProjectName'
+@Field final String HUB_PROJECT_VERSION_NAME_PROPERTY_NAME = 'blackduck.hubProjectVersionName'
+@Field final String HUB_COMPONENT_VERSION_LINK_PROPERTY_NAME = 'blackduck.hubComponentVersionLink'
+@Field final String HIGH_VULNERABILITIES_PROPERTY_NAME = 'blackduck.highVulnerabilities'
+@Field final String MEDIUM_VULNERABILITIES_PROPERTY_NAME = 'blackduck.mediumVulnerabilities'
+@Field final String LOW_VULNERABILITIES_PROPERTY_NAME = 'blackduck.lowVulnerabilities'
+
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
-        if (!params['repoKey'][0] && !params['patterns'][0]) {
-            message = 'You must provide a repoKey and comma-separated list of patterns'
+        if (!params.containsKey('repoKey') || !params['repoKey'][0]) {
+            message = 'You must provide a repoKey'
             return
         }
+        String repoKey = params['repoKey'][0]
+        String patterns = getPatternsFromPackageType(repositories.getRepositoryConfiguration(repoKey).getPackageType())
 
-        createHubProject(params['repoKey'][0], params['patterns'][0])
+        createHubProject(repoKey, patterns)
     }
 
     updateInspectedRepository(httpMethod: 'POST') { params ->
@@ -68,9 +96,36 @@ executions {
     }
 }
 
+storage {
+    afterCreate { ItemInfo item ->
+        if (!item.isFolder()) {
+            RepoPath repoPath = item.getRepoPath()
+            String repoKey = item.getRepoKey()
+            String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
+            SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
+            String projectName = getRepoProjectName(repoKey)
+            String projectVersionName = getRepoProjectVersionName(repoKey)
+
+            try {
+                Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
+                if (repoPathDependency != null) {
+                    HubServicesFactory hubServicesFactory = createHubServicesFactory();
+                    ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
+                    componentDataService.addComponentToProjectVersion(repoPathDependency.externalId, projectName, projectVersionName);
+
+                    String hubOriginId = repoPathDependency.externalId.createHubOriginId()
+                    repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
+                }
+            } catch (Exception e) {
+                log.debug("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub: ${e.getMessage()}")
+            }
+        }
+    }
+}
+
 private String getRepoProjectName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectName')
+    String projectNameProperty = repositories.getProperty(repoPath, HUB_PROJECT_NAME_PROPERTY_NAME)
     if (StringUtils.isNotBlank(projectNameProperty)) {
         return projectNameProperty
     }
@@ -79,7 +134,7 @@ private String getRepoProjectName(String repoKey) {
 
 private String getRepoProjectVersionName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectVersionNameProperty = repositories.getProperty(repoPath, 'blackduck.hubProjectVersionName')
+    String projectVersionNameProperty = repositories.getProperty(repoPath, HUB_PROJECT_VERSION_NAME_PROPERTY_NAME)
     if (StringUtils.isNotBlank(projectVersionNameProperty)) {
         return projectVersionNameProperty
     }
@@ -125,38 +180,108 @@ private void createHubProject(String repoKey, String patterns) {
     bomImportService.importBomFile(bdioFile);
 }
 
+private String getPatternsFromPackageType(String packageType) {
+    if (RUBYGEMS_PACKAGE.equals(packageType)) {
+        return RUBYGEMS_PATTERNS
+    }
+    if (MAVEN_PACKAGE.equals(packageType)) {
+        return MAVEN_PATTERNS
+    }
+    if (GRADLE_PACKAGE.equals(packageType)) {
+        return GRADLE_PATTERNS
+    }
+    if (PYPI_PACKAGE.equals(packageType)) {
+        return PYPI_PATTERNS
+    }
+    if (NUGET_PACKAGE.equals(packageType)) {
+        return NUGET_PATTERNS
+    }
+    if (NPM_PACKAGE.equals(packageType)) {
+        return NPM_PATTERNS
+    }
+}
+
 private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
-    if ('nuget'.equals(packageType)) {
-        Properties properties = repositories.getProperties(repoPath)
-        String name = properties['nuget.id'][0]
-        String version = properties['nuget.version'][0]
-        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NUGET, name, version)
-        return new Dependency(name, version, externalId)
-    }
+    try {
+        if (NUGET_PACKAGE.equals(packageType)) {
+            Properties properties = repositories.getProperties(repoPath)
+            String name = properties['nuget.id'][0]
+            String version = properties['nuget.version'][0]
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NUGET, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
 
-    if ('npm'.equals(packageType)) {
-        Properties properties = repositories.getProperties(repoPath)
-        String name = properties['npm.name'][0]
-        String version = properties['npm.version'][0]
-        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NPM, name, version)
-        return new Dependency(name, version, externalId)
-    }
+        if (NPM_PACKAGE.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            Properties properties = repositories.getProperties(repoPath)
+            Forge forge = Forge.NPM
+            String name
+            String version
+            if (properties['npm.name'] && properties['npm.version']) {
+                name = properties['npm.name'][0]
+                version = properties['npm.version'][0]
+            } else {
+                name = fileLayoutInfo.module
+                version = fileLayoutInfo.baseRevision
+            }
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.NPM, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
 
-    if ('maven'.equals(packageType) || 'gradle'.equals(packageType)) {
-        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-        String name = fileLayoutInfo.module
-        String version = fileLayoutInfo.baseRevision
-        String group = fileLayoutInfo.organization
-        ExternalId externalId = simpleBdioFactory.createMavenExternalId(group, name, version)
-        return new Dependency(name, version, externalId)
-    }
+        if (PYPI_PACKAGE.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            Properties properties = repositories.getProperties(repoPath)
+            Forge forge = Forge.PYPI
+            String name
+            String version
+            if (properties['pypi.name'] && properties['pypi.version']) {
+                name = properties['pypi.name'][0]
+                version = properties['pypi.version'][0]
+            } else {
+                name = fileLayoutInfo.module
+                version = fileLayoutInfo.baseRevision
+            }
+            if (!name || !version) {
+                try {
+                    def pypiService = ((ApplicationContext) ctx).getBean('pypiService')
+                    def pypiMetadata = pypiService.getPypiMetadata(repoPath)
+                    name = pypiMetadata.name
+                    version = pypiMetadata.version
+                } catch (Exception e) {
+                }
+            }
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.PYPI, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
 
-    if ('gems'.equals(packageType)) {
-        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-        String name = fileLayoutInfo.module
-        String version = fileLayoutInfo.baseRevision
-        ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.RUBYGEMS, name, version)
-        return new Dependency(name, version, externalId)
+        if (MAVEN_PACKAGE.equals(packageType) || GRADLE_PACKAGE.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            String name = fileLayoutInfo.module
+            String version = fileLayoutInfo.baseRevision
+            String group = fileLayoutInfo.organization
+            ExternalId externalId = simpleBdioFactory.createMavenExternalId(group, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
+
+        if (RUBYGEMS_PACKAGE.equals(packageType)) {
+            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+            String name = fileLayoutInfo.module
+            String version = fileLayoutInfo.baseRevision
+            ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(Forge.RUBYGEMS, name, version)
+            if (name && version && externalId) {
+                return new Dependency(name, version, externalId)
+            }
+        }
+    } catch (Exception e) {
+        log.debug("Could not resolve dependency: ${e.getMessage()}")
     }
 
     return null
