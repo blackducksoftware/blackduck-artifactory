@@ -104,7 +104,8 @@ private void createHubProject(String repoKey, String patterns) {
         if (repoPathDependency != null) {
             String hubOriginId = repoPathDependency.externalId.createHubOriginId()
             repositories.setProperty(repoPath, 'blackduck.hubOriginId', hubOriginId)
-            mutableDependencyGraph.addChildToRoot(repoPathDependency);
+            repositories.setProperty(repoPath, 'blackduck.hubForge', repoPathDependency.externalId.forge.toString())
+            mutableDependencyGraph.addChildToRoot(repoPathDependency)
         }
     }
 
