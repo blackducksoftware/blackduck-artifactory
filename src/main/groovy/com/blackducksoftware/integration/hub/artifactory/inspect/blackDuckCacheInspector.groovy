@@ -61,12 +61,13 @@ import groovy.transform.Field
 @Field final String NPM_PATTERNS = '*.tgz'
 
 @Field final String HUB_ORIGIN_ID_PROPERTY_NAME = 'blackduck.hubOriginId'
+@Field final String HUB_FORGE_PROPERTY_NAME = 'blackduck.hubForge'
 @Field final String HUB_PROJECT_NAME_PROPERTY_NAME = 'blackduck.hubProjectName'
 @Field final String HUB_PROJECT_VERSION_NAME_PROPERTY_NAME = 'blackduck.hubProjectVersionName'
-@Field final String HUB_COMPONENT_VERSION_LINK_PROPERTY_NAME = 'blackduck.hubComponentVersionLink'
 @Field final String HIGH_VULNERABILITIES_PROPERTY_NAME = 'blackduck.highVulnerabilities'
 @Field final String MEDIUM_VULNERABILITIES_PROPERTY_NAME = 'blackduck.mediumVulnerabilities'
 @Field final String LOW_VULNERABILITIES_PROPERTY_NAME = 'blackduck.lowVulnerabilities'
+@Field final String POLICY_STATUS_PROPERTY_NAME = 'blackduck.policyStatus'
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
@@ -158,8 +159,8 @@ private void createHubProject(String repoKey, String patterns) {
         Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType);
         if (repoPathDependency != null) {
             String hubOriginId = repoPathDependency.externalId.createHubOriginId()
-            repositories.setProperty(repoPath, 'blackduck.hubOriginId', hubOriginId)
-            repositories.setProperty(repoPath, 'blackduck.hubForge', repoPathDependency.externalId.forge.toString())
+            repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
+            repositories.setProperty(repoPath, HUB_FORGE_PROPERTY_NAME, repoPathDependency.externalId.forge.toString())
             mutableDependencyGraph.addChildToRoot(repoPathDependency)
         }
     }
@@ -301,14 +302,14 @@ private void updateFromHubProject(String repoKey, String projectName, String pro
 private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
     artifactMetaDataList.each { artifactMetaData ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put('blackduck.hubOriginId', artifactMetaData.originId);
-        setMultimap.put('blackduck.hubForge', artifactMetaData.forge);
+        setMultimap.put(HUB_ORIGIN_ID_PROPERTY_NAME, artifactMetaData.originId);
+        setMultimap.put(HUB_FORGE_PROPERTY_NAME, artifactMetaData.forge);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, 'blackduck.highSeverity', Integer.toString(artifactMetaData.highSeverityCount))
-            repositories.setProperty(repoPath, 'blackduck.mediumSeverity', Integer.toString(artifactMetaData.mediumSeverityCount))
-            repositories.setProperty(repoPath, 'blackduck.lowSeverity', Integer.toString(artifactMetaData.lowSeverityCount))
-            repositories.setProperty(repoPath, 'blackduck.policyStatus', artifactMetaData.policyStatus)
+            repositories.setProperty(repoPath, HIGH_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.highSeverityCount))
+            repositories.setProperty(repoPath, MEDIUM_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.mediumSeverityCount))
+            repositories.setProperty(repoPath, LOW_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.lowSeverityCount))
+            repositories.setProperty(repoPath, POLICY_STATUS_PROPERTY_NAME, artifactMetaData.policyStatus)
         }
     }
 }
