@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.blackducksoftware.integration.exception.EncryptionException;
 import com.blackducksoftware.integration.exception.IntegrationException;
-import com.blackducksoftware.integration.hub.api.bom.BomImportRequestService;
+import com.blackducksoftware.integration.hub.api.bom.BomImportService;
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryRestClient;
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
@@ -52,7 +52,7 @@ public class HubClient {
     }
 
     public void uploadBdioToHub(final File bdioFile) throws IntegrationException {
-        final BomImportRequestService bomImportRequestService = getHubServicesFactory().createBomImportRequestService();
+        final BomImportService bomImportRequestService = getHubServicesFactory().createBomImportService();
         bomImportRequestService.importBomFile(bdioFile);
     }
 

@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.integration.hub.api.project.ProjectRequestService
-import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionRequestService
+import com.blackducksoftware.integration.hub.api.project.ProjectService
+import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionService
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
@@ -64,13 +64,13 @@ class HubProjectDetails {
 
     String getHubProjectVersionUIUrl(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        ProjectRequestService projectRequestService = hubServicesFactory.createProjectRequestService()
-        ProjectVersionRequestService projectVersionRequestService = hubServicesFactory.createProjectVersionRequestService()
+        ProjectService projectService = hubServicesFactory.createProjectService()
+        ProjectVersionService projectVersionService = hubServicesFactory.createProjectVersionService()
         HubServerConfig hubServerConfig = hubClient.createBuilder().build()
 
-        ProjectView project = projectRequestService.getProjectByName(projectName)
-        ProjectVersionView projectVersion = projectVersionRequestService.getProjectVersion(project, projectVersionName)
-        String projectVersionUIUrl = projectRequestService.getFirstLinkSafely(projectVersion, "components")
+        ProjectView project = projectService.getProjectByName(projectName)
+        ProjectVersionView projectVersion = projectVersionService.getProjectVersion(project, projectVersionName)
+        String projectVersionUIUrl = projectService.getFirstLinkSafely(projectVersion, "components")
         projectVersionUIUrl
     }
 }
