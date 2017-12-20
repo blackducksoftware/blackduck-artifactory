@@ -11,7 +11,8 @@ import org.artifactory.repo.RepositoryConfiguration
 import org.springframework.context.ApplicationContext
 
 import com.blackducksoftware.integration.hub.api.bom.BomImportService
-import com.blackducksoftware.integration.hub.api.view.MetaHandler
+import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
+import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
@@ -23,7 +24,6 @@ import com.blackducksoftware.integration.hub.dataservice.component.ComponentData
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
 import com.blackducksoftware.integration.hub.global.HubServerConfig
-import com.blackducksoftware.integration.hub.model.view.VersionBomComponentView
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
@@ -34,7 +34,7 @@ import com.google.common.collect.SetMultimap
 
 import groovy.transform.Field
 
-@Field final String HUB_URL="h"
+@Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
 @Field final String HUB_USERNAME=""
 @Field final String HUB_PASSWORD=""
@@ -44,7 +44,7 @@ import groovy.transform.Field
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
 
-@Field final boolean HUB_ALWAYS_TRUST_CERTS=true
+@Field final boolean HUB_ALWAYS_TRUST_CERTS=false
 
 @Field final String RUBYGEMS_PACKAGE = 'gems'
 @Field final String MAVEN_PACKAGE = 'maven'
@@ -61,12 +61,13 @@ import groovy.transform.Field
 @Field final String NPM_PATTERNS = '*.tgz'
 
 @Field final String HUB_ORIGIN_ID_PROPERTY_NAME = 'blackduck.hubOriginId'
+@Field final String HUB_FORGE_PROPERTY_NAME = 'blackduck.hubForge'
 @Field final String HUB_PROJECT_NAME_PROPERTY_NAME = 'blackduck.hubProjectName'
 @Field final String HUB_PROJECT_VERSION_NAME_PROPERTY_NAME = 'blackduck.hubProjectVersionName'
-@Field final String HUB_COMPONENT_VERSION_LINK_PROPERTY_NAME = 'blackduck.hubComponentVersionLink'
 @Field final String HIGH_VULNERABILITIES_PROPERTY_NAME = 'blackduck.highVulnerabilities'
 @Field final String MEDIUM_VULNERABILITIES_PROPERTY_NAME = 'blackduck.mediumVulnerabilities'
 @Field final String LOW_VULNERABILITIES_PROPERTY_NAME = 'blackduck.lowVulnerabilities'
+@Field final String POLICY_STATUS_PROPERTY_NAME = 'blackduck.policyStatus'
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
@@ -159,7 +160,8 @@ private void createHubProject(String repoKey, String patterns) {
         if (repoPathDependency != null) {
             String hubOriginId = repoPathDependency.externalId.createHubOriginId()
             repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
-            mutableDependencyGraph.addChildToRoot(repoPathDependency);
+            repositories.setProperty(repoPath, HUB_FORGE_PROPERTY_NAME, repoPathDependency.externalId.forge.toString())
+            mutableDependencyGraph.addChildToRoot(repoPathDependency)
         }
     }
 
@@ -290,41 +292,24 @@ private void updateFromHubProject(String repoKey, String projectName, String pro
     HubServicesFactory hubServicesFactory = createHubServicesFactory();
     HubService hubService = hubServicesFactory.createHubService();
     ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
+    ArtifactMetaDataManager artifactMetaDataManager = new ArtifactMetaDataManager();
 
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    if (hubService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaHandler.COMPONENTS_LINK)) {
-        String componentsLink = hubService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaHandler.COMPONENTS_LINK);
-        List<VersionBomComponentView> versionBomComponents = hubService.getAllViews(componentsLink, VersionBomComponentView.class);
-
-        Map<String, String> externalIdToComponentVersionLink = transformVersionBomComponentViews(versionBomComponents);
-        addOriginIdProperties(repoKey, externalIdToComponentVersionLink);
-    }
+    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaData(hubService, projectVersionWrapper.getProjectVersionView());
+    addOriginIdProperties(repoKey, artifactMetaDataList);
 }
 
-private Map<String, String> transformVersionBomComponentViews(List<VersionBomComponentView> versionBomComponents) {
-    Map<String, String> externalIdToComponentVersionLink = new HashMap<>();
-    versionBomComponents.each { component ->
-        String componentVersionLink = component.componentVersion;
-        component.origins.each { origin ->
-            String currentValue = externalIdToComponentVersionLink.get(origin.externalId);
-            if (currentValue != null && !currentValue.equals(componentVersionLink)) {
-                log.warn(String.format("The external id %s is already assigned to the component link %s so we will not assign it to %s", origin.externalId, currentValue, componentVersionLink));
-            } else {
-                externalIdToComponentVersionLink.put(origin.externalId, componentVersionLink);
-            }
-        }
-    }
-
-    return externalIdToComponentVersionLink
-}
-
-private void addOriginIdProperties(String repoKey, Map<String, String> externalIdToComponentVersionLink) {
-    externalIdToComponentVersionLink.each { key, value ->
+private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
+    artifactMetaDataList.each { artifactMetaData ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put(HUB_ORIGIN_ID_PROPERTY_NAME, key);
+        setMultimap.put(HUB_ORIGIN_ID_PROPERTY_NAME, artifactMetaData.originId);
+        setMultimap.put(HUB_FORGE_PROPERTY_NAME, artifactMetaData.forge);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, HUB_COMPONENT_VERSION_LINK_PROPERTY_NAME, value)
+            repositories.setProperty(repoPath, HIGH_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.highSeverityCount))
+            repositories.setProperty(repoPath, MEDIUM_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.mediumSeverityCount))
+            repositories.setProperty(repoPath, LOW_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.lowSeverityCount))
+            repositories.setProperty(repoPath, POLICY_STATUS_PROPERTY_NAME, artifactMetaData.policyStatus)
         }
     }
 }

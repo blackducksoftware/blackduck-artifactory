@@ -52,8 +52,8 @@ public class HubClient {
     }
 
     public void uploadBdioToHub(final File bdioFile) throws IntegrationException {
-        final BomImportService bomImportRequestService = getHubServicesFactory().createBomImportService();
-        bomImportRequestService.importBomFile(bdioFile);
+        final BomImportService bomImportService = getHubServicesFactory().createBomImportService();
+        bomImportService.importBomFile(bdioFile);
     }
 
     public void waitForBomCalculation(final String projectName, final String projectVersionName) throws IntegrationException {
