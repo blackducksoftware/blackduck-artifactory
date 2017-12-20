@@ -34,7 +34,7 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
-import com.blackducksoftware.integration.hub.api.item.MetaService
+import com.blackducksoftware.integration.hub.api.view.MetaHandler
 import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
@@ -48,7 +48,7 @@ import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusVi
 import com.blackducksoftware.integration.hub.request.builder.ProjectRequestBuilder
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
 import com.blackducksoftware.integration.hub.scan.HubScanConfig
-import com.blackducksoftware.integration.hub.service.HubResponseService
+import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuesser
@@ -255,9 +255,9 @@ jobs {
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
         HubServicesFactory hubServicesFactory = createHubServicesFactory()
-        HubResponseService hubResponseService = hubServicesFactory.createHubResponseService()
+        HubService hubService = hubServicesFactory.createHubService()
 
-        populatePolicyStatuses(hubResponseService, repoPaths)
+        populatePolicyStatuses(hubService, repoPaths)
 
         log.info('...completed blackDuckAddPolicyStatus cron job.')
     }
@@ -435,7 +435,7 @@ private void deletePathArtifact(String fileName){
 
 private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVersionView){
     HubServicesFactory hubServicesFactory = createHubServicesFactory()
-    HubResponseService hubResponseService = hubServicesFactory.createHubResponseService()
+    HubService hubService = hubServicesFactory.createHubService()
     log.info("${repoPath.name} was successfully scanned by the BlackDuck CLI.")
     repositories.setProperty(repoPath, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, 'SUCCESS')
 
@@ -443,12 +443,12 @@ private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVe
         String projectVersionUrl = ''
         String projectVersionUIUrl = ''
         try {
-            projectVersionUrl = hubResponseService.getHref(projectVersionView)
+            projectVersionUrl = hubService.getHref(projectVersionView)
             if (StringUtils.isNotEmpty(projectVersionUrl)) {
                 repositories.setProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
                 log.info("Added ${projectVersionUrl} to ${repoPath.name}")
             }
-            projectVersionUIUrl = hubResponseService.getFirstLinkSafely(projectVersionView, 'components')
+            projectVersionUIUrl = hubService.getFirstLinkSafely(projectVersionView, 'components')
             if (StringUtils.isNotEmpty(projectVersionUIUrl)) {
                 repositories.setProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME, projectVersionUIUrl)
                 log.info("Added ${projectVersionUIUrl} to ${repoPath.name}")
@@ -461,7 +461,7 @@ private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVe
     }
 }
 
-private void populatePolicyStatuses(HubResponseService hubResponseService, Set<RepoPath> repoPaths) {
+private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPaths) {
     boolean problemRetrievingPolicyStatus = false
     repoPaths.each {
         try {
@@ -469,11 +469,11 @@ private void populatePolicyStatuses(HubResponseService hubResponseService, Set<R
             if (StringUtils.isNotBlank(projectVersionUrl)) {
                 projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
                 repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
-                ProjectVersionView projectVersionView = hubResponseService.getItem(projectVersionUrl, ProjectVersionView.class)
+                ProjectVersionView projectVersionView = hubService.getView(projectVersionUrl, ProjectVersionView.class)
                 try{
-                    String policyStatusUrl = hubResponseService.getFirstLink(projectVersionView, MetaService.POLICY_STATUS_LINK)
+                    String policyStatusUrl = hubService.getFirstLink(projectVersionView, MetaHandler.POLICY_STATUS_LINK)
                     log.info("Looking up policy status: ${policyStatusUrl}")
-                    VersionBomPolicyStatusView versionBomPolicyStatusView = hubResponseService.getItem(policyStatusUrl, VersionBomPolicyStatusView.class)
+                    VersionBomPolicyStatusView versionBomPolicyStatusView = hubService.getView(policyStatusUrl, VersionBomPolicyStatusView.class)
                     log.info("policy status json: ${versionBomPolicyStatusView.json}")
                     PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
                     repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)

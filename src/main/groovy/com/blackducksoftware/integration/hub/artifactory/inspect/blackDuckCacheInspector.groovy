@@ -7,8 +7,9 @@ import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
 
-import com.blackducksoftware.integration.hub.api.bom.BomImportRequestService
-import com.blackducksoftware.integration.hub.api.item.MetaService
+import com.blackducksoftware.integration.hub.api.bom.BomImportService
+import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
+import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
@@ -19,9 +20,8 @@ import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
 import com.blackducksoftware.integration.hub.global.HubServerConfig
-import com.blackducksoftware.integration.hub.model.view.VersionBomComponentView
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
-import com.blackducksoftware.integration.hub.service.HubResponseService
+import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.util.IntegrationEscapeUtil
@@ -121,8 +121,8 @@ private void createHubProject(String repoKey, String patterns) {
     bdioFile.delete()
     simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
 
-    BomImportRequestService bomImportRequestService = hubServicesFactory.createBomImportRequestService();
-    bomImportRequestService.importBomFile(bdioFile);
+    BomImportService bomImportService = hubServicesFactory.createBomImportService();
+    bomImportService.importBomFile(bdioFile);
 }
 
 private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
@@ -164,43 +164,26 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
 
 private void updateFromHubProject(String repoKey, String projectName, String projectVersionName) {
     HubServicesFactory hubServicesFactory = createHubServicesFactory();
-    HubResponseService hubResponseService = hubServicesFactory.createHubResponseService();
+    HubService hubService = hubServicesFactory.createHubService();
     ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
+    ArtifactMetaDataManager artifactMetaDataManager = new ArtifactMetaDataManager();
 
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    if (hubResponseService.hasLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK)) {
-        String componentsLink = hubResponseService.getFirstLink(projectVersionWrapper.getProjectVersionView(), MetaService.COMPONENTS_LINK);
-        List<VersionBomComponentView> versionBomComponents = hubResponseService.getAllItems(componentsLink, VersionBomComponentView.class);
-
-        Map<String, String> externalIdToComponentVersionLink = transformVersionBomComponentViews(versionBomComponents);
-        addOriginIdProperties(repoKey, externalIdToComponentVersionLink);
-    }
+    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaData(hubService, projectVersionWrapper.getProjectVersionView());
+    addOriginIdProperties(repoKey, artifactMetaDataList);
 }
 
-private Map<String, String> transformVersionBomComponentViews(List<VersionBomComponentView> versionBomComponents) {
-    Map<String, String> externalIdToComponentVersionLink = new HashMap<>();
-    versionBomComponents.each { component ->
-        String componentVersionLink = component.componentVersion;
-        component.origins.each { origin ->
-            String currentValue = externalIdToComponentVersionLink.get(origin.externalId);
-            if (currentValue != null && !currentValue.equals(componentVersionLink)) {
-                log.warn(String.format("The external id %s is already assigned to the component link %s so we will not assign it to %s", origin.externalId, currentValue, componentVersionLink));
-            } else {
-                externalIdToComponentVersionLink.put(origin.externalId, componentVersionLink);
-            }
-        }
-    }
-
-    return externalIdToComponentVersionLink
-}
-
-private void addOriginIdProperties(String repoKey, Map<String, String> externalIdToComponentVersionLink) {
-    externalIdToComponentVersionLink.each { key, value ->
+private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
+    artifactMetaDataList.each { artifactMetaData ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put('blackduck.hubOriginId', key);
+        setMultimap.put('blackduck.hubOriginId', artifactMetaData.originId);
+        setMultimap.put('blackduck.hubForge', artifactMetaData.forge);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, 'componentVersionLink', value)
+            repositories.setProperty(repoPath, 'blackduck.highSeverity', Integer.toString(artifactMetaData.highSeverityCount))
+            repositories.setProperty(repoPath, 'blackduck.mediumSeverity', Integer.toString(artifactMetaData.mediumSeverityCount))
+            repositories.setProperty(repoPath, 'blackduck.lowSeverity', Integer.toString(artifactMetaData.lowSeverityCount))
+            repositories.setProperty(repoPath, 'blackduck.policyStatus', artifactMetaData.policyStatus)
         }
     }
 }
