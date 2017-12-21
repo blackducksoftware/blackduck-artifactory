@@ -4,15 +4,16 @@ import org.apache.commons.lang.StringUtils
 import org.artifactory.addon.pypi.*
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
-import org.artifactory.md.Properties
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
 import org.springframework.context.ApplicationContext
 
+import com.blackducksoftware.integration.exception.IntegrationException
 import com.blackducksoftware.integration.hub.api.bom.BomImportService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
@@ -46,13 +47,6 @@ import groovy.transform.Field
 
 @Field final boolean HUB_ALWAYS_TRUST_CERTS=false
 
-@Field final String RUBYGEMS_PACKAGE = 'gems'
-@Field final String MAVEN_PACKAGE = 'maven'
-@Field final String GRADLE_PACKAGE = 'gradle'
-@Field final String PYPI_PACKAGE = 'pypi'
-@Field final String NUGET_PACKAGE = 'nuget'
-@Field final String NPM_PACKAGE = 'npm'
-
 @Field final String RUBYGEMS_PATTERNS = '*.gem'
 @Field final String MAVEN_PATTERNS = '*.jar'
 @Field final String GRADLE_PATTERNS = '*.jar'
@@ -60,14 +54,12 @@ import groovy.transform.Field
 @Field final String NUGET_PATTERNS = '*.nupkg'
 @Field final String NPM_PATTERNS = '*.tgz'
 
-@Field final String HUB_ORIGIN_ID_PROPERTY_NAME = 'blackduck.hubOriginId'
-@Field final String HUB_FORGE_PROPERTY_NAME = 'blackduck.hubForge'
-@Field final String HUB_PROJECT_NAME_PROPERTY_NAME = 'blackduck.hubProjectName'
-@Field final String HUB_PROJECT_VERSION_NAME_PROPERTY_NAME = 'blackduck.hubProjectVersionName'
-@Field final String HIGH_VULNERABILITIES_PROPERTY_NAME = 'blackduck.highVulnerabilities'
-@Field final String MEDIUM_VULNERABILITIES_PROPERTY_NAME = 'blackduck.mediumVulnerabilities'
-@Field final String LOW_VULNERABILITIES_PROPERTY_NAME = 'blackduck.lowVulnerabilities'
-@Field final String POLICY_STATUS_PROPERTY_NAME = 'blackduck.policyStatus'
+@Field final String RUBYGEMS_PACKAGE = 'gems'
+@Field final String MAVEN_PACKAGE = 'maven'
+@Field final String GRADLE_PACKAGE = 'gradle'
+@Field final String PYPI_PACKAGE = 'pypi'
+@Field final String NUGET_PACKAGE = 'nuget'
+@Field final String NPM_PACKAGE = 'npm'
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
@@ -99,49 +91,26 @@ executions {
 
 storage {
     afterCreate { ItemInfo item ->
-        if (!item.isFolder()) {
-            RepoPath repoPath = item.getRepoPath()
-            String repoKey = item.getRepoKey()
-            String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
-            SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
-            String projectName = getRepoProjectName(repoKey)
-            String projectVersionName = getRepoProjectVersionName(repoKey)
+        String repoKey = item.getRepoKey()
+        String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
+        SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory()
 
-            try {
-                Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType)
-                if (repoPathDependency != null) {
-                    HubServicesFactory hubServicesFactory = createHubServicesFactory();
-                    ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
-                    componentDataService.addComponentToProjectVersion(repoPathDependency.externalId, projectName, projectVersionName);
+        RepoPath repoPath = item.getRepoPath()
+        String projectName = getRepoProjectName(repoKey)
+        String projectVersionName = getRepoProjectVersionName(repoKey)
 
-                    String hubOriginId = repoPathDependency.externalId.createHubOriginId()
-                    repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
-                    String hubForge = repoPathDependency.externalId.forge.getName()
-                    repositories.setProperty(repoPath, HUB_FORGE_PROPERTY_NAME, hubForge)
-                }
-            } catch (Exception e) {
-                log.debug("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub: ${e.getMessage()}")
+        try {
+            Dependency dependency = createDependency(simpleBdioFactory, repoPath, packageType)
+            if (null != dependency) {
+                addDependencyToProjectVersion(dependency, projectName, projectVersionName)
+                addDependencyProperties(repoPath, dependency)
             }
+        } catch (IntegrationException e) {
+            log.error("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub: ${e.getMessage()}")
+        } catch (Exception e) {
+            log.debug("Unexpected exception: ${e.getMessage()}")
         }
     }
-}
-
-private String getRepoProjectName(String repoKey) {
-    RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectNameProperty = repositories.getProperty(repoPath, HUB_PROJECT_NAME_PROPERTY_NAME)
-    if (StringUtils.isNotBlank(projectNameProperty)) {
-        return projectNameProperty
-    }
-    return repoKey
-}
-
-private String getRepoProjectVersionName(String repoKey) {
-    RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectVersionNameProperty = repositories.getProperty(repoPath, HUB_PROJECT_VERSION_NAME_PROPERTY_NAME)
-    if (StringUtils.isNotBlank(projectVersionNameProperty)) {
-        return projectVersionNameProperty
-    }
-    return InetAddress.getLocalHost().getHostName();
 }
 
 private void createHubProject(String repoKey, String patterns) {
@@ -160,9 +129,7 @@ private void createHubProject(String repoKey, String patterns) {
     repoPaths.each { repoPath ->
         Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType);
         if (repoPathDependency != null) {
-            String hubOriginId = repoPathDependency.externalId.createHubOriginId()
-            repositories.setProperty(repoPath, HUB_ORIGIN_ID_PROPERTY_NAME, hubOriginId)
-            repositories.setProperty(repoPath, HUB_FORGE_PROPERTY_NAME, repoPathDependency.externalId.forge.toString())
+            addDependencyProperties(repoPath, repoPathDependency)
             mutableDependencyGraph.addChildToRoot(repoPathDependency)
         }
     }
@@ -181,6 +148,48 @@ private void createHubProject(String repoKey, String patterns) {
 
     BomImportService bomImportService = hubServicesFactory.createBomImportService();
     bomImportService.importBomFile(bdioFile);
+}
+
+private void updateFromHubProject(String repoKey, String projectName, String projectVersionName) {
+    HubServicesFactory hubServicesFactory = createHubServicesFactory();
+    HubService hubService = hubServicesFactory.createHubService();
+    ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
+    ArtifactMetaDataManager artifactMetaDataManager = new ArtifactMetaDataManager();
+
+    ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
+    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaData(hubService, projectVersionWrapper.getProjectVersionView());
+    addOriginIdProperties(repoKey, artifactMetaDataList);
+}
+
+private String getRepoProjectName(String repoKey) {
+    RepoPath repoPath = RepoPathFactory.create(repoKey)
+    String projectNameProperty = repositories.getProperty(repoPath, BlackDuckProperty.PROJECT_NAME.getName())
+    if (StringUtils.isNotBlank(projectNameProperty)) {
+        return projectNameProperty
+    }
+    return repoKey
+}
+
+private String getRepoProjectVersionName(String repoKey) {
+    RepoPath repoPath = RepoPathFactory.create(repoKey)
+    String projectVersionNameProperty = repositories.getProperty(repoPath, BlackDuckProperty.HUB_PROJECT_VERSION_NAME.getName())
+    if (StringUtils.isNotBlank(projectVersionNameProperty)) {
+        return projectVersionNameProperty
+    }
+    return InetAddress.getLocalHost().getHostName();
+}
+
+private void addDependencyToProjectVersion(Dependency dependency, String projectName, String projectVersionName) {
+    HubServicesFactory hubServicesFactory = createHubServicesFactory();
+    ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
+    componentDataService.addComponentToProjectVersion(dependency.externalId, projectName, projectVersionName);
+}
+
+private void addDependencyProperties(RepoPath repoPath, Dependency dependency) {
+    String hubOriginId = dependency.externalId.createHubOriginId()
+    repositories.setProperty(repoPath, BlackDuckProperty.HUB_ORIGIN_ID.getName(), hubOriginId)
+    String hubForge = dependency.externalId.forge.getName()
+    repositories.setProperty(repoPath, BlackDuckProperty.HUB_FORGE.getName(), hubForge)
 }
 
 private String getPatternsFromPackageType(String packageType) {
@@ -290,28 +299,17 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
     return null
 }
 
-private void updateFromHubProject(String repoKey, String projectName, String projectVersionName) {
-    HubServicesFactory hubServicesFactory = createHubServicesFactory();
-    HubService hubService = hubServicesFactory.createHubService();
-    ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
-    ArtifactMetaDataManager artifactMetaDataManager = new ArtifactMetaDataManager();
-
-    ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaData(hubService, projectVersionWrapper.getProjectVersionView());
-    addOriginIdProperties(repoKey, artifactMetaDataList);
-}
-
 private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
     artifactMetaDataList.each { artifactMetaData ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put(HUB_ORIGIN_ID_PROPERTY_NAME, artifactMetaData.originId);
-        setMultimap.put(HUB_FORGE_PROPERTY_NAME, artifactMetaData.forge);
+        setMultimap.put(BlackDuckProperty.HUB_ORIGIN_ID.getName(), artifactMetaData.originId);
+        setMultimap.put(BlackDuckProperty.HUB_FORGE.getName(), artifactMetaData.forge);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, HIGH_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.highSeverityCount))
-            repositories.setProperty(repoPath, MEDIUM_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.mediumSeverityCount))
-            repositories.setProperty(repoPath, LOW_VULNERABILITIES_PROPERTY_NAME, Integer.toString(artifactMetaData.lowSeverityCount))
-            repositories.setProperty(repoPath, POLICY_STATUS_PROPERTY_NAME, artifactMetaData.policyStatus)
+            repositories.setProperty(repoPath, BlackDuckProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus)
         }
     }
 }
