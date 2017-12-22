@@ -87,6 +87,15 @@ executions {
 
         updateFromHubProject(repoKey, projectName, projectVersionName);
     }
+
+    blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
+        log.info('Starting blackDuckDeleteInspectionProperties REST request...')
+
+        def repoKey = params['repoKey'][0]
+        deleteInspectionProperties(repoKey)
+
+        log.info('...completed blackDuckDeleteInspectionProperties REST request.')
+    }
 }
 
 storage {
@@ -109,6 +118,17 @@ storage {
             log.error("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub: ${e.getMessage()}")
         } catch (Exception e) {
             log.debug("Unexpected exception: ${e.getMessage()}")
+        }
+    }
+}
+
+private void deleteInspectionProperties(String repoKey) {
+    BlackDuckProperty.values().each { blackDuckProperty ->
+        SetMultimap<String,String> setMultimap = new HashMultimap<>();
+        setMultimap.put(blackDuckProperty.getName(), '*');
+        List<RepoPath> repoPathsWithProperty = searches.itemsByProperties(setMultimap, repoKey)
+        repoPathsWithProperty.each { repoPath ->
+            repositories.deleteProperty(repoPath, blackDuckProperty.getName())
         }
     }
 }
@@ -306,6 +326,7 @@ private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifa
         setMultimap.put(BlackDuckProperty.HUB_FORGE.getName(), artifactMetaData.forge);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
+            repositories.setProperty(repoPath, BlackDuckProperty.COMPONENT_VERSION_URL.getName(), Integer.toString(artifactMetaData.componentVersionLink))
             repositories.setProperty(repoPath, BlackDuckProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
             repositories.setProperty(repoPath, BlackDuckProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
             repositories.setProperty(repoPath, BlackDuckProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
