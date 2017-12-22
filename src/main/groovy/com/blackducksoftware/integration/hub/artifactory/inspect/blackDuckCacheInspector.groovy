@@ -326,6 +326,7 @@ private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifa
         setMultimap.put(BlackDuckProperty.HUB_FORGE.getName(), artifactMetaData.forge);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
+            repositories.setProperty(repoPath, BlackDuckProperty.COMPONENT_VERSION_URL.getName(), Integer.toString(artifactMetaData.componentVersionLink))
             repositories.setProperty(repoPath, BlackDuckProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
             repositories.setProperty(repoPath, BlackDuckProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
             repositories.setProperty(repoPath, BlackDuckProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
