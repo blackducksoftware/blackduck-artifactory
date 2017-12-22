@@ -35,17 +35,17 @@ import com.google.common.collect.SetMultimap
 
 import groovy.transform.Field
 
-@Field final String HUB_URL="http://int-hub02.dc1.lan"
+@Field final String HUB_URL=""
 @Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME="sysadmin"
-@Field final String HUB_PASSWORD="blackduck"
+@Field final String HUB_USERNAME=""
+@Field final String HUB_PASSWORD=""
 
 @Field final String HUB_PROXY_HOST=""
 @Field final int HUB_PROXY_PORT=0
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
 
-@Field final boolean HUB_ALWAYS_TRUST_CERTS=true
+@Field final boolean HUB_ALWAYS_TRUST_CERTS=false
 
 @Field final String RUBYGEMS_PATTERNS = '*.gem'
 @Field final String MAVEN_PATTERNS = '*.jar'
