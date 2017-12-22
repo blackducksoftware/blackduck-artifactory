@@ -35,17 +35,17 @@ import com.google.common.collect.SetMultimap
 
 import groovy.transform.Field
 
-@Field final String HUB_URL=""
+@Field final String HUB_URL="http://int-hub02.dc1.lan"
 @Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME=""
-@Field final String HUB_PASSWORD=""
+@Field final String HUB_USERNAME="sysadmin"
+@Field final String HUB_PASSWORD="blackduck"
 
 @Field final String HUB_PROXY_HOST=""
 @Field final int HUB_PROXY_PORT=0
 @Field final String HUB_PROXY_USERNAME=""
 @Field final String HUB_PROXY_PASSWORD=""
 
-@Field final boolean HUB_ALWAYS_TRUST_CERTS=false
+@Field final boolean HUB_ALWAYS_TRUST_CERTS=true
 
 @Field final String RUBYGEMS_PATTERNS = '*.gem'
 @Field final String MAVEN_PATTERNS = '*.jar'
@@ -87,6 +87,15 @@ executions {
 
         updateFromHubProject(repoKey, projectName, projectVersionName);
     }
+
+    blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
+        log.info('Starting blackDuckDeleteInspectionProperties REST request...')
+
+        def repoKey = params['repoKey'][0]
+        deleteInspectionProperties(repoKey)
+
+        log.info('...completed blackDuckDeleteInspectionProperties REST request.')
+    }
 }
 
 storage {
@@ -109,6 +118,17 @@ storage {
             log.error("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub: ${e.getMessage()}")
         } catch (Exception e) {
             log.debug("Unexpected exception: ${e.getMessage()}")
+        }
+    }
+}
+
+private void deleteInspectionProperties(String repoKey) {
+    BlackDuckProperty.values().each { blackDuckProperty ->
+        SetMultimap<String,String> setMultimap = new HashMultimap<>();
+        setMultimap.put(blackDuckProperty.getName(), '*');
+        List<RepoPath> repoPathsWithProperty = searches.itemsByProperties(setMultimap, repoKey)
+        repoPathsWithProperty.each { repoPath ->
+            repositories.deleteProperty(repoPath, blackDuckProperty.getName())
         }
     }
 }
