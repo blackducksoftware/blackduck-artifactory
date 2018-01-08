@@ -47,9 +47,10 @@ def versionFile = new File("${projectDir}/src/main/resources/version.txt")
 versionFile.delete()
 versionFile << version
 
-task produceFinalZip(type: Zip, dependsOn: build) {
+task createFinalZip(type: Zip, dependsOn: build) {
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
+        include 'blackDuckCacheInspector.properties'
         into 'plugins/lib'
     }
 

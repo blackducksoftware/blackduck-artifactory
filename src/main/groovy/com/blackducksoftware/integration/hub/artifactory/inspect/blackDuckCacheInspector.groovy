@@ -38,26 +38,7 @@ import groovy.transform.Field
 
 @Field String propertiesFileName = "${this.getClass().getSimpleName()}.properties"
 @Field Properties inspectorProperties = new Properties()
-loadProperties("${ctx.artifactoryHome.etcDir}/plugins/lib")
-
-@Field final String HUB_URL=""
-@Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME=""
-@Field final String HUB_PASSWORD=""
-
-@Field final String HUB_PROXY_HOST=""
-@Field final int HUB_PROXY_PORT=0
-@Field final String HUB_PROXY_USERNAME=""
-@Field final String HUB_PROXY_PASSWORD=""
-
-@Field final boolean HUB_ALWAYS_TRUST_CERTS=false
-
-@Field final String RUBYGEMS_PATTERNS = '*.gem'
-@Field final String MAVEN_PATTERNS = '*.jar'
-@Field final String GRADLE_PATTERNS = '*.jar'
-@Field final String PYPI_PATTERNS = '*.whl,*.tar.gz,*.zip,*.egg'
-@Field final String NUGET_PATTERNS = '*.nupkg'
-@Field final String NPM_PATTERNS = '*.tgz'
+@Field File propertiesFile = new File("${ctx.artifactoryHome.etcDir}/plugins/lib/${propertiesFileName}.properties")
 
 @Field final String RUBYGEMS_PACKAGE = 'gems'
 @Field final String MAVEN_PACKAGE = 'maven'
@@ -66,13 +47,11 @@ loadProperties("${ctx.artifactoryHome.etcDir}/plugins/lib")
 @Field final String NUGET_PACKAGE = 'nuget'
 @Field final String NPM_PACKAGE = 'npm'
 
-private void loadProperties(String libPath) {
-    File propertiesFile = new File("${libPath}/${propertiesFileName}.properties")
+private void loadProperties() {
     if (propertiesFile.exists()) {
         propertiesFile.withInputStream { inspectorProperties.load(it) }
     } else {
-        log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${libPath}/${propertiesFileName}.properties")
-        System.exit(0)
+        log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
     }
 }
 
@@ -110,10 +89,6 @@ executions {
         deleteInspectionProperties(repoKey)
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
-    }
-
-    getPropertiesFile(httpMethod: 'GET') { params ->
-        message = propertiesFile.getCanonicalPath() + '\n'
     }
 }
 
@@ -204,22 +179,22 @@ private void updateFromHubProject(String repoKey, String projectName, String pro
 
 private String getPatternsFromPackageType(String packageType) {
     if (RUBYGEMS_PACKAGE.equals(packageType)) {
-        return RUBYGEMS_PATTERNS
+        return inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems')
     }
     if (MAVEN_PACKAGE.equals(packageType)) {
-        return MAVEN_PATTERNS
+        return inspectorProperties.get('hub.artifactory.inspect.patterns.maven')
     }
     if (GRADLE_PACKAGE.equals(packageType)) {
-        return GRADLE_PATTERNS
+        return inspectorProperties.get('hub.artifactory.inspect.patterns.gradle')
     }
     if (PYPI_PACKAGE.equals(packageType)) {
-        return PYPI_PATTERNS
+        return inspectorProperties.get('hub.artifactory.inspect.patterns.pypi')
     }
     if (NUGET_PACKAGE.equals(packageType)) {
-        return NUGET_PATTERNS
+        return inspectorProperties.get('hub.artifactory.inspect.patterns.nuget')
     }
     if (NPM_PACKAGE.equals(packageType)) {
-        return NPM_PATTERNS
+        return inspectorProperties.get('hub.artifactory.inspect.patterns.npm')
     }
 
     return ""
@@ -279,7 +254,7 @@ private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPat
         if (PYPI_PACKAGE.equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
-            return createPyPiDependency(simpleBdioFactory, fileLayoutInfo, properties)
+            return createPyPiDependency(simpleBdioFactory, fileLayoutInfo, properties, repoPath)
         }
 
         if (RUBYGEMS_PACKAGE.equals(packageType)) {
@@ -317,7 +292,7 @@ private Dependency createNpmDependency(SimpleBdioFactory simpleBdioFactory, File
     return createNameVersionDependency(simpleBdioFactory, Forge.NPM, name, version)
 }
 
-private Dependency createPyPiDependency(SimpleBdioFactory simpleBdioFactory, FileLayoutInfo fileLayoutInfo, org.artifactory.md.Properties properties) {
+private Dependency createPyPiDependency(SimpleBdioFactory simpleBdioFactory, FileLayoutInfo fileLayoutInfo, org.artifactory.md.Properties properties, RepoPath repoPath) {
     Forge forge = Forge.PYPI
     String name
     String version
@@ -382,15 +357,15 @@ private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifa
 
 private HubServerConfig createHubServerConfig() {
     HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
-    hubServerConfigBuilder.setHubUrl(HUB_URL)
-    hubServerConfigBuilder.setUsername(HUB_USERNAME)
-    hubServerConfigBuilder.setPassword(HUB_PASSWORD)
-    hubServerConfigBuilder.setTimeout(HUB_TIMEOUT)
-    hubServerConfigBuilder.setProxyHost(HUB_PROXY_HOST)
-    hubServerConfigBuilder.setProxyPort(HUB_PROXY_PORT)
-    hubServerConfigBuilder.setProxyUsername(HUB_PROXY_USERNAME)
-    hubServerConfigBuilder.setProxyPassword(HUB_PROXY_PASSWORD)
-    hubServerConfigBuilder.setAlwaysTrustServerCertificate(HUB_ALWAYS_TRUST_CERTS)
+    hubServerConfigBuilder.setHubUrl(inspectorProperties.get('hub.url'))
+    hubServerConfigBuilder.setUsername(inspectorProperties.get('hub.username'))
+    hubServerConfigBuilder.setPassword(inspectorProperties.get('hub.password'))
+    hubServerConfigBuilder.setTimeout(inspectorProperties.get('hub.timeout'))
+    hubServerConfigBuilder.setProxyHost(inspectorProperties.get('hub.proxy.host'))
+    hubServerConfigBuilder.setProxyPort(inspectorProperties.get('hub.proxy.port'))
+    hubServerConfigBuilder.setProxyUsername(inspectorProperties.get('hub.proxy.username'))
+    hubServerConfigBuilder.setProxyPassword(inspectorProperties.get('hub.proxy.password'))
+    hubServerConfigBuilder.setAlwaysTrustServerCertificate(Boolean.parseBoolean(inspectorProperties.get('hub.trust.cert')))
 
     return hubServerConfigBuilder.build()
 }
