@@ -1,5 +1,7 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import static com.blackducksoftware.integration.hub.artifactory.SupportedPackageType.*
+
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang.StringUtils
 import org.artifactory.addon.pypi.*
@@ -15,6 +17,7 @@ import com.blackducksoftware.integration.hub.api.bom.BomImportService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
+import com.blackducksoftware.integration.hub.artifactory.PackageTypePatternManager
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
@@ -36,23 +39,20 @@ import com.google.common.collect.SetMultimap
 
 import groovy.transform.Field
 
-@Field String propertiesFileName = "${this.getClass().getSimpleName()}.properties"
 @Field Properties inspectorProperties = new Properties()
-@Field File propertiesFile = new File("${ctx.artifactoryHome.etcDir}/plugins/lib/${propertiesFileName}.properties")
+@Field File propertiesFile = new File("${ctx.artifactoryHome.etcDir}/plugins/lib/${this.getClass().getSimpleName()}.properties")
+@Field PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
 
-@Field final String RUBYGEMS_PACKAGE = 'gems'
-@Field final String MAVEN_PACKAGE = 'maven'
-@Field final String GRADLE_PACKAGE = 'gradle'
-@Field final String PYPI_PACKAGE = 'pypi'
-@Field final String NUGET_PACKAGE = 'nuget'
-@Field final String NPM_PACKAGE = 'npm'
-
-private void loadProperties() {
-    if (propertiesFile.exists()) {
-        propertiesFile.withInputStream { inspectorProperties.load(it) }
-    } else {
-        log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
-    }
+if (propertiesFile.exists()) {
+    propertiesFile.withInputStream { inspectorProperties.load(it) }
+    packageTypePatternManager.setPattern(gems, inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems'))
+    packageTypePatternManager.setPattern(maven, inspectorProperties.get('hub.artifactory.inspect.patterns.maven'))
+    packageTypePatternManager.setPattern(gradle, inspectorProperties.get('hub.artifactory.inspect.patterns.gradle'))
+    packageTypePatternManager.setPattern(pypi, inspectorProperties.get('hub.artifactory.inspect.patterns.pypi'))
+    packageTypePatternManager.setPattern(nuget, inspectorProperties.get('hub.artifactory.inspect.patterns.nuget'))
+    packageTypePatternManager.setPattern(npm, inspectorProperties.get('hub.artifactory.inspect.patterns.npm'))
+} else {
+    log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
 }
 
 executions {
@@ -62,7 +62,7 @@ executions {
             return
         }
         String repoKey = params['repoKey'][0]
-        String patterns = getPatternsFromPackageType(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+        String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
 
         createHubProject(repoKey, patterns)
     }
@@ -177,31 +177,8 @@ private void updateFromHubProject(String repoKey, String projectName, String pro
     addOriginIdProperties(repoKey, artifactMetaDataList);
 }
 
-private String getPatternsFromPackageType(String packageType) {
-    if (RUBYGEMS_PACKAGE.equals(packageType)) {
-        return inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems')
-    }
-    if (MAVEN_PACKAGE.equals(packageType)) {
-        return inspectorProperties.get('hub.artifactory.inspect.patterns.maven')
-    }
-    if (GRADLE_PACKAGE.equals(packageType)) {
-        return inspectorProperties.get('hub.artifactory.inspect.patterns.gradle')
-    }
-    if (PYPI_PACKAGE.equals(packageType)) {
-        return inspectorProperties.get('hub.artifactory.inspect.patterns.pypi')
-    }
-    if (NUGET_PACKAGE.equals(packageType)) {
-        return inspectorProperties.get('hub.artifactory.inspect.patterns.nuget')
-    }
-    if (NPM_PACKAGE.equals(packageType)) {
-        return inspectorProperties.get('hub.artifactory.inspect.patterns.npm')
-    }
-
-    return ""
-}
-
 private boolean repoPathMatchesPackagePatterns(RepoPath repoPath, String packageType) {
-    String pattern = getPatternsFromPackageType(packageType)
+    String pattern = packageTypePatternManager.getPattern(packageType)
     String path = repoPath.toPath()
 
     return FilenameUtils.wildcardMatch(path, pattern)
@@ -240,29 +217,29 @@ private void addDependencyProperties(RepoPath repoPath, Dependency dependency) {
 
 private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
     try {
-        if (NUGET_PACKAGE.equals(packageType)) {
+        if (nuget.name().equals(packageType)) {
             org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
             return createNugetDependency(simpleBdioFactory, properties)
         }
 
-        if (NPM_PACKAGE.equals(packageType)) {
+        if (npm.name().equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
             return createNpmDependency(simpleBdioFactory, fileLayoutInfo, properties)
         }
 
-        if (PYPI_PACKAGE.equals(packageType)) {
+        if (pypi.name().equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
             return createPyPiDependency(simpleBdioFactory, fileLayoutInfo, properties, repoPath)
         }
 
-        if (RUBYGEMS_PACKAGE.equals(packageType)) {
+        if (gems.name().equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             return createRubygemsDependency(simpleBdioFactory, fileLayoutInfo)
         }
 
-        if (MAVEN_PACKAGE.equals(packageType) || GRADLE_PACKAGE.equals(packageType)) {
+        if (maven.name().equals(packageType) || gradle.name().equals(packageType)) {
             FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
             return createMavenDependency(simpleBdioFactory, fileLayoutInfo)
         }
