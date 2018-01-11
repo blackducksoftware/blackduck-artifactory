@@ -43,17 +43,7 @@ import groovy.transform.Field
 @Field File propertiesFile = new File("${ctx.artifactoryHome.etcDir}/plugins/lib/${this.getClass().getSimpleName()}.properties")
 @Field PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
 
-if (propertiesFile.exists()) {
-    propertiesFile.withInputStream { inspectorProperties.load(it) }
-    packageTypePatternManager.setPattern(gems, inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems'))
-    packageTypePatternManager.setPattern(maven, inspectorProperties.get('hub.artifactory.inspect.patterns.maven'))
-    packageTypePatternManager.setPattern(gradle, inspectorProperties.get('hub.artifactory.inspect.patterns.gradle'))
-    packageTypePatternManager.setPattern(pypi, inspectorProperties.get('hub.artifactory.inspect.patterns.pypi'))
-    packageTypePatternManager.setPattern(nuget, inspectorProperties.get('hub.artifactory.inspect.patterns.nuget'))
-    packageTypePatternManager.setPattern(npm, inspectorProperties.get('hub.artifactory.inspect.patterns.npm'))
-} else {
-    log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
-}
+loadProperties()
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
@@ -103,7 +93,9 @@ storage {
         String projectVersionName = getRepoProjectVersionName(repoKey)
 
         try {
-            if (repoPathMatchesPackagePatterns(repoPath, packageType)) {
+            String pattern = packageTypePatternManager.getPattern(packageType)
+            String path = repoPath.toPath()
+            if (FilenameUtils.wildcardMatch(path, pattern)) {
                 Dependency dependency = createDependency(simpleBdioFactory, repoPath, packageType)
                 if (null != dependency) {
                     addDependencyToProjectVersion(dependency, projectName, projectVersionName)
@@ -118,14 +110,17 @@ storage {
     }
 }
 
-private void deleteInspectionProperties(String repoKey) {
-    BlackDuckProperty.values().each { blackDuckProperty ->
-        SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put(blackDuckProperty.getName(), '*');
-        List<RepoPath> repoPathsWithProperty = searches.itemsByProperties(setMultimap, repoKey)
-        repoPathsWithProperty.each { repoPath ->
-            repositories.deleteProperty(repoPath, blackDuckProperty.getName())
-        }
+private void loadProperties() {
+    if (propertiesFile.exists()) {
+        propertiesFile.withInputStream { inspectorProperties.load(it) }
+        packageTypePatternManager.setPattern(gems, inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems'))
+        packageTypePatternManager.setPattern(maven, inspectorProperties.get('hub.artifactory.inspect.patterns.maven'))
+        packageTypePatternManager.setPattern(gradle, inspectorProperties.get('hub.artifactory.inspect.patterns.gradle'))
+        packageTypePatternManager.setPattern(pypi, inspectorProperties.get('hub.artifactory.inspect.patterns.pypi'))
+        packageTypePatternManager.setPattern(nuget, inspectorProperties.get('hub.artifactory.inspect.patterns.nuget'))
+        packageTypePatternManager.setPattern(npm, inspectorProperties.get('hub.artifactory.inspect.patterns.npm'))
+    } else {
+        log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
     }
 }
 
@@ -177,11 +172,15 @@ private void updateFromHubProject(String repoKey, String projectName, String pro
     addOriginIdProperties(repoKey, artifactMetaDataList);
 }
 
-private boolean repoPathMatchesPackagePatterns(RepoPath repoPath, String packageType) {
-    String pattern = packageTypePatternManager.getPattern(packageType)
-    String path = repoPath.toPath()
-
-    return FilenameUtils.wildcardMatch(path, pattern)
+private void deleteInspectionProperties(String repoKey) {
+    BlackDuckProperty.values().each { blackDuckProperty ->
+        SetMultimap<String,String> setMultimap = new HashMultimap<>();
+        setMultimap.put(blackDuckProperty.getName(), '*');
+        List<RepoPath> repoPathsWithProperty = searches.itemsByProperties(setMultimap, repoKey)
+        repoPathsWithProperty.each { repoPath ->
+            repositories.deleteProperty(repoPath, blackDuckProperty.getName())
+        }
+    }
 }
 
 private String getRepoProjectName(String repoKey) {
@@ -213,6 +212,21 @@ private void addDependencyProperties(RepoPath repoPath, Dependency dependency) {
     repositories.setProperty(repoPath, BlackDuckProperty.HUB_ORIGIN_ID.getName(), hubOriginId)
     String hubForge = dependency.externalId.forge.getName()
     repositories.setProperty(repoPath, BlackDuckProperty.HUB_FORGE.getName(), hubForge)
+}
+
+private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
+    artifactMetaDataList.each { artifactMetaData ->
+        SetMultimap<String,String> setMultimap = new HashMultimap<>();
+        setMultimap.put(BlackDuckProperty.HUB_ORIGIN_ID.getName(), artifactMetaData.originId);
+        setMultimap.put(BlackDuckProperty.HUB_FORGE.getName(), artifactMetaData.forge);
+        List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
+        artifactsWithOriginId.each { repoPath ->
+            repositories.setProperty(repoPath, BlackDuckProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus)
+        }
+    }
 }
 
 private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
@@ -317,38 +331,10 @@ private Dependency createMavenDependency(SimpleBdioFactory simpleBdioFactory, Fi
     }
 }
 
-private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
-    artifactMetaDataList.each { artifactMetaData ->
-        SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put(BlackDuckProperty.HUB_ORIGIN_ID.getName(), artifactMetaData.originId);
-        setMultimap.put(BlackDuckProperty.HUB_FORGE.getName(), artifactMetaData.forge);
-        List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
-        artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, BlackDuckProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus)
-        }
-    }
-}
-
-private HubServerConfig createHubServerConfig() {
-    HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
-    hubServerConfigBuilder.setHubUrl(inspectorProperties.get('hub.url'))
-    hubServerConfigBuilder.setUsername(inspectorProperties.get('hub.username'))
-    hubServerConfigBuilder.setPassword(inspectorProperties.get('hub.password'))
-    hubServerConfigBuilder.setTimeout(inspectorProperties.get('hub.timeout'))
-    hubServerConfigBuilder.setProxyHost(inspectorProperties.get('hub.proxy.host'))
-    hubServerConfigBuilder.setProxyPort(inspectorProperties.get('hub.proxy.port'))
-    hubServerConfigBuilder.setProxyUsername(inspectorProperties.get('hub.proxy.username'))
-    hubServerConfigBuilder.setProxyPassword(inspectorProperties.get('hub.proxy.password'))
-    hubServerConfigBuilder.setAlwaysTrustServerCertificate(Boolean.parseBoolean(inspectorProperties.get('hub.trust.cert')))
-
-    return hubServerConfigBuilder.build()
-}
-
 private HubServicesFactory createHubServicesFactory() {
-    HubServerConfig hubServerConfig = createHubServerConfig()
+    HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
+    hubServerConfigBuilder.setFromProperties(inspectorProperties)
+    HubServerConfig hubServerConfig = hubServerConfigBuilder.build()
     CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
     new HubServicesFactory(credentialsRestConnection)
 }

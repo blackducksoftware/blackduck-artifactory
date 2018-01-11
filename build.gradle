@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:25.0.0'
+    compile 'com.blackducksoftware.integration:hub-common:25.0.1'
     compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.7-SNAPSHOT'
 
     compile 'org.springframework.boot:spring-boot-starter'
