@@ -1,47 +1,24 @@
 buildscript {
-    repositories { jcenter() }
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
 
-    dependencies { classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE' }
+    dependencies {
+        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE'
+    }
 }
 
 plugins {
     id 'groovy'
-    id 'eclipse'
     id 'org.springframework.boot' version '1.5.8.RELEASE'
 }
 
-tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-tasks.withType(GroovyCompile) { options.encoding = 'UTF-8' }
-
-group = 'com.blackducksoftware.integration'
 version = '5.0.0-SNAPSHOT'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-repositories {
-    mavenLocal()
-    jcenter()
-}
-
-dependencies {
-    compile 'com.blackducksoftware.integration:hub-common:26.0.0'
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.9'
-
-    compile 'org.springframework.boot:spring-boot-starter'
-    compile 'org.springframework:spring-web'
-    compile 'org.codehaus.groovy:groovy-all:2.4.7'
-    compile 'org.apache.commons:commons-compress:1.13'
-
-    compileOnly 'org.artifactory:artifactory-papi:4.14.0'
-    compileOnly 'com.google.guava:guava:18.0'
-
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
-}
-
-eclipse.project { natures 'org.springsource.ide.eclipse.gradle.core.nature' }
-
-springBoot { mainClass = 'com.blackducksoftware.integration.hub.artifactory.Application' }
+apply plugin: 'com.blackducksoftware.integration.solution'
 
 def versionFile = new File("${projectDir}/src/main/resources/version.txt")
 versionFile.delete()
@@ -77,3 +54,20 @@ task createFinalZip(type: Zip, dependsOn: build) {
         into 'plugins/lib'
     }
 }
+
+dependencies {
+    compile 'com.blackducksoftware.integration:hub-common:26.0.0'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.9'
+
+    compile 'org.springframework.boot:spring-boot-starter'
+    compile 'org.springframework:spring-web'
+    compile 'org.codehaus.groovy:groovy-all:2.4.7'
+    compile 'org.apache.commons:commons-compress:1.13'
+
+    compileOnly 'org.artifactory:artifactory-papi:4.14.0'
+    compileOnly 'com.google.guava:guava:18.0'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
+
+springBoot { mainClass = 'com.blackducksoftware.integration.hub.artifactory.Application' }
