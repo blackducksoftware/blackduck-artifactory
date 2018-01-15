@@ -39,12 +39,15 @@ import com.google.common.collect.SetMultimap
 
 import groovy.transform.Field
 
-@Field Properties inspectorProperties = new Properties()
-@Field File propertiesFile = new File("${ctx.artifactoryHome.etcDir}/plugins/lib/${this.getClass().getSimpleName()}.properties")
-@Field PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
-@Field DependencyFactory dependencyFactory = new DependencyFactory()
+// propertiesFilePathOverride allows you to specify an absolute path to the blackDuckCacheInspector.properties file.
+// If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackduckCacheInspector.properties
+@Field String propertiesFilePathOverride = ""
 
-loadProperties()
+@Field Properties inspectorProperties
+@Field PackageTypePatternManager packageTypePatternManager
+@Field DependencyFactory dependencyFactory
+
+initialize()
 
 executions {
     inspectRepository(httpMethod: 'POST') { params ->
@@ -108,20 +111,6 @@ storage {
         } catch (Exception e) {
             log.debug("Unexpected exception: ${e.getMessage()}")
         }
-    }
-}
-
-private void loadProperties() {
-    if (propertiesFile.exists()) {
-        propertiesFile.withInputStream { inspectorProperties.load(it) }
-        packageTypePatternManager.setPattern(gems, inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems'))
-        packageTypePatternManager.setPattern(maven, inspectorProperties.get('hub.artifactory.inspect.patterns.maven'))
-        packageTypePatternManager.setPattern(gradle, inspectorProperties.get('hub.artifactory.inspect.patterns.gradle'))
-        packageTypePatternManager.setPattern(pypi, inspectorProperties.get('hub.artifactory.inspect.patterns.pypi'))
-        packageTypePatternManager.setPattern(nuget, inspectorProperties.get('hub.artifactory.inspect.patterns.nuget'))
-        packageTypePatternManager.setPattern(npm, inspectorProperties.get('hub.artifactory.inspect.patterns.npm'))
-    } else {
-        log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
     }
 }
 
@@ -260,6 +249,30 @@ private Dependency createDependency(RepoPath repoPath, String packageType) {
     }
 
     return null
+}
+
+private void initialize() {
+    inspectorProperties = new Properties()
+    packageTypePatternManager = new PackageTypePatternManager()
+    dependencyFactory = new DependencyFactory()
+
+    def propertiesFilePath = "${ctx.artifactoryHome.etcDir}/plugins/lib/${this.getClass().getSimpleName()}.properties";
+    if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
+        propertiesFilePath = propertiesFilePathOverride
+    }
+
+    def propertiesFile = new File(propertiesFilePath);
+    if (propertiesFile.exists()) {
+        propertiesFile.withInputStream { inspectorProperties.load(it) }
+        packageTypePatternManager.setPattern(gems, inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems'))
+        packageTypePatternManager.setPattern(maven, inspectorProperties.get('hub.artifactory.inspect.patterns.maven'))
+        packageTypePatternManager.setPattern(gradle, inspectorProperties.get('hub.artifactory.inspect.patterns.gradle'))
+        packageTypePatternManager.setPattern(pypi, inspectorProperties.get('hub.artifactory.inspect.patterns.pypi'))
+        packageTypePatternManager.setPattern(nuget, inspectorProperties.get('hub.artifactory.inspect.patterns.nuget'))
+        packageTypePatternManager.setPattern(npm, inspectorProperties.get('hub.artifactory.inspect.patterns.npm'))
+    } else {
+        log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
+    }
 }
 
 private HubServicesFactory createHubServicesFactory() {
