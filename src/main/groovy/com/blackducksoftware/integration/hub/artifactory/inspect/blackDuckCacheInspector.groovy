@@ -10,13 +10,13 @@ import org.artifactory.fs.ItemInfo
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
-import org.springframework.context.ApplicationContext
 
 import com.blackducksoftware.integration.exception.IntegrationException
 import com.blackducksoftware.integration.hub.api.bom.BomImportService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
+import com.blackducksoftware.integration.hub.artifactory.DependencyFactory
 import com.blackducksoftware.integration.hub.artifactory.PackageTypePatternManager
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
@@ -42,6 +42,7 @@ import groovy.transform.Field
 @Field Properties inspectorProperties = new Properties()
 @Field File propertiesFile = new File("${ctx.artifactoryHome.etcDir}/plugins/lib/${this.getClass().getSimpleName()}.properties")
 @Field PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
+@Field DependencyFactory dependencyFactory = new DependencyFactory()
 
 loadProperties()
 
@@ -128,7 +129,8 @@ private void createHubProject(String repoKey, String patterns) {
     Set repoPaths = new HashSet<>()
     def patternsToFind = patterns.tokenize(',')
     patternsToFind.each {
-        repoPaths.addAll(searches.artifactsByName(it, repoKey))
+        List<RepoPath> searchResults = searches.artifactsByName(it, repoKey)
+        repoPaths.addAll(searchResults)
     }
 
     HubServicesFactory hubServicesFactory = createHubServicesFactory();
@@ -229,106 +231,35 @@ private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifa
     }
 }
 
-private Dependency createDependency(SimpleBdioFactory simpleBdioFactory, RepoPath repoPath, String packageType) {
+private Dependency createDependency(RepoPath repoPath, String packageType) {
     try {
+        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
+        org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+
         if (nuget.name().equals(packageType)) {
-            org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
-            return createNugetDependency(simpleBdioFactory, properties)
+            return dependencyFactory.createNugetDependency(fileLayoutInfo, properties);
         }
 
         if (npm.name().equals(packageType)) {
-            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-            org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
-            return createNpmDependency(simpleBdioFactory, fileLayoutInfo, properties)
+            return dependencyFactory.createNpmDependency(fileLayoutInfo, properties);
         }
 
         if (pypi.name().equals(packageType)) {
-            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-            org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
-            return createPyPiDependency(simpleBdioFactory, fileLayoutInfo, properties, repoPath)
+            return dependencyFactory.createPyPiDependency(fileLayoutInfo, properties);
         }
 
         if (gems.name().equals(packageType)) {
-            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-            return createRubygemsDependency(simpleBdioFactory, fileLayoutInfo)
+            return dependencyFactory.createRubygemsDependency(fileLayoutInfo, properties);
         }
 
         if (maven.name().equals(packageType) || gradle.name().equals(packageType)) {
-            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-            return createMavenDependency(simpleBdioFactory, fileLayoutInfo)
+            return dependencyFactory.createMavenDependency(fileLayoutInfo, properties);
         }
     } catch (Exception e) {
-        log.debug("Could not resolve dependency: ${e.getMessage()}")
+        log.debug("Could not resolve dependency: ${e.getMessage()}");
     }
 
     return null
-}
-
-private Dependency createNugetDependency(SimpleBdioFactory simpleBdioFactory, org.artifactory.md.Properties properties) {
-    String name = properties['nuget.id'][0]
-    String version = properties['nuget.version'][0]
-    return createNameVersionDependency(simpleBdioFactory, Forge.NUGET, name, version)
-}
-
-private Dependency createNpmDependency(SimpleBdioFactory simpleBdioFactory, FileLayoutInfo fileLayoutInfo, org.artifactory.md.Properties properties) {
-    String name
-    String version
-    if (properties['npm.name'] && properties['npm.version']) {
-        name = properties['npm.name'][0]
-        version = properties['npm.version'][0]
-    } else {
-        name = fileLayoutInfo.module
-        version = fileLayoutInfo.baseRevision
-    }
-    return createNameVersionDependency(simpleBdioFactory, Forge.NPM, name, version)
-}
-
-private Dependency createPyPiDependency(SimpleBdioFactory simpleBdioFactory, FileLayoutInfo fileLayoutInfo, org.artifactory.md.Properties properties, RepoPath repoPath) {
-    Forge forge = Forge.PYPI
-    String name
-    String version
-    if (properties['pypi.name'] && properties['pypi.version']) {
-        name = properties['pypi.name'][0]
-        version = properties['pypi.version'][0]
-    } else {
-        name = fileLayoutInfo.module
-        version = fileLayoutInfo.baseRevision
-    }
-    if (!name || !version) {
-        try {
-            def pypiService = ((ApplicationContext) ctx).getBean('pypiService')
-            def pypiMetadata = pypiService.getPypiMetadata(repoPath)
-            name = pypiMetadata.name
-            version = pypiMetadata.version
-        } catch (Exception e) {
-        }
-    }
-    return createNameVersionDependency(simpleBdioFactory, Forge.PYPI, name, version)
-}
-
-private Dependency createRubygemsDependency(SimpleBdioFactory simpleBdioFactory, FileLayoutInfo fileLayoutInfo) {
-    String name = fileLayoutInfo.module
-    String version = fileLayoutInfo.baseRevision
-    return createNameVersionDependency(simpleBdioFactory, Forge.RUBYGEMS, name, version)
-}
-
-private Dependency createNameVersionDependency(SimpleBdioFactory simpleBdioFactory, FileLayoutInfo fileLayoutInfo, Forge forge, String name, String version) {
-    ExternalId externalId = simpleBdioFactory.createNameVersionExternalId(forge, name, version)
-    if (name && version && externalId) {
-        return new Dependency(name, version, externalId)
-    } else {
-        return null
-    }
-}
-
-private Dependency createMavenDependency(SimpleBdioFactory simpleBdioFactory, FileLayoutInfo fileLayoutInfo) {
-    String name = fileLayoutInfo.module
-    String version = fileLayoutInfo.baseRevision
-    String group = fileLayoutInfo.organization
-    ExternalId externalId = simpleBdioFactory.createMavenExternalId(group, name, version)
-    if (name && version && externalId) {
-        return new Dependency(name, version, externalId)
-    }
 }
 
 private HubServicesFactory createHubServicesFactory() {
