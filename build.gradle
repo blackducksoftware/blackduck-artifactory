@@ -57,7 +57,7 @@ task createFinalZip(type: Zip, dependsOn: build) {
 
 dependencies {
     compile 'com.blackducksoftware.integration:hub-common:26.0.0'
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.9'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.11'
 
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'

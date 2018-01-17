@@ -25,8 +25,10 @@ package com.blackducksoftware.integration.hub.artifactory.inspect
 
 import static com.blackducksoftware.integration.hub.artifactory.SupportedPackageType.*
 
+import java.text.SimpleDateFormat
+
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.artifactory.addon.pypi.*
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
@@ -36,6 +38,7 @@ import org.artifactory.repo.RepositoryConfiguration
 
 import com.blackducksoftware.integration.exception.IntegrationException
 import com.blackducksoftware.integration.hub.api.bom.BomImportService
+import com.blackducksoftware.integration.hub.api.notification.NotificationService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
@@ -53,6 +56,7 @@ import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataServ
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
+import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
@@ -69,6 +73,8 @@ import groovy.transform.Field
 @Field Properties inspectorProperties
 @Field PackageTypePatternManager packageTypePatternManager
 @Field DependencyFactory dependencyFactory
+@Field ArtifactMetaDataManager artifactMetaDataManager
+@Field HubServicesFactory hubServicesFactory
 
 initialize()
 
@@ -97,6 +103,36 @@ executions {
         }
 
         updateFromHubProject(repoKey, projectName, projectVersionName);
+    }
+
+    updateInspectedRepositoryFromNotifications(httpMethod: 'POST') { params ->
+        String today = new Date().format('yyyy-MM-dd')
+
+        def repoKey = params['repoKey'][0]
+        def projectName = getRepoProjectName(repoKey)
+        def projectVersionName = getRepoProjectVersionName(repoKey)
+        def startDateString = today
+        def endDateString = today
+
+        if (params.containsKey('projectName')) {
+            projectName = params['projectName'][0]
+        }
+        if (params.containsKey('projectVersionName')) {
+            projectVersionName = params['projectVersionName'][0]
+        }
+        if (params.containsKey('startDate')) {
+            startDateString = params['startDate'][0]
+        }
+        if (params.containsKey('endDate')) {
+            endDateString = params['endDate'][0]
+        }
+
+        def simpleDateFormat = new SimpleDateFormat(RestConnection.JSON_DATE_FORMAT)
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone('UTC'))
+        Date startDate = simpleDateFormat.parse("${startDateString}T00:00:00.000Z")
+        Date endDate = simpleDateFormat.parse("${endDateString}T23:59:59.999Z")
+
+        updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, startDate, endDate)
     }
 
     blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
@@ -145,14 +181,13 @@ private void createHubProject(String repoKey, String patterns) {
         repoPaths.addAll(searchResults)
     }
 
-    HubServicesFactory hubServicesFactory = createHubServicesFactory();
     RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
     String packageType = repositoryConfiguration.getPackageType();
     SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
     MutableDependencyGraph mutableDependencyGraph = simpleBdioFactory.createMutableDependencyGraph();
 
     repoPaths.each { repoPath ->
-        Dependency repoPathDependency = createDependency(simpleBdioFactory, repoPath, packageType);
+        Dependency repoPathDependency = createDependency(repoPath, packageType);
         if (repoPathDependency != null) {
             addDependencyProperties(repoPath, repoPathDependency)
             mutableDependencyGraph.addChildToRoot(repoPathDependency)
@@ -176,13 +211,20 @@ private void createHubProject(String repoKey, String patterns) {
 }
 
 private void updateFromHubProject(String repoKey, String projectName, String projectVersionName) {
-    HubServicesFactory hubServicesFactory = createHubServicesFactory();
     HubService hubService = hubServicesFactory.createHubService();
     ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
-    ArtifactMetaDataManager artifactMetaDataManager = new ArtifactMetaDataManager();
 
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaData(hubService, projectVersionWrapper.getProjectVersionView());
+    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaData(repoKey, hubService, projectVersionWrapper.getProjectVersionView());
+    addOriginIdProperties(repoKey, artifactMetaDataList);
+}
+
+private void updateFromHubProjectNotifications(String repoKey, String projectName, String projectVersionName, Date startDate, Date endDate) {
+    NotificationService notificationService = hubServicesFactory.createNotificationService()
+    ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
+
+    ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
+    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
     addOriginIdProperties(repoKey, artifactMetaDataList);
 }
 
@@ -268,7 +310,7 @@ private Dependency createDependency(RepoPath repoPath, String packageType) {
             return dependencyFactory.createMavenDependency(fileLayoutInfo, properties);
         }
     } catch (Exception e) {
-        log.debug("Could not resolve dependency: ${e.getMessage()}");
+        log.error("Could not resolve dependency:", e);
     }
 
     return null
@@ -278,7 +320,13 @@ private void initialize() {
     inspectorProperties = new Properties()
     packageTypePatternManager = new PackageTypePatternManager()
     dependencyFactory = new DependencyFactory()
+    artifactMetaDataManager = new ArtifactMetaDataManager()
 
+    loadProperties()
+    createHubServicesFactory()
+}
+
+private void loadProperties() {
     def propertiesFilePath = "${ctx.artifactoryHome.etcDir}/plugins/lib/${this.getClass().getSimpleName()}.properties";
     if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
         propertiesFilePath = propertiesFilePathOverride
@@ -298,10 +346,10 @@ private void initialize() {
     }
 }
 
-private HubServicesFactory createHubServicesFactory() {
+private void createHubServicesFactory() {
     HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
     hubServerConfigBuilder.setFromProperties(inspectorProperties)
     HubServerConfig hubServerConfig = hubServerConfigBuilder.build()
     CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
-    new HubServicesFactory(credentialsRestConnection)
+    hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
 }
