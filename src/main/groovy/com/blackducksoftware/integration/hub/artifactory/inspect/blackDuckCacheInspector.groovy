@@ -75,74 +75,134 @@ import groovy.transform.Field
 @Field DependencyFactory dependencyFactory
 @Field ArtifactMetaDataManager artifactMetaDataManager
 @Field HubServicesFactory hubServicesFactory
+@Field RepoPathFactory repoPathFactory
 
 initialize()
 
+/*
+ * This can be triggered with the following curl command:
+ * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties?params=repoKey=REPO"
+ */
 executions {
-    inspectRepository(httpMethod: 'POST') { params ->
-        if (!params.containsKey('repoKey') || !params['repoKey'][0]) {
-            message = 'You must provide a repoKey'
-            return
-        }
-        String repoKey = params['repoKey'][0]
-        String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+	blackDuckIdentifyArtifatsInRepository(httpMethod: 'POST') { params ->
+		if (!params.containsKey('repoKey') || !params['repoKey'][0]) {
+			message = 'You must provide a repoKey'
+			return
+		}
+		String repoKey = params['repoKey'][0]
+		String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
 
-        createHubProject(repoKey, patterns)
-    }
+		createHubProject(repoKey, patterns)
+	}
 
-    updateInspectedRepository(httpMethod: 'POST') { params ->
-        def repoKey = params['repoKey'][0]
-        def projectName = getRepoProjectName(repoKey)
-        def projectVersionName = getRepoProjectVersionName(repoKey)
+	blackDuckPopulateMetadataInRepository(httpMethod: 'POST') { params ->
+		def repoKey = params['repoKey'][0]
+		def projectName = getRepoProjectName(repoKey)
+		def projectVersionName = getRepoProjectVersionName(repoKey)
 
-        if (params.containsKey('projectName')) {
-            projectName = params['projectName'][0]
-        }
-        if (params.containsKey('projectVersionName')) {
-            projectVersionName = params['projectVersionName'][0]
-        }
+		if (params.containsKey('projectName')) {
+			projectName = params['projectName'][0]
+		}
+		if (params.containsKey('projectVersionName')) {
+			projectVersionName = params['projectVersionName'][0]
+		}
 
-        updateFromHubProject(repoKey, projectName, projectVersionName);
-    }
+		updateFromHubProject(repoKey, projectName, projectVersionName);
+	}
 
-    updateInspectedRepositoryFromNotifications(httpMethod: 'POST') { params ->
-        String today = new Date().format('yyyy-MM-dd')
+	blackDuckUpdateMetadataInRepository(httpMethod: 'POST') { params ->
+		String today = new Date().format('yyyy-MM-dd')
 
-        def repoKey = params['repoKey'][0]
-        def projectName = getRepoProjectName(repoKey)
-        def projectVersionName = getRepoProjectVersionName(repoKey)
-        def startDateString = today
-        def endDateString = today
+		def repoKey = params['repoKey'][0]
+		def projectName = getRepoProjectName(repoKey)
+		def projectVersionName = getRepoProjectVersionName(repoKey)
+		def startDateString = today
+		def endDateString = today
 
-        if (params.containsKey('projectName')) {
-            projectName = params['projectName'][0]
-        }
-        if (params.containsKey('projectVersionName')) {
-            projectVersionName = params['projectVersionName'][0]
-        }
-        if (params.containsKey('startDate')) {
-            startDateString = params['startDate'][0]
-        }
-        if (params.containsKey('endDate')) {
-            endDateString = params['endDate'][0]
-        }
+		if (params.containsKey('projectName')) {
+			projectName = params['projectName'][0]
+		}
+		if (params.containsKey('projectVersionName')) {
+			projectVersionName = params['projectVersionName'][0]
+		}
+		if (params.containsKey('startDate')) {
+			startDateString = params['startDate'][0]
+		}
+		if (params.containsKey('endDate')) {
+			endDateString = params['endDate'][0]
+		}
 
-        def simpleDateFormat = new SimpleDateFormat(RestConnection.JSON_DATE_FORMAT)
-        simpleDateFormat.setTimeZone(TimeZone.getTimeZone('UTC'))
-        Date startDate = simpleDateFormat.parse("${startDateString}T00:00:00.000Z")
-        Date endDate = simpleDateFormat.parse("${endDateString}T23:59:59.999Z")
+		def simpleDateFormat = new SimpleDateFormat(RestConnection.JSON_DATE_FORMAT)
+		simpleDateFormat.setTimeZone(TimeZone.getTimeZone('UTC'))
+		Date startDate = simpleDateFormat.parse("${startDateString}T00:00:00.000Z")
+		Date endDate = simpleDateFormat.parse("${endDateString}T23:59:59.999Z")
 
-        updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, startDate, endDate)
-    }
+		updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, startDate, endDate)
+	}
+	
+	blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
+		log.info('Starting blackDuckDeleteInspectionProperties REST request...')
 
-    blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
-        log.info('Starting blackDuckDeleteInspectionProperties REST request...')
+		def repoKey = params['repoKey'][0]
+		deleteInspectionProperties(repoKey)
 
-        def repoKey = params['repoKey'][0]
-        deleteInspectionProperties(repoKey)
+		log.info('...completed blackDuckDeleteInspectionProperties REST request.')
+	}
+}
 
-        log.info('...completed blackDuckDeleteInspectionProperties REST request.')
-    }
+jobs {
+	blackDuckIdentifyArtifacts(cron: "0 0/1 * 1/1 * ?") {
+		log.info('Starting blackDuckIdentifyArtifacts CRON job...')
+
+		List<String> repoKeys = getRepoKeys()
+		repoKeys.each { repoKey ->
+			String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+			createHubProject(repoKey, patterns)
+		}
+
+		log.info('...completed blackDuckIdentifyArtifacts CRON job.')
+	}
+
+	blackDuckPopulateMetadata(cron: "0 0/1 * 1/1 * ?") {
+		log.info('Starting blackDuckPopulateRepository CRON job...')
+
+		List<String> repoKeys = getRepoKeys()
+		repoKeys.each { repoKey ->
+			RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+			String nowString = RestConnection.formatDate(new Date())
+			String projectName = getRepoProjectName(repoKey)
+			String projectVersionName = getRepoProjectVersionName(repoKey)
+			
+			updateFromHubProject(repoKey, projectName, projectVersionName);
+			repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), nowString)
+		}
+
+		log.info('...completed blackDuckPopulateMetadata CRON job.')
+	}
+
+	blackDuckUpdateMetadata(cron: "0 0/1 * 1/1 * ?") {
+		log.info('Starting blackDuckUpdateRepository CRON job...')
+		
+		List<String> repoKeys = getRepoKeys()
+		repoKeys.each { repoKey ->
+			RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+			Date now = new Date()
+			String startDateString = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName())
+			
+			if (startDateString) {
+				Date lastInspected = RestConnection.parseDateString(startDateString)
+				String projectName = getRepoProjectName(repoKey)
+				String projectVersionName = getRepoProjectVersionName(repoKey)
+				
+				updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, lastInspected, now)
+			}
+
+			String nowString = RestConnection.formatDate(now)
+			repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), nowString)
+		}
+
+		log.info('...completed blackDuckUpdateMetadata CRON job.')
+	}
 }
 
 storage {
@@ -171,6 +231,22 @@ storage {
             log.debug("Unexpected exception: ${e.getMessage()}")
         }
     }
+}
+
+private List<String> getRepoKeys() {
+    def repoKeys = []
+    String repositoryFilePath = inspectorProperties.get('hub.artifactory.inspect.repos.file')
+    
+    if (repositoryFilePath) {
+        def repositoryFile = new File(repositoryFilePath)
+        repositoryFile.splitEachLine(',') { repos ->
+            repoKeys.addAll(repos)
+        }
+    } else {
+        String repositoryString = inspectorProperties.get('hub.artifactory.inspect.repos')
+        repoKeys.addAll(repositoryString.split(','))
+    }
+    return repoKeys
 }
 
 private void createHubProject(String repoKey, String patterns) {
@@ -321,6 +397,7 @@ private void initialize() {
     packageTypePatternManager = new PackageTypePatternManager()
     dependencyFactory = new DependencyFactory()
     artifactMetaDataManager = new ArtifactMetaDataManager()
+	repoPathFactory = new RepoPathFactory()
 
     loadProperties()
     createHubServicesFactory()
