@@ -1,3 +1,26 @@
+/*
+ * hub-artifactory
+ *
+ * Copyright (C) 2018 Black Duck Software, Inc.
+ * http://www.blackducksoftware.com/
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
 import java.time.LocalDate
@@ -9,9 +32,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import com.blackducksoftware.integration.hub.api.item.MetaService
-import com.blackducksoftware.integration.hub.api.project.ProjectRequestService
-import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionRequestService
+import com.blackducksoftware.integration.hub.api.project.ProjectService
+import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionService
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
@@ -65,14 +87,13 @@ class HubProjectDetails {
 
     String getHubProjectVersionUIUrl(String projectName, String projectVersionName){
         HubServicesFactory hubServicesFactory = hubClient.getHubServicesFactory()
-        MetaService metaService = hubServicesFactory.createMetaService()
-        ProjectRequestService projectRequestService = hubServicesFactory.createProjectRequestService()
-        ProjectVersionRequestService projectVersionRequestService = hubServicesFactory.createProjectVersionRequestService()
+        ProjectService projectService = hubServicesFactory.createProjectService()
+        ProjectVersionService projectVersionService = hubServicesFactory.createProjectVersionService()
         HubServerConfig hubServerConfig = hubClient.createBuilder().build()
 
-        ProjectView project = projectRequestService.getProjectByName(projectName)
-        ProjectVersionView projectVersion = projectVersionRequestService.getProjectVersion(project, projectVersionName)
-        String projectVersionUIUrl = metaService.getFirstLinkSafely(projectVersion, "components")
+        ProjectView project = projectService.getProjectByName(projectName)
+        ProjectVersionView projectVersion = projectVersionService.getProjectVersion(project, projectVersionName)
+        String projectVersionUIUrl = projectService.getFirstLinkSafely(projectVersion, "components")
         projectVersionUIUrl
     }
 }
