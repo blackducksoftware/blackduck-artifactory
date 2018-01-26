@@ -76,6 +76,7 @@ import groovy.transform.Field
 @Field ArtifactMetaDataManager artifactMetaDataManager
 @Field HubServicesFactory hubServicesFactory
 @Field RepoPathFactory repoPathFactory
+@Field List<String> repoKeysToInspect
 
 initialize()
 
@@ -140,11 +141,21 @@ executions {
 		updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, startDate, endDate)
 	}
 	
-	blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
-		log.info('Starting blackDuckDeleteInspectionProperties REST request...')
+	blackDuckDeleteInspectionPropertiesFromRepository(httpMethod: 'POST') { params ->
+		log.info('Starting blackDuckDeleteInspectionPropertiesFromRepository REST request...')
 
 		def repoKey = params['repoKey'][0]
 		deleteInspectionProperties(repoKey)
+
+		log.info('...completed blackDuckDeleteInspectionPropertiesFromRepository REST request.')
+	}
+	
+	blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
+		log.info('Starting blackDuckDeleteInspectionProperties REST request...')
+
+		repoKeysToInspect.each { repoKey ->
+			deleteInspectionProperties(repoKey)
+		}
 
 		log.info('...completed blackDuckDeleteInspectionProperties REST request.')
 	}
@@ -154,51 +165,75 @@ jobs {
 	blackDuckIdentifyArtifacts(cron: "0 0/1 * 1/1 * ?") {
 		log.info('Starting blackDuckIdentifyArtifacts CRON job...')
 
-		List<String> repoKeys = getRepoKeys()
-		repoKeys.each { repoKey ->
-			String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
-			createHubProject(repoKey, patterns)
+		repoKeysToInspect.each { repoKey ->
+			RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+			String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
+			
+			if (!'SUCCESS'.equals(inspectionStatus)) {
+				try {
+					String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+					createHubProject(repoKey, patterns)
+					repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName(), 'SUCCESS')
+				} catch (Exception e) {
+					repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName(), 'FAILURE')
+					log.error("The blackDuckCacheInspector encountered an unexpected exception while identifying artifacts in repository ${repoKey}", e)
+				}
+			}
 		}
 
 		log.info('...completed blackDuckIdentifyArtifacts CRON job.')
 	}
 
 	blackDuckPopulateMetadata(cron: "0 0/1 * 1/1 * ?") {
-		log.info('Starting blackDuckPopulateRepository CRON job...')
+		log.info('Starting blackDuckPopulateMetadata CRON job...')
 
-		List<String> repoKeys = getRepoKeys()
-		repoKeys.each { repoKey ->
+		repoKeysToInspect.each { repoKey ->
 			RepoPath repoKeyPath = repoPathFactory.create(repoKey)
-			String nowString = RestConnection.formatDate(new Date())
 			String projectName = getRepoProjectName(repoKey)
 			String projectVersionName = getRepoProjectVersionName(repoKey)
+			String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
 			
-			updateFromHubProject(repoKey, projectName, projectVersionName);
-			repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), nowString)
+			try {
+				if ('SUCCESS'.equals(inspectionStatus)) {
+					updateFromHubProject(repoKey, projectName, projectVersionName);
+					
+					String lastInspectedString = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName())
+					if (!lastInspectedString) {
+						String nowString = RestConnection.formatDate(new Date())
+						repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), nowString)
+					}
+				}
+			} catch (Exception e) {
+				log.error("The blackDuckCacheInspector encountered an unexpected exception while populating artifact metadata in repository ${repoKey}", e)
+			}
 		}
 
 		log.info('...completed blackDuckPopulateMetadata CRON job.')
 	}
 
 	blackDuckUpdateMetadata(cron: "0 0/1 * 1/1 * ?") {
-		log.info('Starting blackDuckUpdateRepository CRON job...')
+		log.info('Starting blackDuckUpdateMetadata CRON job...')
 		
-		List<String> repoKeys = getRepoKeys()
-		repoKeys.each { repoKey ->
+		repoKeysToInspect.each { repoKey ->
 			RepoPath repoKeyPath = repoPathFactory.create(repoKey)
-			Date now = new Date()
 			String startDateString = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName())
+			Date now = new Date()
+			String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
 			
-			if (startDateString) {
-				Date lastInspected = RestConnection.parseDateString(startDateString)
-				String projectName = getRepoProjectName(repoKey)
-				String projectVersionName = getRepoProjectVersionName(repoKey)
-				
-				updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, lastInspected, now)
+			if (startDateString && 'SUCCESS'.equals(inspectionStatus)) {
+				try {
+					Date lastInspected = RestConnection.parseDateString(startDateString)
+					String projectName = getRepoProjectName(repoKey)
+					String projectVersionName = getRepoProjectVersionName(repoKey)
+					
+					updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, lastInspected, now)
+					
+					String nowString = RestConnection.formatDate(now)
+					repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), nowString)
+				} catch (Exception e) {
+					log.error("The blackDuckCacheInspector encountered an unexpected exception while updating artifact metadata from Hub notifications in repository ${repoKey}", e)
+				}
 			}
-
-			String nowString = RestConnection.formatDate(now)
-			repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), nowString)
 		}
 
 		log.info('...completed blackDuckUpdateMetadata CRON job.')
@@ -231,22 +266,6 @@ storage {
             log.debug("Unexpected exception: ${e.getMessage()}")
         }
     }
-}
-
-private List<String> getRepoKeys() {
-    def repoKeys = []
-    String repositoryFilePath = inspectorProperties.get('hub.artifactory.inspect.repos.file')
-    
-    if (repositoryFilePath) {
-        def repositoryFile = new File(repositoryFilePath)
-        repositoryFile.splitEachLine(',') { repos ->
-            repoKeys.addAll(repos)
-        }
-    } else {
-        String repositoryString = inspectorProperties.get('hub.artifactory.inspect.repos')
-        repoKeys.addAll(repositoryString.split(','))
-    }
-    return repoKeys
 }
 
 private void createHubProject(String repoKey, String patterns) {
@@ -400,7 +419,6 @@ private void initialize() {
 	repoPathFactory = new RepoPathFactory()
 
     loadProperties()
-    createHubServicesFactory()
 }
 
 private void loadProperties() {
@@ -418,6 +436,9 @@ private void loadProperties() {
         packageTypePatternManager.setPattern(pypi, inspectorProperties.get('hub.artifactory.inspect.patterns.pypi'))
         packageTypePatternManager.setPattern(nuget, inspectorProperties.get('hub.artifactory.inspect.patterns.nuget'))
         packageTypePatternManager.setPattern(npm, inspectorProperties.get('hub.artifactory.inspect.patterns.npm'))
+		
+		createHubServicesFactory()
+		loadRepositoriesToInspect()
     } else {
         log.error("Black Duck Cache Inspector could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
     }
@@ -429,4 +450,19 @@ private void createHubServicesFactory() {
     HubServerConfig hubServerConfig = hubServerConfigBuilder.build()
     CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
     hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+}
+
+private void loadRepositoriesToInspect() {
+	String repositoriesToInspect = inspectorProperties.get('hub.artifactory.inspect.repos')
+	String repositoriesToInspectFilePath = inspectorProperties.get('hub.artifactory.inspect.repos.file')
+	repoKeysToInspect = []
+	
+	if (repositoriesToInspectFilePath) {
+		def repositoryFile = new File(repositoriesToInspectFilePath)
+		repositoryFile.splitEachLine(',') { repos ->
+			repoKeysToInspect.addAll(repos)
+		}
+	} else if (repositoriesToInspect) {
+		repoKeysToInspect.addAll(repositoriesToInspect.split(','))
+	}
 }
