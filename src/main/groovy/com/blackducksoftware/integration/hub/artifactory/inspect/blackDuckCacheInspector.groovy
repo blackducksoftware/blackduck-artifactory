@@ -77,6 +77,7 @@ import groovy.transform.Field
 @Field HubServicesFactory hubServicesFactory
 @Field RepoPathFactory repoPathFactory
 @Field List<String> repoKeysToInspect
+@Field File pluginsLibDir
 
 initialize()
 
@@ -425,17 +426,20 @@ private void initialize() {
     dependencyFactory = new DependencyFactory()
     artifactMetaDataManager = new ArtifactMetaDataManager()
 	repoPathFactory = new RepoPathFactory()
+	File pluginsDir = new File(ctx.artifactoryHome.pluginsDir)
+	pluginsLibDir = new File(pluginsDir, "lib")
 
     loadProperties()
 }
 
 private void loadProperties() {
-    def propertiesFilePath = "${ctx.artifactoryHome.etcDir}/plugins/lib/${this.getClass().getSimpleName()}.properties";
+	def propertiesFile
     if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
-        propertiesFilePath = propertiesFilePathOverride
-    }
+		propertiesFile = new File(propertiesFilePathOverride);
+    } else {
+		propertiesFile = new File(pluginsLibDir, "${this.getClass().getSimpleName()}.properties")
+	}
 
-    def propertiesFile = new File(propertiesFilePath);
     if (propertiesFile.exists()) {
         propertiesFile.withInputStream { inspectorProperties.load(it) }
         packageTypePatternManager.setPattern(gems, inspectorProperties.get('hub.artifactory.inspect.patterns.rubygems'))
