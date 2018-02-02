@@ -8,12 +8,14 @@ buildscript {
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.8.RELEASE'
+        //classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.6.1'
     }
 }
 
 plugins {
     id 'groovy'
     id 'org.springframework.boot' version '1.5.8.RELEASE'
+    id 'org.sonarqube' version '2.6.1'
 }
 
 version = '5.0.0-SNAPSHOT'
@@ -71,3 +73,12 @@ dependencies {
 }
 
 springBoot { mainClass = 'com.blackducksoftware.integration.hub.artifactory.Application' }
+
+sonarqube {
+    properties {
+        property 'sonar.projectName', 'Integrations - Hub Artifactory'
+        property 'sonar.projectKey', 'com.blackducksoftware:int:hub-artifactory'
+        property 'sonar.sources', sourceSets.main.groovy.srcDirs
+        property 'sonar.verbose', false
+    }
+}
