@@ -24,24 +24,34 @@
 package com.blackducksoftware.integration.hub.artifactory
 
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.PropertySource
+import org.springframework.context.annotation.PropertySources
 import org.springframework.stereotype.Component
 
 @Component
+@PropertySources([
+    @PropertySource('blackDuckCacheInspector.properties'),
+    @PropertySource('blackDuckScanForHub.properties')
+])
 class ConfigurationProperties {
     @Value('${user.dir}')
     String currentUserDirectory
 
+    String artifactoryUsername
+
+    String artifactoryPassword
+
+    String artifactoryUrl
+
+    //Common
     @Value('${hub.url}')
     String hubUrl
 
+    @Value('${hub.api.key}')
+    String hubApiKey
+
     @Value('${hub.timeout}')
     String hubTimeout
-
-    @Value('${hub.username}')
-    String hubUsername
-
-    @Value('${hub.password}')
-    String hubPassword
 
     @Value('${hub.trust.cert}')
     String hubAlwaysTrustCerts
@@ -58,42 +68,47 @@ class ConfigurationProperties {
     @Value('${hub.proxy.password}')
     String hubProxyPassword
 
-    @Value('${artifactory.username}')
-    String artifactoryUsername
+    //Inspector
+    @Value('${hub.artifactory.inspect.repos}')
+    String hubArtifactoryInspectRepositoriesList
 
-    @Value('${artifactory.password}')
-    String artifactoryPassword
+    @Value('${hub.artifactory.inspect.repos.csv.path}')
+    String hubArtifactoryInspectRepositoriesCsvPath
 
-    @Value('${artifactory.url}')
-    String artifactoryUrl
+    @Value('${hub.artifactory.inspect.patterns.rubygems}')
+    String hubArtifactoryInspectPatternsRubygems
 
-    @Value('${hub.artifactory.working.directory.path}')
-    String hubArtifactoryWorkingDirectoryPath
+    @Value('${hub.artifactory.inspect.patterns.maven}')
+    String hubArtifactoryInspectPatternsMaven
 
-    @Value('${hub.artifactory.project.name}')
-    String hubArtifactoryProjectName
+    @Value('${hub.artifactory.inspect.patterns.gradle}')
+    String hubArtifactoryInspectPatternsGradle
 
-    @Value('${hub.artifactory.project.version.name}')
-    String hubArtifactoryProjectVersionName
+    @Value('${hub.artifactory.inspect.patterns.pypi}')
+    String hubArtifactoryInspectPatternsPypi
 
-    @Value('${hub.artifactory.date.time.pattern}')
-    String hubArtifactoryDateTimePattern
+    @Value('${hub.artifactory.inspect.patterns.nuget}')
+    String hubArtifactoryInspectPatternsNuget
 
-    @Value('${hub.artifactory.inspect.repo.key}')
-    String hubArtifactoryInspectRepoKey
+    @Value('${hub.artifactory.inspect.patterns.npm}')
+    String hubArtifactoryInspectPatternsNpm
 
-    @Value('${hub.artifactory.inspect.latest.updated.cutoff}')
-    String hubArtifactoryInspectLatestUpdatedCutoff
+    //Scanner
+    @Value('${hub.artifactory.scan.repos}')
+    String hubArtifactoryScanRepositoriesList
 
-    @Value('${hub.artifactory.inspect.skip.bom.calculation}')
-    String hubArtifactoryInspectSkipBomCalculation
-
-    @Value('${hub.artifactory.scan.repos.to.search}')
-    String hubArtifactoryScanReposToSearch
+    @Value('${hub.artifactory.scan.repos.csv.path}')
+    String hubArtifactoryScanRepositoriesCsvPath
 
     @Value('${hub.artifactory.scan.name.patterns}')
     String hubArtifactoryScanNamePatterns
 
     @Value('${hub.artifactory.scan.binaries.directory.path}')
     String hubArtifactoryScanBinariesDirectoryPath
+
+    @Value('${hub.artifactory.scan.memory}')
+    String hubArtifactoryScanMemory
+
+    @Value('${hub.artifactory.scan.dry.run}')
+    String hubArtifactoryScanDryRun
 }

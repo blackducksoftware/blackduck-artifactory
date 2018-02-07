@@ -34,8 +34,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.context.annotation.Bean
 
-import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactoryInspector
-import com.blackducksoftware.integration.hub.artifactory.scan.ArtifactoryScanConfigurer
 import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
 import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
@@ -50,15 +48,6 @@ class Application {
     @Autowired
     ConfigurationManager configurationManager
 
-    @Autowired
-    ConfigurationProperties configurationProperties
-
-    @Autowired
-    ArtifactoryInspector artifactoryInspector
-
-    @Autowired
-    ArtifactoryScanConfigurer artifactoryScanConfigurer
-
     @Value('${mode}')
     String mode
 
@@ -69,7 +58,7 @@ class Application {
     @PostConstruct
     void init() {
         if (StringUtils.isBlank(mode)) {
-            logger.error('You are running without specifying a mode. Please add \'--mode=(run-inspector|configure-inspector|configure-scanner)\' to your command.')
+            logger.error('You are running without specifying a mode. Please add \'--mode=(configure-inspector|configure-scanner)\' to your command.')
             return
         }
 
@@ -79,7 +68,7 @@ class Application {
                 configurationManager.updateBaseConfigValues(System.console(), System.out)
             }
 
-            if ('configure-inspector' == mode || ('run-inspector' == mode && configurationManager.needsArtifactoryInspectUpdate())) {
+            if ('configure-inspector' == mode) {
                 configurationManager.updateArtifactoryInspectValues(System.console(), System.out)
             } else if ('configure-scanner' == mode) {
                 configurationManager.updateArtifactoryScanValues(System.console(), System.out)
@@ -90,18 +79,10 @@ class Application {
 
         if (configurationManager.needsBaseConfigUpdate()) {
             logger.error('You have not provided enough configuration to run either an inspection or a scan - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
-        } else if (('configure-inspector' == mode || 'run-inspector' == mode) && configurationManager.needsArtifactoryInspectUpdate()) {
-            logger.error('You have not provided enough configuration to run an inspection - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
+        } else if ('configure-inspector' == mode && configurationManager.needsArtifactoryInspectUpdate()) {
+            logger.error('You have not provided enough configuration to configure the inspector plugin - please edit the \'config/blackDuckCacheInspector.properties\' file directly, or run from a command line to configure the properties.')
         } else if ('configure-scanner' == mode && configurationManager.needsArtifactoryScanUpdate()) {
-            logger.error('You have not provided enough configuration to configure the scan plugin - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
-        } else if('run-inspector' == mode || 'configure-scanner' == mode) {
-            def workingDirectory = new File(configurationProperties.hubArtifactoryWorkingDirectoryPath)
-            workingDirectory.mkdirs()
-            if ('run-inspector' == mode) {
-                artifactoryInspector.performInspect()
-            } else {
-                artifactoryScanConfigurer.createScanPluginFile()
-            }
+            logger.error('You have not provided enough configuration to configure the scan plugin - please edit the \'config/blackDuckScanForHub.properties\' file directly, or run from a command line to configure the properties.')
         }
     }
 

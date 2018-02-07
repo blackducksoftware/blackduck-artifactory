@@ -298,14 +298,14 @@ class RestTemplateContainer extends RestTemplate {
     @Override
     public <T> ResponseEntity<T> exchange(final String url, final HttpMethod method, final HttpEntity<?> requestEntity, final Class<T> responseType,
             final Object... uriVariables)
-            throws RestClientException {
+                    throws RestClientException {
         return restTemplate.exchange(url, method, requestEntity, responseType, uriVariables);
     }
 
     @Override
     public <T> ResponseEntity<T> exchange(final String url, final HttpMethod method, final HttpEntity<?> requestEntity, final Class<T> responseType,
             final Map<String, ?> uriVariables)
-            throws RestClientException {
+                    throws RestClientException {
         return restTemplate.exchange(url, method, requestEntity, responseType, uriVariables);
     }
 
@@ -332,7 +332,7 @@ class RestTemplateContainer extends RestTemplate {
     @Override
     public <T> ResponseEntity<T> exchange(final URI url, final HttpMethod method, final HttpEntity<?> requestEntity,
             final ParameterizedTypeReference<T> responseType)
-            throws RestClientException {
+                    throws RestClientException {
         return restTemplate.exchange(url, method, requestEntity, responseType);
     }
 
@@ -349,14 +349,14 @@ class RestTemplateContainer extends RestTemplate {
     @Override
     public <T> T execute(final String url, final HttpMethod method, final RequestCallback requestCallback, final ResponseExtractor<T> responseExtractor,
             final Object... uriVariables)
-            throws RestClientException {
+                    throws RestClientException {
         return restTemplate.execute(url, method, requestCallback, responseExtractor, uriVariables);
     }
 
     @Override
     public <T> T execute(final String url, final HttpMethod method, final RequestCallback requestCallback, final ResponseExtractor<T> responseExtractor,
             final Map<String, ?> uriVariables)
-            throws RestClientException {
+                    throws RestClientException {
         return restTemplate.execute(url, method, requestCallback, responseExtractor, uriVariables);
     }
 

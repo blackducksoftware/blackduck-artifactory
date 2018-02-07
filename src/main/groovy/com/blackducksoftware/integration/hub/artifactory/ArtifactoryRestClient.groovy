@@ -58,6 +58,11 @@ class ArtifactoryRestClient {
         return VERSION_UNKNOWN
     }
 
+    Map getRepositoryConfiguration(String repositoryName) {
+        def apiUrl = "${configurationProperties.artifactoryUrl}/api/repositories/${repositoryName}"
+        return getJsonResponse(apiUrl)
+    }
+
     String checkSystem() {
         def apiUrl = "${configurationProperties.artifactoryUrl}/api/system/ping"
         restTemplate.getForObject(apiUrl, String.class)
@@ -80,18 +85,6 @@ class ArtifactoryRestClient {
     Map getPropertiesForPath(String repoKey, String repoPath, List<String> propertyNames) {
         def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}?properties=${propertyNames.join(',')}"
         getJsonResponse(apiUrl)
-    }
-
-    void setPropertiesForPath(String repoKey, String repoPath, Map properties, boolean recursive) {
-        def propertiesParameter = properties.collect { key, value -> "${key}=${value}" }.join('|')
-        def recursiveNum = recursive ? "1" : "0"
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}?properties=${propertiesParameter}&recursive=${recursiveNum}"
-        restTemplate.put(apiUrl, "")
-    }
-
-    void deletePropertiesForPath(String repoKey, String repoPath, List<String> propertyNames) {
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}?properties=${propertyNames.join(',')}"
-        restTemplate.delete(apiUrl)
     }
 
     Map getStatsForPath(String repoKey, String repoPath) {

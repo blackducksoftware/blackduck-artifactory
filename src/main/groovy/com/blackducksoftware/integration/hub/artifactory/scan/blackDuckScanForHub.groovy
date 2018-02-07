@@ -25,7 +25,6 @@ package com.blackducksoftware.integration.hub.artifactory.scan
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.repo.RepoPath
@@ -34,11 +33,11 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
-import com.blackducksoftware.integration.hub.rest.RestConnection
-import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
 import com.blackducksoftware.integration.hub.api.view.MetaHandler
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
+import com.blackducksoftware.integration.hub.artifactory.PluginProperty
 import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder
-import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
 import com.blackducksoftware.integration.hub.dataservice.phonehome.PhoneHomeDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
@@ -56,6 +55,7 @@ import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuesser
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phonehome.enums.ThirdPartyName
+import com.blackducksoftware.integration.util.ResourceUtil
 
 import groovy.transform.Field
 
@@ -63,31 +63,37 @@ import groovy.transform.Field
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckScanForHub.properties
 @Field String propertiesFilePathOverride = ""
 
-//if this is set, only artifacts with a modified date later than the CUTOFF will be scanned. You will have to use the
-//DATE_TIME_PATTERN defined above for the cutoff to work properly. With the default pattern, to scan only artifacts newer than January 01, 2016 you would use
-//the cutoff string = "2016-01-01T00:00:00.000"
-@Field String artifactCutoffDateOverride = ""
-
-@Field Properties scannerProperties
-@Field File etcDir
-@Field File homeDir
-@Field File blackDuckDirectory
-@Field File cliDirectory
-@Field File pluginsLibDir
+@Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
 @Field HubServicesFactory hubServicesFactory
-@Field int hubTimeout
-@Field String hubUrl
+@Field File cronLogFile
+@Field File cliDirectory
+
 @Field int scanMemory
 @Field boolean scanDryRun
 @Field boolean logVerboseCronLog
 @Field List<String> reposToSearch
 @Field List<String> patternsToScan
+
 @Field String dateTimePattern
 @Field String artifactCutoffDate
 
 initialize()
 
 executions {
+    /**
+     * This will attempt to reload the properties file and initialize the scanner with the new values.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadScanner"
+     */
+    blackDuckReloadScanner(httpMethod: 'POST') { params ->
+        log.info('Starting blackDuckReloadScanner REST request...')
+
+        initialize()
+
+        log.info('...completed blackDuckReloadScanner REST request.')
+    }
+
     /**
      * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
      * For example:
@@ -140,8 +146,8 @@ executions {
     blackDuckReloadDirectory() { params ->
         log.info('Starting blackDuckReloadDirectory REST request...')
 
-        FileUtils.deleteDirectory(blackDuckDirectory)
-        blackDuckDirectory.mkdirs()
+        FileUtils.deleteDirectory(blackDuckArtifactoryConfig.blackDuckDirectory)
+        blackDuckArtifactoryConfig.blackDuckDirectory.mkdirs()
 
         log.info('...completed blackDuckReloadDirectory REST request.')
     }
@@ -342,13 +348,13 @@ private FileLayoutInfo getArtifactFromPath(RepoPath repoPath) {
     def fileOutputStream
     try {
         inputStream = resourceStream.inputStream
-        fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, repoPath.name))
+        fileOutputStream = new FileOutputStream(new File(blackDuckArtifactoryConfig.blackDuckDirectory, repoPath.name))
         fileOutputStream << inputStream
     } catch (Exception e) {
         log.error("There was an error getting ${repoPath.name}: ${e.message}")
     } finally {
-        IOUtils.closeQuietly(inputStream)
-        IOUtils.closeQuietly(fileOutputStream)
+        ResourceUtil.closeQuietly(inputStream)
+        ResourceUtil.closeQuietly(fileOutputStream)
         resourceStream.close()
     }
     fileLayoutInfo
@@ -360,7 +366,7 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     hubScanConfigBuilder.scanMemory = scanMemory
     hubScanConfigBuilder.dryRun = scanDryRun
     hubScanConfigBuilder.toolsDir = cliDirectory
-    hubScanConfigBuilder.workingDirectory = blackDuckDirectory
+    hubScanConfigBuilder.workingDirectory = blackDuckArtifactoryConfig.blackDuckDirectory
     hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
 
     String project = getProjectNameFromFileLayoutInfo(fileLayoutInfo)
@@ -379,17 +385,17 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
     HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
-    HubServicesFactory hubServicesFactory = createHubServicesFactory()
+    int hubTimeout = hubServicesFactory.getRestConnection().timeout
     CLIDataService cliDataService = hubServicesFactory.createCLIDataService(hubTimeout * 1000)
     PhoneHomeDataService phoneHomeDataService = hubServicesFactory.createPhoneHomeDataService()
 
-    HubServerConfig hubServerConfig = createHubServerConfig()
+    HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     ProjectRequest projectRequest = projectRequestBuilder.build()
     String thirdPartyVersion = '???'
     String pluginVersion = '???'
     try {
         thirdPartyVersion = ctx?.versionProvider?.running?.versionName
-        pluginVersion = new File('lib/version.txt')?.text
+        pluginVersion = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, 'version.txt')?.text
     } catch(Exception e) {
     }
 
@@ -398,7 +404,7 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
 
 private void deletePathArtifact(String fileName){
     try {
-        boolean deleteOk = new File(blackDuckDirectory, fileName).delete()
+        boolean deleteOk = new File(blackDuckArtifactoryConfig.blackDuckDirectory, fileName).delete()
         log.info("Successfully deleted temporary ${fileName}: ${Boolean.toString(deleteOk)}")
     } catch (Exception e) {
         log.error("Exception deleting ${fileName}: ${e.message}")
@@ -512,6 +518,7 @@ private void deleteAllBlackDuckProperties(RepoPath repoPath) {
  * If the hub server being used changes, the existing properties in artifactory could be inaccurate so we will update them when they differ from the hub url established in the properties file.
  */
 private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
+    String hubUrl = hubServicesFactory.getRestConnection().hubBaseUrl.toString()
     if (urlProperty.startsWith(hubUrl)) {
         return urlProperty
     }
@@ -531,7 +538,6 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
 private void logCronRun(String methodName) {
     if (logVerboseCronLog) {
         String timeString = getNowString()
-        def cronLogFile = new File(blackDuckDirectory, 'blackduck_cron_history')
         if (cronLogFile.length() > 10000) {
             cronLogFile.delete()
             cronLogFile.createNewFile()
@@ -541,7 +547,6 @@ private void logCronRun(String methodName) {
 }
 
 private List<String> getLatestCronLogItems() {
-    def cronLogFile = new File(blackDuckDirectory, 'blackduck_cron_history')
     def List<String> lastTenLines = new ArrayList<>()
     cronLogFile.withReader {reader ->
         while (line = reader.readLine()) {
@@ -555,72 +560,55 @@ private List<String> getLatestCronLogItems() {
     return lastTenLines
 }
 
-private HubServerConfig createHubServerConfig() {
-    HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
-    hubServerConfigBuilder.setFromProperties(scannerProperties)
-
-    return hubServerConfigBuilder.build()
-}
-
 private HubServicesFactory createHubServicesFactory() {
-    HubServerConfig hubServerConfig = createHubServerConfig()
+    HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
     hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
 }
 
 private void initialize() {
-	scannerProperties = new Properties()
-	File pluginsDir = new File(ctx.artifactoryHome.pluginsDir)
-	pluginsLibDir = new File(pluginsDir, 'lib')
-	
-	String scanBinariesDirectory = scannerProperties.getProperty('hub.artifactory.scan.binaries.directory')
-	if (scanBinariesDirectory) {
-		homeDir = ctx.artifactoryHome.homeDir
-		blackDuckDirectory = new File(homeDir, scanBinariesDirectory)
-	} else {
-		etcDir = ctx.artifactoryHome.etcDir
-		blackDuckDirectory = new File(etcDir, 'blackducksoftware')
-	}
-	cliDirectory = new File(blackDuckDirectory, 'cli')
-	cliDirectory.mkdirs()
+    blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
+    blackDuckArtifactoryConfig.setEtcDirectory(ctx.artifactoryHome.etcDir)
+    blackDuckArtifactoryConfig.setHomeDirectory(ctx.artifactoryHome.homeDir)
+    blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir)
 
-	File cronLogFile = new File(blackDuckDirectory, 'blackduck_cron_history')
-	cronLogFile.createNewFile()
-
-	loadProperties()
+    loadProperties()
 }
 
 private void loadProperties() {
-	def propertiesFile
-	if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
-		propertiesFile = new File(propertiesFilePathOverride);
-	} else {
-		propertiesFile = new File(pluginsLibDir, "${this.getClass().getSimpleName()}.properties")
-	}
+    def propertiesFile
+    if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
+        propertiesFile = new File(propertiesFilePathOverride);
+    } else {
+        propertiesFile = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, "${this.getClass().getSimpleName()}.properties")
+    }
 
-	if (propertiesFile.exists()) {
-		propertiesFile.withInputStream { scannerProperties.load(it) }	
-		try {
-			hubUrl = scannerProperties.getProperty('hub.url')
-			hubTimeout = Integer.parseInt(scannerProperties.getProperty('hub.timeout'))
-			scanMemory = Integer.parseInt(scannerProperties.getProperty('hub.artifactory.scan.memory'))
-			scanDryRun = Boolean.parseBoolean(scannerProperties.getProperty('hub.artifactory.scan.dry.run'))
-			logVerboseCronLog = Boolean.parseBoolean(scannerProperties.getProperty('hub.artifactory.scan.cron.log.verbose'))
-			reposToSearch = scannerProperties.getProperty('hub.artifactory.scan.repos').tokenize(',')
-			patternsToScan = scannerProperties.getProperty('hub.artifactory.scan.patterns').tokenize(',')
-			dateTimePattern = scannerProperties.getProperty('hub.artifactory.scan.date.time.pattern')
-			artifactCutoffDate = scannerProperties.getProperty('hub.artifactory.scan.cutoff.date')
-			createHubServicesFactory()
-		} catch (Exception e) {
-			log.error("Black Duck Scanner could not parse ${propertiesFile.getAbsolutePath()}:", e)
-		}
-	} else {
-		log.error("Black Duck Scanner could not find its properties file. Please ensure that the following file exists: ${propertiesFile.getAbsolutePath()}")
-	}
-}
+    try {
+        blackDuckArtifactoryConfig.loadProperties(propertiesFile)
+        scanMemory = Integer.parseInt(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY))
+        scanDryRun = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN))
+        logVerboseCronLog = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CRON_LOG_VERBOSE))
+        reposToSearch = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS).tokenize(',')
+        patternsToScan = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_NAME_PATTERNS).tokenize(',')
+        dateTimePattern = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN)
+        artifactCutoffDate = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE)
 
-private String getOneYearAgoString() {
-	DateTime.now().withZone(DateTimeZone.UTC).plusYears(-1).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+        String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperties().getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
+        if (scanBinariesDirectory) {
+            blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.homeDirectory.canonicalPath, scanBinariesDirectory))
+        } else {
+            blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.etcDirectory.canonicalPath, 'blackducksoftware'))
+        }
+        cliDirectory = new File(blackDuckArtifactoryConfig.blackDuckDirectory, 'cli')
+        cliDirectory.mkdirs()
+
+        cronLogFile = new File(blackDuckArtifactoryConfig.blackDuckDirectory, 'blackduck_cron_history')
+        cronLogFile.createNewFile()
+
+        createHubServicesFactory()
+    } catch (Exception e) {
+        log.error("Black Duck Scanner encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}", e)
+    }
 }
 
 private String getNowString() {
