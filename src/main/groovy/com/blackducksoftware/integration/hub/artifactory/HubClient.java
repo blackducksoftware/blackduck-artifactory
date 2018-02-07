@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import com.blackducksoftware.integration.exception.IntegrationException;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection;
+import com.blackducksoftware.integration.hub.rest.ApiKeyRestConnection;
 import com.blackducksoftware.integration.log.Slf4jIntLogger;
 
 @Component
@@ -51,8 +51,8 @@ public class HubClient {
 
     public void testHubConnection() throws IntegrationException {
         final HubServerConfig hubServerConfig = createBuilder().build();
-        final CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(logger));
-        credentialsRestConnection.connect();
+        final ApiKeyRestConnection apiKeyRestConnection = hubServerConfig.createApiKeyRestConnection(new Slf4jIntLogger(logger));
+        apiKeyRestConnection.connect();
         logger.info("Successful connection to the Hub!");
     }
 

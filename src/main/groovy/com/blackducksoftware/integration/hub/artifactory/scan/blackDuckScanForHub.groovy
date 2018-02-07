@@ -47,7 +47,7 @@ import com.blackducksoftware.integration.hub.model.request.ProjectRequest
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
 import com.blackducksoftware.integration.hub.request.builder.ProjectRequestBuilder
-import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
+import com.blackducksoftware.integration.hub.rest.ApiKeyRestConnection
 import com.blackducksoftware.integration.hub.scan.HubScanConfig
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
@@ -562,8 +562,8 @@ private List<String> getLatestCronLogItems() {
 
 private HubServicesFactory createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
-    CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
-    hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+    ApiKeyRestConnection apiKeyRestConnection = hubServerConfig.createApiKeyRestConnection(new Slf4jIntLogger(log))
+    hubServicesFactory = new HubServicesFactory(apiKeyRestConnection)
 }
 
 private void initialize() {

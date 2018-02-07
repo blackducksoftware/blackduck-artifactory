@@ -56,7 +56,7 @@ import com.blackducksoftware.integration.hub.dataservice.component.ComponentData
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
 import com.blackducksoftware.integration.hub.global.HubServerConfig
-import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
+import com.blackducksoftware.integration.hub.rest.ApiKeyRestConnection
 import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
@@ -470,8 +470,8 @@ private void loadProperties() {
 
 private void createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
-    CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
-    hubServicesFactory = new HubServicesFactory(credentialsRestConnection)
+    ApiKeyRestConnection apiKeyRestConnection = hubServerConfig.createApiKeyRestConnection(new Slf4jIntLogger(log))
+    hubServicesFactory = new HubServicesFactory(apiKeyRestConnection)
 }
 
 private void loadRepositoriesToInspect() {
