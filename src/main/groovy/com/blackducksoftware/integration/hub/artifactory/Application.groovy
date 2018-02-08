@@ -63,11 +63,6 @@ class Application {
         }
 
         if (null != System.console() && null != System.out) {
-            logger.info('You are running in an interactive mode - if configuration is needed, you should be prompted to provide it.')
-            if (mode.contains('configure') || configurationManager.needsBaseConfigUpdate()) {
-                configurationManager.updateBaseConfigValues(System.console(), System.out)
-            }
-
             if ('configure-inspector' == mode) {
                 configurationManager.updateArtifactoryInspectValues(System.console(), System.out)
             } else if ('configure-scanner' == mode) {

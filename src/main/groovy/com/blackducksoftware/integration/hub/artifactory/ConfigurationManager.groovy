@@ -47,7 +47,6 @@ class ConfigurationManager {
     @Autowired
     ConfigurationProperties configurationProperties
 
-    File userSpecifiedProperties
     File inspectorPropertiesFile
     File scannerPropertiesFile
     PropertiesConfiguration inspectorConfig
@@ -100,12 +99,12 @@ class ConfigurationManager {
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun))
     }
 
-    void updateBaseConfigValues(Console console, PrintStream out) {
+    void updateBaseConfigValues(PropertiesConfiguration config, Console console, PrintStream out) {
         out.println('Updating Config - just hit enter to make no change to a value:')
-        configurationProperties.hubUrl = setValueFromInput(console, out, 'Hub Server Url', configurationProperties.hubUrl)
-        configurationProperties.hubApiKey = setValueFromInput(console, out, 'Hub Server API Key', configurationProperties.hubApiKey)
-        configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', configurationProperties.hubTimeout)
-        configurationProperties.hubAlwaysTrustCerts = setValueFromInput(console, out, 'Always Trust Server Certificates', configurationProperties.hubAlwaysTrustCerts)
+        configurationProperties.hubUrl = setValueFromInput(console, out, 'Hub Server Url', config, PluginProperty.HUB_URL)
+        configurationProperties.hubApiKey = setValueFromInput(console, out, 'Hub Server API Key', config, PluginProperty.HUB_API_KEY)
+        configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, PluginProperty.HUB_TIMEOUT)
+        configurationProperties.hubAlwaysTrustCerts = setValueFromInput(console, out, 'Always Trust Server Certificates', config, PluginProperty.HUB_ALWAYS_TRUST_CERT)
 
         boolean ok = false
         try {
@@ -113,11 +112,12 @@ class ConfigurationManager {
             out.println 'Your Hub configuration is valid and a successful connection to the Hub was established.'
             ok = true
         } catch (Exception e) {
-            out.println("Your Hub configuration is not valid: ${e.message}")
+            out.println("Your Hub configuration is not valid:")
+            e.printStackTrace()
         }
 
         if (!ok) {
-            out.println('You may need to manually edit the \'config/application.properties\' file to provide proxy details. If you wish to re-enter the base configuration, enter \'y\', otherwise, just press <enter> to continue.')
+            out.println('You may need to manually edit the properties file to provide proxy details. If you wish to re-enter the base configuration, enter \'y\', otherwise, just press <enter> to continue.')
             String userValue = StringUtils.trimToEmpty(console.readLine())
             if ('y' == userValue) {
                 updateBaseConfigValues(console, out)
@@ -126,53 +126,40 @@ class ConfigurationManager {
     }
 
     void updateArtifactoryInspectValues(Console console, PrintStream out) {
-        configurationProperties.hubArtifactoryInspectPatternsRubygems = setValueFromInput(console, out, 'Rubygems Artifact Pattern', configurationProperties.hubArtifactoryInspectPatternsRubygems)
-        configurationProperties.hubArtifactoryInspectPatternsMaven = setValueFromInput(console, out, 'Maven Artifact Pattern', configurationProperties.hubArtifactoryInspectPatternsMaven)
-        configurationProperties.hubArtifactoryInspectPatternsGradle = setValueFromInput(console, out, 'Gradle Artifact Pattern', configurationProperties.hubArtifactoryInspectPatternsGradle)
-        configurationProperties.hubArtifactoryInspectPatternsPypi = setValueFromInput(console, out, 'Pypi Artifact Pattern', configurationProperties.hubArtifactoryInspectPatternsPypi)
-        configurationProperties.hubArtifactoryInspectPatternsNuget = setValueFromInput(console, out, 'Nuget Artifact Pattern', configurationProperties.hubArtifactoryInspectPatternsNuget)
-        configurationProperties.hubArtifactoryInspectPatternsNpm = setValueFromInput(console, out, 'NPM Artifact Pattern', configurationProperties.hubArtifactoryInspectPatternsNpm)
+        updateBaseConfigValues(inspectorConfig, console, out)
 
-        String reposToSearch = configurationProperties.hubArtifactoryInspectRepositoriesList
+        configurationProperties.hubArtifactoryInspectPatternsRubygems = setValueFromInput(console, out, 'Rubygems Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS)
+        configurationProperties.hubArtifactoryInspectPatternsMaven = setValueFromInput(console, out, 'Maven Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_MAVEN)
+        configurationProperties.hubArtifactoryInspectPatternsGradle = setValueFromInput(console, out, 'Gradle Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_GRADLE)
+        configurationProperties.hubArtifactoryInspectPatternsPypi = setValueFromInput(console, out, 'Pypi Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI)
+        configurationProperties.hubArtifactoryInspectPatternsNuget = setValueFromInput(console, out, 'Nuget Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET)
+        configurationProperties.hubArtifactoryInspectPatternsNpm = setValueFromInput(console, out, 'NPM Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM)
+
         out.println('The artifactory inspector can be configured to either read a list of repositories to inspct, or a file containing a comma separated list of repositories.')
         out.println('If you would like to provide a path to a file, enter \'y\' now. Otherwise, just press <enter> to manually add a list of repositories.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Inspect', configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)
+            configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Inspect', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS_CSV_PATH)
         } else {
-            def repositoryNames = reposToSearch ? reposToSearch.tokenize(',') : []
-            out.println("The current set of repositories to search is ${reposToSearch}. You will be prompted to add new repositories. If you would first like to clear the currently configured repositories, type 'clear'.")
-            userValue = StringUtils.trimToEmpty(console.readLine())
-            if ('clear' == userValue) {
-                repositoryNames = []
-            }
-
-            out.println('Enter Artifactory repositories to search for artifacts to inspect, one at a time. If you are finished, just press <enter>.')
-            out.print "Enter repository name (current repositories=${repositoryNames.join(',')}): "
-            userValue = StringUtils.trimToEmpty(console.readLine())
-            while (StringUtils.isNotBlank(userValue)) {
-                repositoryNames.add(userValue)
-                out.print 'Enter repository name: '
-                userValue = StringUtils.trimToEmpty(console.readLine())
-            }
+            configurationProperties.hubArtifactoryInspectRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Inspect', 'Enter repository name', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS)
             configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = ''
-            configurationProperties.hubArtifactoryInspectRepositoriesList = repositoryNames.join(',')
         }
 
         persistInspectorProperties()
 
         String repositoriesString
         if (StringUtils.isNotBlank(configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)) {
-            repositoriesString = "The repositories listed in \"${configurationProperties.hubArtifactoryInspectRepositoriesCsvPath}\""
-            repositoriesString = "These repositories (${configurationProperties.hubArtifactoryInspectRepositoriesList})"
+            repositoriesString = "The repositories listed in \'${configurationProperties.hubArtifactoryInspectRepositoriesCsvPath}\'"
+        } else {
+            repositoriesString = "The repositories \'${configurationProperties.hubArtifactoryInspectRepositoriesList})\'"
         }
         out.println("${repositoriesString} will be searched for artifacts.")
-        out.println("Artifacts in Rubygems repositories will be identified for inspection by the following pattern: '${configurationProperties.hubArtifactoryInspectPatternsRubygems}'")
-        out.println("Artifacts in Maven repositories will be identified for inspection by the following pattern: '${configurationProperties.hubArtifactoryInspectPatternsMaven}'")
-        out.println("Artifacts in Gradle repositories will be identified for inspection by the following pattern: '${configurationProperties.hubArtifactoryInspectPatternsGradle}'")
-        out.println("Artifacts in Pypi repositories will be identified for inspection by the following pattern: '${configurationProperties.hubArtifactoryInspectPatternsPypi}'")
-        out.println("Artifacts in Nuget repositories will be identified for inspection by the following pattern: '${configurationProperties.hubArtifactoryInspectPatternsNuget}'")
-        out.println("Artifacts in NPM repositories will be identified for inspection by the following pattern: '${configurationProperties.hubArtifactoryInspectPatternsNpm}'")
+        out.println("Artifacts in Rubygems repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsRubygems}\'")
+        out.println("Artifacts in Maven repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsMaven}\'")
+        out.println("Artifacts in Gradle repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsGradle}\'")
+        out.println("Artifacts in Pypi repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsPypi}\'")
+        out.println("Artifacts in Nuget repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsNuget}\'")
+        out.println("Artifacts in NPM repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsNpm}\'")
         out.print('If this is incorrect, enter \'n\' to enter new values, if this is correct, just press <enter>.')
         userValue = StringUtils.trimToEmpty(console.readLine())
         if ('n' == userValue) {
@@ -181,63 +168,33 @@ class ConfigurationManager {
     }
 
     void updateArtifactoryScanValues(Console console, PrintStream out) {
-        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
-        configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
-        configurationProperties.hubArtifactoryScanDryRun = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
-        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
+        updateBaseConfigValues(scannerConfig, console, out)
+
+        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
+        configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Scan Memory Allocation', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY)
+        configurationProperties.hubArtifactoryScanDryRun = setValueFromInput(console, out, 'Scan Dry Run', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN)
 
         String reposToSearch = configurationProperties.hubArtifactoryScanRepositoriesList
         out.println('The artifactory scanner can be configured to either read a list of repositories to scan, or a file containing a comma separated list of repositories.')
         out.println('If you would like to provide a path to a file, enter \'y\' now. Otherwise, just press <enter> to manually add a list of repositories.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.hubArtifactoryScanRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan', configurationProperties.hubArtifactoryScanRepositoriesCsvPath)
+            configurationProperties.hubArtifactoryScanRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS_CSV_PATH)
         } else {
-            def repositoryNames = reposToSearch ? reposToSearch.tokenize(',') : []
-            out.println("The current set of repositories to search is ${reposToSearch}. You will be prompted to add new repositories. If you would first like to clear the currently configured repositories, type 'clear'.")
-            userValue = StringUtils.trimToEmpty(console.readLine())
-            if ('clear' == userValue) {
-                repositoryNames = []
-            }
-
-            out.println('Enter Artifactory repositories to search for artifacts to scan, one at a time. If you are finished, just press <enter>.')
-            out.print "Enter repository name (current repositories=${repositoryNames.join(',')}): "
-            userValue = StringUtils.trimToEmpty(console.readLine())
-            while (StringUtils.isNotBlank(userValue)) {
-                repositoryNames.add(userValue)
-                out.print 'Enter repository name: '
-                userValue = StringUtils.trimToEmpty(console.readLine())
-            }
+            configurationProperties.hubArtifactoryScanRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Scan', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS)
             configurationProperties.hubArtifactoryScanRepositoriesCsvPath = ''
-            configurationProperties.hubArtifactoryScanRepositoriesList = repositoryNames.join(',')
         }
-
-        String namePatternsToScan = configurationProperties.hubArtifactoryScanNamePatterns
-        def namePatterns = namePatternsToScan ? namePatternsToScan.tokenize(',') : []
-        out.println("The current set of patterns to scan is ${namePatternsToScan}. You will be prompted to add new patterns. If you would first like to clear the currently configured patterns, type 'clear'.")
-        userValue = StringUtils.trimToEmpty(console.readLine())
-        if ('clear' == userValue) {
-            namePatterns = []
-        }
-
-        out.println('Enter Artifactory artifact filename patterns to scan, one at a time. If you are finished, just press <enter>.')
-        out.print "Enter pattern (current patterns=${namePatterns.join(',')}): "
-        userValue = StringUtils.trimToEmpty(console.readLine())
-        while (StringUtils.isNotBlank(userValue)) {
-            namePatterns.add(userValue)
-            out.print 'Enter pattern: '
-            userValue = StringUtils.trimToEmpty(console.readLine())
-        }
-        configurationProperties.hubArtifactoryScanNamePatterns = namePatterns.join(',')
+        configurationProperties.hubArtifactoryScanNamePatterns = setValueFromInput(console, out, 'Scan Artifact Patterns', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_NAME_PATTERNS)
 
         persistScannerProperties()
 
         String repositoriesString
         if (StringUtils.isNotBlank(configurationProperties.hubArtifactoryScanRepositoriesCsvPath)) {
-            repositoriesString = "The repositories listed in \"${configurationProperties.hubArtifactoryScanRepositoriesCsvPath}\""
-            repositoriesString = "These repositories (${configurationProperties.hubArtifactoryScanRepositoriesList})"
+            repositoriesString = "the repositories listed in \'${configurationProperties.hubArtifactoryScanRepositoriesCsvPath}\'"
+        } else {
+            repositoriesString = "the repositories \'${configurationProperties.hubArtifactoryScanRepositoriesList}\'"
         }
-        out.println("${repositoriesString} will be searched for these artifact name patterns (${configurationProperties.hubArtifactoryScanNamePatterns}) which will then be scanned.")
+        out.println("The Artifactory Scanner will search ${repositoriesString} for artifacts matching \'${configurationProperties.hubArtifactoryScanNamePatterns}\', then scan them.")
         out.print('If this is incorrect, enter \'n\' to enter new values, if this is correct, just press <enter>.')
         userValue = StringUtils.trimToEmpty(console.readLine())
         if ('n' == userValue) {
@@ -287,8 +244,9 @@ class ConfigurationManager {
         handler.save(outputFile);
     }
 
-    private String setValueFromInput(Console console, PrintStream out, String propertyName, String oldValue) {
-        out.print("Enter ${propertyName} (current value=\"${oldValue}\"): ")
+    private String setValueFromInput(Console console, PrintStream out, String propertyDescription, PropertiesConfiguration config, PluginProperty property) {
+        String oldValue = config.getString(property.getKey())
+        out.print("Enter ${propertyDescription} (current value=\'${oldValue}\'): ")
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if (StringUtils.isNotBlank(userValue)) {
             userValue

@@ -37,10 +37,13 @@ class ConfigurationProperties {
     @Value('${user.dir}')
     String currentUserDirectory
 
+    @Value('${artifactory.username}')
     String artifactoryUsername
 
+    @Value('${artifactory.password}')
     String artifactoryPassword
 
+    @Value('${artifactory.url}')
     String artifactoryUrl
 
     //Common
