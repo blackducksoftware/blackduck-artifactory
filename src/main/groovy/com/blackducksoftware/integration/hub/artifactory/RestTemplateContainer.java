@@ -64,9 +64,9 @@ class RestTemplateContainer extends RestTemplate {
         restTemplate = new RestTemplate();
 
         final String artifactoryUsername = configurationProperties.getArtifactoryUsername();
-        final String artifactoryPassword = configurationProperties.getArtifactoryPassword();
-        if (StringUtils.isNotBlank(artifactoryUsername) && StringUtils.isNotBlank(artifactoryPassword)) {
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(artifactoryUsername, artifactoryPassword);
+        final String artifactoryApiKey = configurationProperties.getArtifactoryApiKey();
+        if (StringUtils.isNotBlank(artifactoryUsername) && StringUtils.isNotBlank(artifactoryApiKey)) {
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(artifactoryUsername, artifactoryApiKey);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
         }
     }

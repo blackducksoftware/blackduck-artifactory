@@ -99,12 +99,13 @@ class ConfigurationManager {
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun))
     }
 
-    void updateBaseConfigValues(PropertiesConfiguration config, Console console, PrintStream out) {
+    void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {
         out.println('Updating Config - just hit enter to make no change to a value:')
         configurationProperties.hubUrl = setValueFromInput(console, out, 'Hub Server Url', config, PluginProperty.HUB_URL)
         configurationProperties.hubApiKey = setValueFromInput(console, out, 'Hub Server API Key', config, PluginProperty.HUB_API_KEY)
         configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, PluginProperty.HUB_TIMEOUT)
         configurationProperties.hubAlwaysTrustCerts = setValueFromInput(console, out, 'Always Trust Server Certificates', config, PluginProperty.HUB_ALWAYS_TRUST_CERT)
+        persistCommonProperties(config, outputFile)
 
         boolean ok = false
         try {
@@ -120,13 +121,13 @@ class ConfigurationManager {
             out.println('You may need to manually edit the properties file to provide proxy details. If you wish to re-enter the base configuration, enter \'y\', otherwise, just press <enter> to continue.')
             String userValue = StringUtils.trimToEmpty(console.readLine())
             if ('y' == userValue) {
-                updateBaseConfigValues(console, out)
+                updateBaseConfigValues(config, console, out)
             }
         }
     }
 
     void updateArtifactoryInspectValues(Console console, PrintStream out) {
-        updateBaseConfigValues(inspectorConfig, console, out)
+        updateBaseConfigValues(inspectorConfig, inspectorPropertiesFile, console, out)
 
         configurationProperties.hubArtifactoryInspectPatternsRubygems = setValueFromInput(console, out, 'Rubygems Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS)
         configurationProperties.hubArtifactoryInspectPatternsMaven = setValueFromInput(console, out, 'Maven Artifact Patterns', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_MAVEN)
@@ -141,7 +142,7 @@ class ConfigurationManager {
         if ('y' == userValue) {
             configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Inspect', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS_CSV_PATH)
         } else {
-            configurationProperties.hubArtifactoryInspectRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Inspect', 'Enter repository name', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS)
+            configurationProperties.hubArtifactoryInspectRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Inspect', inspectorConfig, PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS)
             configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = ''
         }
 
@@ -151,7 +152,7 @@ class ConfigurationManager {
         if (StringUtils.isNotBlank(configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)) {
             repositoriesString = "The repositories listed in \'${configurationProperties.hubArtifactoryInspectRepositoriesCsvPath}\'"
         } else {
-            repositoriesString = "The repositories \'${configurationProperties.hubArtifactoryInspectRepositoriesList})\'"
+            repositoriesString = "The repositories \'${configurationProperties.hubArtifactoryInspectRepositoriesList}\'"
         }
         out.println("${repositoriesString} will be searched for artifacts.")
         out.println("Artifacts in Rubygems repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsRubygems}\'")
@@ -168,7 +169,7 @@ class ConfigurationManager {
     }
 
     void updateArtifactoryScanValues(Console console, PrintStream out) {
-        updateBaseConfigValues(scannerConfig, console, out)
+        updateBaseConfigValues(scannerConfig, scannerPropertiesFile, console, out)
 
         configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
         configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Scan Memory Allocation', scannerConfig, PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY)
@@ -200,9 +201,46 @@ class ConfigurationManager {
         if ('n' == userValue) {
             updateArtifactoryScanValues(console, out)
         }
+
+        out.println('If you would like to volume test your configuration, enter \'y\' (this may take a while). Otherwise, just press <enter> to skip testing.')
+        userValue = StringUtils.trimToEmpty(console.readLine())
+        if ('y' == userValue) {
+            if (updateArtifactoryConnectionValues(console, out)) {
+                def repositoriesToSearch = StringUtils.isNotBlank(configurationProperties.hubArtifactoryScanRepositoriesList) ? configurationProperties.hubArtifactoryScanRepositoriesList.tokenize(',') : []
+                def patternsToSearch = StringUtils.isNotBlank(configurationProperties.hubArtifactoryScanNamePatterns) ? configurationProperties.hubArtifactoryScanNamePatterns.tokenize(',') : []
+                int matches = 0
+                patternsToSearch.each { pattern ->
+                    matches += artifactoryRestClient.searchForArtifactTerm(repositoriesToSearch, pattern).size()
+                }
+                out.println("Found ${matches} artifacts in ${configurationProperties.hubArtifactoryScanRepositoriesList} matching the patterns ${configurationProperties.hubArtifactoryScanNamePatterns}")
+            }
+        }
     }
 
-    private setCommonProperties(PropertiesConfiguration config) {
+    boolean updateArtifactoryConnectionValues(Console console, PrintStream out) {
+        configurationProperties.artifactoryUrl = setValueFromInput(console, out, 'Url to Artifactory Instance', configurationProperties.artifactoryUrl)
+        configurationProperties.artifactoryUsername = setValueFromInput(console, out, 'Artifactory Username', configurationProperties.artifactoryUsername)
+        configurationProperties.artifactoryApiKey = setValueFromInput(console, out, 'Artifactory API Key', configurationProperties.artifactoryApiKey)
+        boolean ok = false;
+        try {
+            restTemplateContainer.init()
+            String connectionStatus = artifactoryRestClient.checkSystem();
+            out.println("Connection status: ${connectionStatus}")
+            ok = "OK".equalsIgnoreCase(connectionStatus)
+        } catch (Exception e) {
+            out.println("An error occurred when establishing your connection to Artifactory: ${e.message}")
+        }
+        if (!ok) {
+            out.println("If you would like to reconfigure your connection, enter \'y\'. Otherwise, just press <enter> to skip volume testing.")
+            def userValue = StringUtils.trimToEmpty(console.readLine())
+            if ('y' == userValue) {
+                updateArtifactoryConnectionValues(console, out)
+            }
+        }
+        return ok
+    }
+
+    private persistCommonProperties(PropertiesConfiguration config, File outputFile) {
         config.setProperty(PluginProperty.HUB_URL.getKey(), configurationProperties.hubUrl)
         config.setProperty(PluginProperty.HUB_TIMEOUT.getKey(), configurationProperties.hubTimeout)
         config.setProperty(PluginProperty.HUB_API_KEY.getKey(), configurationProperties.hubApiKey)
@@ -211,10 +249,11 @@ class ConfigurationManager {
         config.setProperty(PluginProperty.HUB_PROXY_PORT.getKey(), configurationProperties.hubProxyPort)
         config.setProperty(PluginProperty.HUB_PROXY_USERNAME.getKey(), configurationProperties.hubProxyUsername)
         config.setProperty(PluginProperty.HUB_PROXY_PASSWORD.getKey(), configurationProperties.hubProxyPassword)
+
+        persistConfigToFile(config, outputFile)
     }
 
     private persistScannerProperties() {
-        setCommonProperties(scannerConfig)
         scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_NAME_PATTERNS.getKey(), configurationProperties.hubArtifactoryScanNamePatterns)
         scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY.getKey(), configurationProperties.hubArtifactoryScanMemory)
         scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN.getKey(), configurationProperties.hubArtifactoryScanDryRun)
@@ -226,7 +265,6 @@ class ConfigurationManager {
     }
 
     private persistInspectorProperties() {
-        setCommonProperties(inspectorConfig)
         inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesList)
         inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)
         inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS.getKey(), configurationProperties.hubArtifactoryInspectPatternsRubygems)
@@ -245,7 +283,10 @@ class ConfigurationManager {
     }
 
     private String setValueFromInput(Console console, PrintStream out, String propertyDescription, PropertiesConfiguration config, PluginProperty property) {
-        String oldValue = config.getString(property.getKey())
+        return setValueFromInput(console, out, propertyDescription, config.getString(property.getKey()))
+    }
+
+    private String setValueFromInput(Console console, PrintStream out, String propertyDescription, String oldValue) {
         out.print("Enter ${propertyDescription} (current value=\'${oldValue}\'): ")
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if (StringUtils.isNotBlank(userValue)) {

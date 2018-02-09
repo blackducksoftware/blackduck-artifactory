@@ -65,8 +65,26 @@ class Application {
         if (null != System.console() && null != System.out) {
             if ('configure-inspector' == mode) {
                 configurationManager.updateArtifactoryInspectValues(System.console(), System.out)
+                // Ask to test configuration
+                // if 'y'
+                //      if !artifactory.username && artifactory.apikey && artifactory.URL
+                //          Prompt for username/apikey/URL
+                //      restClient.checkSystem()
+                //      for repository in repositoryList:
+                //          restClient.getRepositoryConfiguration
+                //          get pattern via configuration
+                //          restClient.artifactSearch(pattern, repository)
+                //          increment counter
             } else if ('configure-scanner' == mode) {
                 configurationManager.updateArtifactoryScanValues(System.console(), System.out)
+                // Ask to test configuration
+                // if 'y'
+                //      if !artifactory.username && artifactory.apikey && artifactory.URL
+                //          Prompt for username/apikey/URL
+                //      restClient.checkSystem()
+                //      for repository in repositoryList:
+                //          restClient.artifactSearch(pattern, repository)
+                //          increment counter
             }
         } else {
             logger.info('You are NOT running in an interactive mode - if configuration is needed, and error will occur.')
