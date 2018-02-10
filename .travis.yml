@@ -1,20 +1,32 @@
 language: java
+sudo: false
+install: true
+
+addons:
+  sonarcloud:
+    token:
+      secure: "SEhBs7ZGSmhzFk3iL9ul7Vjz7HUVTH26zRPtUrDRE+c0j3zS+V25KlWOohSIq+aAgAvNYJIIXi9h6QqDVthTLaFk6qdN6Wrlu67Cz+Y9dfxVhjVjxX0j1hvB+BKJe5u4gPxo1RyrMTWPIRcPy55jKyk0iH9PGf3QJ0alKUUpFQLTSlPcwaIUSqnkEilgOH/9LngyzxVXqKsJ5ql9RjQSzV2gtZYz6L7A1ayUgXjnVcsqIodtEzfFDE227b5FMXDbV6HG9oCi8Hp9lmV5OM7JEi5RL0+Na+7/3KDZaGal6UYD0nt7mdxzNtBZ3i2QBH3/waPblN/uKMDK2Es4ZAJYZfBOzqIHZ7XjZ/H2kUbKIRdhCKfMyXLjnEQAjH7TKOV0Yhn4vMmVL8OXnu11Y0dziqKJcVZJGw6wUWHHHhWocXK/cnz+O0w7TQuiSgFFeICvsiIP2oKVh7Vgna075ZRNxPf6ibGbZ46LC5PmNqLMpHJzU3eKn1pAJ86Qyiddu5UJDtLfnAL++frigqv+n38xhB4W2EsTbSkHonUuHd2qJ0FayPfNzEcQh6zNWo5Z8EuYErlP82vCGkzd184PL8YzPQEGZ8JIzmaCK926IUHjuHKH07VWk0OtfEKRc21ftWtRudNYvdMCwchH/ULmHNBV0enEwyZkyVjaWyD8KxmFrrY="
 
 jdk:
-  - oraclejdk8
+- oraclejdk8
 
 notifications:
   email:
     recipients:
-      - akamen@blackducksoftware.com
-      - ekerwin@blackducksoftware.com
-      - rotte@blackducksoftware.com
-
-install: true
+    - akamen@blackducksoftware.com
+    - ekerwin@blackducksoftware.com
+    - rotte@blackducksoftware.com
 
 script:
-  - ./gradlew clean build
+ - "./gradlew clean build sonarqube"
 
 after_success:
-  - ./gradlew test jacocoTestReport coveralls
-  - bash <(curl -s https://copilot.blackducksoftware.com/ci/travis/scripts/upload)
+ - "./gradlew test jacocoTestReport coveralls"
+ - bash <(curl -s https://copilot.blackducksoftware.com/ci/travis/scripts/upload)
+
+cache:
+  directories:
+  - "$HOME/.m2/repository"
+  - "$HOME/.sonar/cache"
+  - "$HOME/.gradle"
+  - ".gradle"
