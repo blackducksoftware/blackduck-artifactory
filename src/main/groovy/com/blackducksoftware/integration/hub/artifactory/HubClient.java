@@ -45,7 +45,7 @@ public class HubClient {
         return createBuilder().isValid();
     }
 
-    public void assertValid() throws IllegalStateException {
+    public void assertValid() {
         createBuilder().build();
     }
 

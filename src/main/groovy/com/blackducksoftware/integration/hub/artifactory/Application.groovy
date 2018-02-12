@@ -34,6 +34,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.context.annotation.Bean
 
+import com.blackducksoftware.integration.hub.artifactory.inspect.InspectorConfigurationManager
+import com.blackducksoftware.integration.hub.artifactory.scan.ScannerConfigurationManager
 import com.blackducksoftware.integration.hub.bdio.BdioNodeFactory
 import com.blackducksoftware.integration.hub.bdio.BdioPropertyHelper
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
@@ -46,7 +48,10 @@ class Application {
     BdioPropertyHelper bdioPropertyHelper
 
     @Autowired
-    ConfigurationManager configurationManager
+    InspectorConfigurationManager inspectorConfigurationManager
+
+    @Autowired
+    ScannerConfigurationManager scannerConfigurationManager
 
     @Value('${mode}')
     String mode
@@ -64,38 +69,16 @@ class Application {
 
         if (null != System.console() && null != System.out) {
             if ('configure-inspector' == mode) {
-                configurationManager.updateArtifactoryInspectValues(System.console(), System.out)
-                // Ask to test configuration
-                // if 'y'
-                //      if !artifactory.username && artifactory.apikey && artifactory.URL
-                //          Prompt for username/apikey/URL
-                //      restClient.checkSystem()
-                //      for repository in repositoryList:
-                //          restClient.getRepositoryConfiguration
-                //          get pattern via configuration
-                //          restClient.artifactSearch(pattern, repository)
-                //          increment counter
+                inspectorConfigurationManager.updateValues(System.console(), System.out)
             } else if ('configure-scanner' == mode) {
-                configurationManager.updateArtifactoryScanValues(System.console(), System.out)
-                // Ask to test configuration
-                // if 'y'
-                //      if !artifactory.username && artifactory.apikey && artifactory.URL
-                //          Prompt for username/apikey/URL
-                //      restClient.checkSystem()
-                //      for repository in repositoryList:
-                //          restClient.artifactSearch(pattern, repository)
-                //          increment counter
+                scannerConfigurationManager.updateValues(System.console(), System.out)
             }
-        } else {
-            logger.info('You are NOT running in an interactive mode - if configuration is needed, and error will occur.')
         }
 
-        if (configurationManager.needsBaseConfigUpdate()) {
-            logger.error('You have not provided enough configuration to run either an inspection or a scan - please edit the \'config/application.properties\' file directly, or run from a command line to configure the properties.')
-        } else if ('configure-inspector' == mode && configurationManager.needsArtifactoryInspectUpdate()) {
-            logger.error('You have not provided enough configuration to configure the inspector plugin - please edit the \'config/blackDuckCacheInspector.properties\' file directly, or run from a command line to configure the properties.')
-        } else if ('configure-scanner' == mode && configurationManager.needsArtifactoryScanUpdate()) {
-            logger.error('You have not provided enough configuration to configure the scan plugin - please edit the \'config/blackDuckScanForHub.properties\' file directly, or run from a command line to configure the properties.')
+        if ('configure-inspector' == mode && inspectorConfigurationManager.needsUpdate()) {
+            logger.error('You have not provided enough configuration to configure the inspector plugin - please edit the \'./lib/blackDuckCacheInspector.properties\' file directly, or run from a command line to configure the properties.')
+        } else if ('configure-scanner' == mode && scannerConfigurationManager.needsUpdate()) {
+            logger.error('You have not provided enough configuration to configure the scan plugin - please edit the \'./lib/blackDuckScanForHub.properties\' file directly, or run from a command line to configure the properties.')
         }
     }
 

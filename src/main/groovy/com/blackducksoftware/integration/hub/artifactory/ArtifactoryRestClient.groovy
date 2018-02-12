@@ -36,60 +36,20 @@ import groovy.json.JsonSlurper
 class ArtifactoryRestClient {
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryRestClient.class);
 
-    public static final String ARTIFACTORY_VERSION_KEY = "version";
-    public static final String VERSION_UNKNOWN = "???";
-
     @Autowired
     RestTemplateContainer restTemplate
 
     @Autowired
     ConfigurationProperties configurationProperties
 
-    String getVersionInfoForArtifactory() {
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/system/version"
-        try {
-            Map response = getJsonResponse(apiUrl)
-            if (response.containsKey(ARTIFACTORY_VERSION_KEY)) {
-                return response.get(ARTIFACTORY_VERSION_KEY)
-            }
-        } catch (Exception e) {
-            logger.debug("Error getting artifactory version: ${e.message}")
-        }
-        return VERSION_UNKNOWN
-    }
-
-    Map getRepositoryConfiguration(String repositoryName) {
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/repositories/${repositoryName}"
-        return getJsonResponse(apiUrl)
-    }
-
     String checkSystem() {
         def apiUrl = "${configurationProperties.artifactoryUrl}/api/system/ping"
         restTemplate.getForObject(apiUrl, String.class)
     }
 
-    Map getInfoForInfoUri(String uri) {
-        getJsonResponse(uri)
-    }
-
-    Map getInfoForPath(String repoKey, String repoPath) {
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}"
-        getJsonResponse(apiUrl)
-    }
-
     List searchForArtifactTerm(List<String> reposToSearch, String artifactTerm) {
         def apiUrl = "${configurationProperties.artifactoryUrl}/api/search/artifact?name=${artifactTerm}&repos=${reposToSearch.join(',')}"
         getJsonResponse(apiUrl).results.collect { it.uri }
-    }
-
-    Map getPropertiesForPath(String repoKey, String repoPath, List<String> propertyNames) {
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}?properties=${propertyNames.join(',')}"
-        getJsonResponse(apiUrl)
-    }
-
-    Map getStatsForPath(String repoKey, String repoPath) {
-        def apiUrl = "${configurationProperties.artifactoryUrl}/api/storage/${repoKey}/${repoPath}?stats"
-        getJsonResponse(apiUrl)
     }
 
     private Map getJsonResponse(String apiUrl) {
