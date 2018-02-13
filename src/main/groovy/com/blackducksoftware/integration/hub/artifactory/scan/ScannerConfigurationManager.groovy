@@ -102,7 +102,7 @@ class ScannerConfigurationManager {
             repositoriesString = "the repositories \'${configurationProperties.hubArtifactoryScanRepositoriesList}\'"
         }
         out.println("The Artifactory Scanner will search ${repositoriesString} for artifacts matching \'${configurationProperties.hubArtifactoryScanNamePatterns}\', then scan them.")
-        out.print('If this is incorrect, enter \'n\' to enter new values, if this is correct, just press <enter>.')
+        out.println('If this is incorrect, enter \'n\' to enter new values, if this is correct, just press <enter>.')
         userValue = StringUtils.trimToEmpty(console.readLine())
         if ('n' == userValue) {
             updateValues(console, out)

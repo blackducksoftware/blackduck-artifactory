@@ -51,7 +51,6 @@ class CommonConfigurationManager {
     }
 
     void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {
-        out.println('Updating Config - just hit enter to make no change to a value:')
         configurationProperties.hubUrl = setValueFromInput(console, out, 'Hub Server Url', config, PluginProperty.HUB_URL)
         configurationProperties.hubApiKey = setValueFromInput(console, out, 'Hub Server API Key', config, PluginProperty.HUB_API_KEY)
         configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, PluginProperty.HUB_TIMEOUT)
@@ -75,7 +74,7 @@ class CommonConfigurationManager {
             out.println('If you wish to re-enter the base configuration, enter \'y\', otherwise, just press <enter> to continue.')
             userValue = StringUtils.trimToEmpty(console.readLine())
             if ('y' == userValue) {
-                updateBaseConfigValues(config, console, out)
+                updateBaseConfigValues(config, outputFile, console, out)
             }
         }
     }

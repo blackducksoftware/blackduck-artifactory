@@ -55,15 +55,17 @@ class Application {
 
     @PostConstruct
     void init() {
-        if (StringUtils.isBlank(mode) || ('configure-inspector' != mode && 'configure-inspector' != mode)) {
+        if (StringUtils.isBlank(mode) || ('configure-inspector' != mode && 'configure-scanner' != mode)) {
             logger.error('You are running without specifying a valid mode. Please add \'--mode=(configure-inspector|configure-scanner)\' to your command.')
             return
         }
 
         if (null != System.console() && null != System.out) {
             if ('configure-inspector' == mode) {
+                System.out.println('Updating ./lib/blackDuckCacheInspector.properties - just hit enter to make no change to a value:')
                 inspectorConfigurationManager.updateValues(System.console(), System.out)
             } else if ('configure-scanner' == mode) {
+                System.out.println('Updating ./lib/blackDuckScanForHub.properties - just hit enter to make no change to a value:')
                 scannerConfigurationManager.updateValues(System.console(), System.out)
             }
         }
