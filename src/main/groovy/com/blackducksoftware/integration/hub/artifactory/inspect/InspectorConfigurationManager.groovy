@@ -148,6 +148,7 @@ class InspectorConfigurationManager {
         inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI.getKey(), configurationProperties.hubArtifactoryInspectPatternsPypi)
         inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET.getKey(), configurationProperties.hubArtifactoryInspectPatternsNuget)
         inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM.getKey(), configurationProperties.hubArtifactoryInspectPatternsNpm)
+        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryInspectDateTimePattern)
 
         commonConfigurationManager.persistConfigToFile(inspectorConfig, inspectorPropertiesFile)
     }
