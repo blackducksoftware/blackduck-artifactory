@@ -25,8 +25,6 @@ package com.blackducksoftware.integration.hub.artifactory.inspect
 
 import static com.blackducksoftware.integration.hub.artifactory.SupportedPackageType.*
 
-import java.text.SimpleDateFormat
-
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
@@ -34,6 +32,9 @@ import org.artifactory.fs.ItemInfo
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 
 import com.blackducksoftware.integration.exception.IntegrationException
 import com.blackducksoftware.integration.hub.api.bom.BomImportService
@@ -57,7 +58,6 @@ import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataServ
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
 import com.blackducksoftware.integration.hub.global.HubServerConfig
 import com.blackducksoftware.integration.hub.rest.ApiKeyRestConnection
-import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.log.Slf4jIntLogger
@@ -79,6 +79,7 @@ import groovy.transform.Field
 @Field RepoPathFactory repoPathFactory
 
 @Field List<String> repoKeysToInspect
+@Field String dateTimePattern
 
 initialize()
 
@@ -147,10 +148,8 @@ executions {
             endDateString = params['endDate'][0]
         }
 
-        def simpleDateFormat = new SimpleDateFormat(RestConnection.JSON_DATE_FORMAT)
-        simpleDateFormat.setTimeZone(TimeZone.getTimeZone('UTC'))
-        Date startDate = simpleDateFormat.parse("${startDateString}T00:00:00.000Z")
-        Date endDate = simpleDateFormat.parse("${endDateString}T23:59:59.999Z")
+        Date startDate = getDateFromString("${startDateString}T00:00:00.000Z")
+        Date endDate = getDateFromString("${endDateString}T23:59:59.999Z")
 
         updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, startDate, endDate)
     }
@@ -210,7 +209,7 @@ jobs {
 
             if (lastInspectedString) {
                 Date now = new Date()
-                Date lastInspected = RestConnection.parseDateString(lastInspectedString)
+                Date lastInspected = getDateFromString(lastInspectedString)
                 String projectName = getRepoProjectName(repoKey)
                 String projectVersionName = getRepoProjectVersionName(repoKey)
 
@@ -314,7 +313,7 @@ private void updateFromHubProject(String repoKey, String projectName, String pro
 
             String lastInspectedString = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName())
             if (!lastInspectedString) {
-                String nowString = RestConnection.formatDate(new Date())
+                String nowString = getNowString()
                 repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), nowString)
             }
         } catch (Exception e) {
@@ -336,7 +335,7 @@ private void updateFromHubProjectNotifications(String repoKey, String projectNam
             List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
             addOriginIdProperties(repoKey, artifactMetaDataList);
 
-            String endString = RestConnection.formatDate(endDate)
+            String endString = getNowString()
             repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName(), endString)
         } catch (Exception e) {
             log.error("The blackDuckCacheInspector encountered an exception while updating artifact metadata from Hub notifications in repository ${repoKey}", e)
@@ -460,6 +459,7 @@ private void loadProperties() {
         packageTypePatternManager.setPattern(pypi, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI))
         packageTypePatternManager.setPattern(nuget, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET))
         packageTypePatternManager.setPattern(npm, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM))
+        dateTimePattern = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_DATE_TIME_PATTERN)
 
         createHubServicesFactory()
         loadRepositoriesToInspect()
@@ -487,4 +487,12 @@ private void loadRepositoriesToInspect() {
     } else if (repositoriesToInspect) {
         repoKeysToInspect.addAll(repositoriesToInspect.split(','))
     }
+}
+
+private String getNowString() {
+    DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+}
+
+private Date getDateFromString(String dateTimeString) {
+    DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
 }

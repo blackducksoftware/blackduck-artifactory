@@ -68,7 +68,9 @@ class InspectorConfigurationManager {
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsGradle)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsPypi)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm))
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
+                || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
     void updateValues(Console console, PrintStream out) {
@@ -80,6 +82,7 @@ class InspectorConfigurationManager {
         configurationProperties.hubArtifactoryInspectPatternsPypi = setValueFromInput(console, out, 'Pypi Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI)
         configurationProperties.hubArtifactoryInspectPatternsNuget = setValueFromInput(console, out, 'Nuget Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET)
         configurationProperties.hubArtifactoryInspectPatternsNpm = setValueFromInput(console, out, 'NPM Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM)
+        configurationProperties.hubArtifactoryInspectDateTimePattern = setValueFromInput(console, out, 'Inspection Date Time Pattern', PluginProperty.HUB_ARTIFACTORY_INSPECT_DATE_TIME_PATTERN)
 
         out.println('The artifactory inspector can be configured to either read a list of repositories to inspct, or a file containing a comma separated list of repositories.')
         out.println('If you would like to provide a path to a file, enter \'y\' now. Otherwise, just press <enter> to manually add a list of repositories.')

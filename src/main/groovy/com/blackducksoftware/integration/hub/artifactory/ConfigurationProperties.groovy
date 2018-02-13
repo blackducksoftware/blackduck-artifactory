@@ -96,6 +96,9 @@ class ConfigurationProperties {
     @Value('${hub.artifactory.inspect.patterns.npm}')
     String hubArtifactoryInspectPatternsNpm
 
+    @Value('${hub.artifactory.inspect.date.time.pattern}')
+    String hubArtifactoryInspectDateTimePattern
+
     //Scanner
     @Value('${hub.artifactory.scan.repos}')
     String hubArtifactoryScanRepositoriesList
@@ -114,4 +117,10 @@ class ConfigurationProperties {
 
     @Value('${hub.artifactory.scan.dry.run}')
     String hubArtifactoryScanDryRun
+
+    @Value('${hub.artifactory.scan.date.time.pattern}')
+    String hubArtifactoryScanDateTimePattern
+
+    @Value('${hub.artifactory.scan.cutoff.date}')
+    String hubArtifactoryScanCutoffDate
 }

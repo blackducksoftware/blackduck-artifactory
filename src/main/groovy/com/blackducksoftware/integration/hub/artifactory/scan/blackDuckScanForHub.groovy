@@ -65,13 +65,11 @@ import groovy.transform.Field
 
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
 @Field HubServicesFactory hubServicesFactory
-@Field File cronLogFile
 @Field File cliDirectory
 
 @Field int scanMemory
 @Field boolean scanDryRun
-@Field boolean logVerboseCronLog
-@Field List<String> reposToSearch
+@Field List<String> repoKeysToScan
 @Field List<String> patternsToScan
 
 @Field String dateTimePattern
@@ -222,8 +220,6 @@ jobs {
     blackDuckScan(cron: "0 0/1 * 1/1 * ?") {
         log.info('Starting blackDuckScan cron job...')
 
-        logCronRun('blackDuckScan')
-
         Set<RepoPath> repoPaths = searchForRepoPaths()
         scanArtifactPaths(repoPaths)
 
@@ -232,8 +228,6 @@ jobs {
 
     blackDuckAddPolicyStatus(cron: "0 0/1 * 1/1 * ?") {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
-
-        logCronRun('blackDuckAddPolicyStatus')
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
         HubService hubService = hubServicesFactory.createHubService()
@@ -278,7 +272,7 @@ private String getProjectVersionNameFromFileLayoutInfo(FileLayoutInfo fileLayout
 private Set<RepoPath> searchForRepoPaths() {
     def repoPaths = []
     patternsToScan.each {
-        repoPaths.addAll(searches.artifactsByName(it, reposToSearch.toArray(new String[reposToSearch.size])))
+        repoPaths.addAll(searches.artifactsByName(it, repoKeysToScan.toArray(new String[repoKeysToScan.size])))
     }
 
     repoPaths.toSet()
@@ -494,14 +488,9 @@ private String buildStatusCheckMessage() {
         }
     }
 
-    List<String> cronLogItems = getLatestCronLogItems()
-    def cronLogResults = StringUtils.join(cronLogItems, '\n')
-
     """canConnectToHub: ${connectMessage}
 artifactsFound: ${repoPaths.size()}
 dateCutoffStatus: ${cutoffMessage}
-loggedCronRuns:
-${cronLogResults}
 """
 }
 
@@ -535,31 +524,6 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
     updatedProperty
 }
 
-private void logCronRun(String methodName) {
-    if (logVerboseCronLog) {
-        String timeString = getNowString()
-        if (cronLogFile.length() > 10000) {
-            cronLogFile.delete()
-            cronLogFile.createNewFile()
-        }
-        cronLogFile << "${methodName}\t${timeString}${System.lineSeparator}"
-    }
-}
-
-private List<String> getLatestCronLogItems() {
-    def List<String> lastTenLines = new ArrayList<>()
-    cronLogFile.withReader {reader ->
-        while (line = reader.readLine()) {
-            if (lastTenLines.size() == 10) {
-                lastTenLines.remove(0)
-            }
-            lastTenLines.add(line)
-        }
-    }
-
-    return lastTenLines
-}
-
 private HubServicesFactory createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     ApiKeyRestConnection apiKeyRestConnection = hubServerConfig.createApiKeyRestConnection(new Slf4jIntLogger(log))
@@ -587,28 +551,42 @@ private void loadProperties() {
         blackDuckArtifactoryConfig.loadProperties(propertiesFile)
         scanMemory = Integer.parseInt(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY))
         scanDryRun = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN))
-        logVerboseCronLog = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CRON_LOG_VERBOSE))
-        reposToSearch = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS).tokenize(',')
         patternsToScan = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_NAME_PATTERNS).tokenize(',')
         dateTimePattern = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN)
         artifactCutoffDate = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE)
 
-        String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperties().getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
-        if (scanBinariesDirectory) {
-            blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.homeDirectory.canonicalPath, scanBinariesDirectory))
-        } else {
-            blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.etcDirectory.canonicalPath, 'blackducksoftware'))
-        }
-        cliDirectory = new File(blackDuckArtifactoryConfig.blackDuckDirectory, 'cli')
-        cliDirectory.mkdirs()
-
-        cronLogFile = new File(blackDuckArtifactoryConfig.blackDuckDirectory, 'blackduck_cron_history')
-        cronLogFile.createNewFile()
-
+        setUpBlackDuckDirectory()
         createHubServicesFactory()
+        loadRepositoriesToScan()
     } catch (Exception e) {
         log.error("Black Duck Scanner encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}", e)
     }
+}
+
+private void loadRepositoriesToScan() {
+    String repositoriesToScan = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS)
+    String repositoriesToScanFilePath = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS_CSV_PATH)
+    repoKeysToScan = []
+
+    if (repositoriesToScanFilePath) {
+        def repositoryFile = new File(repositoriesToScanFilePath)
+        repositoryFile.splitEachLine(',') { repos ->
+            repoKeysToScan.addAll(repos)
+        }
+    } else if (repositoriesToScan) {
+        repoKeysToScan.addAll(repositoriesToScan.split(','))
+    }
+}
+
+private void setUpBlackDuckDirectory() {
+    String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperties().getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
+    if (scanBinariesDirectory) {
+        blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.homeDirectory.canonicalPath, scanBinariesDirectory))
+    } else {
+        blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.etcDirectory.canonicalPath, 'blackducksoftware'))
+    }
+    cliDirectory = new File(blackDuckArtifactoryConfig.blackDuckDirectory, 'cli')
+    cliDirectory.mkdirs()
 }
 
 private String getNowString() {

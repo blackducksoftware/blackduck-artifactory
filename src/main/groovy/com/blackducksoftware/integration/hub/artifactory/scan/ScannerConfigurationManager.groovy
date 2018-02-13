@@ -67,6 +67,8 @@ class ScannerConfigurationManager {
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanMemory)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDateTimePattern)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCutoffDate)
                 || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
@@ -76,6 +78,8 @@ class ScannerConfigurationManager {
         configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
         configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Scan Memory Allocation', PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY)
         configurationProperties.hubArtifactoryScanDryRun = setValueFromInput(console, out, 'Scan Dry Run', PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN)
+        configurationProperties.hubArtifactoryScanDateTimePattern = setValueFromInput(console, out, 'Scan Date Time Pattern', PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN)
+        configurationProperties.hubArtifactoryScanCutoffDate = setValueFromInput(console, out, 'Scan Cutoff Date', PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE)
 
         String reposToSearch = configurationProperties.hubArtifactoryScanRepositoriesList
         out.println('The artifactory scanner can be configured to either read a list of repositories to scan, or a file containing a comma separated list of repositories.')
