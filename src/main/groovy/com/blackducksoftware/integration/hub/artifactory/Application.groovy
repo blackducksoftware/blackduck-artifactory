@@ -71,9 +71,9 @@ class Application {
         }
 
         if ('configure-inspector' == mode && inspectorConfigurationManager.needsUpdate()) {
-            logger.error('You have not provided enough configuration to configure the inspector plugin - please edit the \'./lib/blackDuckCacheInspector.properties\' file directly, or run from a command line to configure the properties.')
+            logger.error('The inspector was not completely configured - please edit the \'./lib/blackDuckCacheInspector.properties\' file directly, or run from a command line to configure the properties.')
         } else if ('configure-scanner' == mode && scannerConfigurationManager.needsUpdate()) {
-            logger.error('You have not provided enough configuration to configure the scan plugin - please edit the \'./lib/blackDuckScanForHub.properties\' file directly, or run from a command line to configure the properties.')
+            logger.error('The scanner was not completely configured - please edit the \'./lib/blackDuckScanForHub.properties\' file directly, or run from a command line to configure the properties.')
         }
     }
 }

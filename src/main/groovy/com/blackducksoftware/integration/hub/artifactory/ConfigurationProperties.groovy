@@ -40,9 +40,6 @@ class ConfigurationProperties {
     @Value('${artifactory.url}')
     String artifactoryUrl
 
-    @Value('${artifactory.username}')
-    String artifactoryUsername
-
     @Value('${artifactory.api.key}')
     String artifactoryApiKey
 

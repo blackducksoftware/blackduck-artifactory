@@ -81,7 +81,6 @@ class CommonConfigurationManager {
 
     boolean updateArtifactoryConnectionValues(Console console, PrintStream out) {
         configurationProperties.artifactoryUrl = setValueFromInput(console, out, 'Url to Artifactory Instance', configurationProperties.artifactoryUrl)
-        configurationProperties.artifactoryUsername = setValueFromInput(console, out, 'Artifactory Username', configurationProperties.artifactoryUsername)
         configurationProperties.artifactoryApiKey = setValueFromInput(console, out, 'Artifactory API Key', configurationProperties.artifactoryApiKey)
         boolean ok = false;
         try {
@@ -146,6 +145,8 @@ class CommonConfigurationManager {
         patternsToSearch.each { pattern ->
             matches += artifactoryRestClient.searchForArtifactTerm(repositoriesToSearch, pattern).size()
         }
+
+        return matches
     }
 
     void persistConfigToFile(PropertiesConfiguration config, File outputFile) {

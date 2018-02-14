@@ -109,7 +109,7 @@ class InspectorConfigurationManager {
         out.println("Artifacts in Pypi repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsPypi}\'")
         out.println("Artifacts in Nuget repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsNuget}\'")
         out.println("Artifacts in NPM repositories will be identified for inspection by the following patterns: \'${configurationProperties.hubArtifactoryInspectPatternsNpm}\'")
-        out.print('If this is incorrect, enter \'n\' to enter new values, if this is correct, just press <enter>.')
+        out.println('If this is incorrect, enter \'n\' to enter new values, if this is correct, just press <enter>.')
         userValue = StringUtils.trimToEmpty(console.readLine())
         if ('n' == userValue) {
             updateValues(console, out)

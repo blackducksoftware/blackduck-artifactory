@@ -40,7 +40,6 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RequestCallback;
@@ -62,11 +61,10 @@ class RestTemplateContainer extends RestTemplate {
     @PostConstruct
     public void init() throws EncryptionException {
         restTemplate = new RestTemplate();
-        final String artifactoryUsername = configurationProperties.getArtifactoryUsername();
         final String artifactoryApiKey = configurationProperties.getArtifactoryApiKey();
-        if (StringUtils.isNotBlank(artifactoryUsername) && StringUtils.isNotBlank(artifactoryApiKey)) {
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(artifactoryUsername, artifactoryApiKey);
-            restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
+        if (StringUtils.isNotBlank(artifactoryApiKey)) {
+            final ArtifactoryAuthorizationInterceptor artifactoryAuthorizationInterceptor = new ArtifactoryAuthorizationInterceptor(artifactoryApiKey);
+            restTemplate.getInterceptors().add(artifactoryAuthorizationInterceptor);
         }
     }
 
