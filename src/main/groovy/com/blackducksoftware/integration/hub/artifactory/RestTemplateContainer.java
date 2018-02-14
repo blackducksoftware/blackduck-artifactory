@@ -50,6 +50,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriTemplateHandler;
 
+import com.blackducksoftware.integration.exception.EncryptionException;
+
 @Component
 class RestTemplateContainer extends RestTemplate {
     @Autowired
@@ -58,7 +60,7 @@ class RestTemplateContainer extends RestTemplate {
     private RestTemplate restTemplate;
 
     @PostConstruct
-    public void init() {
+    public void init() throws EncryptionException {
         restTemplate = new RestTemplate();
         final String artifactoryUsername = configurationProperties.getArtifactoryUsername();
         final String artifactoryApiKey = configurationProperties.getArtifactoryApiKey();
