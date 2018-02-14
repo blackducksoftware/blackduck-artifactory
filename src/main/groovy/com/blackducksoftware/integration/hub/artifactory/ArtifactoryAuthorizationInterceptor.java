@@ -1,4 +1,4 @@
-/*
+/**
  * hub-artifactory
  *
  * Copyright (C) 2018 Black Duck Software, Inc.
@@ -21,14 +21,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory.inspect
+package com.blackducksoftware.integration.hub.artifactory;
 
-class InspectionResults {
-    int totalArtifactsFound
-    int totalExtractAttempts
-    int totalBdioNodesCreated
-    int multiplesFound
-    int singlesFound
-    int artifactsNotExtracted
-    int skippedArtifacts
+import java.io.IOException;
+
+import org.springframework.http.HttpRequest;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.ClientHttpResponse;
+
+public class ArtifactoryAuthorizationInterceptor implements ClientHttpRequestInterceptor {
+    private final String apiKey;
+
+    public ArtifactoryAuthorizationInterceptor(final String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    @Override
+    public ClientHttpResponse intercept(final HttpRequest request, final byte[] body, final ClientHttpRequestExecution execution) throws IOException {
+        request.getHeaders().add("X-JFrog-Art-Api", this.apiKey);
+        return execution.execute(request, body);
+    }
 }

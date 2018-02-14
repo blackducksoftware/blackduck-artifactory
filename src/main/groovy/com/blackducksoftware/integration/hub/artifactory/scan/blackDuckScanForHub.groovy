@@ -25,7 +25,6 @@ package com.blackducksoftware.integration.hub.artifactory.scan
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.repo.RepoPath
@@ -35,8 +34,10 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import com.blackducksoftware.integration.hub.api.view.MetaHandler
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
+import com.blackducksoftware.integration.hub.artifactory.PluginProperty
 import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder
-import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
 import com.blackducksoftware.integration.hub.dataservice.phonehome.PhoneHomeDataService
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
@@ -46,7 +47,7 @@ import com.blackducksoftware.integration.hub.model.request.ProjectRequest
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
 import com.blackducksoftware.integration.hub.request.builder.ProjectRequestBuilder
-import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection
+import com.blackducksoftware.integration.hub.rest.ApiKeyRestConnection
 import com.blackducksoftware.integration.hub.scan.HubScanConfig
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
@@ -54,52 +55,43 @@ import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuesser
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phonehome.enums.ThirdPartyName
+import com.blackducksoftware.integration.util.ResourceUtil
 
 import groovy.transform.Field
 
-@Field final String HUB_URL=""
-@Field final int HUB_TIMEOUT=120
-@Field final String HUB_USERNAME=""
-@Field final String HUB_PASSWORD=""
+// propertiesFilePathOverride allows you to specify an absolute path to the blackDuckScanForHub.properties file.
+// If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckScanForHub.properties
+@Field String propertiesFilePathOverride = ""
 
-@Field final String HUB_PROXY_HOST=""
-@Field final int HUB_PROXY_PORT=0
-@Field final String HUB_PROXY_USERNAME=""
-@Field final String HUB_PROXY_PASSWORD=""
-
-@Field final boolean HUB_ALWAYS_TRUST_CERTS=false
-
-@Field final int HUB_SCAN_MEMORY=4096
-@Field final boolean HUB_SCAN_DRY_RUN=false
-
-@Field final String ARTIFACTORY_REPOS_TO_SEARCH="ext-release-local,libs-release"
-@Field final String ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip,*.tar.gz,*.hpi"
-@Field final String BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH="etc/blackducksoftware"
-
-@Field final boolean logVerboseCronLog=false
-
-@Field final String DATE_TIME_PATTERN="yyyy-MM-dd'T'HH:mm:ss.SSS"
-@Field final String BLACK_DUCK_SCAN_TIME_PROPERTY_NAME="blackduck.scanTime"
-@Field final String BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME="blackduck.scanResult"
-@Field final String BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME="blackduck.apiUrl"
-@Field final String BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME="blackduck.uiUrl"
-@Field final String BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME="blackduck.policyStatus"
-@Field final String BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME="blackduck.overallPolicyStatus"
-
-
-//if this is set, only artifacts with a modified date later than the CUTOFF will be scanned. You will have to use the
-//DATE_TIME_PATTERN defined above for the cutoff to work properly. With the default pattern, to scan only artifacts newer than January 01, 2016 you would use
-//the cutoff string = "2016-01-01T00:00:00.000"
-@Field final String ARTIFACT_CUTOFF_DATE="2016-01-01T00:00:00.000"
-
-@Field boolean initialized=false
-@Field File etcDir
-@Field File homeDir
-@Field File blackDuckDirectory
+@Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
+@Field HubServicesFactory hubServicesFactory
 @Field File cliDirectory
 
+@Field int scanMemory
+@Field boolean scanDryRun
+@Field List<String> repoKeysToScan
+@Field List<String> patternsToScan
+
+@Field String dateTimePattern
+@Field String artifactCutoffDate
+
+initialize()
 
 executions {
+    /**
+     * This will attempt to reload the properties file and initialize the scanner with the new values.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadScanner"
+     */
+    blackDuckReloadScanner(httpMethod: 'POST') { params ->
+        log.info('Starting blackDuckReloadScanner REST request...')
+
+        initialize()
+
+        log.info('...completed blackDuckReloadScanner REST request.')
+    }
+
     /**
      * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
      * For example:
@@ -123,7 +115,6 @@ executions {
     blackDuckScan(httpMethod: 'GET') { params ->
         log.info('Starting blackDuckScan REST request...')
 
-        initializeConfiguration()
         Set<RepoPath> repoPaths = searchForRepoPaths()
         scanArtifactPaths(repoPaths)
 
@@ -139,7 +130,6 @@ executions {
     blackDuckTestConfig(httpMethod: 'GET') { params ->
         log.info('Starting blackDuckTestConfig REST request...')
 
-        initializeConfiguration()
         message = buildStatusCheckMessage()
 
         log.info('...completed blackDuckTestConfig REST request.')
@@ -154,10 +144,8 @@ executions {
     blackDuckReloadDirectory() { params ->
         log.info('Starting blackDuckReloadDirectory REST request...')
 
-        initializeConfiguration()
-
-        FileUtils.deleteDirectory(blackDuckDirectory)
-        blackDuckDirectory.mkdirs()
+        FileUtils.deleteDirectory(blackDuckArtifactoryConfig.blackDuckDirectory)
+        blackDuckArtifactoryConfig.blackDuckDirectory.mkdirs()
 
         log.info('...completed blackDuckReloadDirectory REST request.')
     }
@@ -176,8 +164,6 @@ executions {
      */
     blackDuckDeleteScanProperties() { params ->
         log.info('Starting blackDuckDeleteScanProperties REST request...')
-
-        initializeConfiguration()
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
         repoPaths.each { deleteAllBlackDuckProperties(it) }
@@ -201,11 +187,9 @@ executions {
     blackDuckDeleteScanPropertiesFromFailures() { params ->
         log.info('Starting blackDuckDeleteScanPropertiesFromFailures REST request...')
 
-        initializeConfiguration()
-
         Set<RepoPath> repoPaths = searchForRepoPaths()
         repoPaths.each {
-            if(repositories.getProperty(it, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME)?.equals('FAILURE')){
+            if(repositories.getProperty(it, BlackDuckProperty.SCAN_RESULT.getName())?.equals('FAILURE')){
                 deleteAllBlackDuckProperties(it)
             }
         }
@@ -236,10 +220,6 @@ jobs {
     blackDuckScan(cron: "0 0/1 * 1/1 * ?") {
         log.info('Starting blackDuckScan cron job...')
 
-        initializeConfiguration()
-
-        logCronRun('blackDuckScan')
-
         Set<RepoPath> repoPaths = searchForRepoPaths()
         scanArtifactPaths(repoPaths)
 
@@ -249,12 +229,7 @@ jobs {
     blackDuckAddPolicyStatus(cron: "0 0/1 * 1/1 * ?") {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
 
-        initializeConfiguration()
-
-        logCronRun('blackDuckAddPolicyStatus')
-
         Set<RepoPath> repoPaths = searchForRepoPaths()
-        HubServicesFactory hubServicesFactory = createHubServicesFactory()
         HubService hubService = hubServicesFactory.createHubService()
 
         populatePolicyStatuses(hubService, repoPaths)
@@ -295,12 +270,9 @@ private String getProjectVersionNameFromFileLayoutInfo(FileLayoutInfo fileLayout
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
 //####################################################
 private Set<RepoPath> searchForRepoPaths() {
-    def reposToSearch = ARTIFACTORY_REPOS_TO_SEARCH.tokenize(',')
-    def patternsToScan = ARTIFACT_NAME_PATTERNS_TO_SCAN.tokenize(',')
-
     def repoPaths = []
     patternsToScan.each {
-        repoPaths.addAll(searches.artifactsByName(it, reposToSearch.toArray(new String[reposToSearch.size])))
+        repoPaths.addAll(searches.artifactsByName(it, repoKeysToScan.toArray(new String[repoKeysToScan.size])))
     }
 
     repoPaths.toSet()
@@ -314,12 +286,12 @@ private boolean shouldRepoPathBeScannedNow(RepoPath repoPath) {
     long lastModifiedTime = itemInfo.lastModified
 
     boolean shouldCutoffPreventScanning = false
-    if (StringUtils.isNotBlank(ARTIFACT_CUTOFF_DATE)) {
+    if (StringUtils.isNotBlank(artifactCutoffDate)) {
         try {
-            long cutoffTime = getTimeFromString(ARTIFACT_CUTOFF_DATE)
+            long cutoffTime = getTimeFromString(artifactCutoffDate)
             shouldCutoffPreventScanning = lastModifiedTime < cutoffTime
         } catch (Exception e) {
-            log.error("The pattern: ${DATE_TIME_PATTERN} does not match the date string: ${ARTIFACT_CUTOFF_DATE}: ${e.message}")
+            log.error("The pattern: ${dateTimePattern} does not match the date string: ${artifactCutoffDate}: ${e.message}")
             shouldCutoffPreventScanning = false
         }
     }
@@ -329,7 +301,7 @@ private boolean shouldRepoPathBeScannedNow(RepoPath repoPath) {
         return false
     }
 
-    String blackDuckScanTimeProperty = repositories.getProperty(repoPath, BLACK_DUCK_SCAN_TIME_PROPERTY_NAME)
+    String blackDuckScanTimeProperty = repositories.getProperty(repoPath, BlackDuckProperty.SCAN_TIME.getName())
     if (StringUtils.isBlank(blackDuckScanTimeProperty)) {
         return true
     }
@@ -349,14 +321,14 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
     repoPaths = repoPaths.findAll {shouldRepoPathBeScannedNow(it)}
     repoPaths.each {
         try{
-            String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
-            repositories.setProperty(it, BLACK_DUCK_SCAN_TIME_PROPERTY_NAME, timeString)
+            String timeString = getNowString()
+            repositories.setProperty(it, BlackDuckProperty.SCAN_TIME.getName(), timeString)
             FileLayoutInfo fileLayoutInfo = getArtifactFromPath(it)
             ProjectVersionView projectVersionView = scanArtifact(it, it.name, fileLayoutInfo)
             writeScanProperties(it, projectVersionView)
         } catch (Exception e) {
             log.error("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully on ${it.name}: ${e.message}", e)
-            repositories.setProperty(it, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, 'FAILURE')
+            repositories.setProperty(it, BlackDuckProperty.SCAN_RESULT.getName(), 'FAILURE')
         } finally {
             deletePathArtifact(it.name)
         }
@@ -370,13 +342,13 @@ private FileLayoutInfo getArtifactFromPath(RepoPath repoPath) {
     def fileOutputStream
     try {
         inputStream = resourceStream.inputStream
-        fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, repoPath.name))
+        fileOutputStream = new FileOutputStream(new File(blackDuckArtifactoryConfig.blackDuckDirectory, repoPath.name))
         fileOutputStream << inputStream
     } catch (Exception e) {
         log.error("There was an error getting ${repoPath.name}: ${e.message}")
     } finally {
-        IOUtils.closeQuietly(inputStream)
-        IOUtils.closeQuietly(fileOutputStream)
+        ResourceUtil.closeQuietly(inputStream)
+        ResourceUtil.closeQuietly(fileOutputStream)
         resourceStream.close()
     }
     fileLayoutInfo
@@ -385,10 +357,10 @@ private FileLayoutInfo getArtifactFromPath(RepoPath repoPath) {
 private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, FileLayoutInfo fileLayoutInfo){
     ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder()
     HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
-    hubScanConfigBuilder.scanMemory = HUB_SCAN_MEMORY
-    hubScanConfigBuilder.dryRun = HUB_SCAN_DRY_RUN
+    hubScanConfigBuilder.scanMemory = scanMemory
+    hubScanConfigBuilder.dryRun = scanDryRun
     hubScanConfigBuilder.toolsDir = cliDirectory
-    hubScanConfigBuilder.workingDirectory = blackDuckDirectory
+    hubScanConfigBuilder.workingDirectory = blackDuckArtifactoryConfig.blackDuckDirectory
     hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
 
     String project = getProjectNameFromFileLayoutInfo(fileLayoutInfo)
@@ -407,17 +379,17 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
     HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
-    HubServicesFactory hubServicesFactory = createHubServicesFactory()
-    CLIDataService cliDataService = hubServicesFactory.createCLIDataService(HUB_TIMEOUT * 1000)
+    int hubTimeout = hubServicesFactory.getRestConnection().timeout
+    CLIDataService cliDataService = hubServicesFactory.createCLIDataService(hubTimeout * 1000)
     PhoneHomeDataService phoneHomeDataService = hubServicesFactory.createPhoneHomeDataService()
 
-    HubServerConfig hubServerConfig = createHubServerConfig()
+    HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     ProjectRequest projectRequest = projectRequestBuilder.build()
     String thirdPartyVersion = '???'
     String pluginVersion = '???'
     try {
         thirdPartyVersion = ctx?.versionProvider?.running?.versionName
-        pluginVersion = new File('lib/version.txt')?.text
+        pluginVersion = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, 'version.txt')?.text
     } catch(Exception e) {
     }
 
@@ -426,7 +398,7 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
 
 private void deletePathArtifact(String fileName){
     try {
-        boolean deleteOk = new File(blackDuckDirectory, fileName).delete()
+        boolean deleteOk = new File(blackDuckArtifactoryConfig.blackDuckDirectory, fileName).delete()
         log.info("Successfully deleted temporary ${fileName}: ${Boolean.toString(deleteOk)}")
     } catch (Exception e) {
         log.error("Exception deleting ${fileName}: ${e.message}")
@@ -437,7 +409,7 @@ private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVe
     HubServicesFactory hubServicesFactory = createHubServicesFactory()
     HubService hubService = hubServicesFactory.createHubService()
     log.info("${repoPath.name} was successfully scanned by the BlackDuck CLI.")
-    repositories.setProperty(repoPath, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME, 'SUCCESS')
+    repositories.setProperty(repoPath, BlackDuckProperty.SCAN_RESULT.getName(), 'SUCCESS')
 
     if (projectVersionView) {
         String projectVersionUrl = ''
@@ -445,12 +417,12 @@ private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVe
         try {
             projectVersionUrl = hubService.getHref(projectVersionView)
             if (StringUtils.isNotEmpty(projectVersionUrl)) {
-                repositories.setProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
+                repositories.setProperty(repoPath, BlackDuckProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
                 log.info("Added ${projectVersionUrl} to ${repoPath.name}")
             }
             projectVersionUIUrl = hubService.getFirstLinkSafely(projectVersionView, 'components')
             if (StringUtils.isNotEmpty(projectVersionUIUrl)) {
-                repositories.setProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME, projectVersionUIUrl)
+                repositories.setProperty(repoPath, BlackDuckProperty.PROJECT_VERSION_UI_URL.getName(), projectVersionUIUrl)
                 log.info("Added ${projectVersionUIUrl} to ${repoPath.name}")
             }
         } catch (Exception e) {
@@ -465,10 +437,10 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
     boolean problemRetrievingPolicyStatus = false
     repoPaths.each {
         try {
-            String projectVersionUrl = repositories.getProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
+            String projectVersionUrl = repositories.getProperty(it, BlackDuckProperty.PROJECT_VERSION_URL.getName())
             if (StringUtils.isNotBlank(projectVersionUrl)) {
                 projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
-                repositories.setProperty(it, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME, projectVersionUrl)
+                repositories.setProperty(it, BlackDuckProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
                 ProjectVersionView projectVersionView = hubService.getView(projectVersionUrl, ProjectVersionView.class)
                 try{
                     String policyStatusUrl = hubService.getFirstLink(projectVersionView, MetaHandler.POLICY_STATUS_LINK)
@@ -476,8 +448,8 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
                     VersionBomPolicyStatusView versionBomPolicyStatusView = hubService.getView(policyStatusUrl, VersionBomPolicyStatusView.class)
                     log.info("policy status json: ${versionBomPolicyStatusView.json}")
                     PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
-                    repositories.setProperty(it, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME, policyStatusDescription.policyStatusMessage)
-                    repositories.setProperty(it, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME, versionBomPolicyStatusView.overallStatus.toString())
+                    repositories.setProperty(it, BlackDuckProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
+                    repositories.setProperty(it, BlackDuckProperty.OVERALL_POLICY_STATUS.getName(), versionBomPolicyStatusView.overallStatus.toString())
                     log.info("Added policy status to ${it.name}")
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
@@ -507,40 +479,36 @@ private String buildStatusCheckMessage() {
     Set<RepoPath> repoPaths = searchForRepoPaths()
 
     def cutoffMessage = 'The date cutoff is not specified so all artifacts that are found will be scanned.'
-    if (StringUtils.isNotBlank(ARTIFACT_CUTOFF_DATE)) {
+    if (StringUtils.isNotBlank(artifactCutoffDate)) {
         try {
-            getTimeFromString(ARTIFACT_CUTOFF_DATE)
+            getTimeFromString(artifactCutoffDate)
             cutoffMessage = 'The date cutoff is specified correctly.'
         } catch (Exception e) {
-            cutoffMessage = "The pattern: ${DATE_TIME_PATTERN} does not match the date string: ${ARTIFACT_CUTOFF_DATE}: ${e.message}"
+            cutoffMessage = "The pattern: ${dateTimePattern} does not match the date string: ${artifactCutoffDate}: ${e.message}"
         }
     }
-
-    List<String> cronLogItems = getLatestCronLogItems()
-    def cronLogResults = StringUtils.join(cronLogItems, '\n')
 
     """canConnectToHub: ${connectMessage}
 artifactsFound: ${repoPaths.size()}
 dateCutoffStatus: ${cutoffMessage}
-loggedCronRuns:
-${cronLogResults}
 """
 }
 
 private void deleteAllBlackDuckProperties(RepoPath repoPath) {
-    repositories.deleteProperty(repoPath, BLACK_DUCK_SCAN_TIME_PROPERTY_NAME)
-    repositories.deleteProperty(repoPath, BLACK_DUCK_SCAN_RESULT_PROPERTY_NAME)
-    repositories.deleteProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_URL_PROPERTY_NAME)
-    repositories.deleteProperty(repoPath, BLACK_DUCK_PROJECT_VERSION_UI_URL_PROPERTY_NAME)
-    repositories.deleteProperty(repoPath, BLACK_DUCK_POLICY_STATUS_PROPERTY_NAME)
-    repositories.deleteProperty(repoPath, BLACK_DUCK_OVERALL_POLICY_STATUS_PROPERTY_NAME)
+    repositories.deleteProperty(repoPath, BlackDuckProperty.SCAN_TIME.getName())
+    repositories.deleteProperty(repoPath, BlackDuckProperty.SCAN_RESULT.getName())
+    repositories.deleteProperty(repoPath, BlackDuckProperty.PROJECT_VERSION_URL.getName())
+    repositories.deleteProperty(repoPath, BlackDuckProperty.PROJECT_VERSION_UI_URL.getName())
+    repositories.deleteProperty(repoPath, BlackDuckProperty.POLICY_STATUS.getName())
+    repositories.deleteProperty(repoPath, BlackDuckProperty.OVERALL_POLICY_STATUS.getName())
 }
 
 /**
  * If the hub server being used changes, the existing properties in artifactory could be inaccurate so we will update them when they differ from the hub url established in the properties file.
  */
 private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
-    if (urlProperty.startsWith(HUB_URL)) {
+    String hubUrl = hubServicesFactory.getRestConnection().hubBaseUrl.toString()
+    if (urlProperty.startsWith(hubUrl)) {
         return urlProperty
     }
 
@@ -552,81 +520,79 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
     }
     String urlEndpoint = urlProperty.replace(hubUrlFromProperty, '')
 
-    String updatedProperty = HUB_URL + urlEndpoint
+    String updatedProperty = hubUrl + urlEndpoint
     updatedProperty
 }
 
-private void logCronRun(String methodName) {
-    if (logVerboseCronLog) {
-        String timeString = DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
-        def cronLogFile = new File(blackDuckDirectory, 'blackduck_cron_history')
-        if (cronLogFile.length() > 10000) {
-            cronLogFile.delete()
-            cronLogFile.createNewFile()
-        }
-        cronLogFile << "${methodName}\t${timeString}${System.lineSeparator}"
-    }
-}
-
-private List<String> getLatestCronLogItems() {
-    def cronLogFile = new File(blackDuckDirectory, 'blackduck_cron_history')
-    def List<String> lastTenLines = new ArrayList<>()
-    cronLogFile.withReader {reader ->
-        while (line = reader.readLine()) {
-            if (lastTenLines.size() == 10) {
-                lastTenLines.remove(0)
-            }
-            lastTenLines.add(line)
-        }
-    }
-
-    return lastTenLines
-}
-
-private HubServerConfig createHubServerConfig() {
-    HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder()
-    hubServerConfigBuilder.setHubUrl(HUB_URL)
-    hubServerConfigBuilder.setUsername(HUB_USERNAME)
-    hubServerConfigBuilder.setPassword(HUB_PASSWORD)
-    hubServerConfigBuilder.setTimeout(HUB_TIMEOUT)
-    hubServerConfigBuilder.setProxyHost(HUB_PROXY_HOST)
-    hubServerConfigBuilder.setProxyPort(HUB_PROXY_PORT)
-    hubServerConfigBuilder.setProxyUsername(HUB_PROXY_USERNAME)
-    hubServerConfigBuilder.setProxyPassword(HUB_PROXY_PASSWORD)
-    hubServerConfigBuilder.setAlwaysTrustServerCertificate(HUB_ALWAYS_TRUST_CERTS)
-
-    return hubServerConfigBuilder.build()
-}
-
 private HubServicesFactory createHubServicesFactory() {
-    HubServerConfig hubServerConfig = createHubServerConfig()
-    CredentialsRestConnection credentialsRestConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
-    new HubServicesFactory(credentialsRestConnection)
+    HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
+    ApiKeyRestConnection apiKeyRestConnection = hubServerConfig.createApiKeyRestConnection(new Slf4jIntLogger(log))
+    hubServicesFactory = new HubServicesFactory(apiKeyRestConnection)
 }
 
-private void initializeConfiguration() {
-    if (!initialized) {
-        if (BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH) {
-            homeDir = ctx.artifactoryHome.homeDir
-            blackDuckDirectory = new File(homeDir, BLACK_DUCK_SCAN_BINARIES_DIRECTORY_PATH)
-        } else {
-            etcDir = ctx.artifactoryHome.etcDir
-            blackDuckDirectory = new File(etcDir, 'blackducksoftware')
-        }
-        cliDirectory = new File(blackDuckDirectory, 'cli')
-        cliDirectory.mkdirs()
+private void initialize() {
+    blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
+    blackDuckArtifactoryConfig.setEtcDirectory(ctx.artifactoryHome.etcDir)
+    blackDuckArtifactoryConfig.setHomeDirectory(ctx.artifactoryHome.homeDir)
+    blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir)
 
-        File cronLogFile = new File(blackDuckDirectory, 'blackduck_cron_history')
-        cronLogFile.createNewFile()
+    loadProperties()
+}
 
-        initialized = true
+private void loadProperties() {
+    def propertiesFile
+    if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
+        propertiesFile = new File(propertiesFilePathOverride);
+    } else {
+        propertiesFile = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, "${this.getClass().getSimpleName()}.properties")
     }
+
+    try {
+        blackDuckArtifactoryConfig.loadProperties(propertiesFile)
+        scanMemory = Integer.parseInt(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY))
+        scanDryRun = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN))
+        patternsToScan = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_NAME_PATTERNS).tokenize(',')
+        dateTimePattern = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN)
+        artifactCutoffDate = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE)
+
+        setUpBlackDuckDirectory()
+        createHubServicesFactory()
+        loadRepositoriesToScan()
+    } catch (Exception e) {
+        log.error("Black Duck Scanner encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}", e)
+    }
+}
+
+private void loadRepositoriesToScan() {
+    String repositoriesToScan = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS)
+    String repositoriesToScanFilePath = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS_CSV_PATH)
+    repoKeysToScan = []
+
+    if (repositoriesToScanFilePath) {
+        def repositoryFile = new File(repositoriesToScanFilePath)
+        repositoryFile.splitEachLine(',') { repos ->
+            repoKeysToScan.addAll(repos)
+        }
+    } else if (repositoriesToScan) {
+        repoKeysToScan.addAll(repositoriesToScan.split(','))
+    }
+}
+
+private void setUpBlackDuckDirectory() {
+    String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperties().getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
+    if (scanBinariesDirectory) {
+        blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.homeDirectory.canonicalPath, scanBinariesDirectory))
+    } else {
+        blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.etcDirectory.canonicalPath, 'blackducksoftware'))
+    }
+    cliDirectory = new File(blackDuckArtifactoryConfig.blackDuckDirectory, 'cli')
+    cliDirectory.mkdirs()
 }
 
 private String getNowString() {
-    DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC())
+    DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
 }
 
 private long getTimeFromString(String dateTimeString) {
-    DateTime.parse(dateTimeString, DateTimeFormat.forPattern(DATE_TIME_PATTERN).withZoneUTC()).toDate().time
+    DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate().time
 }
