@@ -22,7 +22,8 @@ script:
 
 after_success:
  - "./gradlew test jacocoTestReport coveralls"
- - bash <(curl -s https://copilot.blackducksoftware.com/ci/travis/scripts/upload) --detect.gradle.excluded.configurations=compileOnly
+ - export DETECT_GRADLE_EXCLUDED_CONFIGURATIONS=compileOnly
+ - bash <(curl -s https://copilot.blackducksoftware.com/ci/travis/scripts/upload)
 
 cache:
   directories:
