@@ -69,10 +69,15 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
     compile 'org.codehaus.groovy:groovy-all:2.4.12'
-    compile 'org.apache.commons:commons-compress:1.13'
+    compile ('org.apache.commons:commons-compress:1.13') {
+        force = true
+    }
 
     compileOnly 'org.artifactory:artifactory-papi:5.6.2'
 	compileOnly 'com.google.guava:guava:21.0'
+    compileOnly ('com.fasterxml.jackson.core:jackson-databind:2.8.11.1') {
+        force = true
+    }
 
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
