@@ -49,7 +49,8 @@ class ScannerConfigurationManager {
 
     @PostConstruct
     void init() {
-        def libDirectory = new File (configurationProperties.currentUserDirectory, 'lib')
+        def pluginsDirectory = new File (configurationProperties.currentUserDirectory, 'plugins')
+        def libDirectory = new File (pluginsDirectory, 'lib')
         def configs = new Configurations()
 
         scannerPropertiesFile = new File(libDirectory, 'blackDuckScanForHub.properties')

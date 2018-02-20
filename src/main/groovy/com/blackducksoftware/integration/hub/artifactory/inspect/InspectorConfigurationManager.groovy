@@ -49,7 +49,8 @@ class InspectorConfigurationManager {
 
     @PostConstruct
     void init() {
-        def libDirectory = new File (configurationProperties.currentUserDirectory, 'lib')
+        def pluginsDirectory = new File (configurationProperties.currentUserDirectory, 'plugins')
+        def libDirectory = new File (pluginsDirectory, 'lib')
         def configs = new Configurations()
 
         inspectorPropertiesFile = new File(libDirectory, 'blackDuckCacheInspector.properties')

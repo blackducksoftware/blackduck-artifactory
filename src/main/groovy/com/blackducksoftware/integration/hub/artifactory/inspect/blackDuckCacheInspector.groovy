@@ -52,7 +52,6 @@ import com.blackducksoftware.integration.hub.bdio.model.Forge
 import com.blackducksoftware.integration.hub.bdio.model.SimpleBdioDocument
 import com.blackducksoftware.integration.hub.bdio.model.dependency.Dependency
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
-import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder
 import com.blackducksoftware.integration.hub.dataservice.component.ComponentDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
 import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
@@ -85,7 +84,7 @@ initialize()
 
 executions {
     /**
-     * This will attempt to reload the properties file and initialize the inspector with the new values.
+     * Attempts to reload the properties file and initialize the inspector with the new values.
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadInspector"
@@ -98,71 +97,12 @@ executions {
         log.info('...completed blackDuckReloadInspector REST request.')
     }
 
-
-    blackDuckIdentifyArtifatsInRepository(httpMethod: 'POST') { params ->
-        if (!params.containsKey('repoKey') || !params['repoKey'][0]) {
-            message = 'You must provide a repoKey'
-            return
-        }
-        HubServerConfigBuilder
-        String repoKey = params['repoKey'][0]
-        String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
-
-        createHubProject(repoKey, patterns)
-    }
-
-    blackDuckPopulateMetadataInRepository(httpMethod: 'POST') { params ->
-        def repoKey = params['repoKey'][0]
-        def projectName = getRepoProjectName(repoKey)
-        def projectVersionName = getRepoProjectVersionName(repoKey)
-
-        if (params.containsKey('projectName')) {
-            projectName = params['projectName'][0]
-        }
-        if (params.containsKey('projectVersionName')) {
-            projectVersionName = params['projectVersionName'][0]
-        }
-
-        updateFromHubProject(repoKey, projectName, projectVersionName);
-    }
-
-    blackDuckUpdateMetadataInRepository(httpMethod: 'POST') { params ->
-        String today = new Date().format('yyyy-MM-dd')
-
-        def repoKey = params['repoKey'][0]
-        def projectName = getRepoProjectName(repoKey)
-        def projectVersionName = getRepoProjectVersionName(repoKey)
-        def startDateString = today
-        def endDateString = today
-
-        if (params.containsKey('projectName')) {
-            projectName = params['projectName'][0]
-        }
-        if (params.containsKey('projectVersionName')) {
-            projectVersionName = params['projectVersionName'][0]
-        }
-        if (params.containsKey('startDate')) {
-            startDateString = params['startDate'][0]
-        }
-        if (params.containsKey('endDate')) {
-            endDateString = params['endDate'][0]
-        }
-
-        Date startDate = getDateFromString("${startDateString}T00:00:00.000Z")
-        Date endDate = getDateFromString("${endDateString}T23:59:59.999Z")
-
-        updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, startDate, endDate)
-    }
-
-    blackDuckDeleteInspectionPropertiesFromRepository(httpMethod: 'POST') { params ->
-        log.info('Starting blackDuckDeleteInspectionPropertiesFromRepository REST request...')
-
-        def repoKey = params['repoKey'][0]
-        deleteInspectionProperties(repoKey)
-
-        log.info('...completed blackDuckDeleteInspectionPropertiesFromRepository REST request.')
-    }
-
+    /**
+     * Removes all properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties"
+     */
     blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckDeleteInspectionProperties REST request...')
 
@@ -172,50 +112,139 @@ executions {
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
     }
+
+    /**
+     * Manual execution of the Identify Artifacts step of inspection on a specific repository.
+     * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
+     *
+     * Identifies artifacts in the repository and populates identifying metadata on them for use by the Populate Metadata and Update Metadata
+     * steps.
+     *
+     * Metadata populated on artifacts:
+     * blackduck.hubForge
+     * blackduck.hubOriginId
+     *
+     * Metadata populated on repositories:
+     * blackduck.inspectionTime
+     * blackduck.inspectionStatus
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyIdentifyArtifacts"
+     */
+    blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
+        log.info('Starting blackDuckManuallyIdentifyArtifacts REST request...')
+
+        identifyArtifacts()
+
+        log.info('...completed blackDuckManuallyIdentifyArtifacts REST request.')
+    }
+
+    /**
+     * Manual execution of the Populate Metadata step of inspection on a specific repository.
+     * Automatic execution is performed by the blackDuckPopulateMetadata CRON job below.
+     *
+     * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying metadata
+     * to look up vulnerability metadata in the Hub, then populates that vulnerability metadata on the artifact in Artifactory.
+     *
+     * Metadata populated:
+     * blackduck.highVulnerabilities
+     * blackduck.mediumVulnerabilities
+     * blackduck.lowVulnerabilities
+     * blackduck.policyStatus
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
+     */
+    blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
+        log.info('Starting blackDuckManuallyPopulateMetadata REST request...')
+
+        populateMetadata()
+
+        log.info('...completed blackDuckManuallyPopulateMetadata REST request.')
+    }
+
+    /**
+     * Manual execution of the Identify Artifacts step of inspection on a specific repository.
+     * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
+     *
+     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in the Hub
+     * since the last time the repository was inspected.
+     *
+     * Metadata updated on artifacts:
+     * blackduck.hubForge
+     * blackduck.hubOriginId
+     *
+     * Metadata updated on repositories:
+     * blackduck.inspectionTime
+     * blackduck.inspectionStatus
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyUpdateMetadata"
+     */
+    blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
+        log.info('Starting blackDuckManuallyUpdateMetadata REST request...')
+
+        updateMetadata()
+
+        log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
+    }
 }
 
 jobs {
+    /**
+     * Identifies artifacts in the repository and populates identifying metadata on them for use by the Populate Metadata and Update Metadata
+     * steps.
+     *
+     * Metadata populated on artifacts:
+     * blackduck.hubForge
+     * blackduck.hubOriginId
+     *
+     * Metadata populated on repositories:
+     * blackduck.inspectionTime
+     * blackduck.inspectionStatus
+     */
     blackDuckIdentifyArtifacts(cron: "0 0/1 * 1/1 * ?") {
         log.info('Starting blackDuckIdentifyArtifacts CRON job...')
 
-        repoKeysToInspect.each { repoKey ->
-            String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
-
-            createHubProject(repoKey, patterns)
-        }
+        identifyArtifacts()
 
         log.info('...completed blackDuckIdentifyArtifacts CRON job.')
     }
 
+    /**
+     * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying metadata
+     * to look up vulnerability metadata in the Hub, then populates that vulnerability metadata on the artifact in Artifactory.
+     *
+     * Metadata populated:
+     * blackduck.highVulnerabilities
+     * blackduck.mediumVulnerabilities
+     * blackduck.lowVulnerabilities
+     * blackduck.policyStatus
+     */
     blackDuckPopulateMetadata(cron: "0 0/1 * 1/1 * ?") {
         log.info('Starting blackDuckPopulateMetadata CRON job...')
 
-        repoKeysToInspect.each { repoKey ->
-            String projectName = getRepoProjectName(repoKey)
-            String projectVersionName = getRepoProjectVersionName(repoKey)
-
-            updateFromHubProject(repoKey, projectName, projectVersionName)
-        }
+        populateMetadata()
 
         log.info('...completed blackDuckPopulateMetadata CRON job.')
     }
 
+    /**
+     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in the Hub
+     * since the last time the repository was inspected.
+     *
+     * Metadata updated on artifacts:
+     * blackduck.hubForge
+     * blackduck.hubOriginId
+     *
+     * Metadata updated on repositories:
+     * blackduck.inspectionTime
+     * blackduck.inspectionStatus
+     */
     blackDuckUpdateMetadata(cron: "0 0/1 * 1/1 * ?") {
         log.info('Starting blackDuckUpdateMetadata CRON job...')
 
-        repoKeysToInspect.each { repoKey ->
-            RepoPath repoKeyPath = repoPathFactory.create(repoKey)
-            String lastInspectedString = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName())
-
-            if (lastInspectedString) {
-                Date now = new Date()
-                Date lastInspected = getDateFromString(lastInspectedString)
-                String projectName = getRepoProjectName(repoKey)
-                String projectVersionName = getRepoProjectVersionName(repoKey)
-
-                updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, lastInspected, now)
-            }
-        }
+        updateMetadata()
 
         log.info('...completed blackDuckUpdateMetadata CRON job.')
     }
@@ -245,6 +274,38 @@ storage {
             log.error("Failed to add ${repoPath} to the project/version ${projectName}/${projectVersionName} in the hub", e)
         } catch (Exception e) {
             log.debug("Unexpected exception", e)
+        }
+    }
+}
+
+void identifyArtifacts() {
+    repoKeysToInspect.each { repoKey ->
+        String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+        createHubProject(repoKey, patterns)
+    }
+}
+
+void populateMetadata() {
+    repoKeysToInspect.each { repoKey ->
+        String projectName = getRepoProjectName(repoKey)
+        String projectVersionName = getRepoProjectVersionName(repoKey)
+
+        updateFromHubProject(repoKey, projectName, projectVersionName)
+    }
+}
+
+void updateMetadata() {
+    repoKeysToInspect.each { repoKey ->
+        RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+        String lastInspectedString = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_TIME.getName())
+
+        if (lastInspectedString) {
+            Date now = new Date()
+            Date lastInspected = getDateFromString(lastInspectedString)
+            String projectName = getRepoProjectName(repoKey)
+            String projectVersionName = getRepoProjectVersionName(repoKey)
+
+            updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, lastInspected, now)
         }
     }
 }
