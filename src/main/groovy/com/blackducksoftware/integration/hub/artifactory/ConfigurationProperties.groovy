@@ -44,29 +44,29 @@ class ConfigurationProperties {
     String artifactoryApiKey
 
     //Common
-    @Value('${hub.url}')
-    String hubUrl
+    @Value('${blackduck.hub.url}')
+    String blackduckHubUrl
 
-    @Value('${hub.api.key}')
-    String hubApiKey
+    @Value('${blackduck.hub.api.token}')
+    String blackduckHubApiToken
 
-    @Value('${hub.timeout}')
-    String hubTimeout
+    @Value('${blackduck.hub.timeout}')
+    String blackduckHubTimeout
 
-    @Value('${hub.trust.cert}')
-    String hubAlwaysTrustCerts
+    @Value('${blackduck.hub.trust.cert}')
+    String blackduckHubTrustCert
 
-    @Value('${hub.proxy.host}')
-    String hubProxyHost
+    @Value('${blackduck.hub.proxy.host}')
+    String blackduckHubProxyHost
 
-    @Value('${hub.proxy.port}')
-    String hubProxyPort
+    @Value('${blackduck.hub.proxy.port}')
+    String blackduckHubProxyPort
 
-    @Value('${hub.proxy.username}')
-    String hubProxyUsername
+    @Value('${blackduck.hub.proxy.username}')
+    String blackduckHubProxyUsername
 
-    @Value('${hub.proxy.password}')
-    String hubProxyPassword
+    @Value('${blackduck.hub.proxy.password}')
+    String blackduckHubProxyPassword
 
     //Inspector
     @Value('${hub.artifactory.inspect.repos}')

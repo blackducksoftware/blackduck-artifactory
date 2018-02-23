@@ -58,16 +58,16 @@ public class HubClient {
 
     private HubServerConfigBuilder createBuilder() {
         final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setHubUrl(configurationProperties.getHubUrl());
-        hubServerConfigBuilder.setApiToken(configurationProperties.getHubApiKey());
+        hubServerConfigBuilder.setHubUrl(configurationProperties.getBlackduckHubUrl());
+        hubServerConfigBuilder.setApiToken(configurationProperties.getBlackduckHubApiToken());
 
-        hubServerConfigBuilder.setTimeout(configurationProperties.getHubTimeout());
-        hubServerConfigBuilder.setProxyHost(configurationProperties.getHubProxyHost());
-        hubServerConfigBuilder.setProxyPort(configurationProperties.getHubProxyPort());
-        hubServerConfigBuilder.setProxyUsername(configurationProperties.getHubProxyUsername());
-        hubServerConfigBuilder.setProxyPassword(configurationProperties.getHubProxyPassword());
+        hubServerConfigBuilder.setTimeout(configurationProperties.getBlackduckHubTimeout());
+        hubServerConfigBuilder.setProxyHost(configurationProperties.getBlackduckHubProxyHost());
+        hubServerConfigBuilder.setProxyPort(configurationProperties.getBlackduckHubProxyPort());
+        hubServerConfigBuilder.setProxyUsername(configurationProperties.getBlackduckHubProxyUsername());
+        hubServerConfigBuilder.setProxyPassword(configurationProperties.getBlackduckHubProxyPassword());
 
-        hubServerConfigBuilder.setAlwaysTrustServerCertificate(Boolean.parseBoolean(configurationProperties.getHubAlwaysTrustCerts()));
+        hubServerConfigBuilder.setAlwaysTrustServerCertificate(Boolean.parseBoolean(configurationProperties.getBlackduckHubTrustCert()));
 
         return hubServerConfigBuilder;
     }

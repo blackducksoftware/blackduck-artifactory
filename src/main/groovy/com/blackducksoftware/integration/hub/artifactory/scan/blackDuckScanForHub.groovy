@@ -36,7 +36,6 @@ import org.joda.time.format.DateTimeFormat
 import com.blackducksoftware.integration.hub.api.generated.component.ProjectRequest
 import com.blackducksoftware.integration.hub.api.generated.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.api.generated.view.VersionBomPolicyStatusView
-import com.blackducksoftware.integration.hub.api.view.MetaHandler
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
 import com.blackducksoftware.integration.hub.artifactory.PluginProperty
@@ -441,7 +440,7 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
                 repositories.setProperty(it, BlackDuckProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
                 ProjectVersionView projectVersionView = hubService.getResponse(projectVersionUrl, ProjectVersionView.class)
                 try{
-                    String policyStatusUrl = hubService.getFirstLink(projectVersionView, MetaHandler.POLICY_STATUS_LINK)
+                    String policyStatusUrl = hubService.getFirstLink(projectVersionView, ProjectVersionView.POLICY_STATUS_LINK)
                     log.info("Looking up policy status: ${policyStatusUrl}")
                     VersionBomPolicyStatusView versionBomPolicyStatusView = hubService.getResponse(policyStatusUrl, VersionBomPolicyStatusView.class)
                     log.info("policy status json: ${versionBomPolicyStatusView.json}")

@@ -51,18 +51,18 @@ class CommonConfigurationManager {
     }
 
     void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {
-        configurationProperties.hubUrl = setValueFromInput(console, out, 'Hub Server Url', config, PluginProperty.HUB_URL)
-        configurationProperties.hubApiKey = setValueFromInput(console, out, 'Hub Server API Key', config, PluginProperty.HUB_API_KEY)
-        configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, PluginProperty.HUB_TIMEOUT)
-        configurationProperties.hubAlwaysTrustCerts = setValueFromInput(console, out, 'Always Trust Server Certificates', config, PluginProperty.HUB_ALWAYS_TRUST_CERT)
+        configurationProperties.hubUrl = setValueFromInput(console, out, 'Hub Server Url', config, PluginProperty.BLACKDUCK_HUB_URL)
+        configurationProperties.hubApiKey = setValueFromInput(console, out, 'Hub Server API Token', config, PluginProperty.BLACKDUCK_HUB_API_TOKEN)
+        configurationProperties.hubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, PluginProperty.BLACKDUCK_HUB_TIMEOUT)
+        configurationProperties.hubAlwaysTrustCerts = setValueFromInput(console, out, 'Always Trust Server Certificates', config, PluginProperty.BLACKDUCK_HUB_TRUST_CERT)
 
         out.println('If you wish to set up proxy details, enter \'y\'. Otherwise, just press <enter> to continue.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.hubProxyHost = setValueFromInput(console, out, 'Proxy Host', config, PluginProperty.HUB_PROXY_HOST)
-            configurationProperties.hubProxyPort = setValueFromInput(console, out, 'Proxy Port', config, PluginProperty.HUB_PROXY_PORT)
-            configurationProperties.hubProxyUsername = setValueFromInput(console, out, 'Proxy Username', config, PluginProperty.HUB_PROXY_USERNAME)
-            configurationProperties.hubProxyPassword = setValueFromInput(console, out, 'Proxy Password', config, PluginProperty.HUB_PROXY_PASSWORD)
+            configurationProperties.hubProxyHost = setValueFromInput(console, out, 'Proxy Host', config, PluginProperty.BLACKDUCK_HUB_PROXY_HOST)
+            configurationProperties.hubProxyPort = setValueFromInput(console, out, 'Proxy Port', config, PluginProperty.BLACKDUCK_HUB_PROXY_PORT)
+            configurationProperties.hubProxyUsername = setValueFromInput(console, out, 'Proxy Username', config, PluginProperty.BLACKDUCK_HUB_PROXY_USERNAME)
+            configurationProperties.hubProxyPassword = setValueFromInput(console, out, 'Proxy Password', config, PluginProperty.BLACKDUCK_HUB_PROXY_PASSWORD)
         }
         persistCommonProperties(config, outputFile)
 
