@@ -14,6 +14,7 @@ buildscript {
 plugins {
     id 'groovy'
     id 'org.springframework.boot' version '1.5.8.RELEASE'
+    id 'org.sonarqube' version '2.6.1'
 }
 
 version = '5.0.0-SNAPSHOT'
@@ -85,3 +86,12 @@ dependencies {
 }
 
 springBoot { mainClass = 'com.blackducksoftware.integration.hub.artifactory.Application' }
+
+sonarqube {
+    properties {
+        property 'sonar.projectName', 'Integrations - Hub Artifactory'
+        property 'sonar.projectKey', 'com.blackducksoftware:int:hub-artifactory'
+        property 'sonar.sources', sourceSets.main.groovy.srcDirs
+        property 'sonar.verbose', false
+    }
+}
