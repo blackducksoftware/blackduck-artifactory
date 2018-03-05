@@ -61,7 +61,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.13-SNAPSHOT'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.13'
     
     compile 'org.apache.commons:commons-configuration2:2.2'
     compile 'commons-beanutils:commons-beanutils:1.9.3'
