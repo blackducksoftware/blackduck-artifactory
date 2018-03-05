@@ -33,26 +33,24 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
-import com.blackducksoftware.integration.hub.api.view.MetaHandler
+import com.blackducksoftware.integration.hub.api.generated.component.ProjectRequest
+import com.blackducksoftware.integration.hub.api.generated.view.ProjectVersionView
+import com.blackducksoftware.integration.hub.api.generated.view.VersionBomPolicyStatusView
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
 import com.blackducksoftware.integration.hub.artifactory.PluginProperty
-import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder
-import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService
-import com.blackducksoftware.integration.hub.dataservice.phonehome.PhoneHomeDataService
-import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription
+import com.blackducksoftware.integration.hub.configuration.HubScanConfig
+import com.blackducksoftware.integration.hub.configuration.HubScanConfigBuilder
+import com.blackducksoftware.integration.hub.configuration.HubServerConfig
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
-import com.blackducksoftware.integration.hub.global.HubServerConfig
-import com.blackducksoftware.integration.hub.model.request.ProjectRequest
-import com.blackducksoftware.integration.hub.model.view.ProjectVersionView
-import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView
-import com.blackducksoftware.integration.hub.request.builder.ProjectRequestBuilder
-import com.blackducksoftware.integration.hub.rest.ApiKeyRestConnection
-import com.blackducksoftware.integration.hub.scan.HubScanConfig
+import com.blackducksoftware.integration.hub.rest.ApiTokenRestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
-import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuess
-import com.blackducksoftware.integration.hub.util.ProjectNameVersionGuesser
+import com.blackducksoftware.integration.hub.service.SignatureScannerService
+import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
+import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuess
+import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuesser
+import com.blackducksoftware.integration.hub.service.model.ProjectRequestBuilder
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phonehome.enums.ThirdPartyName
 import com.blackducksoftware.integration.util.ResourceUtil
@@ -380,8 +378,7 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
 
     HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
     int hubTimeout = hubServicesFactory.getRestConnection().timeout
-    CLIDataService cliDataService = hubServicesFactory.createCLIDataService(hubTimeout * 1000)
-    PhoneHomeDataService phoneHomeDataService = hubServicesFactory.createPhoneHomeDataService()
+    SignatureScannerService signatureScannerService = hubServicesFactory.createSignatureScannerService(hubTimeout * 1000)
 
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     ProjectRequest projectRequest = projectRequestBuilder.build()
@@ -393,7 +390,7 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     } catch(Exception e) {
     }
 
-    cliDataService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, ThirdPartyName.ARTIFACTORY, thirdPartyVersion, pluginVersion)
+    signatureScannerService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, ThirdPartyName.ARTIFACTORY, thirdPartyVersion, pluginVersion)
 }
 
 private void deletePathArtifact(String fileName){
@@ -441,11 +438,11 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
             if (StringUtils.isNotBlank(projectVersionUrl)) {
                 projectVersionUrl = updateUrlPropertyToCurrentHubServer(projectVersionUrl)
                 repositories.setProperty(it, BlackDuckProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
-                ProjectVersionView projectVersionView = hubService.getView(projectVersionUrl, ProjectVersionView.class)
+                ProjectVersionView projectVersionView = hubService.getResponse(projectVersionUrl, ProjectVersionView.class)
                 try{
-                    String policyStatusUrl = hubService.getFirstLink(projectVersionView, MetaHandler.POLICY_STATUS_LINK)
+                    String policyStatusUrl = hubService.getFirstLink(projectVersionView, ProjectVersionView.POLICY_STATUS_LINK)
                     log.info("Looking up policy status: ${policyStatusUrl}")
-                    VersionBomPolicyStatusView versionBomPolicyStatusView = hubService.getView(policyStatusUrl, VersionBomPolicyStatusView.class)
+                    VersionBomPolicyStatusView versionBomPolicyStatusView = hubService.getResponse(policyStatusUrl, VersionBomPolicyStatusView.class)
                     log.info("policy status json: ${versionBomPolicyStatusView.json}")
                     PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
                     repositories.setProperty(it, BlackDuckProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
@@ -507,7 +504,7 @@ private void deleteAllBlackDuckProperties(RepoPath repoPath) {
  * If the hub server being used changes, the existing properties in artifactory could be inaccurate so we will update them when they differ from the hub url established in the properties file.
  */
 private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
-    String hubUrl = hubServicesFactory.getRestConnection().hubBaseUrl.toString()
+    String hubUrl = hubServicesFactory.getRestConnection().baseUrl.toString()
     if (urlProperty.startsWith(hubUrl)) {
         return urlProperty
     }
@@ -526,8 +523,8 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
 
 private HubServicesFactory createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
-    ApiKeyRestConnection apiKeyRestConnection = hubServerConfig.createApiKeyRestConnection(new Slf4jIntLogger(log))
-    hubServicesFactory = new HubServicesFactory(apiKeyRestConnection)
+    ApiTokenRestConnection apiTokenRestConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log))
+    hubServicesFactory = new HubServicesFactory(apiTokenRestConnection)
 }
 
 private void initialize() {

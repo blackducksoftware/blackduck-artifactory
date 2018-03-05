@@ -37,8 +37,6 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import com.blackducksoftware.integration.exception.IntegrationException
-import com.blackducksoftware.integration.hub.api.bom.BomImportService
-import com.blackducksoftware.integration.hub.api.notification.NotificationService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
@@ -52,13 +50,14 @@ import com.blackducksoftware.integration.hub.bdio.model.Forge
 import com.blackducksoftware.integration.hub.bdio.model.SimpleBdioDocument
 import com.blackducksoftware.integration.hub.bdio.model.dependency.Dependency
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
-import com.blackducksoftware.integration.hub.dataservice.component.ComponentDataService
-import com.blackducksoftware.integration.hub.dataservice.project.ProjectDataService
-import com.blackducksoftware.integration.hub.dataservice.project.ProjectVersionWrapper
-import com.blackducksoftware.integration.hub.global.HubServerConfig
-import com.blackducksoftware.integration.hub.rest.ApiKeyRestConnection
+import com.blackducksoftware.integration.hub.configuration.HubServerConfig
+import com.blackducksoftware.integration.hub.rest.ApiTokenRestConnection
+import com.blackducksoftware.integration.hub.service.CodeLocationService
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
+import com.blackducksoftware.integration.hub.service.NotificationService
+import com.blackducksoftware.integration.hub.service.ProjectService
+import com.blackducksoftware.integration.hub.service.model.ProjectVersionWrapper
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.util.IntegrationEscapeUtil
 import com.google.common.collect.HashMultimap
@@ -348,8 +347,8 @@ private void createHubProject(String repoKey, String patterns) {
             bdioFile.delete()
             simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
 
-            BomImportService bomImportService = hubServicesFactory.createBomImportService();
-            bomImportService.importBomFile(bdioFile);
+            CodeLocationService codeLocationService = hubServicesFactory.createCodeLocationService();
+            codeLocationService.importBomFile(bdioFile);
 
             repositories.setProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName(), 'SUCCESS')
         } catch (Exception e) {
@@ -366,7 +365,7 @@ private void updateFromHubProject(String repoKey, String projectName, String pro
     if ('SUCCESS'.equals(inspectionStatus)) {
         try {
             HubService hubService = hubServicesFactory.createHubService();
-            ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
+            ProjectService projectDataService = hubServicesFactory.createProjectService();
 
             ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
             List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaData(repoKey, hubService, projectVersionWrapper.getProjectVersionView());
@@ -390,7 +389,7 @@ private void updateFromHubProjectNotifications(String repoKey, String projectNam
     if ('SUCCESS'.equals(inspectionStatus)) {
         try {
             NotificationService notificationService = hubServicesFactory.createNotificationService()
-            ProjectDataService projectDataService = hubServicesFactory.createProjectDataService();
+            ProjectService projectDataService = hubServicesFactory.createProjectService();
 
             ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
             List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
@@ -436,8 +435,8 @@ private String getRepoProjectVersionName(String repoKey) {
 
 private void addDependencyToProjectVersion(Dependency dependency, String projectName, String projectVersionName) {
     HubServicesFactory hubServicesFactory = createHubServicesFactory();
-    ComponentDataService componentDataService = hubServicesFactory.createComponentDataService();
-    componentDataService.addComponentToProjectVersion(dependency.externalId, projectName, projectVersionName);
+    ProjectService projectService = hubServicesFactory.createProjectService();
+    projectService.addComponentToProjectVersion(dependency.externalId, projectName, projectVersionName);
 }
 
 private void addDependencyProperties(RepoPath repoPath, Dependency dependency) {
@@ -531,7 +530,7 @@ private void loadProperties() {
 
 private void createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
-    ApiKeyRestConnection apiKeyRestConnection = hubServerConfig.createApiKeyRestConnection(new Slf4jIntLogger(log))
+    ApiTokenRestConnection apiKeyRestConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log))
     hubServicesFactory = new HubServicesFactory(apiKeyRestConnection)
 }
 

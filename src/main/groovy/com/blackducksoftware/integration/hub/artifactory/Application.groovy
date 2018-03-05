@@ -60,20 +60,40 @@ class Application {
             return
         }
 
-        if (null != System.console() && null != System.out) {
-            if ('configure-inspector' == mode) {
-                System.out.println('Updating ./lib/blackDuckCacheInspector.properties - just hit enter to make no change to a value:')
-                inspectorConfigurationManager.updateValues(System.console(), System.out)
-            } else if ('configure-scanner' == mode) {
-                System.out.println('Updating ./lib/blackDuckScanForHub.properties - just hit enter to make no change to a value:')
-                scannerConfigurationManager.updateValues(System.console(), System.out)
+        configurePlugin()
+    }
+
+    void configurePlugin() {
+        if ('configure-inspector' == mode && (null != System.console() && null != System.out)) {
+            System.out.println('Updating ./plugins/lib/blackDuckCacheInspector.properties - just hit enter to make no change to a value:')
+            inspectorConfigurationManager.updateValues(System.console(), System.out)
+            if (inspectorConfigurationManager.needsUpdate()) {
+                System.out.println('The inspector was not completely configured. Would you like to restart configuration? Enter \'y\' to re-configure the inspector, or press <enter> to exit configuration.')
+                def userValue = StringUtils.trimToEmpty(System.console().readLine())
+                if ('y' == userValue) {
+                    configurePlugin()
+                } else {
+                    System.out.println('Exiting configuration. You can finish configuring the inspector manually by editing the properties file located at \'./plugins/lib/blackDuckCacheInspector.properties\'')
+                }
+            } else {
+                System.out.println('The inspector has been configured successfully, the properties file has been generated in \'./plugins/lib/blackDuckCacheInspector.properties\'')
             }
         }
 
-        if ('configure-inspector' == mode && inspectorConfigurationManager.needsUpdate()) {
-            logger.error('The inspector was not completely configured - please edit the \'./lib/blackDuckCacheInspector.properties\' file directly, or run from a command line to configure the properties.')
-        } else if ('configure-scanner' == mode && scannerConfigurationManager.needsUpdate()) {
-            logger.error('The scanner was not completely configured - please edit the \'./lib/blackDuckScanForHub.properties\' file directly, or run from a command line to configure the properties.')
+        if ('configure-scanner' == mode && (null != System.console() && null != System.out)) {
+            System.out.println('Updating ./plugins/lib/blackDuckScanForHub.properties - just hit enter to make no change to a value:')
+            scannerConfigurationManager.updateValues(System.console(), System.out)
+            if (scannerConfigurationManager.needsUpdate()) {
+                System.out.println('The scanner was not completely configured. Would you like to restart configuration? Enter \'y\' to re-configure the scanner, or press <enter> to exit configuration.')
+                def userValue = StringUtils.trimToEmpty(System.console().readLine())
+                if ('y' == userValue) {
+                    configurePlugin()
+                }else {
+                    System.out.println('Exiting configuration. You can finish configuring the scanner manually by editing the properties file located at \'./plugins/lib/blackDuckScanForHub.properties\'')
+                }
+            } else {
+                System.out.println('The scanner has been configured successfully, the properties file has been generated in \'./plugins/lib/blackDuckScanForHub.properties\'')
+            }
         }
     }
 }
