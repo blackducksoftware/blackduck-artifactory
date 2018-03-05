@@ -23,8 +23,6 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
-import static com.blackducksoftware.integration.hub.artifactory.SupportedPackageType.*
-
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
@@ -44,6 +42,7 @@ import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
 import com.blackducksoftware.integration.hub.artifactory.DependencyFactory
 import com.blackducksoftware.integration.hub.artifactory.PackageTypePatternManager
 import com.blackducksoftware.integration.hub.artifactory.PluginProperty
+import com.blackducksoftware.integration.hub.artifactory.SupportedPackageType
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
@@ -105,9 +104,7 @@ executions {
     blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckDeleteInspectionProperties REST request...')
 
-        repoKeysToInspect.each { repoKey ->
-            deleteInspectionProperties(repoKey)
-        }
+        repoKeysToInspect.each { repoKey -> deleteInspectionProperties(repoKey) }
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
     }
@@ -466,23 +463,23 @@ private Dependency createDependency(RepoPath repoPath, String packageType) {
         FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
         org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
 
-        if (nuget.name().equals(packageType)) {
+        if (SupportedPackageType.nuget.name().equals(packageType)) {
             return dependencyFactory.createNugetDependency(fileLayoutInfo, properties);
         }
 
-        if (npm.name().equals(packageType)) {
+        if (SupportedPackageType.npm.name().equals(packageType)) {
             return dependencyFactory.createNpmDependency(fileLayoutInfo, properties);
         }
 
-        if (pypi.name().equals(packageType)) {
+        if (SupportedPackageType.pypi.name().equals(packageType)) {
             return dependencyFactory.createPyPiDependency(fileLayoutInfo, properties);
         }
 
-        if (gems.name().equals(packageType)) {
+        if (SupportedPackageType.gems.name().equals(packageType)) {
             return dependencyFactory.createRubygemsDependency(fileLayoutInfo, properties);
         }
 
-        if (maven.name().equals(packageType) || gradle.name().equals(packageType)) {
+        if (SupportedPackageType.maven.name().equals(packageType) || SupportedPackageType.gradle.name().equals(packageType)) {
             return dependencyFactory.createMavenDependency(fileLayoutInfo, properties);
         }
     } catch (Exception e) {
@@ -513,12 +510,12 @@ private void loadProperties() {
 
     try {
         blackDuckArtifactoryConfig.loadProperties(propertiesFile)
-        packageTypePatternManager.setPattern(gems, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS))
-        packageTypePatternManager.setPattern(maven, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_MAVEN))
-        packageTypePatternManager.setPattern(gradle, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_GRADLE))
-        packageTypePatternManager.setPattern(pypi, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI))
-        packageTypePatternManager.setPattern(nuget, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET))
-        packageTypePatternManager.setPattern(npm, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM))
+        packageTypePatternManager.setPattern(SupportedPackageType.gems, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS))
+        packageTypePatternManager.setPattern(SupportedPackageType.maven, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_MAVEN))
+        packageTypePatternManager.setPattern(SupportedPackageType.gradle, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_GRADLE))
+        packageTypePatternManager.setPattern(SupportedPackageType.pypi, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI))
+        packageTypePatternManager.setPattern(SupportedPackageType.nuget, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET))
+        packageTypePatternManager.setPattern(SupportedPackageType.npm, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM))
         dateTimePattern = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_DATE_TIME_PATTERN)
 
         createHubServicesFactory()
