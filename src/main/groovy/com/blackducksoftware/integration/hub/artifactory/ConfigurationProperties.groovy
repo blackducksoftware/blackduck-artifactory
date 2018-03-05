@@ -47,6 +47,12 @@ class ConfigurationProperties {
     @Value('${blackduck.hub.url}')
     String blackduckHubUrl
 
+    @Value('${blackduck.hub.username}')
+    String blackduckHubUsername
+
+    @Value('${blackduck.hub.password}')
+    String blackduckHubPassword
+
     @Value('${blackduck.hub.api.token}')
     String blackduckHubApiToken
 

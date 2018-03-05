@@ -51,7 +51,7 @@ import com.blackducksoftware.integration.hub.bdio.model.SimpleBdioDocument
 import com.blackducksoftware.integration.hub.bdio.model.dependency.Dependency
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
 import com.blackducksoftware.integration.hub.configuration.HubServerConfig
-import com.blackducksoftware.integration.hub.rest.ApiTokenRestConnection
+import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.CodeLocationService
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
@@ -530,8 +530,15 @@ private void loadProperties() {
 
 private void createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
-    ApiTokenRestConnection apiKeyRestConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log))
-    hubServicesFactory = new HubServicesFactory(apiKeyRestConnection)
+    final RestConnection restConnection;
+
+    if (StringUtils.isNotBlank(blackDuckArtifactoryConfig.getProperty(PluginProperty.BLACKDUCK_HUB_API_TOKEN))) {
+        restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log));
+    } else {
+        restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log));
+    }
+
+    hubServicesFactory = new HubServicesFactory(restConnection)
 }
 
 private void loadRepositoriesToInspect() {

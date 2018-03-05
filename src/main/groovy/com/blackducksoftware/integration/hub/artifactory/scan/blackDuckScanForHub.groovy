@@ -43,7 +43,7 @@ import com.blackducksoftware.integration.hub.configuration.HubScanConfig
 import com.blackducksoftware.integration.hub.configuration.HubScanConfigBuilder
 import com.blackducksoftware.integration.hub.configuration.HubServerConfig
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
-import com.blackducksoftware.integration.hub.rest.ApiTokenRestConnection
+import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.service.SignatureScannerService
@@ -523,8 +523,15 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
 
 private HubServicesFactory createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
-    ApiTokenRestConnection apiTokenRestConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log))
-    hubServicesFactory = new HubServicesFactory(apiTokenRestConnection)
+    final RestConnection restConnection;
+    
+    if (StringUtils.isNotBlank(blackDuckArtifactoryConfig.getProperty(PluginProperty.BLACKDUCK_HUB_API_TOKEN))) {
+        restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log));
+    } else {
+        restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log));
+    }
+
+    hubServicesFactory = new HubServicesFactory(restConnection)
 }
 
 private void initialize() {
