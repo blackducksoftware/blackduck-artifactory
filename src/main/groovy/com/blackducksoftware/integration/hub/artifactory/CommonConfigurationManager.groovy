@@ -53,8 +53,10 @@ class CommonConfigurationManager {
     void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {
         configurationProperties.blackduckHubUrl = setValueFromInput(console, out, 'Hub Server Url', config, PluginProperty.BLACKDUCK_HUB_URL)
         configurationProperties.blackduckHubApiToken = setValueFromInput(console, out, 'Hub Server API Token', config, PluginProperty.BLACKDUCK_HUB_API_TOKEN)
-        configurationProperties.blackduckHubUsername = setValueFromInput(console, out, 'Hub Server Username', config, PluginProperty.BLACKDUCK_HUB_USERNAME)
-        configurationProperties.blackduckHubPassword = setValueFromInput(console, out, 'Hub Server Password', config, PluginProperty.BLACKDUCK_HUB_PASSWORD)
+        if (StringUtils.isBlank(configurationProperties.blackduckHubApiToken)) {
+            configurationProperties.blackduckHubUsername = setValueFromInput(console, out, 'Hub Server Username', config, PluginProperty.BLACKDUCK_HUB_USERNAME)
+            configurationProperties.blackduckHubPassword = setValueFromInput(console, out, 'Hub Server Password', config, PluginProperty.BLACKDUCK_HUB_PASSWORD)
+        }
         configurationProperties.blackduckHubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, PluginProperty.BLACKDUCK_HUB_TIMEOUT)
         configurationProperties.blackduckHubTrustCert = setValueFromInput(console, out, 'Always Trust Server Certificates', config, PluginProperty.BLACKDUCK_HUB_TRUST_CERT)
 
