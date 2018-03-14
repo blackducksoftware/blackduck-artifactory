@@ -524,7 +524,7 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
 private HubServicesFactory createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     final RestConnection restConnection;
-    
+
     if (StringUtils.isNotBlank(blackDuckArtifactoryConfig.getProperty(PluginProperty.BLACKDUCK_HUB_API_TOKEN))) {
         restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log));
     } else {
@@ -536,9 +536,9 @@ private HubServicesFactory createHubServicesFactory() {
 
 private void initialize() {
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
-    blackDuckArtifactoryConfig.setEtcDirectory(ctx.artifactoryHome.etcDir)
-    blackDuckArtifactoryConfig.setHomeDirectory(ctx.artifactoryHome.homeDir)
-    blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir)
+    blackDuckArtifactoryConfig.setEtcDirectory(ctx.artifactoryHome.etcDir.toString())
+    blackDuckArtifactoryConfig.setHomeDirectory(ctx.artifactoryHome.homeDir.toString())
+    blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
 
     loadProperties()
 }
@@ -563,7 +563,8 @@ private void loadProperties() {
         createHubServicesFactory()
         loadRepositoriesToScan()
     } catch (Exception e) {
-        log.error("Black Duck Scanner encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}", e)
+        log.error("Black Duck Scanner encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}")
+        throw e
     }
 }
 
