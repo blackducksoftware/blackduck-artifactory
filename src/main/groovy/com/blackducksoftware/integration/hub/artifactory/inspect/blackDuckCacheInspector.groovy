@@ -35,6 +35,7 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
+import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataFromNotifications
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
@@ -326,21 +327,27 @@ void updateMetadata() {
     repoKeysToInspect.each { repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
+        Date lastNotificationDate = null;
 
         if ('SUCCESS'.equals(inspectionStatus)) {
             try {
                 Date now = new Date()
-                Date lastInspected = getDateFromProperty(repoKeyPath, BlackDuckProperty.LAST_INSPECTION.getName())
+                Date dateToCheck
+                if (StringUtils.isNotBlank(repositories.getProperty(repoPath, BlackDuckProperty.LAST_UPDATE))) {
+                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckProperty.LAST_UPDATE.getName())
+                } else {
+                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckProperty.LAST_INSPECTION.getName())
+                }
                 String projectName = getRepoProjectName(repoKey)
                 String projectVersionName = getRepoProjectVersionName(repoKey)
 
-                updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, lastInspected, now)
-
-                setUpdateStatus(repoKeyPath, 'UP TO DATE')
+                lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now)
+                repositories.setProperty(repoPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
+                repositories.setProperty(repoPath, BlackDuckProperty.LAST_UPDATE.getName(), getStringFromDate(lastNotificationDate))
             } catch (Exception e) {
                 log.error("The blackDuckCacheInspector encountered an exception while updating artifact metadata from Hub notifications in repository ${repoKey}: ${e.getMessage}")
                 log.debug('Stack trace:', e)
-                setUpdateStatus(repoKeyPath, 'OUT OF DATE')
+                repositories.setProperty(repoPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
             }
         }
     }
@@ -432,13 +439,15 @@ private void populateFromHubProject(String repoKey, String projectName, String p
     addOriginIdProperties(repoKey, artifactMetaDataList);
 }
 
-private void updateFromHubProjectNotifications(String repoKey, String projectName, String projectVersionName, Date startDate, Date endDate) {
+private Date updateFromHubProjectNotifications(String repoKey, String projectName, String projectVersionName, Date startDate, Date endDate) {
     NotificationService notificationService = hubServicesFactory.createNotificationService()
     ProjectService projectDataService = hubServicesFactory.createProjectService();
 
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
-    addOriginIdProperties(repoKey, artifactMetaDataList);
+    ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
+    addOriginIdProperties(repoKey, artifactMetaDataFromNotifications.getArtifactMetaData());
+
+    return artifactMetaDataFromNotifications.getLastNotificationDate();
 }
 
 private void deleteInspectionProperties(String repoKey) {
@@ -598,6 +607,10 @@ private String getNowString() {
     DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
 }
 
+private String getStringFromDate(Date date) {
+    return new DateTime(date).withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+}
+
 private Date getDateFromProperty(RepoPath repoPath, String propertyName) {
     String lastInspectedString = repositories.getProperty(repoPath, BlackDuckProperty.LAST_INSPECTION.getName())
     return DateTime.parse(lastInspectedString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
@@ -610,11 +623,4 @@ private Date getDateFromString(String dateTimeString) {
 private setInspectionStatus(RepoPath repoPath, String status) {
     repositories.setProperty(repoPath, BlackDuckProperty.INSPECTION_STATUS.getName(), status)
     repositories.setProperty(repoPath, BlackDuckProperty.LAST_INSPECTION.getName(), getNowString())
-}
-
-private setUpdateStatus(RepoPath repoPath, String status) {
-    repositories.setProperty(repoPath, BlackDuckProperty.UPDATE_STATUS.getName(), status)
-    if ('UP TO DATE'.equals(repositories.getProperty(repoPath, BlackDuckProperty.UPDATE_STATUS.getName())) {
-        repositories.setProperty(repoPath, BlackDuckProperty.LAST_UPDATE.getName(), getNowString())
-    }
 }
