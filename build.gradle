@@ -8,8 +8,18 @@ buildscript {
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE'
+        classpath 'org.apache.commons:commons-configuration2:2.2'
+        classpath 'commons-beanutils:commons-beanutils:1.9.3'
+        classpath 'com.blackducksoftware.integration:hub-artifactory-common:0.0.17'
     }
 }
+import org.apache.commons.configuration2.PropertiesConfiguration
+import org.apache.commons.configuration2.builder.fluent.Configurations
+import org.apache.commons.configuration2.io.FileHandler
+import com.blackducksoftware.integration.hub.artifactory.PluginProperty
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 
 plugins {
     id 'groovy'
@@ -20,14 +30,45 @@ version = '5.0.0-SNAPSHOT'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 
+dependencies {
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.17'
+    
+    compile 'org.apache.commons:commons-configuration2:2.2'
+    compile 'commons-beanutils:commons-beanutils:1.9.3'
+
+    compile 'org.springframework.boot:spring-boot-starter'
+    compile 'org.springframework:spring-web'
+    
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
+
 def versionFile = new File("${projectDir}/src/main/resources/version.txt")
 versionFile.delete()
 versionFile << version
 
-task createFinalZip(type: Zip, dependsOn: build) {
+task generateScanConfig {
+    doLast {
+        def configs = new Configurations()
+        def scanConfigFile = new File("${projectDir}/src/main/resources/blackDuckScanForHub.properties")
+        PropertiesConfiguration scanConfig = configs.properties(scanConfigFile)
+        def dateTimePattern = scanConfig.getString(PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN.getKey())
+        String nowString = DateTime.now().toLocalDate().toDateTimeAtStartOfDay(DateTimeZone.UTC).minusYears(1).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+        scanConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE.getKey(), nowString)
+        FileHandler handler = new FileHandler(scanConfig)
+        handler.save(new File("${projectDir}/build/configs/blackDuckScanForHub.properties"))
+    }
+}
+
+
+task createFinalZip(type: Zip) {
+    dependsOn build, generateScanConfig
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
         include 'blackDuckCacheInspector.properties'
+        into 'plugins/lib'
+    }
+    
+    from ("${projectDir}/build/configs/") {
         include 'blackDuckScanForHub.properties'
         into 'plugins/lib'
     }
@@ -54,18 +95,6 @@ task createFinalZip(type: Zip, dependsOn: build) {
         exclude 'spring*.jar'
         into 'plugins/lib'
     }
-}
-
-dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.17'
-    
-    compile 'org.apache.commons:commons-configuration2:2.2'
-    compile 'commons-beanutils:commons-beanutils:1.9.3'
-
-    compile 'org.springframework.boot:spring-boot-starter'
-    compile 'org.springframework:spring-web'
-    
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
 
 springBoot { mainClass = 'com.blackducksoftware.integration.hub.artifactory.Application' }
