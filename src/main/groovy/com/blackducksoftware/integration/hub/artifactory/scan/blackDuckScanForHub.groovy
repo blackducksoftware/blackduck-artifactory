@@ -521,7 +521,7 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
     updatedProperty
 }
 
-private HubServicesFactory createHubServicesFactory() {
+private void createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     final RestConnection restConnection;
 
