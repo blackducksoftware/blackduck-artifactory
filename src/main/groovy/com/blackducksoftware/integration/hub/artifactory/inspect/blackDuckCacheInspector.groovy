@@ -343,7 +343,7 @@ void updateMetadata() {
             try {
                 Date now = new Date()
                 Date dateToCheck
-                if (StringUtils.isNotBlank(repositories.getProperty(repoPath, BlackDuckProperty.LAST_UPDATE))) {
+                if (StringUtils.isNotBlank(repositories.getProperty(repoKeyPath, BlackDuckProperty.LAST_UPDATE.getName()))) {
                     dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckProperty.LAST_UPDATE.getName())
                 } else {
                     dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckProperty.LAST_INSPECTION.getName())
@@ -352,12 +352,11 @@ void updateMetadata() {
                 String projectVersionName = getRepoProjectVersionName(repoKey)
 
                 lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now)
-                repositories.setProperty(repoPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
-                repositories.setProperty(repoPath, BlackDuckProperty.LAST_UPDATE.getName(), getStringFromDate(lastNotificationDate))
+                repositories.setProperty(repoKeyPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
+                repositories.setProperty(repoKeyPath, BlackDuckProperty.LAST_UPDATE.getName(), getStringFromDate(lastNotificationDate))
             } catch (Exception e) {
-                log.error("The blackDuckCacheInspector encountered an exception while updating artifact metadata from Hub notifications in repository ${repoKey}: ${e.getMessage}")
-                log.debug('Stack trace:', e)
-                repositories.setProperty(repoPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
+                log.error("The blackDuckCacheInspector encountered an exception while updating artifact metadata from Hub notifications in repository ${repoKey}:", e)
+                repositories.setProperty(repoKeyPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
             }
         }
     })
@@ -457,9 +456,10 @@ private void populateFromHubProject(String repoKey, String projectName, String p
 private Date updateFromHubProjectNotifications(String repoKey, String projectName, String projectVersionName, Date startDate, Date endDate) {
     NotificationService notificationService = hubServicesFactory.createNotificationService()
     ProjectService projectDataService = hubServicesFactory.createProjectService();
+    HubService hubService = hubServicesFactory.createHubService();
 
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
-    ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
+    ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, hubService, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
     addOriginIdProperties(repoKey, artifactMetaDataFromNotifications.getArtifactMetaData());
 
     return artifactMetaDataFromNotifications.getLastNotificationDate();
@@ -517,7 +517,8 @@ private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifa
             repositories.setProperty(repoPath, BlackDuckProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
             repositories.setProperty(repoPath, BlackDuckProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
             repositories.setProperty(repoPath, BlackDuckProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus)
+            repositories.setProperty(repoPath, BlackDuckProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus.toString())
+            repositories.setProperty(repoPath, BlackDuckProperty.COMPONENT_VERSION_URL.getName(), artifactMetaData.componentVersionLink)
         }
     }
 }
@@ -544,7 +545,7 @@ private Dependency createDependency(RepoPath repoPath, String packageType) {
         }
 
         if (SupportedPackageType.maven.name().equals(packageType) || SupportedPackageType.gradle.name().equals(packageType)) {
-            return dependencyFactory.createMavenDependency(fileLayoutInfo, properties);
+            return dependencyFactory.createMavenDependency(fileLayoutInfo);
         }
     } catch (Exception e) {
         log.error("Could not resolve dependency:", e);
