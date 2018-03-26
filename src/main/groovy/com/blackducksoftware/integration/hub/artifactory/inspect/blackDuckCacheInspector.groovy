@@ -23,6 +23,9 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import java.util.concurrent.ForkJoinPool
+import java.util.function.Consumer
+
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
@@ -105,6 +108,12 @@ executions {
         log.info('Starting blackDuckDeleteInspectionProperties REST request...')
 
         repoKeysToInspect.each { repoKey -> deleteInspectionProperties(repoKey) }
+
+        ForkJoinPool customThreadPool = new ForkJoinPool(2);
+        customThreadPool.submit({
+            repoKeysToInspect.parallelStream()
+                    .forEach({ repoKey -> deleteInspectionProperties(repoKey) });
+        });
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
     }
@@ -285,7 +294,7 @@ storage {
 }
 
 void identifyArtifacts() {
-    repoKeysToInspect.each { repoKey ->
+    iterateOverRepoKeys({  repoKey ->
         String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
@@ -299,11 +308,11 @@ void identifyArtifacts() {
                 log.error("The blackDuckCacheInspector encountered an exception while identifying artifacts in repository ${repoKey}", e)
             }
         }
-    }
+    })
 }
 
 void populateMetadata() {
-    repoKeysToInspect.each { repoKey ->
+    iterateOverRepoKeys({  repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
 
@@ -320,11 +329,12 @@ void populateMetadata() {
                 setInspectionStatus(repoKeyPath, 'FAILURE')
             }
         }
-    }
+    })
+
 }
 
 void updateMetadata() {
-    repoKeysToInspect.each { repoKey ->
+    iterateOverRepoKeys({  repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
         Date lastNotificationDate = null;
@@ -350,11 +360,11 @@ void updateMetadata() {
                 repositories.setProperty(repoPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
             }
         }
-    }
+    })
 }
 
 void resolvePendingArtifacts() {
-    repoKeysToInspect.each { repoKey ->
+    iterateOverRepoKeys({  repoKey ->
         Set repoPaths = new HashSet<>()
         String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
         def patternsToFind = patterns.tokenize(',')
@@ -390,7 +400,12 @@ void resolvePendingArtifacts() {
                 }
             }
         }
-    }
+    })
+}
+
+private void iterateOverRepoKeys(Consumer<? super String> action) {
+    ForkJoinPool customThreadPool = new ForkJoinPool(2);
+    customThreadPool.submit({repoKeysToInspect.parallelStream().forEach(action)})
 }
 
 private void createHubProject(String repoKey, String patterns) {
