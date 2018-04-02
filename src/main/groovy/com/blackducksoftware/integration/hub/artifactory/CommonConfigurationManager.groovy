@@ -23,9 +23,12 @@
  */
 package com.blackducksoftware.integration.hub.artifactory
 
+import java.text.ParseException
+
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.io.FileHandler
 import org.apache.commons.lang3.StringUtils
+import org.quartz.CronExpression
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -120,7 +123,7 @@ class CommonConfigurationManager {
         persistConfigToFile(config, outputFile)
     }
 
-    String setValueFromInput(Console console, PrintStream out, String propertyDescription, PropertiesConfiguration config, BlackDuckHubProperty property) {
+    String setValueFromInput(Console console, PrintStream out, String propertyDescription, PropertiesConfiguration config, ConfigurationProperty property) {
         return setValueFromInput(console, out, propertyDescription, config.getString(property.getKey()))
     }
 
@@ -132,6 +135,29 @@ class CommonConfigurationManager {
         } else {
             oldValue
         }
+    }
+
+    String setCronFromInput(Console console, PrintStream out, String propertyDescription, PropertiesConfiguration config, ConfigurationProperty property) {
+        String cronString = setValueFromInput(console, out, propertyDescription, config, property)
+        while (!validateCron(out, cronString)) {
+            out.println('Enter \'y\' to continue regardless, otherwise press <enter> to input another CRON expression.')
+            String userValue = StringUtils.trimToEmpty(console.readLine())
+            if ('y' == userValue) {
+                break
+            }
+            cronString = setValueFromInput(console, out, propertyDescription, config, property)
+        }
+        return cronString
+    }
+
+    boolean validateCron(PrintStream out, String cronString) {
+        try {
+            CronExpression.validateExpression(cronString)
+        } catch (ParseException e) {
+            out.println("\'${cronString}\' is not a valid CRON expression: ${e.getMessage()}")
+            return false
+        }
+        return true
     }
 
     List<String> getRepositoriesToSearch(String csvPath, String repositoryList) {
@@ -158,5 +184,20 @@ class CommonConfigurationManager {
     void persistConfigToFile(PropertiesConfiguration config, File outputFile) {
         FileHandler handler = new FileHandler(config);
         handler.save(outputFile);
+    }
+
+    void printVisualValidationOfCron(PrintStream out, String cronName, String cronExpressionString) {
+        String message
+        CronExpression cronExpression;
+        message = "The CRON job ${cronName}"
+        try {
+            cronExpression = new CronExpression(cronExpressionString)
+            String nextExecution = cronExpression.getNextValidTimeAfter(new Date()).toString();
+            message += " will be executed next ${nextExecution}"
+        } catch (ParseException e) {
+            message += (' is configured with an invalid CRON expression')
+        }
+
+        out.println(message)
     }
 }

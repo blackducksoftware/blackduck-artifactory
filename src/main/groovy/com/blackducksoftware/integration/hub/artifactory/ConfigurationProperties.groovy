@@ -138,4 +138,11 @@ class ConfigurationProperties {
 
     @Value('${hub.artifactory.scan.cutoff.date}')
     String hubArtifactoryScanCutoffDate
+
+    @Value('${hub.artifactory.scan.cron')
+    String hubArtifactoryScanCron
+
+    @Value('${hub.artifactory.scan.add.policy.status.cron')
+    String hubArtifactoryScanAddPolicyStatusCron
+
 }
