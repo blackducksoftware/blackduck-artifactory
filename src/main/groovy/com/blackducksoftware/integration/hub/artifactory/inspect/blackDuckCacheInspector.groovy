@@ -24,7 +24,6 @@
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
 import java.util.concurrent.ForkJoinPool
-import java.util.function.Consumer
 
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.StringUtils
@@ -41,11 +40,8 @@ import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataFromNotifications
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
-import com.blackducksoftware.integration.hub.artifactory.BlackDuckProperty
-import com.blackducksoftware.integration.hub.artifactory.DependencyFactory
-import com.blackducksoftware.integration.hub.artifactory.PackageTypePatternManager
-import com.blackducksoftware.integration.hub.artifactory.PluginProperty
-import com.blackducksoftware.integration.hub.artifactory.SupportedPackageType
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryProperty
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckHubProperty
 import com.blackducksoftware.integration.hub.bdio.SimpleBdioFactory
 import com.blackducksoftware.integration.hub.bdio.graph.MutableDependencyGraph
 import com.blackducksoftware.integration.hub.bdio.model.Forge
@@ -80,6 +76,10 @@ import groovy.transform.Field
 
 @Field List<String> repoKeysToInspect
 @Field String dateTimePattern
+@Field String blackDuckIdentifyArtifactsCron
+@Field String blackDuckPopulateMetadataCron
+@Field String blackDuckUpdateMetadataCron
+@Field String blackDuckAddPendingArtifactsCron
 
 initialize()
 
@@ -193,6 +193,22 @@ executions {
 
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
     }
+
+    iterativeTest(httpMethod: 'POST') { params ->
+        long startTime = System.currentTimeMillis()
+        populateMetadataIteratively()
+        long endTime = System.currentTimeMillis()
+
+        message = "Iterative test took ${startTime - endTime} milliseconds"
+    }
+
+    parallelTest(httpMethod: 'POST') { params ->
+        long startTime = System.currentTimeMillis()
+        populateMetadata()
+        long endTime = System.currentTimeMillis()
+
+        message = "Parallel test Took ${startTime - endTime} milliseconds"
+    }
 }
 
 jobs {
@@ -208,7 +224,7 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      */
-    blackDuckIdentifyArtifacts(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckIdentifyArtifacts(cron: blackDuckIdentifyArtifactsCron) {
         log.info('Starting blackDuckIdentifyArtifacts CRON job...')
 
         identifyArtifacts()
@@ -226,7 +242,7 @@ jobs {
      * blackduck.lowVulnerabilities
      * blackduck.policyStatus
      */
-    blackDuckPopulateMetadata(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckPopulateMetadata(cron: blackDuckPopulateMetadataCron) {
         log.info('Starting blackDuckPopulateMetadata CRON job...')
 
         populateMetadata()
@@ -246,7 +262,7 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      */
-    blackDuckUpdateMetadata(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckUpdateMetadata(cron: blackDuckUpdateMetadataCron) {
         log.info('Starting blackDuckUpdateMetadata CRON job...')
 
         updateMetadata()
@@ -257,7 +273,7 @@ jobs {
     /**
      * Completes the identification step of
      */
-    blackDuckAddPendingArtifacts(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckAddPendingArtifacts(cron: blackDuckAddPendingArtifactsCron) {
         log.info('Starting blackDuckAddPendingArtifacts CRON job...')
 
         resolvePendingArtifacts()
@@ -294,10 +310,10 @@ storage {
 }
 
 void identifyArtifacts() {
-    iterateOverRepoKeys({  repoKey ->
+    repoKeysToInspect.each {  repoKey ->
         String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
-        String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
+        String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
         if (StringUtils.isBlank(inspectionStatus)) {
             try {
@@ -308,13 +324,13 @@ void identifyArtifacts() {
                 log.error("The blackDuckCacheInspector encountered an exception while identifying artifacts in repository ${repoKey}", e)
             }
         }
-    })
+    }
 }
 
 void populateMetadata() {
-    iterateOverRepoKeys({  repoKey ->
+    repoKeysToInspect.each {  repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
-        String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
+        String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
         if ('PENDING'.equals(inspectionStatus)) {
             try {
@@ -329,41 +345,41 @@ void populateMetadata() {
                 setInspectionStatus(repoKeyPath, 'FAILURE')
             }
         }
-    })
+    }
 
 }
 
 void updateMetadata() {
-    iterateOverRepoKeys({  repoKey ->
+    repoKeysToInspect.each {   repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
-        String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckProperty.INSPECTION_STATUS.getName())
+        String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
         Date lastNotificationDate = null;
 
         if ('SUCCESS'.equals(inspectionStatus)) {
             try {
                 Date now = new Date()
                 Date dateToCheck
-                if (StringUtils.isNotBlank(repositories.getProperty(repoKeyPath, BlackDuckProperty.LAST_UPDATE.getName()))) {
-                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckProperty.LAST_UPDATE.getName())
+                if (StringUtils.isNotBlank(repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName()))) {
+                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName())
                 } else {
-                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckProperty.LAST_INSPECTION.getName())
+                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION.getName())
                 }
                 String projectName = getRepoProjectName(repoKey)
                 String projectVersionName = getRepoProjectVersionName(repoKey)
 
                 lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now)
-                repositories.setProperty(repoKeyPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
-                repositories.setProperty(repoKeyPath, BlackDuckProperty.LAST_UPDATE.getName(), getStringFromDate(lastNotificationDate))
+                repositories.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
+                repositories.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), getStringFromDate(lastNotificationDate))
             } catch (Exception e) {
                 log.error("The blackDuckCacheInspector encountered an exception while updating artifact metadata from Hub notifications in repository ${repoKey}:", e)
-                repositories.setProperty(repoKeyPath, BlackDuckProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
+                repositories.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
             }
         }
-    })
+    }
 }
 
 void resolvePendingArtifacts() {
-    iterateOverRepoKeys({  repoKey ->
+    repoKeysToInspect.each {  repoKey ->
         Set repoPaths = new HashSet<>()
         String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
         def patternsToFind = patterns.tokenize(',')
@@ -378,14 +394,14 @@ void resolvePendingArtifacts() {
         String projectVersionName = getRepoProjectVersionName(repoKey)
 
         repoPaths.each { repoPath ->
-            String inspectionStatus = repositories.getProperty(repoPath, BlackDuckProperty.INSPECTION_STATUS.getName())
+            String inspectionStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
             if (!'SUCCESS'.equals(inspectionStatus)) {
                 try {
                     Dependency repoPathDependency = createDependency(repoPath, packageType);
                     if (repoPathDependency != null) {
                         //TODO: externalidify
-                        String hubOriginId = repositories.getProperty(repoPath, BlackDuckProperty.HUB_ORIGIN_ID.getName());
-                        String hubForge = repositories.getProperty(repoPath, BlackDuckProperty.HUB_FORGE.getName());
+                        String hubOriginId = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName());
+                        String hubForge = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName());
                         if (StringUtils.isBlank(hubOriginId) || StringUtils.isBlank(hubForge)) {
                             addDependencyProperties(repoPath, repoPathDependency)
                             setInspectionStatus(repoPath, 'PENDING')
@@ -399,12 +415,7 @@ void resolvePendingArtifacts() {
                 }
             }
         }
-    })
-}
-
-private void iterateOverRepoKeys(Consumer<? super String> action) {
-    ForkJoinPool customThreadPool = new ForkJoinPool(2);
-    customThreadPool.submit({repoKeysToInspect.parallelStream().forEach(action)})
+    }
 }
 
 private void createHubProject(String repoKey, String patterns) {
@@ -466,7 +477,7 @@ private Date updateFromHubProjectNotifications(String repoKey, String projectNam
 }
 
 private void deleteInspectionProperties(String repoKey) {
-    BlackDuckProperty.values().each { blackDuckProperty ->
+    BlackDuckArtifactoryProperty.values().each { blackDuckProperty ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
         setMultimap.put(blackDuckProperty.getName(), '*');
         List<RepoPath> repoPathsWithProperty = searches.itemsByProperties(setMultimap, repoKey)
@@ -478,7 +489,7 @@ private void deleteInspectionProperties(String repoKey) {
 
 private String getRepoProjectName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectNameProperty = repositories.getProperty(repoPath, BlackDuckProperty.PROJECT_NAME.getName())
+    String projectNameProperty = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_NAME.getName())
     if (StringUtils.isNotBlank(projectNameProperty)) {
         return projectNameProperty
     }
@@ -487,7 +498,7 @@ private String getRepoProjectName(String repoKey) {
 
 private String getRepoProjectVersionName(String repoKey) {
     RepoPath repoPath = RepoPathFactory.create(repoKey)
-    String projectVersionNameProperty = repositories.getProperty(repoPath, BlackDuckProperty.HUB_PROJECT_VERSION_NAME.getName())
+    String projectVersionNameProperty = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_PROJECT_VERSION_NAME.getName())
     if (StringUtils.isNotBlank(projectVersionNameProperty)) {
         return projectVersionNameProperty
     }
@@ -502,23 +513,23 @@ private void addDependencyToProjectVersion(Dependency dependency, String project
 
 private void addDependencyProperties(RepoPath repoPath, Dependency dependency) {
     String hubOriginId = dependency.externalId.createHubOriginId()
-    repositories.setProperty(repoPath, BlackDuckProperty.HUB_ORIGIN_ID.getName(), hubOriginId)
+    repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName(), hubOriginId)
     String hubForge = dependency.externalId.forge.getName()
-    repositories.setProperty(repoPath, BlackDuckProperty.HUB_FORGE.getName(), hubForge)
+    repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName(), hubForge)
 }
 
 private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
     artifactMetaDataList.each { artifactMetaData ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put(BlackDuckProperty.HUB_ORIGIN_ID.getName(), artifactMetaData.originId);
-        setMultimap.put(BlackDuckProperty.HUB_FORGE.getName(), artifactMetaData.forge);
+        setMultimap.put(BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName(), artifactMetaData.originId);
+        setMultimap.put(BlackDuckArtifactoryProperty.HUB_FORGE.getName(), artifactMetaData.forge);
         List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
         artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, BlackDuckProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus.toString())
-            repositories.setProperty(repoPath, BlackDuckProperty.COMPONENT_VERSION_URL.getName(), artifactMetaData.componentVersionLink)
+            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
+            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus.toString())
+            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL.getName(), artifactMetaData.componentVersionLink)
         }
     }
 }
@@ -575,13 +586,17 @@ private void loadProperties() {
 
     try {
         blackDuckArtifactoryConfig.loadProperties(propertiesFile)
-        packageTypePatternManager.setPattern(SupportedPackageType.gems, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS))
-        packageTypePatternManager.setPattern(SupportedPackageType.maven, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_MAVEN))
-        packageTypePatternManager.setPattern(SupportedPackageType.gradle, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_GRADLE))
-        packageTypePatternManager.setPattern(SupportedPackageType.pypi, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI))
-        packageTypePatternManager.setPattern(SupportedPackageType.nuget, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET))
-        packageTypePatternManager.setPattern(SupportedPackageType.npm, blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM))
-        dateTimePattern = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_DATE_TIME_PATTERN)
+        packageTypePatternManager.setPattern(SupportedPackageType.gems, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_RUBYGEMS))
+        packageTypePatternManager.setPattern(SupportedPackageType.maven, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_MAVEN))
+        packageTypePatternManager.setPattern(SupportedPackageType.gradle, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_GRADLE))
+        packageTypePatternManager.setPattern(SupportedPackageType.pypi, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_PYPI))
+        packageTypePatternManager.setPattern(SupportedPackageType.nuget, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_NUGET))
+        packageTypePatternManager.setPattern(SupportedPackageType.npm, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_NPM))
+        dateTimePattern = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN)
+        blackDuckIdentifyArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.IDENTIFY_ARTIFACTS_CRON)
+        blackDuckPopulateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.POPULATE_METADATA_CRON)
+        blackDuckUpdateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.UPDATE_METADATA_CRON)
+        blackDuckAddPendingArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.ADD_PENDING_ARTIFACTS_CRON)
 
         createHubServicesFactory()
         loadRepositoriesToInspect()
@@ -595,7 +610,7 @@ private void createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     final RestConnection restConnection;
 
-    if (StringUtils.isNotBlank(blackDuckArtifactoryConfig.getProperty(PluginProperty.BLACKDUCK_HUB_API_TOKEN))) {
+    if (StringUtils.isNotBlank(blackDuckArtifactoryConfig.getProperty(BlackDuckHubProperty.API_TOKEN))) {
         restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log));
     } else {
         restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log));
@@ -605,8 +620,8 @@ private void createHubServicesFactory() {
 }
 
 private void loadRepositoriesToInspect() {
-    String repositoriesToInspect = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS)
-    String repositoriesToInspectFilePath = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS_CSV_PATH)
+    String repositoriesToInspect = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.REPOS)
+    String repositoriesToInspectFilePath = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.REPOS_CSV_PATH)
     repoKeysToInspect = []
 
     if (repositoriesToInspectFilePath) {
@@ -628,7 +643,7 @@ private String getStringFromDate(Date date) {
 }
 
 private Date getDateFromProperty(RepoPath repoPath, String propertyName) {
-    String lastInspectedString = repositories.getProperty(repoPath, BlackDuckProperty.LAST_INSPECTION.getName())
+    String lastInspectedString = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION.getName())
     return DateTime.parse(lastInspectedString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
 }
 
@@ -637,6 +652,6 @@ private Date getDateFromString(String dateTimeString) {
 }
 
 private setInspectionStatus(RepoPath repoPath, String status) {
-    repositories.setProperty(repoPath, BlackDuckProperty.INSPECTION_STATUS.getName(), status)
-    repositories.setProperty(repoPath, BlackDuckProperty.LAST_INSPECTION.getName(), getNowString())
+    repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), status)
+    repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION.getName(), getNowString())
 }

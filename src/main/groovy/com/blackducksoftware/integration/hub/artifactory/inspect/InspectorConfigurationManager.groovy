@@ -34,7 +34,6 @@ import org.springframework.util.ResourceUtils
 
 import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
-import com.blackducksoftware.integration.hub.artifactory.PluginProperty
 
 @Component
 class InspectorConfigurationManager {
@@ -71,27 +70,31 @@ class InspectorConfigurationManager {
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectIdentifyArtifactsCron)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPopulateMetadataCron)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectUpdateMetadataCron)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectAddPendingArtifactsCron)
                 || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
     void updateValues(Console console, PrintStream out) {
         commonConfigurationManager.updateBaseConfigValues(inspectorConfig, inspectorPropertiesFile, console, out)
 
-        configurationProperties.hubArtifactoryInspectPatternsRubygems = setValueFromInput(console, out, 'Rubygems Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS)
-        configurationProperties.hubArtifactoryInspectPatternsMaven = setValueFromInput(console, out, 'Maven Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_MAVEN)
-        configurationProperties.hubArtifactoryInspectPatternsGradle = setValueFromInput(console, out, 'Gradle Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_GRADLE)
-        configurationProperties.hubArtifactoryInspectPatternsPypi = setValueFromInput(console, out, 'Pypi Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI)
-        configurationProperties.hubArtifactoryInspectPatternsNuget = setValueFromInput(console, out, 'Nuget Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET)
-        configurationProperties.hubArtifactoryInspectPatternsNpm = setValueFromInput(console, out, 'NPM Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM)
-        configurationProperties.hubArtifactoryInspectDateTimePattern = setValueFromInput(console, out, 'Inspection Date Time Pattern', PluginProperty.HUB_ARTIFACTORY_INSPECT_DATE_TIME_PATTERN)
+        configurationProperties.hubArtifactoryInspectPatternsRubygems = setValueFromInput(console, out, 'Rubygems Artifact Patterns', InspectPluginProperty.PATTERNS_RUBYGEMS)
+        configurationProperties.hubArtifactoryInspectPatternsMaven = setValueFromInput(console, out, 'Maven Artifact Patterns', InspectPluginProperty.PATTERNS_MAVEN)
+        configurationProperties.hubArtifactoryInspectPatternsGradle = setValueFromInput(console, out, 'Gradle Artifact Patterns', InspectPluginProperty.PATTERNS_GRADLE)
+        configurationProperties.hubArtifactoryInspectPatternsPypi = setValueFromInput(console, out, 'Pypi Artifact Patterns', InspectPluginProperty.PATTERNS_PYPI)
+        configurationProperties.hubArtifactoryInspectPatternsNuget = setValueFromInput(console, out, 'Nuget Artifact Patterns', InspectPluginProperty.PATTERNS_NUGET)
+        configurationProperties.hubArtifactoryInspectPatternsNpm = setValueFromInput(console, out, 'NPM Artifact Patterns', InspectPluginProperty.PATTERNS_NPM)
+        configurationProperties.hubArtifactoryInspectDateTimePattern = setValueFromInput(console, out, 'Inspection Date Time Pattern', InspectPluginProperty.DATE_TIME_PATTERN)
 
         out.println('The artifactory inspector can be configured to either read a list of repositories to inspct, or a file containing a comma separated list of repositories.')
         out.println('If you would like to provide a path to a file, enter \'y\' now. Otherwise, just press <enter> to manually add a list of repositories.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Inspect', PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS_CSV_PATH)
+            configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Inspect', InspectPluginProperty.REPOS_CSV_PATH)
         } else {
-            configurationProperties.hubArtifactoryInspectRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Inspect', PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS)
+            configurationProperties.hubArtifactoryInspectRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Inspect', InspectPluginProperty.REPOS)
             configurationProperties.hubArtifactoryInspectRepositoriesCsvPath = ''
         }
 
@@ -141,20 +144,20 @@ class InspectorConfigurationManager {
     }
 
     void persistInspectorProperties() {
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesList)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_RUBYGEMS.getKey(), configurationProperties.hubArtifactoryInspectPatternsRubygems)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_MAVEN.getKey(), configurationProperties.hubArtifactoryInspectPatternsMaven)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_GRADLE.getKey(), configurationProperties.hubArtifactoryInspectPatternsGradle)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_PYPI.getKey(), configurationProperties.hubArtifactoryInspectPatternsPypi)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NUGET.getKey(), configurationProperties.hubArtifactoryInspectPatternsNuget)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_PATTERNS_NPM.getKey(), configurationProperties.hubArtifactoryInspectPatternsNpm)
-        inspectorConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_INSPECT_DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryInspectDateTimePattern)
+        inspectorConfig.setProperty(InspectPluginProperty.REPOS.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesList)
+        inspectorConfig.setProperty(InspectPluginProperty.REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)
+        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_RUBYGEMS.getKey(), configurationProperties.hubArtifactoryInspectPatternsRubygems)
+        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_MAVEN.getKey(), configurationProperties.hubArtifactoryInspectPatternsMaven)
+        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_GRADLE.getKey(), configurationProperties.hubArtifactoryInspectPatternsGradle)
+        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_PYPI.getKey(), configurationProperties.hubArtifactoryInspectPatternsPypi)
+        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_NUGET.getKey(), configurationProperties.hubArtifactoryInspectPatternsNuget)
+        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_NPM.getKey(), configurationProperties.hubArtifactoryInspectPatternsNpm)
+        inspectorConfig.setProperty(InspectPluginProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryInspectDateTimePattern)
 
         commonConfigurationManager.persistConfigToFile(inspectorConfig, inspectorPropertiesFile)
     }
 
-    String setValueFromInput(Console console, PrintStream out, String propertyDescription, PluginProperty property) {
+    String setValueFromInput(Console console, PrintStream out, String propertyDescription, InspectPluginProperty property) {
         return commonConfigurationManager.setValueFromInput(console, out, propertyDescription, inspectorConfig, property)
     }
 }

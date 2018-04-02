@@ -30,8 +30,12 @@ version = '5.0.0-SNAPSHOT'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.19'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.20-SNAPSHOT'
     
     compile 'org.apache.commons:commons-configuration2:2.2'
     compile 'commons-beanutils:commons-beanutils:1.9.3'

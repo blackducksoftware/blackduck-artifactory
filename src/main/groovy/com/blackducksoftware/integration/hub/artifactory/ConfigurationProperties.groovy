@@ -102,6 +102,18 @@ class ConfigurationProperties {
     @Value('${hub.artifactory.inspect.date.time.pattern}')
     String hubArtifactoryInspectDateTimePattern
 
+    @Value('${hub.artifactory.inspect.identify.artifacts.cron}')
+    String hubArtifactoryInspectIdentifyArtifactsCron
+
+    @Value('${hub.artifactory.inspect.populate.metadata.cron}')
+    String hubArtifactoryInspectPopulateMetadataCron
+
+    @Value('${hub.artifactory.inspect.update.metadata.cron}')
+    String hubArtifactoryInspectUpdateMetadataCron
+
+    @Value('${hub.artifactory.inspect.add.pending.artifacts.cron}')
+    String hubArtifactoryInspectAddPendingArtifactsCron
+
     //Scanner
     @Value('${hub.artifactory.scan.repos}')
     String hubArtifactoryScanRepositoriesList
