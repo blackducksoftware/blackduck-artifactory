@@ -23,8 +23,6 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
-import java.util.concurrent.ForkJoinPool
-
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
@@ -109,12 +107,6 @@ executions {
 
         repoKeysToInspect.each { repoKey -> deleteInspectionProperties(repoKey) }
 
-        ForkJoinPool customThreadPool = new ForkJoinPool(2);
-        customThreadPool.submit({
-            repoKeysToInspect.parallelStream()
-                    .forEach({ repoKey -> deleteInspectionProperties(repoKey) });
-        });
-
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
     }
 
@@ -192,22 +184,6 @@ executions {
         updateMetadata()
 
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
-    }
-
-    iterativeTest(httpMethod: 'POST') { params ->
-        long startTime = System.currentTimeMillis()
-        populateMetadataIteratively()
-        long endTime = System.currentTimeMillis()
-
-        message = "Iterative test took ${startTime - endTime} milliseconds"
-    }
-
-    parallelTest(httpMethod: 'POST') { params ->
-        long startTime = System.currentTimeMillis()
-        populateMetadata()
-        long endTime = System.currentTimeMillis()
-
-        message = "Parallel test Took ${startTime - endTime} milliseconds"
     }
 }
 
@@ -296,16 +272,18 @@ storage {
             String pattern = packageTypePatternManager.getPattern(packageType)
             String path = repoPath.toPath()
             if (FilenameUtils.wildcardMatch(path, pattern)) {
-                Dependency dependency = createDependency(repoPath, packageType)
-                if (null != dependency) {
-                    addDependencyProperties(repoPath, dependency)
+                FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
+                org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+                Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
+                if (optionalDependency.isPresent()) {
+                    Dependency constructedDependency = optionalDependency.get()
+                    addDependencyProperties(repoPath, constructedDependency)
                     setInspectionStatus(repoPath, 'PENDING')
                 }
             }
         } catch (Exception e) {
             log.debug("The blackDuckCacheInspector encountered an unexpected exception", e)
         }
-
     }
 }
 
@@ -346,14 +324,12 @@ void populateMetadata() {
             }
         }
     }
-
 }
 
 void updateMetadata() {
     repoKeysToInspect.each {   repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
-        Date lastNotificationDate = null;
 
         if ('SUCCESS'.equals(inspectionStatus)) {
             try {
@@ -367,7 +343,7 @@ void updateMetadata() {
                 String projectName = getRepoProjectName(repoKey)
                 String projectVersionName = getRepoProjectVersionName(repoKey)
 
-                lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now)
+                Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now)
                 repositories.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
                 repositories.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), getStringFromDate(lastNotificationDate))
             } catch (Exception e) {
@@ -397,16 +373,19 @@ void resolvePendingArtifacts() {
             String inspectionStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
             if (!'SUCCESS'.equals(inspectionStatus)) {
                 try {
-                    Dependency repoPathDependency = createDependency(repoPath, packageType);
-                    if (repoPathDependency != null) {
+                    FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
+                    org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+                    Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
+                    if (optionalDependency.isPresent()) {
                         //TODO: externalidify
+                        Dependency constructedDependency = optionalDependency.get()
                         String hubOriginId = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName());
                         String hubForge = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName());
                         if (StringUtils.isBlank(hubOriginId) || StringUtils.isBlank(hubForge)) {
-                            addDependencyProperties(repoPath, repoPathDependency)
+                            addDependencyProperties(repoPath, constructedDependency)
                             setInspectionStatus(repoPath, 'PENDING')
                         }
-                        addDependencyToProjectVersion(repoPathDependency, projectName, projectVersionName)
+                        addDependencyToProjectVersion(constructedDependency, projectName, projectVersionName)
                         setInspectionStatus(repoPath, 'SUCCESS')
                     }
                 } catch (Exception e) {
@@ -432,10 +411,13 @@ private void createHubProject(String repoKey, String patterns) {
     MutableDependencyGraph mutableDependencyGraph = simpleBdioFactory.createMutableDependencyGraph();
 
     repoPaths.each { repoPath ->
-        Dependency repoPathDependency = createDependency(repoPath, packageType);
-        if (repoPathDependency != null) {
-            addDependencyProperties(repoPath, repoPathDependency)
-            mutableDependencyGraph.addChildToRoot(repoPathDependency)
+        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
+        org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+        Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
+        if (optionalDependency.isPresent()) {
+            Dependency constructedDependency = optionalDependency.get()
+            addDependencyProperties(repoPath, constructedDependency)
+            mutableDependencyGraph.addChildToRoot(constructedDependency)
         }
     }
 
@@ -532,37 +514,6 @@ private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifa
             repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL.getName(), artifactMetaData.componentVersionLink)
         }
     }
-}
-
-private Dependency createDependency(RepoPath repoPath, String packageType) {
-    try {
-        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
-        org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
-
-        if (SupportedPackageType.nuget.name().equals(packageType)) {
-            return dependencyFactory.createNugetDependency(fileLayoutInfo, properties);
-        }
-
-        if (SupportedPackageType.npm.name().equals(packageType)) {
-            return dependencyFactory.createNpmDependency(fileLayoutInfo, properties);
-        }
-
-        if (SupportedPackageType.pypi.name().equals(packageType)) {
-            return dependencyFactory.createPyPiDependency(fileLayoutInfo, properties);
-        }
-
-        if (SupportedPackageType.gems.name().equals(packageType)) {
-            return dependencyFactory.createRubygemsDependency(fileLayoutInfo, properties);
-        }
-
-        if (SupportedPackageType.maven.name().equals(packageType) || SupportedPackageType.gradle.name().equals(packageType)) {
-            return dependencyFactory.createMavenDependency(fileLayoutInfo);
-        }
-    } catch (Exception e) {
-        log.error("Could not resolve dependency:", e);
-    }
-
-    return null
 }
 
 private void initialize() {

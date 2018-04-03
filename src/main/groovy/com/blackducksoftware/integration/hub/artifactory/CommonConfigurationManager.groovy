@@ -192,8 +192,9 @@ class CommonConfigurationManager {
         message = "The CRON job ${cronName}"
         try {
             cronExpression = new CronExpression(cronExpressionString)
-            String nextExecution = cronExpression.getNextValidTimeAfter(new Date()).toString();
-            message += " will be executed next ${nextExecution}"
+            Date soonestExecutionDate = cronExpression.getNextValidTimeAfter(new Date())
+            Date secondSoonestExecutionDate = cronExpression.getNextValidTimeAfter(soonestExecutionDate)
+            message += " will next be executed at ${soonestExecutionDate.toString()}, then ${secondSoonestExecutionDate.toString()}"
         } catch (ParseException e) {
             message += (' is configured with an invalid CRON expression')
         }

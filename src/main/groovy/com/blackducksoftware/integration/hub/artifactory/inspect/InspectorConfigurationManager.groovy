@@ -34,7 +34,6 @@ import org.springframework.util.ResourceUtils
 
 import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
-import com.blackducksoftware.integration.hub.artifactory.scan.ScanPluginProperty
 
 @Component
 class InspectorConfigurationManager {
@@ -180,7 +179,7 @@ class InspectorConfigurationManager {
         return commonConfigurationManager.setValueFromInput(console, out, propertyDescription, inspectorConfig, property)
     }
 
-    String setCronFromInput(Console console, PrintStream out, String propertyDescription, ScanPluginProperty property) {
+    String setCronFromInput(Console console, PrintStream out, String propertyDescription, InspectPluginProperty property) {
         return commonConfigurationManager.setCronFromInput(console, out, propertyDescription, inspectorConfig, property)
     }
 }

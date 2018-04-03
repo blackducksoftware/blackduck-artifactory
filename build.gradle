@@ -43,7 +43,7 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
     
-    compileOnly 'org.quartz-scheduler:quartz:2.2.1'
+    compile 'org.quartz-scheduler:quartz:2.2.1'
     compileOnly 'org.artifactory:artifactory-papi:5.6.2'
     
     testCompile 'org.springframework.boot:spring-boot-starter-test'
@@ -80,7 +80,11 @@ task createFinalZip(type: Zip) {
         into 'plugins/lib'
     }
 
-    from("${buildDir}/libs") { include '*.jar' }
+    from("${buildDir}/libs") { 
+        include '*.jar' 
+        exclude '*sources.jar'
+        exclude '*javadoc.jar'
+    }
 
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
         include 'blackDuckScanForHub.groovy'
@@ -94,12 +98,26 @@ task createFinalZip(type: Zip) {
 
     from(configurations.runtime) {
         exclude 'artifactory-papi*.jar'
+        exclude 'commons-beanutils*.jar'
+        exclude 'commons-codec*.jar'
+        exclude 'commons-collection*.jar'
         exclude 'commons-compress*.jar'
+        exclude 'commons-io*.jar'
+        exclude 'commons-lang3*.jar'
         exclude 'groovy-all*.jar'
         exclude 'gson*.jar'
+        exclude 'httpclient*.jar'
+        exclude 'httpcore*.jar'
+        exclude 'jcl-over-slf4j*.jar'
+        exclude 'joda-time*.jar'
+        exclude 'jul-to-slf4j*.jar'
+        exclude 'log4j-over-slf4j*.jar'
         exclude 'logback*.jar'
+        exclude 'quartz*.jar'
         exclude 'snakeyaml*.jar'
+        exclude 'slf4j-api*.jar'
         exclude 'spring*.jar'
+
         into 'plugins/lib'
     }
 }
