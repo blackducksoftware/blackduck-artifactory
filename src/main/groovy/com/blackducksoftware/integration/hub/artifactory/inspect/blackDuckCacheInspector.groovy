@@ -53,6 +53,7 @@ import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.service.NotificationService
 import com.blackducksoftware.integration.hub.service.ProjectService
+import com.blackducksoftware.integration.hub.service.model.HostnameHelper
 import com.blackducksoftware.integration.hub.service.model.ProjectVersionWrapper
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.util.IntegrationEscapeUtil
@@ -484,7 +485,8 @@ private String getRepoProjectVersionName(String repoKey) {
     if (StringUtils.isNotBlank(projectVersionNameProperty)) {
         return projectVersionNameProperty
     }
-    return InetAddress.getLocalHost().getHostName();
+    Optional<String> optionalHostname = Optional.ofNullable(HostnameHelper.getMyHostname())
+    return optionalHostname.orElse('UNKNOWN_HOST')
 }
 
 private void addDependencyToProjectVersion(Dependency dependency, String projectName, String projectVersionName) {

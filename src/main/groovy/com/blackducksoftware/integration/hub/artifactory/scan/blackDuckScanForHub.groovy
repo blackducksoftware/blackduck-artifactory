@@ -47,6 +47,7 @@ import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.service.SignatureScannerService
+import com.blackducksoftware.integration.hub.service.model.HostnameHelper
 import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuesser
@@ -73,6 +74,7 @@ import groovy.transform.Field
 @Field String artifactCutoffDate
 @Field String blackDuckScanCron
 @Field String blackDuckAddPolicyStatusCron
+@Field boolean useRepoPathAsCodelocationName
 
 initialize()
 
@@ -377,6 +379,12 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     projectRequestBuilder.versionName = version
     hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
+    if (useRepoPathAsCodelocationName) {
+        Optional<String> optionalHostname = Optional.ofNullable(HostnameHelper.getMyHostname())
+        String hostname = optionalHostname.orElse('UNKNOWN_HOST')
+        hubScanConfigBuilder.setCodeLocationAlias("${hostname}#${repoPath.toPath()}")
+    }
+
     HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
     int hubTimeout = hubServicesFactory.getRestConnection().timeout
     SignatureScannerService signatureScannerService = hubServicesFactory.createSignatureScannerService(hubTimeout * 1000)
@@ -561,6 +569,7 @@ private void loadProperties() {
         artifactCutoffDate = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.CUTOFF_DATE)
         blackDuckScanCron = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.SCAN_CRON)
         blackDuckAddPolicyStatusCron = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.ADD_POLICY_STATUS_CRON)
+        useRepoPathAsCodelocationName = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.REPO_PATH_CODELOCATION))
 
         setUpBlackDuckDirectory()
         createHubServicesFactory()

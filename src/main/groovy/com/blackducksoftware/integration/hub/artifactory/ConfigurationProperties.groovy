@@ -145,4 +145,7 @@ class ConfigurationProperties {
     @Value('${hub.artifactory.scan.add.policy.status.cron')
     String hubArtifactoryScanAddPolicyStatusCron
 
+    @Value('${hub.artifactory.scan.repo.path.codelocation}')
+    String hubArtifactoryScanRepoPathCodelocation
+
 }
