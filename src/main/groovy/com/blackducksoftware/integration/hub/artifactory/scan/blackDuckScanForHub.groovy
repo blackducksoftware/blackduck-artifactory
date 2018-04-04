@@ -457,8 +457,15 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName(), versionBomPolicyStatusView.overallStatus.toString())
                     log.info("Added policy status to ${it.name}")
+                    repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
+                    repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), getNowString())
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
+                    def policyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
+                    def overallPolicyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName())
+                    if (StringUtils.isNotBlank(policyStatus) || StringUtils.isNotBlank(overallPolicyStatus)) {
+                        repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
+                    }
                 }
             }
         } catch (Exception e) {
@@ -596,7 +603,7 @@ private void loadRepositoriesToScan() {
 }
 
 private void setUpBlackDuckDirectory() {
-    String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperties().getProperty(ScanPluginProperty.BINARIES_DIRECTORY_PATH)
+    String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.BINARIES_DIRECTORY_PATH)
     if (scanBinariesDirectory) {
         blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.homeDirectory.canonicalPath, scanBinariesDirectory))
     } else {
