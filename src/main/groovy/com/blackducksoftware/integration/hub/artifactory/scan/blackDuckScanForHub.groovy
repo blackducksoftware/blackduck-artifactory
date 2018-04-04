@@ -584,7 +584,7 @@ private void loadRepositoriesToScan() {
 }
 
 private void setUpBlackDuckDirectory() {
-    String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperties().getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
+    String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
     if (scanBinariesDirectory) {
         blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.homeDirectory.canonicalPath, scanBinariesDirectory))
     } else {
