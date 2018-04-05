@@ -403,7 +403,6 @@ private void deletePathArtifact(String fileName){
 }
 
 private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVersionView){
-    HubServicesFactory hubServicesFactory = createHubServicesFactory()
     HubService hubService = hubServicesFactory.createHubService()
     log.info("${repoPath.name} was successfully scanned by the BlackDuck CLI.")
     repositories.setProperty(repoPath, BlackDuckProperty.SCAN_RESULT.getName(), 'SUCCESS')
@@ -465,7 +464,6 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
 private String buildStatusCheckMessage() {
     def connectMessage = 'OK'
     try {
-        HubServicesFactory hubServicesFactory = createHubServicesFactory()
         if (hubServicesFactory == null) {
             connectMessage = 'Could not create the connection to the Hub - you will have to check the artifactory logs.'
         }
