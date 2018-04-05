@@ -490,7 +490,6 @@ private String getRepoProjectVersionName(String repoKey) {
 }
 
 private void addDependencyToProjectVersion(Dependency dependency, String projectName, String projectVersionName) {
-    HubServicesFactory hubServicesFactory = createHubServicesFactory();
     ProjectService projectService = hubServicesFactory.createProjectService();
     projectService.addComponentToProjectVersion(dependency.externalId, projectName, projectVersionName);
 }

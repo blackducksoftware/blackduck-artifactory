@@ -26,7 +26,7 @@ plugins {
     id 'org.springframework.boot' version '1.5.10.RELEASE'
 }
 
-version = '5.0.0-SNAPSHOT'
+version = '5.1.0-SNAPSHOT'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 
@@ -95,6 +95,11 @@ task createFinalZip(type: Zip) {
         include 'blackDuckCacheInspector.groovy'
         into 'plugins'
     }
+    
+    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory") {
+        include 'blackDuckPolicyEnforcer.groovy'
+        into 'plugins'
+    }
 
     from(configurations.runtime) {
         exclude 'artifactory-papi*.jar'
@@ -106,8 +111,9 @@ task createFinalZip(type: Zip) {
         exclude 'commons-lang3*.jar'
         exclude 'groovy-all*.jar'
         exclude 'gson*.jar'
-        exclude 'httpclient*.jar'
-        exclude 'httpcore*.jar'
+        // These should be excluded, but we cannot for now
+        // exclude 'httpclient*.jar'
+        // exclude 'httpcore*.jar'
         exclude 'jcl-over-slf4j*.jar'
         exclude 'joda-time*.jar'
         exclude 'jul-to-slf4j*.jar'
