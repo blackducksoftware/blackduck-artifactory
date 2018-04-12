@@ -31,9 +31,9 @@ import com.blackducksoftware.integration.hub.api.generated.enumeration.PolicySta
 
 download {
     beforeDownload { Request request, RepoPath repoPath ->
-        def policyStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName())
+        def policyStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
         if (PolicyStatusApprovalStatusType.IN_VIOLATION.name().equals(policyStatus)) {
-            throw new CancelException("the artifact ${repoPath.toPath()} violates a policy in your Black Duck Hub.", 403)
+            throw new CancelException("Black Duck Policy Enforcer has prevented the download of ${repoPath.toPath()} because it violates a policy in your Black Duck Hub.", 403)
         }
     }
 }

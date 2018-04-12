@@ -357,41 +357,46 @@ void updateMetadata() {
 
 void resolvePendingArtifacts() {
     repoKeysToInspect.each {  repoKey ->
-        Set repoPaths = new HashSet<>()
-        String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
-        def patternsToFind = patterns.tokenize(',')
-        patternsToFind.each {
-            List<RepoPath> searchResults = searches.artifactsByName(it, repoKey)
-            repoPaths.addAll(searchResults)
-        }
+        RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+        String repoInspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
-        RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
-        String packageType = repositoryConfiguration.getPackageType();
-        String projectName = getRepoProjectName(repoKey)
-        String projectVersionName = getRepoProjectVersionName(repoKey)
+        if ('SUCCESS'.equals(repoInspectionStatus)) {
+            Set repoPaths = new HashSet<>()
+            String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+            def patternsToFind = patterns.tokenize(',')
+            patternsToFind.each {
+                List<RepoPath> searchResults = searches.artifactsByName(it, repoKey)
+                repoPaths.addAll(searchResults)
+            }
 
-        repoPaths.each { repoPath ->
-            String inspectionStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
-            if (!'SUCCESS'.equals(inspectionStatus)) {
-                try {
-                    FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
-                    org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
-                    Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
-                    if (optionalDependency.isPresent()) {
-                        //TODO: externalidify
-                        Dependency constructedDependency = optionalDependency.get()
-                        String hubOriginId = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName());
-                        String hubForge = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName());
-                        if (StringUtils.isBlank(hubOriginId) || StringUtils.isBlank(hubForge)) {
-                            addDependencyProperties(repoPath, constructedDependency)
-                            setInspectionStatus(repoPath, 'PENDING')
+            RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
+            String packageType = repositoryConfiguration.getPackageType();
+            String projectName = getRepoProjectName(repoKey)
+            String projectVersionName = getRepoProjectVersionName(repoKey)
+
+            repoPaths.each { repoPath ->
+                String inspectionStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
+                if (!'SUCCESS'.equals(inspectionStatus)) {
+                    try {
+                        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
+                        org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+                        Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
+                        if (optionalDependency.isPresent()) {
+                            //TODO: externalidify
+                            Dependency constructedDependency = optionalDependency.get()
+                            String hubOriginId = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName());
+                            String hubForge = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName());
+                            if (StringUtils.isBlank(hubOriginId) || StringUtils.isBlank(hubForge)) {
+                                addDependencyProperties(repoPath, constructedDependency)
+                                setInspectionStatus(repoPath, 'PENDING')
+                            }
+                            addDependencyToProjectVersion(constructedDependency, projectName, projectVersionName)
+                            setInspectionStatus(repoPath, 'SUCCESS')
                         }
-                        addDependencyToProjectVersion(constructedDependency, projectName, projectVersionName)
-                        setInspectionStatus(repoPath, 'SUCCESS')
+                    } catch (Exception e) {
+                        setInspectionStatus(repoPath, 'FAILURE')
+                        log.debug("The blackDuckCacheInspector could not successfully inspect ${repoPath}:", e)
                     }
-                } catch (Exception e) {
-                    setInspectionStatus(repoPath, 'FAILURE')
-                    log.debug("The blackDuckCacheInspector could not successfully inspect ${repoPath}:", e)
                 }
             }
         }
@@ -436,6 +441,10 @@ private void createHubProject(String repoKey, String patterns) {
 
     CodeLocationService codeLocationService = hubServicesFactory.createCodeLocationService();
     codeLocationService.importBomFile(bdioFile);
+
+    repoPaths.each { repoPath ->
+        setInspectionStatus(repoPath, 'SUCCESS')
+    }
 }
 
 private void populateFromHubProject(String repoKey, String projectName, String projectVersionName) {
@@ -503,16 +512,18 @@ private void addDependencyProperties(RepoPath repoPath, Dependency dependency) {
 
 private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifactMetaDataList) {
     artifactMetaDataList.each { artifactMetaData ->
-        SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put(BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName(), artifactMetaData.originId);
-        setMultimap.put(BlackDuckArtifactoryProperty.HUB_FORGE.getName(), artifactMetaData.forge);
-        List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
-        artifactsWithOriginId.each { repoPath ->
-            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
-            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus.toString())
-            repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL.getName(), artifactMetaData.componentVersionLink)
+        if (StringUtils.isNotBlank(artifactMetaData.originId) && StringUtils.isNotBlank(artifactMetaData.forge)) {
+            SetMultimap<String,String> setMultimap = new HashMultimap<>();
+            setMultimap.put(BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName(), artifactMetaData.originId);
+            setMultimap.put(BlackDuckArtifactoryProperty.HUB_FORGE.getName(), artifactMetaData.forge);
+            List<RepoPath> artifactsWithOriginId = searches.itemsByProperties(setMultimap, repoKey)
+            artifactsWithOriginId.each { repoPath ->
+                repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.highSeverityCount))
+                repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.mediumSeverityCount))
+                repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES.getName(), Integer.toString(artifactMetaData.lowSeverityCount))
+                repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), artifactMetaData.policyStatus.toString())
+                repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL.getName(), artifactMetaData.componentVersionLink)
+            }
         }
     }
 }
@@ -520,7 +531,7 @@ private void addOriginIdProperties(String repoKey, List<ArtifactMetaData> artifa
 private void initialize() {
     packageTypePatternManager = new PackageTypePatternManager()
     dependencyFactory = new DependencyFactory()
-    artifactMetaDataManager = new ArtifactMetaDataManager()
+    artifactMetaDataManager = new ArtifactMetaDataManager(new Slf4jIntLogger(log))
     repoPathFactory = new RepoPathFactory()
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
