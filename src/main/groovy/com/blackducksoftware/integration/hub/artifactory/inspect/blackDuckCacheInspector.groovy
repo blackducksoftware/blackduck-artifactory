@@ -289,7 +289,7 @@ storage {
 }
 
 void identifyArtifacts() {
-    repoKeysToInspect.each {  repoKey ->
+    repoKeysToInspect.each { repoKey ->
         String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
@@ -307,7 +307,7 @@ void identifyArtifacts() {
 }
 
 void populateMetadata() {
-    repoKeysToInspect.each {  repoKey ->
+    repoKeysToInspect.each { repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
@@ -328,7 +328,7 @@ void populateMetadata() {
 }
 
 void updateMetadata() {
-    repoKeysToInspect.each {   repoKey ->
+    repoKeysToInspect.each { repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
