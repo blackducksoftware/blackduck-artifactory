@@ -78,7 +78,7 @@ task createFinalZip(type: Zip) {
     from("${buildDir}/libs") { 
         include '*.jar' 
         exclude '*sources.jar'
-        exclude '*javadoc.jar'    
+        exclude '*javadoc.jar'
     }
 
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
@@ -93,7 +93,7 @@ task createFinalZip(type: Zip) {
 
     from(configurations.runtime) {
         exclude 'artifactory-papi*.jar'
-        exclude 'comons-beanutils*.jar'
+        exclude 'commons-beanutils*.jar'
         exclude 'commons-codec*.jar'
         exclude 'commons-collection*.jar'
         exclude 'commons-compress*.jar'
@@ -112,7 +112,7 @@ task createFinalZip(type: Zip) {
         exclude 'snakeyaml*.jar'
         exclude 'slf4j-api*.jar'
         exclude 'spring*.jar'
-        
+
         into 'plugins/lib'
     }
 }
