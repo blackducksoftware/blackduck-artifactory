@@ -356,7 +356,7 @@ void updateMetadata() {
 }
 
 void resolvePendingArtifacts() {
-    repoKeysToInspect.each {  repoKey ->
+    repoKeysToInspect.each { repoKey ->
         RepoPath repoKeyPath = repoPathFactory.create(repoKey)
         String repoInspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
@@ -469,12 +469,12 @@ private Date updateFromHubProjectNotifications(String repoKey, String projectNam
 }
 
 private void deleteInspectionProperties(String repoKey) {
-    BlackDuckArtifactoryProperty.values().each { blackDuckProperty ->
+    BlackDuckArtifactoryProperty.values().each { blackDuckArtifactoryProperty ->
         SetMultimap<String,String> setMultimap = new HashMultimap<>();
-        setMultimap.put(blackDuckProperty.getName(), '*');
+        setMultimap.put(blackDuckArtifactoryProperty.getName(), '*');
         List<RepoPath> repoPathsWithProperty = searches.itemsByProperties(setMultimap, repoKey)
         repoPathsWithProperty.each { repoPath ->
-            repositories.deleteProperty(repoPath, blackDuckProperty.getName())
+            repositories.deleteProperty(repoPath, blackDuckArtifactoryProperty.getName())
         }
     }
 }
