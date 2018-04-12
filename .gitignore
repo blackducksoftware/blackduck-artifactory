@@ -8,6 +8,8 @@
 bin/
 .idea
 *.iml
+*.ipr
+*.iws
 
 # build tool
 .gradle/

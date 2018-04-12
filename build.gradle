@@ -31,7 +31,7 @@ version = '5.0.0-SNAPSHOT'
 apply plugin: 'com.blackducksoftware.integration.solution'
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.0.19'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.1.0'
     
     compile 'org.apache.commons:commons-configuration2:2.2'
     compile 'commons-beanutils:commons-beanutils:1.9.3'
@@ -75,7 +75,11 @@ task createFinalZip(type: Zip) {
         into 'plugins/lib'
     }
 
-    from("${buildDir}/libs") { include '*.jar' }
+    from("${buildDir}/libs") { 
+        include '*.jar' 
+        exclude '*sources.jar'
+        exclude '*javadoc.jar'    
+    }
 
     from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
         include 'blackDuckScanForHub.groovy'
@@ -89,12 +93,26 @@ task createFinalZip(type: Zip) {
 
     from(configurations.runtime) {
         exclude 'artifactory-papi*.jar'
+        exclude 'comons-beanutils*.jar'
+        exclude 'commons-codec*.jar'
+        exclude 'commons-collection*.jar'
         exclude 'commons-compress*.jar'
+        exclude 'commons-io*.jar'
+        exclude 'commons-lang3*.jar'
         exclude 'groovy-all*.jar'
         exclude 'gson*.jar'
+        // These should be excluded, but we cannot until Artifactory updates them
+        // exclude 'httpclient*.jar'
+        // exclude 'httpcore*.jar'
+        exclude 'jcl-over-slf4j*.jar'
+        exclude 'joda-time*.jar'
+        exclude 'jul-to-slf4j*.jar'
+        exclude 'log4j-over-slf4j*.jar'
         exclude 'logback*.jar'
         exclude 'snakeyaml*.jar'
+        exclude 'slf4j-api*.jar'
         exclude 'spring*.jar'
+        
         into 'plugins/lib'
     }
 }

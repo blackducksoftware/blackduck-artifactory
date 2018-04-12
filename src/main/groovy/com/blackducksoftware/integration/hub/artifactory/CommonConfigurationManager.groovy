@@ -51,22 +51,22 @@ class CommonConfigurationManager {
     }
 
     void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {
-        configurationProperties.blackduckHubUrl = setValueFromInput(console, out, 'Hub Server Url', config, PluginProperty.BLACKDUCK_HUB_URL)
-        configurationProperties.blackduckHubApiToken = setValueFromInput(console, out, 'Hub Server API Token', config, PluginProperty.BLACKDUCK_HUB_API_TOKEN)
+        configurationProperties.blackduckHubUrl = setValueFromInput(console, out, 'Hub Server Url', config, BlackDuckHubProperty.URL)
+        configurationProperties.blackduckHubApiToken = setValueFromInput(console, out, 'Hub Server API Token', config, BlackDuckHubProperty.API_TOKEN)
         if (StringUtils.isBlank(configurationProperties.blackduckHubApiToken)) {
-            configurationProperties.blackduckHubUsername = setValueFromInput(console, out, 'Hub Server Username', config, PluginProperty.BLACKDUCK_HUB_USERNAME)
-            configurationProperties.blackduckHubPassword = setValueFromInput(console, out, 'Hub Server Password', config, PluginProperty.BLACKDUCK_HUB_PASSWORD)
+            configurationProperties.blackduckHubUsername = setValueFromInput(console, out, 'Hub Server Username', config, BlackDuckHubProperty.USERNAME)
+            configurationProperties.blackduckHubPassword = setValueFromInput(console, out, 'Hub Server Password', config, BlackDuckHubProperty.PASSWORD)
         }
-        configurationProperties.blackduckHubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, PluginProperty.BLACKDUCK_HUB_TIMEOUT)
-        configurationProperties.blackduckHubTrustCert = setValueFromInput(console, out, 'Always Trust Server Certificates', config, PluginProperty.BLACKDUCK_HUB_TRUST_CERT)
+        configurationProperties.blackduckHubTimeout = setValueFromInput(console, out, 'Hub Server Timeout', config, BlackDuckHubProperty.TIMEOUT)
+        configurationProperties.blackduckHubTrustCert = setValueFromInput(console, out, 'Always Trust Server Certificates', config, BlackDuckHubProperty.TRUST_CERT)
 
         out.println('If you wish to set up proxy details, enter \'y\'. Otherwise, just press <enter> to continue.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.blackduckHubProxyHost = setValueFromInput(console, out, 'Proxy Host', config, PluginProperty.BLACKDUCK_HUB_PROXY_HOST)
-            configurationProperties.blackduckHubProxyPort = setValueFromInput(console, out, 'Proxy Port', config, PluginProperty.BLACKDUCK_HUB_PROXY_PORT)
-            configurationProperties.blackduckHubProxyUsername = setValueFromInput(console, out, 'Proxy Username', config, PluginProperty.BLACKDUCK_HUB_PROXY_USERNAME)
-            configurationProperties.blackduckHubProxyPassword = setValueFromInput(console, out, 'Proxy Password', config, PluginProperty.BLACKDUCK_HUB_PROXY_PASSWORD)
+            configurationProperties.blackduckHubProxyHost = setValueFromInput(console, out, 'Proxy Host', config, BlackDuckHubProperty.PROXY_HOST)
+            configurationProperties.blackduckHubProxyPort = setValueFromInput(console, out, 'Proxy Port', config, BlackDuckHubProperty.PROXY_PORT)
+            configurationProperties.blackduckHubProxyUsername = setValueFromInput(console, out, 'Proxy Username', config, BlackDuckHubProperty.PROXY_USERNAME)
+            configurationProperties.blackduckHubProxyPassword = setValueFromInput(console, out, 'Proxy Password', config, BlackDuckHubProperty.PROXY_PASSWORD)
         }
         persistCommonProperties(config, outputFile)
 
@@ -106,21 +106,21 @@ class CommonConfigurationManager {
     }
 
     void persistCommonProperties(PropertiesConfiguration config, File outputFile) {
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_URL.getKey(), configurationProperties.blackduckHubUrl)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_TIMEOUT.getKey(), configurationProperties.blackduckHubTimeout)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_API_TOKEN.getKey(), configurationProperties.blackduckHubApiToken)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_USERNAME.getKey(), configurationProperties.blackduckHubUsername)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_PASSWORD.getKey(), configurationProperties.blackduckHubPassword)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_TRUST_CERT.getKey(), configurationProperties.blackduckHubTrustCert)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_PROXY_HOST.getKey(), configurationProperties.blackduckHubProxyHost)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_PROXY_PORT.getKey(), configurationProperties.blackduckHubProxyPort)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_PROXY_USERNAME.getKey(), configurationProperties.blackduckHubProxyUsername)
-        config.setProperty(PluginProperty.BLACKDUCK_HUB_PROXY_PASSWORD.getKey(), configurationProperties.blackduckHubProxyPassword)
+        config.setProperty(BlackDuckHubProperty.URL.getKey(), configurationProperties.blackduckHubUrl)
+        config.setProperty(BlackDuckHubProperty.TIMEOUT.getKey(), configurationProperties.blackduckHubTimeout)
+        config.setProperty(BlackDuckHubProperty.API_TOKEN.getKey(), configurationProperties.blackduckHubApiToken)
+        config.setProperty(BlackDuckHubProperty.USERNAME.getKey(), configurationProperties.blackduckHubUsername)
+        config.setProperty(BlackDuckHubProperty.PASSWORD.getKey(), configurationProperties.blackduckHubPassword)
+        config.setProperty(BlackDuckHubProperty.TRUST_CERT.getKey(), configurationProperties.blackduckHubTrustCert)
+        config.setProperty(BlackDuckHubProperty.PROXY_HOST.getKey(), configurationProperties.blackduckHubProxyHost)
+        config.setProperty(BlackDuckHubProperty.PROXY_PORT.getKey(), configurationProperties.blackduckHubProxyPort)
+        config.setProperty(BlackDuckHubProperty.PROXY_USERNAME.getKey(), configurationProperties.blackduckHubProxyUsername)
+        config.setProperty(BlackDuckHubProperty.PROXY_PASSWORD.getKey(), configurationProperties.blackduckHubProxyPassword)
 
         persistConfigToFile(config, outputFile)
     }
 
-    String setValueFromInput(Console console, PrintStream out, String propertyDescription, PropertiesConfiguration config, PluginProperty property) {
+    String setValueFromInput(Console console, PrintStream out, String propertyDescription, PropertiesConfiguration config, ConfigurationProperty property) {
         return setValueFromInput(console, out, propertyDescription, config.getString(property.getKey()))
     }
 

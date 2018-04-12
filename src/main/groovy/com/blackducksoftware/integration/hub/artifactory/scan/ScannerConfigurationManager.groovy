@@ -34,7 +34,6 @@ import org.springframework.util.ResourceUtils
 
 import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
-import com.blackducksoftware.integration.hub.artifactory.PluginProperty
 
 @Component
 class ScannerConfigurationManager {
@@ -76,21 +75,21 @@ class ScannerConfigurationManager {
     void updateValues(Console console, PrintStream out) {
         commonConfigurationManager.updateBaseConfigValues(scannerConfig, scannerPropertiesFile, console, out)
 
-        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH)
-        configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Scan Memory Allocation', PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY)
-        configurationProperties.hubArtifactoryScanDryRun = setValueFromInput(console, out, 'Scan Dry Run', PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN)
-        configurationProperties.hubArtifactoryScanDateTimePattern = setValueFromInput(console, out, 'Scan Date Time Pattern', PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN)
-        configurationProperties.hubArtifactoryScanCutoffDate = setValueFromInput(console, out, 'Scan Cutoff Date', PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE)
-        configurationProperties.hubArtifactoryScanNamePatterns = setValueFromInput(console, out, 'Scan Artifact Patterns', PluginProperty.HUB_ARTIFACTORY_SCAN_NAME_PATTERNS)
+        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', ScanPluginProperty.BINARIES_DIRECTORY_PATH)
+        configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Scan Memory Allocation', ScanPluginProperty.MEMORY)
+        configurationProperties.hubArtifactoryScanDryRun = setValueFromInput(console, out, 'Scan Dry Run', ScanPluginProperty.DRY_RUN)
+        configurationProperties.hubArtifactoryScanDateTimePattern = setValueFromInput(console, out, 'Scan Date Time Pattern', ScanPluginProperty.DATE_TIME_PATTERN)
+        configurationProperties.hubArtifactoryScanCutoffDate = setValueFromInput(console, out, 'Scan Cutoff Date', ScanPluginProperty.CUTOFF_DATE)
+        configurationProperties.hubArtifactoryScanNamePatterns = setValueFromInput(console, out, 'Scan Artifact Patterns', ScanPluginProperty.NAME_PATTERNS)
 
         String reposToSearch = configurationProperties.hubArtifactoryScanRepositoriesList
         out.println('The artifactory scanner can be configured to either read a list of repositories to scan, or a file containing a comma separated list of repositories.')
         out.println('If you would like to provide a path to a file, enter \'y\' now. Otherwise, just press <enter> to manually add a list of repositories.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.hubArtifactoryScanRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan',PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS_CSV_PATH)
+            configurationProperties.hubArtifactoryScanRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan',ScanPluginProperty.REPOS_CSV_PATH)
         } else {
-            configurationProperties.hubArtifactoryScanRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Scan', PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS)
+            configurationProperties.hubArtifactoryScanRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Scan', ScanPluginProperty.REPOS)
             configurationProperties.hubArtifactoryScanRepositoriesCsvPath = ''
         }
 
@@ -128,19 +127,19 @@ class ScannerConfigurationManager {
     }
 
     void persistScannerProperties() {
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_NAME_PATTERNS.getKey(), configurationProperties.hubArtifactoryScanNamePatterns)
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_MEMORY.getKey(), configurationProperties.hubArtifactoryScanMemory)
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DRY_RUN.getKey(), configurationProperties.hubArtifactoryScanDryRun)
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS.getKey(), configurationProperties.hubArtifactoryScanRepositoriesList)
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryScanRepositoriesCsvPath)
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_BINARIES_DIRECTORY_PATH.getKey(), configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryScanDateTimePattern)
-        scannerConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE.getKey(), configurationProperties.hubArtifactoryScanCutoffDate)
+        scannerConfig.setProperty(ScanPluginProperty.NAME_PATTERNS.getKey(), configurationProperties.hubArtifactoryScanNamePatterns)
+        scannerConfig.setProperty(ScanPluginProperty.MEMORY.getKey(), configurationProperties.hubArtifactoryScanMemory)
+        scannerConfig.setProperty(ScanPluginProperty.DRY_RUN.getKey(), configurationProperties.hubArtifactoryScanDryRun)
+        scannerConfig.setProperty(ScanPluginProperty.REPOS.getKey(), configurationProperties.hubArtifactoryScanRepositoriesList)
+        scannerConfig.setProperty(ScanPluginProperty.REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryScanRepositoriesCsvPath)
+        scannerConfig.setProperty(ScanPluginProperty.BINARIES_DIRECTORY_PATH.getKey(), configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
+        scannerConfig.setProperty(ScanPluginProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryScanDateTimePattern)
+        scannerConfig.setProperty(ScanPluginProperty.CUTOFF_DATE.getKey(), configurationProperties.hubArtifactoryScanCutoffDate)
 
         commonConfigurationManager.persistConfigToFile(scannerConfig, scannerPropertiesFile)
     }
 
-    String setValueFromInput(Console console, PrintStream out, String propertyDescription, PluginProperty property) {
+    String setValueFromInput(Console console, PrintStream out, String propertyDescription, ScanPluginProperty property) {
         return commonConfigurationManager.setValueFromInput(console, out, propertyDescription, scannerConfig, property)
     }
 }
