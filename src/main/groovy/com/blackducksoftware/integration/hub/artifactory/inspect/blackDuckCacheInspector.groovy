@@ -52,10 +52,12 @@ import com.blackducksoftware.integration.hub.service.CodeLocationService
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.service.NotificationService
+import com.blackducksoftware.integration.hub.service.PhoneHomeService
 import com.blackducksoftware.integration.hub.service.ProjectService
 import com.blackducksoftware.integration.hub.service.model.HostnameHelper
 import com.blackducksoftware.integration.hub.service.model.ProjectVersionWrapper
 import com.blackducksoftware.integration.log.Slf4jIntLogger
+import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBody
 import com.blackducksoftware.integration.util.IntegrationEscapeUtil
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.SetMultimap
@@ -445,6 +447,8 @@ private void createHubProject(String repoKey, String patterns) {
     repoPaths.each { repoPath ->
         setInspectionStatus(repoPath, 'SUCCESS')
     }
+
+    phoneHome()
 }
 
 private void populateFromHubProject(String repoKey, String projectName, String projectVersionName) {
@@ -464,6 +468,8 @@ private Date updateFromHubProjectNotifications(String repoKey, String projectNam
     ProjectVersionWrapper projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
     ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataManager.getMetaDataFromNotifications(repoKey, hubService, notificationService, projectVersionWrapper.getProjectVersionView(), startDate, endDate)
     addOriginIdProperties(repoKey, artifactMetaDataFromNotifications.getArtifactMetaData());
+
+    phoneHome()
 
     return artifactMetaDataFromNotifications.getLastNotificationDate();
 }
@@ -614,7 +620,20 @@ private Date getDateFromString(String dateTimeString) {
     DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
 }
 
-private setInspectionStatus(RepoPath repoPath, String status) {
+private void setInspectionStatus(RepoPath repoPath, String status) {
     repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), status)
     repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION.getName(), getNowString())
+}
+
+private void phoneHome() {
+    try {
+        Optional<String> thirdPartyVersion = Optional.ofNullable(ctx?.versionProvider?.running?.versionName)
+        Optional<String> pluginVersion = Optional.ofNullable(blackDuckArtifactoryConfig.getVersionFile()?.text)
+        PhoneHomeService phoneHomeService = hubServicesFactory.createPhoneHomeService()
+        PhoneHomeRequestBody.Builder phoneHomeRequestBodyBuilder = phoneHomeService.createInitialPhoneHomeRequestBodyBuilder('hub-artifactory', pluginVersion.orElse('UNKNOWN_VERSION'))
+        phoneHomeRequestBodyBuilder.addToMetaData('artifactory.version', thirdPartyVersion.orElse('UNKNOWN_VERSION'))
+        phoneHomeRequestBodyBuilder.addToMetaData('hub.artifactory.plugin', 'blackDuckCacheInspector')
+        phoneHomeService.phoneHome(phoneHomeRequestBodyBuilder)
+    } catch(Exception e) {
+    }
 }
