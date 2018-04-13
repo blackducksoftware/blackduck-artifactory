@@ -46,13 +46,14 @@ import com.blackducksoftware.integration.hub.exception.HubIntegrationException
 import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
+import com.blackducksoftware.integration.hub.service.PhoneHomeService
 import com.blackducksoftware.integration.hub.service.SignatureScannerService
 import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuesser
 import com.blackducksoftware.integration.hub.service.model.ProjectRequestBuilder
 import com.blackducksoftware.integration.log.Slf4jIntLogger
-import com.blackducksoftware.integration.phonehome.enums.ThirdPartyName
+import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBody
 import com.blackducksoftware.integration.util.ResourceUtil
 
 import groovy.transform.Field
@@ -382,15 +383,10 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
 
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     ProjectRequest projectRequest = projectRequestBuilder.build()
-    String thirdPartyVersion = '???'
-    String pluginVersion = '???'
-    try {
-        thirdPartyVersion = ctx?.versionProvider?.running?.versionName
-        pluginVersion = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, 'version.txt')?.text
-    } catch(Exception e) {
-    }
 
-    signatureScannerService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false, ThirdPartyName.ARTIFACTORY, thirdPartyVersion, pluginVersion)
+    signatureScannerService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false)
+
+    phoneHome()
 }
 
 private void deletePathArtifact(String fileName){
@@ -447,6 +443,7 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName(), versionBomPolicyStatusView.overallStatus.toString())
                     log.info("Added policy status to ${it.name}")
+                    phoneHome()
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
                 }
@@ -598,4 +595,17 @@ private String getNowString() {
 
 private long getTimeFromString(String dateTimeString) {
     DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate().time
+}
+
+private void phoneHome() {
+    try {
+        Optional<String> thirdPartyVersion = Optional.ofNullable(ctx?.versionProvider?.running?.versionName)
+        Optional<String> pluginVersion = Optional.ofNullable(blackDuckArtifactoryConfig.getVersionFile()?.text)
+        PhoneHomeService phoneHomeService = hubServicesFactory.createPhoneHomeService()
+        PhoneHomeRequestBody.Builder phoneHomeRequestBodyBuilder = phoneHomeService.createInitialPhoneHomeRequestBodyBuilder('hub-artifactory', pluginVersion.orElse('UNKNOWN_VERSION'))
+        phoneHomeRequestBodyBuilder.addToMetaData('artifactory.version', thirdPartyVersion.orElse('UNKNOWN_VERSION'))
+        phoneHomeRequestBodyBuilder.addToMetaData('hub.artifactory.plugin', 'blackDuckScanForHub')
+        phoneHomeService.phoneHome(phoneHomeRequestBodyBuilder)
+    } catch(Exception e) {
+    }
 }
