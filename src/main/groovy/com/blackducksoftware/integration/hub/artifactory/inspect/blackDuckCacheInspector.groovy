@@ -73,7 +73,6 @@ import groovy.transform.Field
 @Field DependencyFactory dependencyFactory
 @Field ArtifactMetaDataManager artifactMetaDataManager
 @Field HubServicesFactory hubServicesFactory
-@Field RepoPathFactory repoPathFactory
 
 @Field List<String> repoKeysToInspect
 @Field String dateTimePattern
@@ -271,8 +270,8 @@ storage {
             String pattern = packageTypePatternManager.getPattern(packageType)
             String path = repoPath.toPath()
             if (FilenameUtils.wildcardMatch(path, pattern)) {
-                FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
-                org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+                FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
+                org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
                 Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
                 if (optionalDependency.isPresent()) {
                     Dependency constructedDependency = optionalDependency.get()
@@ -290,7 +289,7 @@ storage {
 void identifyArtifacts() {
     repoKeysToInspect.each { repoKey ->
         String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
-        RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+        RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
         if (StringUtils.isBlank(inspectionStatus)) {
@@ -307,7 +306,7 @@ void identifyArtifacts() {
 
 void populateMetadata() {
     repoKeysToInspect.each { repoKey ->
-        RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+        RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
         if ('PENDING'.equals(inspectionStatus)) {
@@ -328,7 +327,7 @@ void populateMetadata() {
 
 void updateMetadata() {
     repoKeysToInspect.each { repoKey ->
-        RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+        RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
         if ('SUCCESS'.equals(inspectionStatus)) {
@@ -356,7 +355,7 @@ void updateMetadata() {
 
 void resolvePendingArtifacts() {
     repoKeysToInspect.each { repoKey ->
-        RepoPath repoKeyPath = repoPathFactory.create(repoKey)
+        RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
         String repoInspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
         if ('SUCCESS'.equals(repoInspectionStatus)) {
@@ -535,7 +534,6 @@ private void initialize() {
     packageTypePatternManager = new PackageTypePatternManager()
     dependencyFactory = new DependencyFactory()
     artifactMetaDataManager = new ArtifactMetaDataManager(new Slf4jIntLogger(log))
-    repoPathFactory = new RepoPathFactory()
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
 
@@ -594,6 +592,19 @@ private void loadRepositoriesToInspect() {
     } else if (repositoriesToInspect) {
         repoKeysToInspect.addAll(repositoriesToInspect.split(','))
     }
+
+    List<String> invalidRepoKeys = []
+
+    repoKeysToInspect.each { repoKey ->
+        def repoKeyPath = RepoPathFactory.create(repoKey)
+        def repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey)
+        if (!repositories.exists(repoKeyPath) || !repositoryConfiguration) {
+            invalidRepoKeys.add(repoKey)
+            log.warn("Black Duck Cache Inspector will ignore configured repository \'${repoKey}\': Repository was not found or is not a valid repository.")
+        }
+    }
+
+    repoKeysToInspect.removeAll(invalidRepoKeys)
 }
 
 private String getNowString() {
