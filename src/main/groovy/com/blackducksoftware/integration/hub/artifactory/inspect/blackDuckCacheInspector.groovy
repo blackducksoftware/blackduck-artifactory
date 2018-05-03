@@ -378,9 +378,9 @@ void resolvePendingArtifacts() {
                     try {
                         FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
                         org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+                        //TODO: we only *really* need the ExternalId here, but right now we are creating a whole Dependency
                         Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
                         if (optionalDependency.isPresent()) {
-                            //TODO: externalidify
                             Dependency constructedDependency = optionalDependency.get()
                             String hubOriginId = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName());
                             String hubForge = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName());
@@ -541,7 +541,7 @@ private void initialize() {
 }
 
 private void loadProperties() {
-    def propertiesFile
+    final File propertiesFile
     if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
         propertiesFile = new File(propertiesFilePathOverride);
     } else {
