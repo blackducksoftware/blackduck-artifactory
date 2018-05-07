@@ -7,33 +7,24 @@ buildscript {
 
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE'
-        classpath 'org.apache.commons:commons-configuration2:2.2'
-        classpath 'commons-beanutils:commons-beanutils:1.9.3'
-        classpath 'com.blackducksoftware.integration:hub-artifactory-common:0.0.17'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.0.1.RELEASE'
     }
 }
-import org.apache.commons.configuration2.PropertiesConfiguration
-import org.apache.commons.configuration2.builder.fluent.Configurations
-import org.apache.commons.configuration2.io.FileHandler
-import com.blackducksoftware.integration.hub.artifactory.PluginProperty
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
+
 
 plugins {
     id 'groovy'
-    id 'org.springframework.boot' version '1.5.10.RELEASE'
 }
 
 version = '5.0.1-SNAPSHOT'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.1.1'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.1.2'
     
-    compile 'com.blackducksoftware.integration:hub-common:30.0.1'
     compile 'org.apache.commons:commons-configuration2:2.2'
     compile 'commons-beanutils:commons-beanutils:1.9.3'
 
@@ -49,19 +40,7 @@ def versionFile = new File("${projectDir}/src/main/resources/version.txt")
 versionFile.delete()
 versionFile << version
 
-task generateScanConfig {
-    doLast {
-        def configs = new Configurations()
-        def scanConfigFile = new File("${projectDir}/src/main/resources/blackDuckScanForHub.properties")
-        PropertiesConfiguration scanConfig = configs.properties(scanConfigFile)
-        def dateTimePattern = scanConfig.getString(PluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN.getKey())
-        String nowString = DateTime.now().toLocalDate().toDateTimeAtStartOfDay(DateTimeZone.UTC).minusYears(1).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
-        scanConfig.setProperty(PluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE.getKey(), nowString)
-        FileHandler handler = new FileHandler(scanConfig)
-        handler.save(new File("${projectDir}/build/configs/blackDuckScanForHub.properties"))
-    }
-}
-
+apply from: 'generateScanConfig.gradle'
 
 task createFinalZip(type: Zip) {
     dependsOn build, generateScanConfig
@@ -118,4 +97,4 @@ task createFinalZip(type: Zip) {
     }
 }
 
-springBoot { mainClass = 'com.blackducksoftware.integration.hub.artifactory.Application' }
+springBoot { mainClassName = 'com.blackducksoftware.integration.hub.artifactory.Application' }
