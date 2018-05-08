@@ -24,9 +24,9 @@ task generateScanConfig {
         def configs = new Configurations()
         def scanConfigFile = new File("${projectDir}/src/main/resources/blackDuckScanForHub.properties")
         PropertiesConfiguration scanConfig = configs.properties(scanConfigFile)
-        def dateTimePattern = scanConfig.getString(ScanPluginProperty.HUB_ARTIFACTORY_SCAN_DATE_TIME_PATTERN.getKey())
+        def dateTimePattern = scanConfig.getString(ScanPluginProperty.DATE_TIME_PATTERN.getKey())
         String nowString = DateTime.now().toLocalDate().toDateTimeAtStartOfDay(DateTimeZone.UTC).minusYears(1).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
-        scanConfig.setProperty(ScanPluginProperty.HUB_ARTIFACTORY_SCAN_CUTOFF_DATE.getKey(), nowString)
+        scanConfig.setProperty(ScanPluginProperty.CUTOFF_DATE.getKey(), nowString)
         FileHandler handler = new FileHandler(scanConfig)
         handler.save(new File("${projectDir}/build/configs/blackDuckScanForHub.properties"))
     }
