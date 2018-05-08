@@ -28,6 +28,7 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.repo.RepoPath
+import org.artifactory.repo.RepoPathFactory
 import org.artifactory.resource.ResourceStreamHandle
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -595,6 +596,18 @@ private void loadRepositoriesToScan() {
     } else if (repositoriesToScan) {
         repoKeysToScan.addAll(repositoriesToScan.split(','))
     }
+
+    List<String> invalidRepoKeys = []
+    repoKeysToScan.each { repoKey ->
+        def repoKeyPath = RepoPathFactory.create(repoKey)
+        def repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey)
+        if(!repositories.exists(repoKeyPath) || !repositoryConfiguration) {
+            invalidRepoKeys.add(repoKey)
+            log.warn("Black Duck Scan For Hub will not scan artifacts in configured repository \'${repoKey}\': Repository was not found or is not a valid repository.")
+        }
+    }
+
+    repoKeysToScan.removeAll(invalidRepoKeys)
 }
 
 private void setUpBlackDuckDirectory() {

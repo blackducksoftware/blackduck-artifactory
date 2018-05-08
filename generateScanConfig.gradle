@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+    
+    dependencies {        
+        classpath 'org.apache.commons:commons-configuration2:2.2'
+        classpath 'commons-beanutils:commons-beanutils:1.9.3'
+        classpath 'com.blackducksoftware.integration:hub-artifactory-common:0.1.2'
+    }
+}
+import org.apache.commons.configuration2.PropertiesConfiguration
+import org.apache.commons.configuration2.builder.fluent.Configurations
+import org.apache.commons.configuration2.io.FileHandler
+import com.blackducksoftware.integration.hub.artifactory.scan.ScanPluginProperty
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
+
+task generateScanConfig {
+    doLast {
+        def configs = new Configurations()
+        def scanConfigFile = new File("${projectDir}/src/main/resources/blackDuckScanForHub.properties")
+        PropertiesConfiguration scanConfig = configs.properties(scanConfigFile)
+        def dateTimePattern = scanConfig.getString(ScanPluginProperty.DATE_TIME_PATTERN.getKey())
+        String nowString = DateTime.now().toLocalDate().toDateTimeAtStartOfDay(DateTimeZone.UTC).minusYears(1).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+        scanConfig.setProperty(ScanPluginProperty.CUTOFF_DATE.getKey(), nowString)
+        FileHandler handler = new FileHandler(scanConfig)
+        handler.save(new File("${projectDir}/build/configs/blackDuckScanForHub.properties"))
+    }
+}

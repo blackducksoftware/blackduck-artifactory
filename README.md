@@ -1,8 +1,12 @@
 ## Overview ##
-The hub-artifactory plugin lets the user to specify repo(s) and file extensions that will routinely be scanned and mapped to your Hub Instance
+The Hub Artifactory solution consists of two Artifactory plugins, blackDuckScanForHub and blackDuckCacheInspector.
+
+The scanner plugin, blackDuckScanForHub, can be configured to routinely scan your artifacts for open source vulnerabilities via the Black Duck Signature Scanner.
+
+The inspector plugin, blackDuckCacheInspector, can be configured to inspect your Artifactory remote repository caches for open source components and populate Black Duck vulnerability and policy metadata on them.
+
 
 ## Build ##
-
 [![Build Status](https://travis-ci.org/blackducksoftware/hub-artifactory.svg?branch=master)](https://travis-ci.org/blackducksoftware/hub-artifactory)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Black Duck Security Risk](https://copilot.blackducksoftware.com/github/repos/blackducksoftware/hub-artifactory/branches/master/badge-risk.svg)](https://copilot.blackducksoftware.com/github/repos/blackducksoftware/hub-artifactory/branches/master)
