@@ -69,7 +69,17 @@ class ScannerConfigurationManager {
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDateTimePattern)
                 || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCutoffDate)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCron)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
+                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepoPathCodelocation)
                 || commonConfigurationManager.needsBaseConfigUpdate())
+    }
+
+    void configure(Console console, PrintStream out) {
+        updateValues(console, out)
+        persistScannerProperties()
+        visualValidation(console, out)
+        volumeTest(console, out)
     }
 
     void updateValues(Console console, PrintStream out) {
@@ -81,6 +91,7 @@ class ScannerConfigurationManager {
         configurationProperties.hubArtifactoryScanDateTimePattern = setValueFromInput(console, out, 'Scan Date Time Pattern', ScanPluginProperty.DATE_TIME_PATTERN)
         configurationProperties.hubArtifactoryScanCutoffDate = setValueFromInput(console, out, 'Scan Cutoff Date', ScanPluginProperty.CUTOFF_DATE)
         configurationProperties.hubArtifactoryScanNamePatterns = setValueFromInput(console, out, 'Scan Artifact Patterns', ScanPluginProperty.NAME_PATTERNS)
+        configurationProperties.hubArtifactoryScanRepoPathCodelocation = setValueFromInput(console, out, 'Use Repo Path as Codelocation Name', ScanPluginProperty.REPO_PATH_CODELOCATION)
 
         String reposToSearch = configurationProperties.hubArtifactoryScanRepositoriesList
         out.println('The artifactory scanner can be configured to either read a list of repositories to scan, or a file containing a comma separated list of repositories.')
@@ -93,8 +104,27 @@ class ScannerConfigurationManager {
             configurationProperties.hubArtifactoryScanRepositoriesCsvPath = ''
         }
 
-        persistScannerProperties()
+        configurationProperties.hubArtifactoryScanCron = setCronFromInput(console, out, 'blackDuckScanForHub CRON Expression', ScanPluginProperty.SCAN_CRON)
+        configurationProperties.hubArtifactoryScanAddPolicyStatusCron = setCronFromInput(console, out, 'blackDuckAddPolicyStatus CRON Expression', ScanPluginProperty.ADD_POLICY_STATUS_CRON)
+    }
 
+    void persistScannerProperties() {
+        scannerConfig.setProperty(ScanPluginProperty.ADD_POLICY_STATUS_CRON.getKey(), configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
+        scannerConfig.setProperty(ScanPluginProperty.BINARIES_DIRECTORY_PATH.getKey(), configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
+        scannerConfig.setProperty(ScanPluginProperty.CUTOFF_DATE.getKey(), configurationProperties.hubArtifactoryScanCutoffDate)
+        scannerConfig.setProperty(ScanPluginProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryScanDateTimePattern)
+        scannerConfig.setProperty(ScanPluginProperty.DRY_RUN.getKey(), configurationProperties.hubArtifactoryScanDryRun)
+        scannerConfig.setProperty(ScanPluginProperty.MEMORY.getKey(), configurationProperties.hubArtifactoryScanMemory)
+        scannerConfig.setProperty(ScanPluginProperty.NAME_PATTERNS.getKey(), configurationProperties.hubArtifactoryScanNamePatterns)
+        scannerConfig.setProperty(ScanPluginProperty.REPOS.getKey(), configurationProperties.hubArtifactoryScanRepositoriesList)
+        scannerConfig.setProperty(ScanPluginProperty.REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryScanRepositoriesCsvPath)
+        scannerConfig.setProperty(ScanPluginProperty.REPO_PATH_CODELOCATION.getKey(), configurationProperties.hubArtifactoryScanRepoPathCodelocation)
+        scannerConfig.setProperty(ScanPluginProperty.SCAN_CRON.getKey(), configurationProperties.hubArtifactoryScanCron)
+
+        commonConfigurationManager.persistConfigToFile(scannerConfig, scannerPropertiesFile)
+    }
+
+    void visualValidation(Console console, PrintStream out) {
         String repositoriesString
         if (StringUtils.isNotBlank(configurationProperties.hubArtifactoryScanRepositoriesCsvPath)) {
             repositoriesString = "the repositories listed in \'${configurationProperties.hubArtifactoryScanRepositoriesCsvPath}\'"
@@ -102,12 +132,16 @@ class ScannerConfigurationManager {
             repositoriesString = "the repositories \'${configurationProperties.hubArtifactoryScanRepositoriesList}\'"
         }
         out.println("The Artifactory Scanner will search ${repositoriesString} for artifacts matching \'${configurationProperties.hubArtifactoryScanNamePatterns}\', then scan them.")
+        commonConfigurationManager.printVisualValidationOfCron(out, 'blackDuckScan', configurationProperties.hubArtifactoryScanCron)
+        commonConfigurationManager.printVisualValidationOfCron(out, 'blackDuckAddPolicyStatus', configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
         out.println('If this is incorrect, enter \'n\' to enter new values, if this is correct, just press <enter>.')
-        userValue = StringUtils.trimToEmpty(console.readLine())
+        String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('n' == userValue) {
-            updateValues(console, out)
+            configure(console, out)
         }
+    }
 
+    void volumeTest(Console console, PrintStream out) {
         String lengthWarning = ''
         def repositories = StringUtils.isNotBlank(configurationProperties.hubArtifactoryScanRepositoriesList) ? configurationProperties.hubArtifactoryScanRepositoriesList.tokenize(',') : []
         if (StringUtils.isNotBlank(configurationProperties.hubArtifactoryScanRepositoriesCsvPath) || repositories.size() > 10) {
@@ -115,7 +149,7 @@ class ScannerConfigurationManager {
         }
 
         out.println("If you would like to volume test your configuration, enter \'y\'${lengthWarning}. Otherwise, just press <enter> to skip testing.")
-        userValue = StringUtils.trimToEmpty(console.readLine())
+        String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
             if (commonConfigurationManager.updateArtifactoryConnectionValues(console, out)) {
                 def repositoriesToSearch = StringUtils.isNotBlank(configurationProperties.hubArtifactoryScanRepositoriesList) ? configurationProperties.hubArtifactoryScanRepositoriesList.tokenize(',') : []
@@ -126,20 +160,11 @@ class ScannerConfigurationManager {
         }
     }
 
-    void persistScannerProperties() {
-        scannerConfig.setProperty(ScanPluginProperty.NAME_PATTERNS.getKey(), configurationProperties.hubArtifactoryScanNamePatterns)
-        scannerConfig.setProperty(ScanPluginProperty.MEMORY.getKey(), configurationProperties.hubArtifactoryScanMemory)
-        scannerConfig.setProperty(ScanPluginProperty.DRY_RUN.getKey(), configurationProperties.hubArtifactoryScanDryRun)
-        scannerConfig.setProperty(ScanPluginProperty.REPOS.getKey(), configurationProperties.hubArtifactoryScanRepositoriesList)
-        scannerConfig.setProperty(ScanPluginProperty.REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryScanRepositoriesCsvPath)
-        scannerConfig.setProperty(ScanPluginProperty.BINARIES_DIRECTORY_PATH.getKey(), configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
-        scannerConfig.setProperty(ScanPluginProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryScanDateTimePattern)
-        scannerConfig.setProperty(ScanPluginProperty.CUTOFF_DATE.getKey(), configurationProperties.hubArtifactoryScanCutoffDate)
-
-        commonConfigurationManager.persistConfigToFile(scannerConfig, scannerPropertiesFile)
-    }
-
     String setValueFromInput(Console console, PrintStream out, String propertyDescription, ScanPluginProperty property) {
         return commonConfigurationManager.setValueFromInput(console, out, propertyDescription, scannerConfig, property)
+    }
+
+    String setCronFromInput(Console console, PrintStream out, String propertyDescription, ScanPluginProperty property) {
+        return commonConfigurationManager.setCronFromInput(console, out, propertyDescription, scannerConfig, property)
     }
 }

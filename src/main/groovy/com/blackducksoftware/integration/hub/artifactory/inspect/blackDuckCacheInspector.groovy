@@ -75,6 +75,10 @@ import groovy.transform.Field
 
 @Field List<String> repoKeysToInspect
 @Field String dateTimePattern
+@Field String blackDuckIdentifyArtifactsCron
+@Field String blackDuckPopulateMetadataCron
+@Field String blackDuckUpdateMetadataCron
+@Field String blackDuckAddPendingArtifactsCron
 
 initialize()
 
@@ -197,7 +201,7 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      */
-    blackDuckIdentifyArtifacts(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckIdentifyArtifacts(cron: blackDuckIdentifyArtifactsCron) {
         log.info('Starting blackDuckIdentifyArtifacts CRON job...')
 
         identifyArtifacts()
@@ -215,7 +219,7 @@ jobs {
      * blackduck.lowVulnerabilities
      * blackduck.policyStatus
      */
-    blackDuckPopulateMetadata(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckPopulateMetadata(cron: blackDuckPopulateMetadataCron) {
         log.info('Starting blackDuckPopulateMetadata CRON job...')
 
         populateMetadata()
@@ -235,7 +239,7 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      */
-    blackDuckUpdateMetadata(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckUpdateMetadata(cron: blackDuckUpdateMetadataCron) {
         log.info('Starting blackDuckUpdateMetadata CRON job...')
 
         updateMetadata()
@@ -246,7 +250,7 @@ jobs {
     /**
      * Completes the identification step of
      */
-    blackDuckAddPendingArtifacts(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckAddPendingArtifacts(cron: blackDuckAddPendingArtifactsCron) {
         log.info('Starting blackDuckAddPendingArtifacts CRON job...')
 
         resolvePendingArtifacts()
@@ -281,7 +285,6 @@ storage {
         } catch (Exception e) {
             log.debug("The blackDuckCacheInspector encountered an unexpected exception", e)
         }
-
     }
 }
 
@@ -565,6 +568,10 @@ private void loadProperties() {
         packageTypePatternManager.setPattern(SupportedPackageType.nuget, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_NUGET))
         packageTypePatternManager.setPattern(SupportedPackageType.npm, blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.PATTERNS_NPM))
         dateTimePattern = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN)
+        blackDuckIdentifyArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.IDENTIFY_ARTIFACTS_CRON)
+        blackDuckPopulateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.POPULATE_METADATA_CRON)
+        blackDuckUpdateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.UPDATE_METADATA_CRON)
+        blackDuckAddPendingArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.ADD_PENDING_ARTIFACTS_CRON)
 
         createHubServicesFactory()
         loadRepositoriesToInspect()

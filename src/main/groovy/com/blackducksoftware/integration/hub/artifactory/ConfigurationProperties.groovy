@@ -102,6 +102,18 @@ class ConfigurationProperties {
     @Value('${hub.artifactory.inspect.date.time.pattern}')
     String hubArtifactoryInspectDateTimePattern
 
+    @Value('${hub.artifactory.inspect.identify.artifacts.cron}')
+    String hubArtifactoryInspectIdentifyArtifactsCron
+
+    @Value('${hub.artifactory.inspect.populate.metadata.cron}')
+    String hubArtifactoryInspectPopulateMetadataCron
+
+    @Value('${hub.artifactory.inspect.update.metadata.cron}')
+    String hubArtifactoryInspectUpdateMetadataCron
+
+    @Value('${hub.artifactory.inspect.add.pending.artifacts.cron}')
+    String hubArtifactoryInspectAddPendingArtifactsCron
+
     //Scanner
     @Value('${hub.artifactory.scan.repos}')
     String hubArtifactoryScanRepositoriesList
@@ -126,4 +138,14 @@ class ConfigurationProperties {
 
     @Value('${hub.artifactory.scan.cutoff.date}')
     String hubArtifactoryScanCutoffDate
+
+    @Value('${hub.artifactory.scan.cron')
+    String hubArtifactoryScanCron
+
+    @Value('${hub.artifactory.scan.add.policy.status.cron')
+    String hubArtifactoryScanAddPolicyStatusCron
+
+    @Value('${hub.artifactory.scan.repo.path.codelocation}')
+    String hubArtifactoryScanRepoPathCodelocation
+
 }

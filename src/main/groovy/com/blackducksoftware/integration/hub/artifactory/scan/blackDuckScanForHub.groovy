@@ -49,6 +49,7 @@ import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.service.PhoneHomeService
 import com.blackducksoftware.integration.hub.service.SignatureScannerService
+import com.blackducksoftware.integration.hub.service.model.HostnameHelper
 import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuesser
@@ -65,15 +66,17 @@ import groovy.transform.Field
 
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
 @Field HubServicesFactory hubServicesFactory
-@Field File cliDirectory
 
+@Field File cliDirectory
 @Field int scanMemory
 @Field boolean scanDryRun
 @Field List<String> repoKeysToScan
 @Field List<String> patternsToScan
-
 @Field String dateTimePattern
 @Field String artifactCutoffDate
+@Field String blackDuckScanCron
+@Field String blackDuckAddPolicyStatusCron
+@Field boolean useRepoPathAsCodelocationName
 
 initialize()
 
@@ -217,7 +220,7 @@ jobs {
      *
      * The same functionality is provided via the scanForHub execution to enable a one-time scan triggered via a REST call.
      */
-    blackDuckScan(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckScan(cron: blackDuckScanCron) {
         log.info('Starting blackDuckScan cron job...')
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
@@ -226,7 +229,7 @@ jobs {
         log.info('...completed blackDuckScan cron job.')
     }
 
-    blackDuckAddPolicyStatus(cron: "0 0/1 * 1/1 * ?") {
+    blackDuckAddPolicyStatus(cron: blackDuckAddPolicyStatusCron) {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
 
         Set<RepoPath> repoPaths = searchForRepoPaths()
@@ -378,6 +381,12 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     projectRequestBuilder.versionName = version
     hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
+    if (useRepoPathAsCodelocationName) {
+        Optional<String> optionalHostname = Optional.ofNullable(HostnameHelper.getMyHostname())
+        String hostname = optionalHostname.orElse('UNKNOWN_HOST')
+        hubScanConfigBuilder.setCodeLocationAlias("${hostname}#${repoPath.toPath()}")
+    }
+
     HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
     int hubTimeout = hubServicesFactory.getRestConnection().timeout
     SignatureScannerService signatureScannerService = hubServicesFactory.createSignatureScannerService(hubTimeout * 1000)
@@ -444,9 +453,16 @@ private void populatePolicyStatuses(HubService hubService, Set<RepoPath> repoPat
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName(), versionBomPolicyStatusView.overallStatus.toString())
                     log.info("Added policy status to ${it.name}")
+                    repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
+                    repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), getNowString())
                     phoneHome()
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
+                    def policyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
+                    def overallPolicyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName())
+                    if (StringUtils.isNotBlank(policyStatus) || StringUtils.isNotBlank(overallPolicyStatus)) {
+                        repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
+                    }
                 }
             }
         } catch (Exception e) {
@@ -554,6 +570,9 @@ private void loadProperties() {
         patternsToScan = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.NAME_PATTERNS).tokenize(',')
         dateTimePattern = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.DATE_TIME_PATTERN)
         artifactCutoffDate = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.CUTOFF_DATE)
+        blackDuckScanCron = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.SCAN_CRON)
+        blackDuckAddPolicyStatusCron = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.ADD_POLICY_STATUS_CRON)
+        useRepoPathAsCodelocationName = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.REPO_PATH_CODELOCATION))
 
         setUpBlackDuckDirectory()
         createHubServicesFactory()

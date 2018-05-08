@@ -66,7 +66,7 @@ class Application {
     void configurePlugin() {
         if ('configure-inspector' == mode && (null != System.console() && null != System.out)) {
             System.out.println('Updating ./plugins/lib/blackDuckCacheInspector.properties - just hit enter to make no change to a value:')
-            inspectorConfigurationManager.updateValues(System.console(), System.out)
+            inspectorConfigurationManager.configure(System.console(), System.out)
             if (inspectorConfigurationManager.needsUpdate()) {
                 System.out.println('The inspector was not completely configured. Would you like to restart configuration? Enter \'y\' to re-configure the inspector, or press <enter> to exit configuration.')
                 def userValue = StringUtils.trimToEmpty(System.console().readLine())
@@ -82,7 +82,7 @@ class Application {
 
         if ('configure-scanner' == mode && (null != System.console() && null != System.out)) {
             System.out.println('Updating ./plugins/lib/blackDuckScanForHub.properties - just hit enter to make no change to a value:')
-            scannerConfigurationManager.updateValues(System.console(), System.out)
+            scannerConfigurationManager.configure(System.console(), System.out)
             if (scannerConfigurationManager.needsUpdate()) {
                 System.out.println('The scanner was not completely configured. Would you like to restart configuration? Enter \'y\' to re-configure the scanner, or press <enter> to exit configuration.')
                 def userValue = StringUtils.trimToEmpty(System.console().readLine())
