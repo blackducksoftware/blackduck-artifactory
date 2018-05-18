@@ -288,7 +288,7 @@ storage {
     }
 }
 
-void identifyArtifacts() {
+public void identifyArtifacts() {
     repoKeysToInspect.each { repoKey ->
         String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
         RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
@@ -306,7 +306,7 @@ void identifyArtifacts() {
     }
 }
 
-void populateMetadata() {
+public void populateMetadata() {
     repoKeysToInspect.each { repoKey ->
         RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
@@ -327,7 +327,7 @@ void populateMetadata() {
     }
 }
 
-void updateMetadata() {
+public void updateMetadata() {
     repoKeysToInspect.each { repoKey ->
         RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
         String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
@@ -355,7 +355,7 @@ void updateMetadata() {
     }
 }
 
-void resolvePendingArtifacts() {
+public void resolvePendingArtifacts() {
     repoKeysToInspect.each { repoKey ->
         RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
         String repoInspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
@@ -623,7 +623,7 @@ private void loadRepositoriesToInspect() {
 }
 
 private String getNowString() {
-    DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+    return DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
 }
 
 private String getStringFromDate(Date date) {
@@ -636,7 +636,7 @@ private Date getDateFromProperty(RepoPath repoPath, String propertyName) {
 }
 
 private Date getDateFromString(String dateTimeString) {
-    DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
+    return DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
 }
 
 private void setInspectionStatus(RepoPath repoPath, String status) {

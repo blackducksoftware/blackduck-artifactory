@@ -54,6 +54,7 @@ import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescripti
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuesser
 import com.blackducksoftware.integration.hub.service.model.ProjectRequestBuilder
+import com.blackducksoftware.integration.hub.service.model.ProjectVersionWrapper
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBody
 import com.blackducksoftware.integration.util.ResourceUtil
@@ -278,7 +279,7 @@ private Set<RepoPath> searchForRepoPaths() {
         repoPaths.addAll(searches.artifactsByName(it, repoKeysToScan.toArray(new String[repoKeysToScan.size])))
     }
 
-    repoPaths.toSet()
+    return repoPaths.toSet()
 }
 
 /**
@@ -354,7 +355,7 @@ private FileLayoutInfo getArtifactFromPath(RepoPath repoPath) {
         ResourceUtil.closeQuietly(fileOutputStream)
         resourceStream.close()
     }
-    fileLayoutInfo
+    return fileLayoutInfo
 }
 
 private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, FileLayoutInfo fileLayoutInfo){
@@ -394,9 +395,11 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
     ProjectRequest projectRequest = projectRequestBuilder.build()
 
-    signatureScannerService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false)
+    ProjectVersionWrapper projectVersionWrapper = signatureScannerService.installAndRunControlledScan(hubServerConfig, hubScanConfig, projectRequest, false)
 
     phoneHome()
+
+    return projectVersionWrapper.getProjectVersionView()
 }
 
 private void deletePathArtifact(String fileName){
@@ -497,7 +500,7 @@ private String buildStatusCheckMessage() {
         }
     }
 
-    """canConnectToHub: ${connectMessage}
+    return """canConnectToHub: ${connectMessage}
 artifactsFound: ${repoPaths.size()}
 dateCutoffStatus: ${cutoffMessage}
 """
@@ -530,17 +533,17 @@ private String updateUrlPropertyToCurrentHubServer(String urlProperty) {
     String urlEndpoint = urlProperty.replace(hubUrlFromProperty, '')
 
     String updatedProperty = hubUrl + urlEndpoint
-    updatedProperty
+    return updatedProperty
 }
 
 private void createHubServicesFactory() {
     HubServerConfig hubServerConfig = blackDuckArtifactoryConfig.hubServerConfig
-    final RestConnection restConnection;
+    final RestConnection restConnection
 
     if (StringUtils.isNotBlank(blackDuckArtifactoryConfig.getProperty(BlackDuckHubProperty.API_TOKEN))) {
-        restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log));
+        restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(log))
     } else {
-        restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log));
+        restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(log))
     }
 
     hubServicesFactory = new HubServicesFactory(restConnection)
@@ -558,7 +561,7 @@ private void initialize() {
 private void loadProperties() {
     def propertiesFile
     if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
-        propertiesFile = new File(propertiesFilePathOverride);
+        propertiesFile = new File(propertiesFilePathOverride)
     } else {
         propertiesFile = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, "${this.getClass().getSimpleName()}.properties")
     }
@@ -622,11 +625,11 @@ private void setUpBlackDuckDirectory() {
 }
 
 private String getNowString() {
-    DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+    return DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
 }
 
 private long getTimeFromString(String dateTimeString) {
-    DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate().time
+    return DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate().time
 }
 
 private void phoneHome() {
