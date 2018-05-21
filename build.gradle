@@ -78,18 +78,18 @@ task createFinalZip(type: Zip) {
     }
 
     from(configurations.runtime) {
+        // These should be excluded, but we cannot until Artifactory updates them
+        // exclude 'httpclient*.jar'
+        // exclude 'httpcore*.jar'
+        // exclude 'commons-lang3*.jar'
         exclude 'artifactory-papi*.jar'
         exclude 'commons-beanutils*.jar'
         exclude 'commons-codec*.jar'
         exclude 'commons-collection*.jar'
         exclude 'commons-compress*.jar'
         exclude 'commons-io*.jar'
-        exclude 'commons-lang3*.jar'
         exclude 'groovy-all*.jar'
         exclude 'gson*.jar'
-        // These should be excluded, but we cannot until Artifactory updates them
-        // exclude 'httpclient*.jar'
-        // exclude 'httpcore*.jar'
         exclude 'jcl-over-slf4j*.jar'
         exclude 'joda-time*.jar'
         exclude 'jul-to-slf4j*.jar'
