@@ -23,7 +23,6 @@
  */
 package com.blackducksoftware.integration.hub.artifactory;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +31,10 @@ import org.springframework.stereotype.Component;
 import com.blackducksoftware.integration.exception.IntegrationException;
 import com.blackducksoftware.integration.hub.configuration.HubServerConfig;
 import com.blackducksoftware.integration.hub.configuration.HubServerConfigBuilder;
-import com.blackducksoftware.integration.hub.rest.RestConnection;
 import com.blackducksoftware.integration.log.Slf4jIntLogger;
+import com.blackducksoftware.integration.rest.connection.RestConnection;
+
+import embedded.org.apache.commons.lang3.StringUtils;
 
 @Component
 public class HubClient {
@@ -64,7 +65,7 @@ public class HubClient {
 
     private HubServerConfigBuilder createBuilder() {
         final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setHubUrl(configurationProperties.getBlackduckHubUrl());
+        hubServerConfigBuilder.setUrl(configurationProperties.getBlackduckHubUrl());
         hubServerConfigBuilder.setApiToken(configurationProperties.getBlackduckHubApiToken());
         hubServerConfigBuilder.setUsername(configurationProperties.getBlackduckHubUsername());
         hubServerConfigBuilder.setPassword(configurationProperties.getBlackduckHubPassword());
@@ -73,7 +74,7 @@ public class HubClient {
         hubServerConfigBuilder.setProxyPort(configurationProperties.getBlackduckHubProxyPort());
         hubServerConfigBuilder.setProxyUsername(configurationProperties.getBlackduckHubProxyUsername());
         hubServerConfigBuilder.setProxyPassword(configurationProperties.getBlackduckHubProxyPassword());
-        hubServerConfigBuilder.setAlwaysTrustServerCertificate(Boolean.parseBoolean(configurationProperties.getBlackduckHubTrustCert()));
+        hubServerConfigBuilder.setTrustCert(configurationProperties.getBlackduckHubTrustCert());
 
         return hubServerConfigBuilder;
     }

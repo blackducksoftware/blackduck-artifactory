@@ -23,17 +23,19 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.repo.RepositoryConfiguration
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
 
+import com.blackducksoftware.integration.exception.IntegrationException
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaData
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataFromNotifications
 import com.blackducksoftware.integration.hub.artifactory.ArtifactMetaDataManager
@@ -47,7 +49,6 @@ import com.blackducksoftware.integration.hub.bdio.model.SimpleBdioDocument
 import com.blackducksoftware.integration.hub.bdio.model.dependency.Dependency
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalId
 import com.blackducksoftware.integration.hub.configuration.HubServerConfig
-import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.CodeLocationService
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
@@ -57,10 +58,12 @@ import com.blackducksoftware.integration.hub.service.ProjectService
 import com.blackducksoftware.integration.hub.service.model.ProjectVersionWrapper
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBody
+import com.blackducksoftware.integration.rest.connection.RestConnection
 import com.blackducksoftware.integration.util.IntegrationEscapeUtil
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.SetMultimap
 
+import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 
 // propertiesFilePathOverride allows you to specify an absolute path to the blackDuckCacheInspector.properties file.
@@ -336,10 +339,14 @@ public void updateMetadata() {
             try {
                 Date now = new Date()
                 Date dateToCheck
-                if (StringUtils.isNotBlank(repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName()))) {
-                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName())
-                } else {
-                    dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION.getName())
+                try {
+                    if (StringUtils.isNotBlank(repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName()))) {
+                        dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE.getName())
+                    } else {
+                        dateToCheck = getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION.getName())
+                    }
+                } catch (NullPointerException npe) {
+                    throw new IntegrationException("Could not find timestamp property on ${repoKeyPath.toPath()}. Black Duck artifactory metadata is likely malformed and requires re-inspection. Run the blackDuckDeleteInspectorProperties rest endpoint to re-inspect all configured repositories or delete the malformed properties manually.", npe);
                 }
                 String projectName = getRepoProjectName(repoKey)
                 String projectVersionName = getRepoProjectVersionName(repoKey)
@@ -623,20 +630,27 @@ private void loadRepositoriesToInspect() {
 }
 
 private String getNowString() {
-    return DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+    final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC);
+    return Instant.now().atZone(ZoneOffset.UTC).format(dateTimeFormatter);
+}
+
+private long getTimeFromString(String dateTimeString) {
+    return getDateFromString(dateTimeString).time
 }
 
 private String getStringFromDate(Date date) {
-    return new DateTime(date).withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+    final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC)
+    return date.toInstant().atZone(ZoneOffset.UTC).format(dateTimeFormatter)
 }
 
 private Date getDateFromProperty(RepoPath repoPath, String propertyName) {
-    String lastInspectedString = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION.getName())
-    return DateTime.parse(lastInspectedString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
+    String lastInspectedString = repositories.getProperty(repoPath, propertyName)
+    return getDateFromString(lastInspectedString);
 }
 
 private Date getDateFromString(String dateTimeString) {
-    return DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate()
+    final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC)
+    return Date.from(ZonedDateTime.from(dateTimeFormatter.parse(dateTimeString)).toInstant())
 }
 
 private void setInspectionStatus(RepoPath repoPath, String status) {

@@ -23,16 +23,17 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.scan
 
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.repo.RepoPath
 import org.artifactory.repo.RepoPathFactory
 import org.artifactory.resource.ResourceStreamHandle
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
 
 import com.blackducksoftware.integration.hub.api.generated.component.ProjectRequest
 import com.blackducksoftware.integration.hub.api.generated.view.ProjectVersionView
@@ -44,12 +45,10 @@ import com.blackducksoftware.integration.hub.configuration.HubScanConfig
 import com.blackducksoftware.integration.hub.configuration.HubScanConfigBuilder
 import com.blackducksoftware.integration.hub.configuration.HubServerConfig
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
-import com.blackducksoftware.integration.hub.rest.RestConnection
 import com.blackducksoftware.integration.hub.service.HubService
 import com.blackducksoftware.integration.hub.service.HubServicesFactory
 import com.blackducksoftware.integration.hub.service.PhoneHomeService
 import com.blackducksoftware.integration.hub.service.SignatureScannerService
-import com.blackducksoftware.integration.hub.service.model.HostnameHelper
 import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuess
 import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuesser
@@ -57,8 +56,10 @@ import com.blackducksoftware.integration.hub.service.model.ProjectRequestBuilder
 import com.blackducksoftware.integration.hub.service.model.ProjectVersionWrapper
 import com.blackducksoftware.integration.log.Slf4jIntLogger
 import com.blackducksoftware.integration.phonehome.PhoneHomeRequestBody
+import com.blackducksoftware.integration.rest.connection.RestConnection
 import com.blackducksoftware.integration.util.ResourceUtil
 
+import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 
 // propertiesFilePathOverride allows you to specify an absolute path to the blackDuckScanForHub.properties file.
@@ -383,9 +384,13 @@ private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, File
     hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
 
     if (useRepoPathAsCodelocationName) {
-        Optional<String> optionalHostname = Optional.ofNullable(HostnameHelper.getMyHostname())
-        String hostname = optionalHostname.orElse('UNKNOWN_HOST')
-        hubScanConfigBuilder.setCodeLocationAlias("${hostname}#${repoPath.toPath()}")
+        String hostName
+        try {
+            hostName = InetAddress.getLocalHost().getHostName()
+        } catch (UnknownHostException e) {
+            hostName = 'UNKNOWN_HOST'
+        }
+        hubScanConfigBuilder.setCodeLocationAlias("${hostName}#${repoPath.toPath()}")
     }
 
     HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
@@ -625,11 +630,13 @@ private void setUpBlackDuckDirectory() {
 }
 
 private String getNowString() {
-    return DateTime.now().withZone(DateTimeZone.UTC).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+    final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC);
+    return Instant.now().atZone(ZoneOffset.UTC).format(dateTimeFormatter);
 }
 
 private long getTimeFromString(String dateTimeString) {
-    return DateTime.parse(dateTimeString, DateTimeFormat.forPattern(dateTimePattern).withZoneUTC()).toDate().time
+    final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC);
+    return Date.from(ZonedDateTime.from(dateTimeFormatter.parse(dateTimeString)).toInstant()).time
 }
 
 private void phoneHome() {

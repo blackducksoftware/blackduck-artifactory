@@ -27,10 +27,11 @@ import java.text.ParseException
 
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.io.FileHandler
-import org.apache.commons.lang3.StringUtils
 import org.quartz.CronExpression
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+
+import embedded.org.apache.commons.lang3.StringUtils
 
 @Component
 class CommonConfigurationManager {

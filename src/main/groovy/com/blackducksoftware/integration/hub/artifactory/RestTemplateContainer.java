@@ -30,7 +30,6 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -50,6 +49,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriTemplateHandler;
 
 import com.blackducksoftware.integration.exception.EncryptionException;
+
+import embedded.org.apache.commons.lang3.StringUtils;
 
 @Component
 class RestTemplateContainer extends RestTemplate {
@@ -134,7 +135,7 @@ class RestTemplateContainer extends RestTemplate {
     }
 
     @Override
-    public UriTemplateHandler getUriTemplateHandler()  {
+    public UriTemplateHandler getUriTemplateHandler() {
         return restTemplate.getUriTemplateHandler();
     }
 

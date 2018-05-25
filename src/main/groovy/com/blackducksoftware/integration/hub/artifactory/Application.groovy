@@ -25,7 +25,6 @@ package com.blackducksoftware.integration.hub.artifactory
 
 import javax.annotation.PostConstruct
 
-import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -35,6 +34,8 @@ import org.springframework.boot.builder.SpringApplicationBuilder
 
 import com.blackducksoftware.integration.hub.artifactory.inspect.InspectorConfigurationManager
 import com.blackducksoftware.integration.hub.artifactory.scan.ScannerConfigurationManager
+
+import embedded.org.apache.commons.lang3.StringUtils
 
 @SpringBootApplication
 class Application {
