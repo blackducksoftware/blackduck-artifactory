@@ -476,7 +476,17 @@ private Date updateFromHubProjectNotifications(String repoKey, String projectNam
 
     phoneHome()
 
-    return artifactMetaDataFromNotifications.getLastNotificationDate();
+    Optional<Date> lastNotificationDate = artifactMetaDataFromNotifications.getLastNotificationDate();
+    final Date lastDateParsed;
+
+    if (lastNotificationDate.isPresent()) {
+        lastDateParsed = lastNotificationDate.get();
+    } else {
+        // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
+        lastDateParsed = startDate;
+    }
+
+    return lastDateParsed
 }
 
 private void deleteInspectionProperties(String repoKey) {
