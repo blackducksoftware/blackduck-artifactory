@@ -273,9 +273,9 @@ storage {
             String projectName = getRepoProjectName(repoKey)
             String projectVersionName = getRepoProjectVersionName(repoKey)
 
-            String pattern = packageTypePatternManager.getPattern(packageType)
+            Optional<String> pattern = packageTypePatternManager.getPattern(packageType)
             String path = repoPath.toPath()
-            if (FilenameUtils.wildcardMatch(path, pattern)) {
+            if (pattern.isPresent() && FilenameUtils.wildcardMatch(path, pattern.get())) {
                 FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
                 org.artifactory.md.Properties properties = repositories.getProperties(repoPath)
                 Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
@@ -293,18 +293,22 @@ storage {
 
 public void identifyArtifacts() {
     repoKeysToInspect.each { repoKey ->
-        String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
-        RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
-        String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
+        Optional<String> patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+        if (patterns.isPresent()) {
+            RepoPath repoKeyPath = RepoPathFactory.create(repoKey)
+            String inspectionStatus = repositories.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
 
-        if (StringUtils.isBlank(inspectionStatus)) {
-            try {
-                createHubProject(repoKey, patterns)
-                setInspectionStatus(repoKeyPath, 'PENDING')
-            } catch (Exception e) {
-                setInspectionStatus(repoKeyPath, 'FAILURE')
-                log.error("The blackDuckCacheInspector encountered an exception while identifying artifacts in repository ${repoKey}", e)
+            if (StringUtils.isBlank(inspectionStatus)) {
+                try {
+                    createHubProject(repoKey, patterns)
+                    setInspectionStatus(repoKeyPath, 'PENDING')
+                } catch (Exception e) {
+                    setInspectionStatus(repoKeyPath, 'FAILURE')
+                    log.error("The blackDuckCacheInspector encountered an exception while identifying artifacts in repository ${repoKey}", e)
+                }
             }
+        } else {
+            log.warn("The blackDuckCacheInspector could not identify artifacts in repository ${repoKey} because no supported patterns were found. ${repoKey} is either not a supported repository or no patterns were configured for it.")
         }
     }
 }
@@ -369,42 +373,46 @@ public void resolvePendingArtifacts() {
 
         if ('SUCCESS'.equals(repoInspectionStatus)) {
             Set repoPaths = new HashSet<>()
-            String patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
-            def patternsToFind = patterns.tokenize(',')
-            patternsToFind.each {
-                List<RepoPath> searchResults = searches.artifactsByName(it, repoKey)
-                repoPaths.addAll(searchResults)
-            }
+            Optional<String> patterns = packageTypePatternManager.getPattern(repositories.getRepositoryConfiguration(repoKey).getPackageType())
+            if (patterns.isPresent()) {
+                def patternsToFind = patterns.get().tokenize(',')
+                patternsToFind.each {
+                    List<RepoPath> searchResults = searches.artifactsByName(it, repoKey)
+                    repoPaths.addAll(searchResults)
+                }
 
-            RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
-            String packageType = repositoryConfiguration.getPackageType();
-            String projectName = getRepoProjectName(repoKey)
-            String projectVersionName = getRepoProjectVersionName(repoKey)
+                RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
+                String packageType = repositoryConfiguration.getPackageType();
+                String projectName = getRepoProjectName(repoKey)
+                String projectVersionName = getRepoProjectVersionName(repoKey)
 
-            repoPaths.each { repoPath ->
-                String inspectionStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
-                if (!'SUCCESS'.equals(inspectionStatus)) {
-                    try {
-                        FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
-                        org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
-                        //TODO: we only *really* need the ExternalId here, but right now we are creating a whole Dependency
-                        Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
-                        if (optionalDependency.isPresent()) {
-                            Dependency constructedDependency = optionalDependency.get()
-                            String hubOriginId = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName());
-                            String hubForge = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName());
-                            if (StringUtils.isBlank(hubOriginId) || StringUtils.isBlank(hubForge)) {
-                                addDependencyProperties(repoPath, constructedDependency)
-                                setInspectionStatus(repoPath, 'PENDING')
+                repoPaths.each { repoPath ->
+                    String inspectionStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName())
+                    if (!'SUCCESS'.equals(inspectionStatus)) {
+                        try {
+                            FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
+                            org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+                            //TODO: we only *really* need the ExternalId here, but right now we are creating a whole Dependency
+                            Optional<Dependency> optionalDependency = dependencyFactory.createDependency(log, packageType, fileLayoutInfo, properties);
+                            if (optionalDependency.isPresent()) {
+                                Dependency constructedDependency = optionalDependency.get()
+                                String hubOriginId = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_ORIGIN_ID.getName());
+                                String hubForge = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.HUB_FORGE.getName());
+                                if (StringUtils.isBlank(hubOriginId) || StringUtils.isBlank(hubForge)) {
+                                    addDependencyProperties(repoPath, constructedDependency)
+                                    setInspectionStatus(repoPath, 'PENDING')
+                                }
+                                addDependencyToProjectVersion(constructedDependency, projectName, projectVersionName)
+                                setInspectionStatus(repoPath, 'SUCCESS')
                             }
-                            addDependencyToProjectVersion(constructedDependency, projectName, projectVersionName)
-                            setInspectionStatus(repoPath, 'SUCCESS')
+                        } catch (Exception e) {
+                            setInspectionStatus(repoPath, 'FAILURE')
+                            log.debug("The blackDuckCacheInspector could not successfully inspect ${repoPath}:", e)
                         }
-                    } catch (Exception e) {
-                        setInspectionStatus(repoPath, 'FAILURE')
-                        log.debug("The blackDuckCacheInspector could not successfully inspect ${repoPath}:", e)
                     }
                 }
+            } else {
+                log.warn("The blackDuckCacheInspector could not inspect the repository ${repoKey} because no supported patterns were found. ${repoKey} is either not a supported repository or no patterns were configured for it.")
             }
         }
     }
