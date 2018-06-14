@@ -23,8 +23,6 @@
  */
 package com.blackducksoftware.integration.hub.artifactory;
 
-import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +33,7 @@ import com.blackducksoftware.integration.hub.configuration.HubServerConfig;
 import com.blackducksoftware.integration.hub.configuration.HubServerConfigBuilder;
 import com.blackducksoftware.integration.log.Slf4jIntLogger;
 import com.blackducksoftware.integration.rest.connection.RestConnection;
+import com.blackducksoftware.integration.util.ResourceUtil;
 
 import embedded.org.apache.commons.lang3.StringUtils;
 
@@ -55,18 +54,20 @@ public class HubClient {
 
     public void testHubConnection() throws IntegrationException {
         final HubServerConfig hubServerConfig = createBuilder().build();
-        final RestConnection restConnection;
-        if (StringUtils.isNotBlank(configurationProperties.getBlackduckHubApiToken())) {
-            restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(logger));
-        } else {
-            restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(logger));
-        }
-        restConnection.connect();
+        RestConnection restConnection = null;
+
         try {
-            restConnection.close();
-        } catch (final IOException e) {
-            logger.debug("Exception occurred when closing the rest connection after testing: ", e);
+            if (StringUtils.isNotBlank(configurationProperties.getBlackduckHubApiToken())) {
+                restConnection = hubServerConfig.createApiTokenRestConnection(new Slf4jIntLogger(logger));
+            } else {
+                restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(logger));
+            }
+
+            restConnection.connect();
+        } finally {
+            ResourceUtil.closeQuietly(restConnection);
         }
+
         logger.info("Successful connection to the Hub!");
     }
 
