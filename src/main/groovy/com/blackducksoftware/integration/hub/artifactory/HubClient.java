@@ -23,6 +23,8 @@
  */
 package com.blackducksoftware.integration.hub.artifactory;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,11 @@ public class HubClient {
             restConnection = hubServerConfig.createCredentialsRestConnection(new Slf4jIntLogger(logger));
         }
         restConnection.connect();
+        try {
+            restConnection.close();
+        } catch (final IOException e) {
+            logger.debug("Exception occurred when closing the rest connection after testing: ", e);
+        }
         logger.info("Successful connection to the Hub!");
     }
 
