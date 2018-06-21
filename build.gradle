@@ -15,7 +15,7 @@ plugins {
     id 'groovy'
 }
 
-version = '5.1.0-SNAPSHOT'
+version = '5.1.0'
 def artifactoryMinimumVersion = '5.6.2'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
