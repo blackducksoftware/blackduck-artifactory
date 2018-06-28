@@ -300,7 +300,7 @@ public void identifyArtifacts() {
 
             if (StringUtils.isBlank(inspectionStatus)) {
                 try {
-                    createHubProject(repoKey, patterns)
+                    createHubProject(repoKey, patterns.get())
                     setInspectionStatus(repoKeyPath, 'PENDING')
                 } catch (Exception e) {
                     setInspectionStatus(repoKeyPath, 'FAILURE')
@@ -678,11 +678,20 @@ private void setInspectionStatus(RepoPath repoPath, String status) {
 
 private void phoneHome() {
     try {
-        Optional<String> thirdPartyVersion = Optional.ofNullable(ctx?.versionProvider?.running?.versionName)
-        Optional<String> pluginVersion = Optional.ofNullable(blackDuckArtifactoryConfig.getVersionFile()?.text)
+        String pluginVersion = blackDuckArtifactoryConfig.getVersionFile()?.text
+        String thirdPartyVersion = ctx?.versionProvider?.running?.versionName
+
+        if (pluginVersion == null ) {
+            pluginVersion = 'UNKNOWN_VERSION'
+        }
+
+        if (thirdPartyVersion == null) {
+            thirdPartyVersion = 'UNKNOWN_VERSION'
+        }
+
         PhoneHomeService phoneHomeService = hubServicesFactory.createPhoneHomeService()
-        PhoneHomeRequestBody.Builder phoneHomeRequestBodyBuilder = phoneHomeService.createInitialPhoneHomeRequestBodyBuilder('hub-artifactory', pluginVersion.orElse('UNKNOWN_VERSION'))
-        phoneHomeRequestBodyBuilder.addToMetaData('artifactory.version', thirdPartyVersion.orElse('UNKNOWN_VERSION'))
+        PhoneHomeRequestBody.Builder phoneHomeRequestBodyBuilder = phoneHomeService.createInitialPhoneHomeRequestBodyBuilder('hub-artifactory', pluginVersion)
+        phoneHomeRequestBodyBuilder.addToMetaData('artifactory.version', thirdPartyVersion)
         phoneHomeRequestBodyBuilder.addToMetaData('hub.artifactory.plugin', 'blackDuckCacheInspector')
         phoneHomeService.phoneHome(phoneHomeRequestBodyBuilder)
     } catch(Exception e) {
