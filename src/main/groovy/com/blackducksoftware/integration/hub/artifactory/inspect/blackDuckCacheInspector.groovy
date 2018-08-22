@@ -31,9 +31,7 @@ import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryCon
 import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
 import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
-import com.blackducksoftware.integration.hub.artifactory.inspect.config.InspectPluginProperty
-import com.blackducksoftware.integration.hub.artifactory.inspect.config.PackageTypePatternManager
-import com.blackducksoftware.integration.hub.artifactory.inspect.hub.ArtifactoryExternalIdFactory
+import com.blackducksoftware.integration.hub.artifactory.inspect.metadata.ArtifactMetaDataService
 
 import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
@@ -230,7 +228,7 @@ storage {
             RepoPath repoPath = item.getRepoPath()
             String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
 
-            if (repoKeysToInspect.contains(repoKey) {
+            if (repoKeysToInspect.contains(repoKey)) {
                 Optional<Set<RepoPath>> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey);
                 if (identifiableArtifacts.isPresent() && identifiableArtifacts.get().contains(repoPath)) {
                     Optional<IdentifiedArtifact> optionalIdentifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);

@@ -33,7 +33,6 @@ import org.springframework.util.ResourceUtils
 
 import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
 import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
-import com.blackducksoftware.integration.hub.artifactory.inspect.config.InspectPluginProperty
 
 import embedded.org.apache.commons.lang3.StringUtils
 
