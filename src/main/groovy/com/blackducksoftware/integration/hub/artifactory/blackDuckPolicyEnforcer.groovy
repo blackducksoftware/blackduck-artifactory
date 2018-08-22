@@ -27,12 +27,12 @@ import org.artifactory.exception.CancelException
 import org.artifactory.repo.RepoPath
 import org.artifactory.request.Request
 
-import com.blackducksoftware.integration.hub.api.generated.enumeration.PolicyStatusApprovalStatusType
+import com.blackducksoftware.integration.hub.api.generated.enumeration.PolicyStatusSummaryStatusType
 
 download {
     beforeDownload { Request request, RepoPath repoPath ->
         def policyStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
-        if (PolicyStatusApprovalStatusType.IN_VIOLATION.name().equals(policyStatus)) {
+        if (PolicyStatusSummaryStatusType.IN_VIOLATION.name().equals(policyStatus)) {
             throw new CancelException("Black Duck Policy Enforcer has prevented the download of ${repoPath.toPath()} because it violates a policy in your Black Duck Hub.", 403)
         }
     }
