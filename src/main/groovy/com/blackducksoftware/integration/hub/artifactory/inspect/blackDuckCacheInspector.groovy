@@ -81,6 +81,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(repoKey) }
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
+        phoneHome();
     }
 
     /**
@@ -107,6 +108,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckManuallyIdentifyArtifacts REST request.')
+        phoneHome();
     }
 
     /**
@@ -131,6 +133,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyPopulateMetadata REST request.')
+        phoneHome();
     }
 
     /**
@@ -157,6 +160,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
+        phoneHome();
     }
 }
 
@@ -179,6 +183,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckIdentifyArtifacts CRON job.')
+        phoneHome();
     }
 
     /**
@@ -197,6 +202,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckPopulateMetadata CRON job.')
+        phoneHome();
     }
 
     /**
@@ -217,6 +223,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckUpdateMetadata CRON job.')
+        phoneHome();
     }
 }
 
@@ -278,6 +285,7 @@ private void initialize() {
         log.error("Black Duck Cache Inspector encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}")
         throw e
     }
+    phoneHome();
 }
 
 private void phoneHome() {
