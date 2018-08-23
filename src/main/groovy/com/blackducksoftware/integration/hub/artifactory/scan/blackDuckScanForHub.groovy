@@ -312,7 +312,7 @@ private void scanArtifactPaths(Set<RepoPath> repoPaths) {
     repoPaths = repoPaths.findAll {shouldRepoPathBeScannedNow(it)}
     repoPaths.each {
         try{
-            String timeString = dateTimeManager.getDateTimeStringOfNow()
+            String timeString = dateTimeManager.getStringFromDate(new Date())
             repositories.setProperty(it, BlackDuckArtifactoryProperty.SCAN_TIME.getName(), timeString)
             FileLayoutInfo fileLayoutInfo = getArtifactFromPath(it)
             ProjectVersionView projectVersionView = scanArtifact(it, it.name, fileLayoutInfo)
