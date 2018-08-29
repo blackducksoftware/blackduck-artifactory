@@ -23,29 +23,18 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.scan
 
-import com.blackducksoftware.integration.hub.api.generated.view.ProjectVersionView
 import com.blackducksoftware.integration.hub.api.generated.view.VersionBomPolicyStatusView
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryProperty
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckHubProperty
 import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
 import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
-import com.blackducksoftware.integration.hub.cli.summary.ScanServiceOutput
-import com.blackducksoftware.integration.hub.configuration.HubScanConfig
-import com.blackducksoftware.integration.hub.configuration.HubScanConfigBuilder
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
 import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
-import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuess
-import com.blackducksoftware.integration.hub.service.model.ProjectNameVersionGuesser
-import com.blackducksoftware.integration.hub.service.model.ProjectRequestBuilder
-import com.blackducksoftware.integration.util.ResourceUtil
 import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 import org.apache.commons.io.FileUtils
-import org.apache.commons.io.FilenameUtils
-import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.repo.RepoPath
-import org.artifactory.resource.ResourceStreamHandle
 
 // propertiesFilePathOverride allows you to specify an absolute path to the blackDuckScanForHub.properties file.
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckScanForHub.properties
@@ -54,14 +43,15 @@ import org.artifactory.resource.ResourceStreamHandle
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
 @Field DateTimeManager dateTimeManager
 @Field HubConnectionService hubConnectionService
-@Field RepositoryIdentifactionService repositoryIdentifactionService;
+@Field RepositoryIdentifactionService repositoryIdentifactionService
+@Field ScanPhoneHomeService scanPhoneHomeService
+@Field ArtifactScanService artifactScanService
+@Field ScanFileService scanFileService
 @Field File cliDirectory
-@Field int scanMemory
-@Field boolean scanDryRun
 @Field String artifactCutoffDate
 @Field String blackDuckScanCron
 @Field String blackDuckAddPolicyStatusCron
-@Field boolean useRepoPathAsCodelocationName
+@Field String thirdPartyVersion
 
 initialize()
 
@@ -104,7 +94,7 @@ executions {
         log.info('Starting blackDuckScan REST request...')
 
         Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
-        scanArtifactPaths(repoPaths)
+        artifactScanService.scanArtifactPaths(repoPaths)
 
         log.info('...completed blackDuckScan REST request.')
     }
@@ -209,7 +199,7 @@ jobs {
         log.info('Starting blackDuckScan cron job...')
 
         Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
-        scanArtifactPaths(repoPaths)
+        artifactScanService.scanArtifactPaths(repoPaths)
 
         log.info('...completed blackDuckScan cron job.')
     }
@@ -224,152 +214,9 @@ jobs {
     }
 }
 
-/**
- * Takes a FileLayoutInfo object and returns the project name as it will appear in the Hub. (By default, this returns the module of the FileLayoutInfo object)
- *
- * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project name.
- */
-private String getProjectNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo) {
-    log.info('Constructing project name...')
-
-    String constructedProjectName = fileLayoutInfo.module
-
-    log.info('...project name constructed')
-    return constructedProjectName
-}
-
-/**
- * Takes a FileLayoutInfo object and returns the project version name for as it will appear in the Hub. (By default, this returns the baseRevision of the FileLayoutInfo object)
- *
- * Feel free to modify this method to transform the FileLayoutInfo object as necessary to construct your desired project version name.
- */
-private String getProjectVersionNameFromFileLayoutInfo(FileLayoutInfo fileLayoutInfo) {
-    log.info('Constructing project version name...')
-
-    String constructedProjectVersionName = fileLayoutInfo.baseRevision
-
-    log.info('...project version constructed')
-    return constructedProjectVersionName
-}
-
 //####################################################
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
 //####################################################
-
-private void scanArtifactPaths(Set<RepoPath> repoPaths) {
-    repoPaths = repoPaths.findAll { repositoryIdentifactionService.shouldRepoPathBeScannedNow(it) }
-    repoPaths.each {
-        try {
-            String timeString = dateTimeManager.getStringFromDate(new Date())
-            repositories.setProperty(it, BlackDuckArtifactoryProperty.SCAN_TIME.getName(), timeString)
-            FileLayoutInfo fileLayoutInfo = getArtifactFromPath(it)
-            ProjectVersionView projectVersionView = scanArtifact(it, it.name, fileLayoutInfo)
-            writeScanProperties(it, projectVersionView)
-        } catch (Exception e) {
-            log.error("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully on ${it.name}: ${e.message}", e)
-            repositories.setProperty(it, BlackDuckArtifactoryProperty.SCAN_RESULT.getName(), 'FAILURE')
-        } finally {
-            deletePathArtifact(it.name)
-        }
-    }
-}
-
-private FileLayoutInfo getArtifactFromPath(RepoPath repoPath) {
-    ResourceStreamHandle resourceStream = repositories.getContent(repoPath)
-    FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath)
-    def inputStream
-    def fileOutputStream
-    try {
-        inputStream = resourceStream.inputStream
-        fileOutputStream = new FileOutputStream(new File(blackDuckArtifactoryConfig.blackDuckDirectory, repoPath.name))
-        fileOutputStream << inputStream
-    } catch (Exception e) {
-        log.error("There was an error getting ${repoPath.name}: ${e.message}")
-    } finally {
-        ResourceUtil.closeQuietly(inputStream)
-        ResourceUtil.closeQuietly(fileOutputStream)
-        resourceStream.close()
-    }
-    return fileLayoutInfo
-}
-
-private ProjectVersionView scanArtifact(RepoPath repoPath, String fileName, FileLayoutInfo fileLayoutInfo) {
-    ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder()
-    HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder()
-    hubScanConfigBuilder.scanMemory = scanMemory
-    hubScanConfigBuilder.dryRun = scanDryRun
-    hubScanConfigBuilder.toolsDir = cliDirectory
-    hubScanConfigBuilder.workingDirectory = blackDuckArtifactoryConfig.blackDuckDirectory
-    hubScanConfigBuilder.disableScanTargetPathExistenceCheck()
-
-    String project = getProjectNameFromFileLayoutInfo(fileLayoutInfo)
-    String version = getProjectVersionNameFromFileLayoutInfo(fileLayoutInfo)
-    if (StringUtils.isBlank(project) || StringUtils.isBlank(version)) {
-        String filenameWithoutExtension = FilenameUtils.getBaseName(fileName)
-        ProjectNameVersionGuesser guesser = new ProjectNameVersionGuesser()
-        ProjectNameVersionGuess guess = guesser.guessNameAndVersion(filenameWithoutExtension)
-        project = guess.projectName
-        version = guess.versionName
-    }
-    def scanFile = new File(hubScanConfigBuilder.workingDirectory, fileName)
-    def scanTargetPath = scanFile.canonicalPath
-    projectRequestBuilder.projectName = project
-    projectRequestBuilder.versionName = version
-    hubScanConfigBuilder.addScanTargetPath(scanTargetPath)
-
-    if (useRepoPathAsCodelocationName) {
-        String hostName
-        try {
-            hostName = InetAddress.getLocalHost().getHostName()
-        } catch (UnknownHostException e) {
-            hostName = 'UNKNOWN_HOST'
-        }
-        hubScanConfigBuilder.addTargetToCodeLocationName(scanTargetPath, "${hostName}#${repoPath.toPath()}")
-    }
-
-    HubScanConfig hubScanConfig = hubScanConfigBuilder.build()
-    ScanServiceOutput scanServiceOutput = hubConnectionService.performScan(hubScanConfig, projectRequestBuilder)
-
-    phoneHome()
-
-    return scanServiceOutput.getProjectVersionWrapper().getProjectVersionView()
-}
-
-private void deletePathArtifact(String fileName) {
-    try {
-        boolean deleteOk = new File(blackDuckArtifactoryConfig.blackDuckDirectory, fileName).delete()
-        log.info("Successfully deleted temporary ${fileName}: ${Boolean.toString(deleteOk)}")
-    } catch (Exception e) {
-        log.error("Exception deleting ${fileName}: ${e.message}")
-    }
-}
-
-private void writeScanProperties(RepoPath repoPath, ProjectVersionView projectVersionView) {
-    log.info("${repoPath.name} was successfully scanned by the BlackDuck CLI.")
-    repositories.
-    setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT.getName(), 'SUCCESS')
-
-    if (projectVersionView) {
-        String projectVersionUrl = ''
-        String projectVersionUIUrl = ''
-        try {
-            projectVersionUrl = hubConnectionService.getProjectVersionUrlFromView(projectVersionView)
-            if (StringUtils.isNotEmpty(projectVersionUrl)) {
-                repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
-                log.info("Added ${projectVersionUrl} to ${repoPath.name}")
-            }
-            projectVersionUIUrl = hubConnectionService.getProjectVersionUIUrlFromView(projectVersionView)
-            if (StringUtils.isNotEmpty(projectVersionUIUrl)) {
-                repositories.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), projectVersionUIUrl)
-                log.info("Added ${projectVersionUIUrl} to ${repoPath.name}")
-            }
-        } catch (Exception e) {
-            log.error("Exception getting code location url: ${e.message}")
-        }
-    } else {
-        log.warn('No scan summaries were available for a successful scan. This is expected if this was a dry run, but otherwise there should be summaries.')
-    }
-}
 
 private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
     boolean problemRetrievingPolicyStatus = false
@@ -389,7 +236,7 @@ private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
                     log.info("Added policy status to ${it.name}")
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), dateTimeManager.getStringFromDate(new Date()))
-                    phoneHome()
+                    scanPhoneHomeService.phoneHome()
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
                     def policyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
@@ -473,11 +320,16 @@ private void initialize() {
     blackDuckArtifactoryConfig.setHomeDirectory(ctx.artifactoryHome.homeDir.toString())
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
 
+    thirdPartyVersion = ctx?.versionProvider?.running?.versionName
+
     loadProperties()
 
     // Services must be created after the properties are loaded
-    repositoryIdentifactionService = new RepositoryIdentifactionService(blackDuckArtifactoryConfig,
-    repositories, searches, dateTimeManager)
+    scanFileService = new ScanFileService(blackDuckArtifactoryConfig, hubConnectionService, repositories)
+    scanFileService.setUpBlackDuckDirectory()
+    repositoryIdentifactionService = new RepositoryIdentifactionService(blackDuckArtifactoryConfig, repositories, searches, dateTimeManager)
+    scanPhoneHomeService = new ScanPhoneHomeService(blackDuckArtifactoryConfig, hubConnectionService, thirdPartyVersion)
+    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentifactionService, scanFileService, scanPhoneHomeService, repositories, dateTimeManager)
 }
 
 private void loadProperties() {
@@ -490,39 +342,13 @@ private void loadProperties() {
 
     try {
         blackDuckArtifactoryConfig.loadProperties(propertiesFile)
-        scanMemory = Integer.parseInt(blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.MEMORY))
-        scanDryRun = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.DRY_RUN))
         artifactCutoffDate = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.CUTOFF_DATE)
         blackDuckScanCron = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.SCAN_CRON)
         blackDuckAddPolicyStatusCron = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.ADD_POLICY_STATUS_CRON)
-        useRepoPathAsCodelocationName = Boolean.parseBoolean(blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.REPO_PATH_CODELOCATION))
         dateTimeManager = new DateTimeManager(blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.DATE_TIME_PATTERN));
         hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig)
-
-        setUpBlackDuckDirectory()
     } catch (Exception e) {
         log.error("Black Duck Scanner encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}")
         throw e
-    }
-}
-
-private void setUpBlackDuckDirectory() {
-    String scanBinariesDirectory = blackDuckArtifactoryConfig.getProperty(ScanPluginProperty.BINARIES_DIRECTORY_PATH)
-    if (scanBinariesDirectory) {
-        blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.homeDirectory.canonicalPath, scanBinariesDirectory))
-    } else {
-        blackDuckArtifactoryConfig.setBlackDuckDirectory(FilenameUtils.concat(blackDuckArtifactoryConfig.etcDirectory.canonicalPath, 'blackducksoftware'))
-    }
-    cliDirectory = new File(blackDuckArtifactoryConfig.blackDuckDirectory, 'cli')
-    cliDirectory.mkdirs()
-}
-
-private void phoneHome() {
-    try {
-        String pluginVersion = blackDuckArtifactoryConfig.getVersionFile()?.text
-        String thirdPartyVersion = ctx?.versionProvider?.running?.versionName
-
-        hubConnectionService.phoneHome(pluginVersion, thirdPartyVersion, 'blackDuckScanForHub')
-    } catch (Exception e) {
     }
 }
