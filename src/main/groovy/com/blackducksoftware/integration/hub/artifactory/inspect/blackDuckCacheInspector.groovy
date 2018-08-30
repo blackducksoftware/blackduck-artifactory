@@ -23,18 +23,17 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
-import org.artifactory.fs.ItemInfo
-import org.artifactory.repo.RepoPath
-
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
 import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.blackducksoftware.integration.hub.artifactory.inspect.metadata.ArtifactMetaDataService
-
+import com.blackducksoftware.integration.hub.artifactory.scan.ArtifactoryPhoneHomeService
 import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
+import org.artifactory.fs.ItemInfo
+import org.artifactory.repo.RepoPath
 
 // propertiesFilePathOverride allows you to specify an absolute path to the blackDuckCacheInspector.properties file.
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackduckCacheInspector.properties
@@ -46,6 +45,7 @@ import groovy.transform.Field
 @Field ArtifactIdentificationService artifactIdentificationService
 @Field MetaDataPopulationService metadataPopulationService
 @Field MetaDataUpdateService metadataUpdateService
+@Field ArtifactoryPhoneHomeService artifactoryPhoneHomeService
 
 @Field List<String> repoKeysToInspect
 @Field String blackDuckIdentifyArtifactsCron
@@ -253,6 +253,8 @@ storage {
 private void initialize() {
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
+    blackDuckArtifactoryConfig.setThirdPartyVersion(ctx?.versionProvider?.running?.versionName?.toString())
+    blackDuckArtifactoryConfig.setPluginName('blackDuckCacheInspector')
 
     final File propertiesFile
     if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
@@ -266,6 +268,7 @@ private void initialize() {
         blackDuckIdentifyArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.IDENTIFY_ARTIFACTS_CRON)
         blackDuckPopulateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.POPULATE_METADATA_CRON)
         blackDuckUpdateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.UPDATE_METADATA_CRON)
+
 
         DateTimeManager dateTimeManager = new DateTimeManager(blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN))
         ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory();
@@ -281,19 +284,11 @@ private void initialize() {
         metadataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metadataPopulationService)
 
         repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect();
+
+        artifactoryPhoneHomeService = new ArtifactoryPhoneHomeService(blackDuckArtifactoryConfig, hubConnectionService)
     } catch (Exception e) {
         log.error("Black Duck Cache Inspector encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}")
         throw e
     }
-    phoneHome();
-}
-
-private void phoneHome() {
-    try {
-        String pluginVersion = blackDuckArtifactoryConfig.getVersionFile()?.text
-        String thirdPartyVersion = ctx?.versionProvider?.running?.versionName
-
-        hubConnectionService.phoneHome(pluginVersion, thirdPartyVersion, 'blackDuckCacheInspector')
-    } catch(Exception e) {
-    }
+    artifactoryPhoneHomeService.phoneHome()
 }

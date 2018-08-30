@@ -24,6 +24,7 @@
 package com.blackducksoftware.integration.hub.artifactory.scan
 
 import com.blackducksoftware.integration.hub.api.generated.view.VersionBomPolicyStatusView
+import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPhoneHomeService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryProperty
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
@@ -39,7 +40,7 @@ import org.artifactory.repo.RepoPath
 
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
 @Field RepositoryIdentificationService repositoryIdentificationService
-@Field ScanPhoneHomeService scanPhoneHomeService
+@Field ArtifactoryPhoneHomeService artifactoryPhoneHomeService
 @Field ArtifactScanService artifactScanService
 @Field ScanPluginManager scanPluginManager
 @Field ArtifactoryScanPropertyService artifactoryScanPropertyService
@@ -281,14 +282,14 @@ private void initialize() {
     blackDuckArtifactoryConfig.setHomeDirectory(ctx.artifactoryHome.homeDir.toString())
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
     blackDuckArtifactoryConfig.setThirdPartyVersion(ctx?.versionProvider?.running?.versionName?.toString())
+    blackDuckArtifactoryConfig.setPluginName(this.getClass().getSimpleName())
 
     // The ScanPluginManager must be created first
     scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig);
     scanPluginManager.setUpBlackDuckDirectory()
 
-    final String defaultPropertiesFileName = "${this.getClass().getSimpleName()}.properties"
-    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches, propertiesFilePathOverride, defaultPropertiesFileName)
+    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches, propertiesFilePathOverride)
     repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
-    scanPhoneHomeService = new ScanPhoneHomeService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService())
-    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, scanPhoneHomeService, artifactoryScanPropertyService, repositories)
+    artifactoryPhoneHomeService = new ArtifactoryPhoneHomeService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService())
+    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, artifactoryPhoneHomeService, artifactoryScanPropertyService, repositories)
 }
