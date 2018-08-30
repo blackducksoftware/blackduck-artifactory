@@ -24,9 +24,9 @@
 package com.blackducksoftware.integration.hub.artifactory.scan
 
 import com.blackducksoftware.integration.hub.api.generated.view.VersionBomPolicyStatusView
-import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPhoneHomeService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryProperty
+import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException
 import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
 import embedded.org.apache.commons.lang3.StringUtils
@@ -40,10 +40,10 @@ import org.artifactory.repo.RepoPath
 
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
 @Field RepositoryIdentificationService repositoryIdentificationService
-@Field ArtifactoryPhoneHomeService artifactoryPhoneHomeService
 @Field ArtifactScanService artifactScanService
 @Field ScanPluginManager scanPluginManager
 @Field ArtifactoryScanPropertyService artifactoryScanPropertyService
+@Field HubConnectionService hubConnectionService
 
 initialize()
 
@@ -228,7 +228,7 @@ private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
                     log.info("Added policy status to ${it.name}")
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), scanPluginManager.dateTimeManager.getStringFromDate(new Date()))
-                    artifactoryPhoneHomeService.phoneHome()
+                    hubConnectionService.phoneHome()
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
                     def policyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
@@ -289,8 +289,8 @@ private void initialize() {
     scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig);
     scanPluginManager.setUpBlackDuckDirectory()
 
+    hubConnectionService = scanPluginManager.getHubConnectionService()
     artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
     repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
-    artifactoryPhoneHomeService = new ArtifactoryPhoneHomeService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService())
-    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, artifactoryPhoneHomeService, artifactoryScanPropertyService, repositories)
+    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, artifactoryScanPropertyService, repositories)
 }

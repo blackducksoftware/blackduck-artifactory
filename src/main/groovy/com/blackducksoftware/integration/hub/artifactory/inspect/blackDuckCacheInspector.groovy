@@ -23,7 +23,6 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
-import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPhoneHomeService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
@@ -45,7 +44,6 @@ import org.artifactory.repo.RepoPath
 @Field ArtifactIdentificationService artifactIdentificationService
 @Field MetaDataPopulationService metadataPopulationService
 @Field MetaDataUpdateService metadataUpdateService
-@Field ArtifactoryPhoneHomeService artifactoryPhoneHomeService
 
 @Field List<String> repoKeysToInspect
 @Field String blackDuckIdentifyArtifactsCron
@@ -81,7 +79,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(repoKey) }
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
-        artifactoryPhoneHomeService.phoneHome();
+        hubConnectionService.phoneHome();
     }
 
     /**
@@ -108,7 +106,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckManuallyIdentifyArtifacts REST request.')
-        artifactoryPhoneHomeService.phoneHome();
+        hubConnectionService.phoneHome();
     }
 
     /**
@@ -133,7 +131,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyPopulateMetadata REST request.')
-        artifactoryPhoneHomeService.phoneHome();
+        hubConnectionService.phoneHome();
     }
 
     /**
@@ -160,7 +158,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
-        artifactoryPhoneHomeService.phoneHome();
+        hubConnectionService.phoneHome();
     }
 }
 
@@ -183,7 +181,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckIdentifyArtifacts CRON job.')
-        artifactoryPhoneHomeService.phoneHome();
+        hubConnectionService.phoneHome();
     }
 
     /**
@@ -202,7 +200,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckPopulateMetadata CRON job.')
-        artifactoryPhoneHomeService.phoneHome();
+        hubConnectionService.phoneHome();
     }
 
     /**
@@ -223,7 +221,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckUpdateMetadata CRON job.')
-        artifactoryPhoneHomeService.phoneHome();
+        hubConnectionService.phoneHome();
     }
 }
 
@@ -285,11 +283,10 @@ private void initialize() {
         metadataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metadataPopulationService)
 
         repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect();
-
-        artifactoryPhoneHomeService = new ArtifactoryPhoneHomeService(blackDuckArtifactoryConfig, hubConnectionService)
     } catch (Exception e) {
         log.error("Black Duck Cache Inspector encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}")
         throw e
     }
-    artifactoryPhoneHomeService.phoneHome()
+
+    hubConnectionService.phoneHome()
 }
