@@ -275,7 +275,7 @@ private void initialize() {
         PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
         packageTypePatternManager.loadPatterns(blackDuckArtifactoryConfig)
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager)
-        hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, dateTimeManager)
+        hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, dateTimeManager)
 
         CacheInspectorService cacheInspectorService = new CacheInspectorService(blackDuckArtifactoryConfig, repositories, artifactoryPropertyService)
         ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(hubConnectionService)
