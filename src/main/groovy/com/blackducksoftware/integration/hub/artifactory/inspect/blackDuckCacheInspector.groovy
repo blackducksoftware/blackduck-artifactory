@@ -243,7 +243,7 @@ storage {
                 }
             }
         } catch (Exception e) {
-            log.debug("The blackDuckCacheInspector encountered an unexpected exception", e)
+            log.debug("The ${blackDuckArtifactoryConfig.pluginName} encountered an unexpected exception", e)
         }
     }
 }
