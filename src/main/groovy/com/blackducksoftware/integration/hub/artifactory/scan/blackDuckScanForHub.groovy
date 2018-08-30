@@ -38,10 +38,10 @@ import org.artifactory.repo.RepoPath
 @Field String propertiesFilePathOverride = ""
 
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
-@Field RepositoryIdentifactionService repositoryIdentifactionService
+@Field RepositoryIdentificationService repositoryIdentificationService
 @Field ScanPhoneHomeService scanPhoneHomeService
 @Field ArtifactScanService artifactScanService
-@Field ScanFileService scanFileService
+@Field ScanPluginManager scanPluginManager
 @Field ArtifactoryScanPropertyService artifactoryScanPropertyService
 @Field String thirdPartyVersion
 
@@ -85,7 +85,7 @@ executions {
     blackDuckScan(httpMethod: 'GET') { params ->
         log.info('Starting blackDuckScan REST request...')
 
-        Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
+        Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
         artifactScanService.scanArtifactPaths(repoPaths)
 
         log.info('...completed blackDuckScan REST request.')
@@ -135,7 +135,7 @@ executions {
     blackDuckDeleteScanProperties() { params ->
         log.info('Starting blackDuckDeleteScanProperties REST request...')
 
-        Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
+        Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
         repoPaths.each { artifactoryScanPropertyService.deleteAllBlackDuckProperties(it) }
 
         log.info('...completed blackDuckDeleteScanProperties REST request.')
@@ -157,7 +157,7 @@ executions {
     blackDuckDeleteScanPropertiesFromFailures() { params ->
         log.info('Starting blackDuckDeleteScanPropertiesFromFailures REST request...')
 
-        Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
+        Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
         repoPaths.each {
             if (repositories.getProperty(it, BlackDuckArtifactoryProperty.SCAN_RESULT.getName())?.equals('FAILURE')) {
                 artifactoryScanPropertyService.deleteAllBlackDuckProperties(it)
@@ -190,7 +190,7 @@ jobs {
     blackDuckScan(cron: artifactoryScanPropertyService.blackDuckScanCron) {
         log.info('Starting blackDuckScan cron job...')
 
-        Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
+        Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
         artifactScanService.scanArtifactPaths(repoPaths)
 
         log.info('...completed blackDuckScan cron job.')
@@ -199,7 +199,7 @@ jobs {
     blackDuckAddPolicyStatus(cron: artifactoryScanPropertyService.blackDuckAddPolicyStatusCron) {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
 
-        Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
+        Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
         populatePolicyStatuses(repoPaths)
 
         log.info('...completed blackDuckAddPolicyStatus cron job.')
@@ -220,14 +220,14 @@ private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
                 projectVersionUrl = artifactoryScanPropertyService.updateUrlPropertyToCurrentHubServer(projectVersionUrl)
                 repositories.setProperty(it, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
                 try {
-                    VersionBomPolicyStatusView versionBomPolicyStatusView = artifactoryScanPropertyService.hubConnectionService.getPolicyStatusOfProjectVersion(projectVersionUrl);
+                    VersionBomPolicyStatusView versionBomPolicyStatusView = scanPluginManager.hubConnectionService.getPolicyStatusOfProjectVersion(projectVersionUrl);
                     log.info("policy status json: " + versionBomPolicyStatusView.json);
                     PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView);
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName(), versionBomPolicyStatusView.overallStatus.toString())
                     log.info("Added policy status to ${it.name}")
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
-                    repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), artifactoryScanPropertyService.dateTimeManager.getStringFromDate(new Date()))
+                    repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), scanPluginManager.dateTimeManager.getStringFromDate(new Date()))
                     scanPhoneHomeService.phoneHome()
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
@@ -251,22 +251,22 @@ private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
 private String buildStatusCheckMessage() {
     def connectMessage = 'OK'
     try {
-        if (artifactoryScanPropertyService.hubConnectionService == null) {
+        if (scanPluginManager.hubConnectionService == null) {
             connectMessage = 'Could not create the connection to the Hub - you will have to check the artifactory logs.'
         }
     } catch (Exception e) {
         connectMessage = e.message
     }
 
-    Set<RepoPath> repoPaths = repositoryIdentifactionService.searchForRepoPaths()
+    Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
 
     def cutoffMessage = 'The date cutoff is not specified so all artifacts that are found will be scanned.'
-    if (StringUtils.isNotBlank(artifactoryScanPropertyService.getArtifactCutoffDate())) {
+    if (StringUtils.isNotBlank(scanPluginManager.getArtifactCutoffDate())) {
         try {
-            artifactoryScanPropertyService.dateTimeManager.getTimeFromString(artifactoryScanPropertyService.getArtifactCutoffDate())
+            scanPluginManager.dateTimeManager.getTimeFromString(scanPluginManager.getArtifactCutoffDate())
             cutoffMessage = 'The date cutoff is specified correctly.'
         } catch (Exception e) {
-            cutoffMessage = "The pattern: ${artifactoryScanPropertyService.dateTimeManager.dateTimePattern} does not match the date string: ${artifactoryScanPropertyService.getArtifactCutoffDate()}: ${e.message}"
+            cutoffMessage = "The pattern: ${scanPluginManager.dateTimeManager.dateTimePattern} does not match the date string: ${scanPluginManager.getArtifactCutoffDate()}: ${e.message}"
         }
     }
 
@@ -286,11 +286,11 @@ private void initialize() {
 
     // The ArtifactoryScanPropertyService must be created first
     final String defaultPropertiesFileName = "${this.getClass().getSimpleName()}.properties"
-    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, repositories, propertiesFilePathOverride, defaultPropertiesFileName)
+    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService(), repositories, propertiesFilePathOverride, defaultPropertiesFileName)
+    scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig);
+    scanPluginManager.setUpBlackDuckDirectory()
 
-    scanFileService = new ScanFileService(blackDuckArtifactoryConfig, artifactoryScanPropertyService.hubConnectionService, repositories)
-    scanFileService.setUpBlackDuckDirectory()
-    repositoryIdentifactionService = new RepositoryIdentifactionService(blackDuckArtifactoryConfig, repositories, searches, artifactoryScanPropertyService.getDateTimeManager())
-    scanPhoneHomeService = new ScanPhoneHomeService(blackDuckArtifactoryConfig, artifactoryScanPropertyService.hubConnectionService, thirdPartyVersion)
-    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentifactionService, scanFileService, scanPhoneHomeService, repositories, artifactoryScanPropertyService.getDateTimeManager())
+    repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, repositories, searches, scanPluginManager.getDateTimeManager())
+    scanPhoneHomeService = new ScanPhoneHomeService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService(), thirdPartyVersion)
+    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, scanPhoneHomeService, artifactoryScanPropertyService, repositories)
 }
