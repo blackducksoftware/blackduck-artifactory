@@ -23,12 +23,10 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.scan
 
-import com.blackducksoftware.integration.hub.api.generated.view.VersionBomPolicyStatusView
+import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryProperty
 import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
-import com.blackducksoftware.integration.hub.exception.HubIntegrationException
-import com.blackducksoftware.integration.hub.service.model.PolicyStatusDescription
 import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 import org.apache.commons.io.FileUtils
@@ -42,7 +40,7 @@ import org.artifactory.repo.RepoPath
 @Field RepositoryIdentificationService repositoryIdentificationService
 @Field ArtifactScanService artifactScanService
 @Field ScanPluginManager scanPluginManager
-@Field ArtifactoryScanPropertyService artifactoryScanPropertyService
+@Field ArtifactoryPropertyService artifactoryPropertyService
 @Field HubConnectionService hubConnectionService
 
 initialize()
@@ -136,7 +134,7 @@ executions {
         log.info('Starting blackDuckDeleteScanProperties REST request...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
-        repoPaths.each { artifactoryScanPropertyService.deleteAllBlackDuckProperties(it) }
+        repoPaths.each { artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(it) }
 
         log.info('...completed blackDuckDeleteScanProperties REST request.')
     }
@@ -160,7 +158,7 @@ executions {
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
         repoPaths.each {
             if (repositories.getProperty(it, BlackDuckArtifactoryProperty.SCAN_RESULT.getName())?.equals('FAILURE')) {
-                artifactoryScanPropertyService.deleteAllBlackDuckProperties(it)
+                artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(it)
             }
         }
 
@@ -200,7 +198,7 @@ jobs {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
-        populatePolicyStatuses(repoPaths)
+        hubConnectionService.populatePolicyStatuses(repoPaths)
 
         log.info('...completed blackDuckAddPolicyStatus cron job.')
     }
@@ -209,44 +207,6 @@ jobs {
 //####################################################
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
 //####################################################
-
-private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
-    boolean problemRetrievingPolicyStatus = false
-    repoPaths.each {
-        try {
-            String projectVersionUrl = repositories.
-            getProperty(it, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL.getName())
-            if (StringUtils.isNotBlank(projectVersionUrl)) {
-                projectVersionUrl = artifactoryScanPropertyService.updateUrlPropertyToCurrentHubServer(projectVersionUrl)
-                repositories.setProperty(it, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
-                try {
-                    VersionBomPolicyStatusView versionBomPolicyStatusView = scanPluginManager.hubConnectionService.getPolicyStatusOfProjectVersion(projectVersionUrl)
-                    log.info("policy status json: " + versionBomPolicyStatusView.json)
-                    PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
-                    repositories.setProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
-                    repositories.setProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName(), versionBomPolicyStatusView.overallStatus.toString())
-                    log.info("Added policy status to ${it.name}")
-                    repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
-                    repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), scanPluginManager.dateTimeManager.getStringFromDate(new Date()))
-                    hubConnectionService.phoneHome()
-                } catch (HubIntegrationException ignored) {
-                    problemRetrievingPolicyStatus = true
-                    def policyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
-                    def overallPolicyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName())
-                    if (StringUtils.isNotBlank(policyStatus) || StringUtils.isNotBlank(overallPolicyStatus)) {
-                        repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'OUT OF DATE')
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("There was a problem trying to access repository ${it.name}: ", e)
-            problemRetrievingPolicyStatus = true
-        }
-    }
-    if (problemRetrievingPolicyStatus) {
-        log.warn('There was a problem retrieving policy status for one or more repos. This is expected if you do not have policy management.')
-    }
-}
 
 private String buildStatusCheckMessage() {
     def connectMessage = 'OK'
@@ -289,8 +249,8 @@ private void initialize() {
     scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig)
     scanPluginManager.setUpBlackDuckDirectory()
 
-    hubConnectionService = scanPluginManager.getHubConnectionService()
-    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
+    artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, scanPluginManager.getDateTimeManager())
+    hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, scanPluginManager.getDateTimeManager())
     repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
-    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, artifactoryScanPropertyService, repositories)
+    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, hubConnectionService, artifactoryPropertyService, repositories)
 }
