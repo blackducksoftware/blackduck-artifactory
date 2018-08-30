@@ -30,7 +30,6 @@ import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.blackducksoftware.integration.hub.artifactory.inspect.metadata.ArtifactMetaDataService
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
-import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo
 import org.artifactory.repo.RepoPath
@@ -249,45 +248,31 @@ storage {
     }
 }
 
-// TODO: Utilize classes and methods created when abstracting scan logic
 private void initialize() {
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
     blackDuckArtifactoryConfig.setThirdPartyVersion(ctx?.versionProvider?.running?.versionName?.toString())
-    blackDuckArtifactoryConfig.setPluginName('blackDuckCacheInspector')
+    blackDuckArtifactoryConfig.setPluginName(this.getClass().getSimpleName())
 
-    final File propertiesFile
-    if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
-        propertiesFile = new File(propertiesFilePathOverride)
-    } else {
-        propertiesFile = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, "${this.getClass().getSimpleName()}.properties")
-    }
+    blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
+    blackDuckIdentifyArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.IDENTIFY_ARTIFACTS_CRON)
+    blackDuckPopulateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.POPULATE_METADATA_CRON)
+    blackDuckUpdateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.UPDATE_METADATA_CRON)
 
-    try {
-        blackDuckArtifactoryConfig.loadProperties(propertiesFile)
-        blackDuckIdentifyArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.IDENTIFY_ARTIFACTS_CRON)
-        blackDuckPopulateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.POPULATE_METADATA_CRON)
-        blackDuckUpdateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.UPDATE_METADATA_CRON)
+    final DateTimeManager dateTimeManager = new DateTimeManager(blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN))
+    final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory())
+    PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
+    packageTypePatternManager.loadPatterns(blackDuckArtifactoryConfig)
+    artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager)
+    hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, dateTimeManager)
 
+    final CacheInspectorService cacheInspectorService = new CacheInspectorService(blackDuckArtifactoryConfig, repositories, artifactoryPropertyService)
+    final ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(hubConnectionService)
+    artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService, cacheInspectorService, hubConnectionService)
+    metadataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService)
+    metadataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metadataPopulationService)
 
-        DateTimeManager dateTimeManager = new DateTimeManager(blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN))
-        ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory())
-        PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
-        packageTypePatternManager.loadPatterns(blackDuckArtifactoryConfig)
-        artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager)
-        hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, dateTimeManager)
-
-        CacheInspectorService cacheInspectorService = new CacheInspectorService(blackDuckArtifactoryConfig, repositories, artifactoryPropertyService)
-        ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(hubConnectionService)
-        artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService, cacheInspectorService, hubConnectionService)
-        metadataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService)
-        metadataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metadataPopulationService)
-
-        repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect()
-    } catch (Exception e) {
-        log.error("Black Duck Cache Inspector encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}")
-        throw e
-    }
+    repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect()
 
     hubConnectionService.phoneHome()
 }
