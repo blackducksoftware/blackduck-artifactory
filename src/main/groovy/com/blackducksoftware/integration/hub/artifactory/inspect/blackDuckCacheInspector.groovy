@@ -23,13 +23,13 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.inspect
 
+import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPhoneHomeService
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
 import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.blackducksoftware.integration.hub.artifactory.inspect.metadata.ArtifactMetaDataService
-import com.blackducksoftware.integration.hub.artifactory.scan.ArtifactoryPhoneHomeService
 import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo
