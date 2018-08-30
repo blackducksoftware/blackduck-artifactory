@@ -284,13 +284,13 @@ private void initialize() {
 
     thirdPartyVersion = ctx?.versionProvider?.running?.versionName
 
-    // The ArtifactoryScanPropertyService must be created first
-    final String defaultPropertiesFileName = "${this.getClass().getSimpleName()}.properties"
-    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService(), repositories, propertiesFilePathOverride, defaultPropertiesFileName)
+    // The ScanPluginManager must be created first
     scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig);
     scanPluginManager.setUpBlackDuckDirectory()
 
-    repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, repositories, searches, scanPluginManager.getDateTimeManager())
+    final String defaultPropertiesFileName = "${this.getClass().getSimpleName()}.properties"
+    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches, propertiesFilePathOverride, defaultPropertiesFileName)
+    repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
     scanPhoneHomeService = new ScanPhoneHomeService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService(), thirdPartyVersion)
     artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, scanPhoneHomeService, artifactoryScanPropertyService, repositories)
 }
