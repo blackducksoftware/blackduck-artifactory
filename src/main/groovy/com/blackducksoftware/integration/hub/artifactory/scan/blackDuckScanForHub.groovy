@@ -27,7 +27,6 @@ import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyServ
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryProperty
 import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
-import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 import org.apache.commons.io.FileUtils
 import org.artifactory.repo.RepoPath
@@ -42,6 +41,7 @@ import org.artifactory.repo.RepoPath
 @Field ScanPluginManager scanPluginManager
 @Field ArtifactoryPropertyService artifactoryPropertyService
 @Field HubConnectionService hubConnectionService
+@Field StatusCheckService statusCheckService;
 
 initialize()
 
@@ -98,7 +98,7 @@ executions {
     blackDuckTestConfig(httpMethod: 'GET') { params ->
         log.info('Starting blackDuckTestConfig REST request...')
 
-        message = buildStatusCheckMessage()
+        message = statusCheckService.getStatusMessage()
 
         log.info('...completed blackDuckTestConfig REST request.')
     }
@@ -208,34 +208,6 @@ jobs {
 //PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
 //####################################################
 
-private String buildStatusCheckMessage() {
-    def connectMessage = 'OK'
-    try {
-        if (hubConnectionService == null) {
-            connectMessage = 'Could not create the connection to the Hub - you will have to check the artifactory logs.'
-        }
-    } catch (Exception e) {
-        connectMessage = e.message
-    }
-
-    Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
-
-    def cutoffMessage = 'The date cutoff is not specified so all artifacts that are found will be scanned.'
-    if (StringUtils.isNotBlank(scanPluginManager.getArtifactCutoffDate())) {
-        try {
-            scanPluginManager.dateTimeManager.getTimeFromString(scanPluginManager.getArtifactCutoffDate())
-            cutoffMessage = 'The date cutoff is specified correctly.'
-        } catch (Exception e) {
-            cutoffMessage = "The pattern: ${scanPluginManager.dateTimeManager.dateTimePattern} does not match the date string: ${scanPluginManager.getArtifactCutoffDate()}: ${e.message}"
-        }
-    }
-
-    return """canConnectToHub: ${connectMessage}
-artifactsFound: ${repoPaths.size()}
-dateCutoffStatus: ${cutoffMessage}
-"""
-}
-
 private void initialize() {
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     blackDuckArtifactoryConfig.setEtcDirectory(ctx.artifactoryHome.etcDir.toString())
@@ -253,4 +225,5 @@ private void initialize() {
     hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, scanPluginManager.getDateTimeManager())
     repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
     artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, hubConnectionService, artifactoryPropertyService, repositories)
+    statusCheckService = new StatusCheckService(scanPluginManager, hubConnectionService, repositoryIdentificationService)
 }
