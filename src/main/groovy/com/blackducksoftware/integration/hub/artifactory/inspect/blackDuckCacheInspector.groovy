@@ -81,7 +81,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(repoKey) }
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
-        phoneHome();
+        artifactoryPhoneHomeService.phoneHome();
     }
 
     /**
@@ -108,7 +108,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckManuallyIdentifyArtifacts REST request.')
-        phoneHome();
+        artifactoryPhoneHomeService.phoneHome();
     }
 
     /**
@@ -133,7 +133,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyPopulateMetadata REST request.')
-        phoneHome();
+        artifactoryPhoneHomeService.phoneHome();
     }
 
     /**
@@ -160,7 +160,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
-        phoneHome();
+        artifactoryPhoneHomeService.phoneHome();
     }
 }
 
@@ -183,7 +183,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckIdentifyArtifacts CRON job.')
-        phoneHome();
+        artifactoryPhoneHomeService.phoneHome();
     }
 
     /**
@@ -202,7 +202,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckPopulateMetadata CRON job.')
-        phoneHome();
+        artifactoryPhoneHomeService.phoneHome();
     }
 
     /**
@@ -223,7 +223,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckUpdateMetadata CRON job.')
-        phoneHome();
+        artifactoryPhoneHomeService.phoneHome();
     }
 }
 

@@ -187,7 +187,7 @@ jobs {
      *
      * The same functionality is provided via the scanForHub execution to enable a one-time scan triggered via a REST call.
      */
-    blackDuckScan(cron: artifactoryScanPropertyService.blackDuckScanCron) {
+    blackDuckScan(cron: scanPluginManager.blackDuckScanCron) {
         log.info('Starting blackDuckScan cron job...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
@@ -196,7 +196,7 @@ jobs {
         log.info('...completed blackDuckScan cron job.')
     }
 
-    blackDuckAddPolicyStatus(cron: artifactoryScanPropertyService.blackDuckAddPolicyStatusCron) {
+    blackDuckAddPolicyStatus(cron: scanPluginManager.blackDuckAddPolicyStatusCron) {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
