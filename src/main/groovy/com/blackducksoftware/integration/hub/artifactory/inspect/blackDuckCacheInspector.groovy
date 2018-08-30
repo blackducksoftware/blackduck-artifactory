@@ -29,6 +29,7 @@ import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
 import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.blackducksoftware.integration.hub.artifactory.inspect.metadata.ArtifactMetaDataService
+import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 import embedded.org.apache.commons.lang3.StringUtils
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo
@@ -270,7 +271,7 @@ private void initialize() {
 
 
         DateTimeManager dateTimeManager = new DateTimeManager(blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN))
-        ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory()
+        ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory())
         PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
         packageTypePatternManager.loadPatterns(blackDuckArtifactoryConfig)
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager)
