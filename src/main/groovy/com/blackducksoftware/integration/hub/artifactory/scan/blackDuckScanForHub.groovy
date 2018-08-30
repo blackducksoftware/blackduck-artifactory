@@ -228,7 +228,7 @@ private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
                     log.info("Added policy status to ${it.name}")
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), scanPluginManager.dateTimeManager.getStringFromDate(new Date()))
-                    scanPhoneHomeService.phoneHome()
+                    artifactoryPhoneHomeService.phoneHome()
                 } catch (HubIntegrationException e) {
                     problemRetrievingPolicyStatus = true
                     def policyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
@@ -283,12 +283,13 @@ private void initialize() {
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
     blackDuckArtifactoryConfig.setThirdPartyVersion(ctx?.versionProvider?.running?.versionName?.toString())
     blackDuckArtifactoryConfig.setPluginName(this.getClass().getSimpleName())
+    blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
 
     // The ScanPluginManager must be created first
     scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig);
     scanPluginManager.setUpBlackDuckDirectory()
 
-    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches, propertiesFilePathOverride)
+    artifactoryScanPropertyService = new ArtifactoryScanPropertyService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
     repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
     artifactoryPhoneHomeService = new ArtifactoryPhoneHomeService(blackDuckArtifactoryConfig, scanPluginManager.getHubConnectionService())
     artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, artifactoryPhoneHomeService, artifactoryScanPropertyService, repositories)

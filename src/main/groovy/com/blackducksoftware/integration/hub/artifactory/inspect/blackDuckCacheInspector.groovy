@@ -250,6 +250,7 @@ storage {
     }
 }
 
+// TODO: Utilize classes and methods created when abstracting scan logic
 private void initialize() {
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
