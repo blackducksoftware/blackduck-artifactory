@@ -211,7 +211,7 @@ jobs {
 private String buildStatusCheckMessage() {
     def connectMessage = 'OK'
     try {
-        if (scanPluginManager.hubConnectionService == null) {
+        if (hubConnectionService == null) {
             connectMessage = 'Could not create the connection to the Hub - you will have to check the artifactory logs.'
         }
     } catch (Exception e) {
@@ -245,7 +245,7 @@ private void initialize() {
     blackDuckArtifactoryConfig.setPluginName(this.getClass().getSimpleName())
     blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
 
-    // The ScanPluginManager must be created first
+    // The ScanPluginManager must be created before other services
     scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig)
     scanPluginManager.setUpBlackDuckDirectory()
 
