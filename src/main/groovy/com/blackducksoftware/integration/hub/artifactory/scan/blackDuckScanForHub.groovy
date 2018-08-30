@@ -220,16 +220,16 @@ private void populatePolicyStatuses(Set<RepoPath> repoPaths) {
                 projectVersionUrl = artifactoryScanPropertyService.updateUrlPropertyToCurrentHubServer(projectVersionUrl)
                 repositories.setProperty(it, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL.getName(), projectVersionUrl)
                 try {
-                    VersionBomPolicyStatusView versionBomPolicyStatusView = scanPluginManager.hubConnectionService.getPolicyStatusOfProjectVersion(projectVersionUrl);
-                    log.info("policy status json: " + versionBomPolicyStatusView.json);
-                    PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView);
+                    VersionBomPolicyStatusView versionBomPolicyStatusView = scanPluginManager.hubConnectionService.getPolicyStatusOfProjectVersion(projectVersionUrl)
+                    log.info("policy status json: " + versionBomPolicyStatusView.json)
+                    PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView)
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), policyStatusDescription.policyStatusMessage)
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName(), versionBomPolicyStatusView.overallStatus.toString())
                     log.info("Added policy status to ${it.name}")
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), 'UP TO DATE')
                     repositories.setProperty(it, BlackDuckArtifactoryProperty.LAST_UPDATE.getName(), scanPluginManager.dateTimeManager.getStringFromDate(new Date()))
                     hubConnectionService.phoneHome()
-                } catch (HubIntegrationException e) {
+                } catch (HubIntegrationException ignored) {
                     problemRetrievingPolicyStatus = true
                     def policyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
                     def overallPolicyStatus = repositories.getProperty(it, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS.getName())
@@ -286,7 +286,7 @@ private void initialize() {
     blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
 
     // The ScanPluginManager must be created first
-    scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig);
+    scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig)
     scanPluginManager.setUpBlackDuckDirectory()
 
     hubConnectionService = scanPluginManager.getHubConnectionService()

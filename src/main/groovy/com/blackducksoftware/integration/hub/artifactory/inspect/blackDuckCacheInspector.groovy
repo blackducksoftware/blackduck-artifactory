@@ -79,7 +79,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(repoKey) }
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
-        hubConnectionService.phoneHome();
+        hubConnectionService.phoneHome()
     }
 
     /**
@@ -106,7 +106,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckManuallyIdentifyArtifacts REST request.')
-        hubConnectionService.phoneHome();
+        hubConnectionService.phoneHome()
     }
 
     /**
@@ -131,7 +131,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyPopulateMetadata REST request.')
-        hubConnectionService.phoneHome();
+        hubConnectionService.phoneHome()
     }
 
     /**
@@ -158,7 +158,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
-        hubConnectionService.phoneHome();
+        hubConnectionService.phoneHome()
     }
 }
 
@@ -181,7 +181,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckIdentifyArtifacts CRON job.')
-        hubConnectionService.phoneHome();
+        hubConnectionService.phoneHome()
     }
 
     /**
@@ -200,7 +200,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckPopulateMetadata CRON job.')
-        hubConnectionService.phoneHome();
+        hubConnectionService.phoneHome()
     }
 
     /**
@@ -221,7 +221,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckUpdateMetadata CRON job.')
-        hubConnectionService.phoneHome();
+        hubConnectionService.phoneHome()
     }
 }
 
@@ -234,9 +234,9 @@ storage {
             String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
 
             if (repoKeysToInspect.contains(repoKey)) {
-                Optional<Set<RepoPath>> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey);
+                Optional<Set<RepoPath>> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey)
                 if (identifiableArtifacts.isPresent() && identifiableArtifacts.get().contains(repoPath)) {
-                    Optional<IdentifiedArtifact> optionalIdentifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
+                    Optional<IdentifiedArtifact> optionalIdentifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType)
                     if (optionalIdentifiedArtifact.isPresent()) {
                         artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(optionalIdentifiedArtifact.get())
                     }
@@ -257,7 +257,7 @@ private void initialize() {
 
     final File propertiesFile
     if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
-        propertiesFile = new File(propertiesFilePathOverride);
+        propertiesFile = new File(propertiesFilePathOverride)
     } else {
         propertiesFile = new File(blackDuckArtifactoryConfig.pluginsLibDirectory, "${this.getClass().getSimpleName()}.properties")
     }
@@ -270,19 +270,19 @@ private void initialize() {
 
 
         DateTimeManager dateTimeManager = new DateTimeManager(blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN))
-        ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory();
-        PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager();
+        ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory()
+        PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
         packageTypePatternManager.loadPatterns(blackDuckArtifactoryConfig)
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager)
         hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig)
 
         CacheInspectorService cacheInspectorService = new CacheInspectorService(blackDuckArtifactoryConfig, repositories, artifactoryPropertyService)
-        ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(hubConnectionService);
+        ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(hubConnectionService)
         artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService, cacheInspectorService, hubConnectionService)
         metadataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService)
         metadataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metadataPopulationService)
 
-        repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect();
+        repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect()
     } catch (Exception e) {
         log.error("Black Duck Cache Inspector encountered an unexpected error when trying to load its properties file at ${propertiesFile.getAbsolutePath()}")
         throw e
