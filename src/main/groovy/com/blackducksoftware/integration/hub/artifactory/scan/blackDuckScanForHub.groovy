@@ -38,10 +38,10 @@ import org.artifactory.repo.RepoPath
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
 @Field RepositoryIdentificationService repositoryIdentificationService
 @Field ArtifactScanService artifactScanService
-@Field ScanPluginManager scanPluginManager
+@Field ScanArtifactoryConfig scanArtifactoryConfig
 @Field ArtifactoryPropertyService artifactoryPropertyService
 @Field HubConnectionService hubConnectionService
-@Field StatusCheckService statusCheckService;
+@Field StatusCheckService statusCheckService
 
 initialize()
 
@@ -134,7 +134,7 @@ executions {
         log.info('Starting blackDuckDeleteScanProperties REST request...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
-        repoPaths.each { artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(it) }
+        repoPaths.each { artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(it.repoKey) }
 
         log.info('...completed blackDuckDeleteScanProperties REST request.')
     }
@@ -185,7 +185,7 @@ jobs {
      *
      * The same functionality is provided via the scanForHub execution to enable a one-time scan triggered via a REST call.
      */
-    blackDuckScan(cron: scanPluginManager.blackDuckScanCron) {
+    blackDuckScan(cron: scanArtifactoryConfig.blackDuckScanCron) {
         log.info('Starting blackDuckScan cron job...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
@@ -194,7 +194,7 @@ jobs {
         log.info('...completed blackDuckScan cron job.')
     }
 
-    blackDuckAddPolicyStatus(cron: scanPluginManager.blackDuckAddPolicyStatusCron) {
+    blackDuckAddPolicyStatus(cron: scanArtifactoryConfig.blackDuckAddPolicyStatusCron) {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
@@ -217,13 +217,13 @@ private void initialize() {
     blackDuckArtifactoryConfig.setPluginName(this.getClass().getSimpleName())
     blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
 
-    // The ScanPluginManager must be created before other services
-    scanPluginManager = new ScanPluginManager(blackDuckArtifactoryConfig)
-    scanPluginManager.setUpBlackDuckDirectory()
+    // The ScanArtifactoryConfig must be created before other services
+    scanArtifactoryConfig = new ScanArtifactoryConfig(blackDuckArtifactoryConfig)
+    scanArtifactoryConfig.setUpBlackDuckDirectory()
 
-    artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, scanPluginManager.getDateTimeManager())
-    hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, scanPluginManager.getDateTimeManager())
-    repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanPluginManager, repositories, searches)
-    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanPluginManager, hubConnectionService, artifactoryPropertyService, repositories)
-    statusCheckService = new StatusCheckService(scanPluginManager, hubConnectionService, repositoryIdentificationService)
+    artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, scanArtifactoryConfig.getDateTimeManager())
+    hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, scanArtifactoryConfig.getDateTimeManager())
+    repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanArtifactoryConfig, repositories, searches)
+    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanArtifactoryConfig, hubConnectionService, artifactoryPropertyService, repositories)
+    statusCheckService = new StatusCheckService(scanArtifactoryConfig, hubConnectionService, repositoryIdentificationService)
 }
