@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory;
+package com.synopsys.integration.blackduck.artifactory;
 
 import java.net.URI;
 import java.util.List;
@@ -48,7 +48,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriTemplateHandler;
 
-import com.blackducksoftware.integration.exception.EncryptionException;
+import com.synopsys.integration.exception.EncryptionException;
 
 import embedded.org.apache.commons.lang3.StringUtils;
 

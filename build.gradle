@@ -61,17 +61,17 @@ task createFinalZip(type: Zip) {
         exclude '*javadoc.jar'
     }
 
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/hub/artifactory/scan") {
         include 'blackDuckScan.groovy'
         into 'plugins'
     }
 
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/inspect") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/hub/artifactory/inspect") {
         include 'blackDuckCacheInspector.groovy'
         into 'plugins'
     }
 
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/hub/artifactory") {
         include 'blackDuckPolicyEnforcer.groovy'
         into 'plugins'
     }

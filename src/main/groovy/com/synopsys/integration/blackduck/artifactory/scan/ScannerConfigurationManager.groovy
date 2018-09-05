@@ -21,10 +21,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory.scan
+package com.synopsys.integration.blackduck.artifactory.scan
 
-import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
-import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
+import com.synopsys.integration.blackduck.artifactory.CommonConfigurationManager
+import com.synopsys.integration.blackduck.artifactory.ConfigurationProperties
 import embedded.org.apache.commons.lang3.StringUtils
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.fluent.Configurations

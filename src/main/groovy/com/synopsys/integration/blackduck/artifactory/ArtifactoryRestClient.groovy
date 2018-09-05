@@ -21,16 +21,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory
+package com.synopsys.integration.blackduck.artifactory
 
+import groovy.json.JsonSlurper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpStatusCodeException
-
-import groovy.json.JsonSlurper
 
 @Component
 class ArtifactoryRestClient {

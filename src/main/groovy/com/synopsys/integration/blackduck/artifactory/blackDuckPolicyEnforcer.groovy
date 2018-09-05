@@ -1,4 +1,4 @@
-/**
+/*
  * hub-artifactory
  *
  * Copyright (C) 2018 Black Duck Software, Inc.
@@ -21,25 +21,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory;
+package com.synopsys.integration.blackduck.artifactory
 
-import java.io.IOException;
+import org.artifactory.exception.CancelException
+import org.artifactory.repo.RepoPath
+import org.artifactory.request.Request
 
-import org.springframework.http.HttpRequest;
-import org.springframework.http.client.ClientHttpRequestExecution;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.ClientHttpResponse;
-
-public class ArtifactoryAuthorizationInterceptor implements ClientHttpRequestInterceptor {
-    private final String apiKey;
-
-    public ArtifactoryAuthorizationInterceptor(final String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    @Override
-    public ClientHttpResponse intercept(final HttpRequest request, final byte[] body, final ClientHttpRequestExecution execution) throws IOException {
-        request.getHeaders().add("X-JFrog-Art-Api", this.apiKey);
-        return execution.execute(request, body);
+download {
+    beforeDownload { Request request, RepoPath repoPath ->
+        def policyStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
+        if (PolicyStatusSummaryStatusType.IN_VIOLATION.name().equals(policyStatus)) {
+            throw new CancelException("Black Duck Policy Enforcer has prevented the download of ${repoPath.toPath()} because it violates a policy in your Black Duck Hub.", 403)
+        }
     }
 }

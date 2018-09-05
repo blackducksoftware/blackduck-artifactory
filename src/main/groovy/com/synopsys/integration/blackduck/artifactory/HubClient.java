@@ -21,21 +21,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory;
+package com.synopsys.integration.blackduck.artifactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.blackducksoftware.integration.exception.IntegrationException;
-import com.blackducksoftware.integration.hub.configuration.HubServerConfig;
-import com.blackducksoftware.integration.hub.configuration.HubServerConfigBuilder;
-import com.blackducksoftware.integration.log.Slf4jIntLogger;
-import com.blackducksoftware.integration.rest.connection.RestConnection;
-import com.blackducksoftware.integration.util.ResourceUtil;
-
-import embedded.org.apache.commons.lang3.StringUtils;
+import com.synopsys.integration.blackduck.configuration.HubServerConfig;
+import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
+import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.log.Slf4jIntLogger;
+import com.synopsys.integration.rest.connection.RestConnection;
+import com.synopsys.integration.util.ResourceUtil;
 
 @Component
 public class HubClient {
