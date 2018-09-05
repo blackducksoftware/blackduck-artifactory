@@ -44,108 +44,108 @@ class ConfigurationProperties {
     String artifactoryApiKey
 
     //Common
-    @Value('${blackduck.hub.url}')
+    @Value('${blackduck.url}')
     String blackduckHubUrl
 
-    @Value('${blackduck.hub.username}')
+    @Value('${blackduck.username}')
     String blackduckHubUsername
 
-    @Value('${blackduck.hub.password}')
+    @Value('${blackduck.password}')
     String blackduckHubPassword
 
-    @Value('${blackduck.hub.api.token}')
+    @Value('${blackduck.api.token}')
     String blackduckHubApiToken
 
-    @Value('${blackduck.hub.timeout}')
+    @Value('${blackduck.timeout}')
     String blackduckHubTimeout
 
-    @Value('${blackduck.hub.trust.cert}')
+    @Value('${blackduck.trust.cert}')
     String blackduckHubTrustCert
 
-    @Value('${blackduck.hub.proxy.host}')
+    @Value('${blackduck.proxy.host}')
     String blackduckHubProxyHost
 
-    @Value('${blackduck.hub.proxy.port}')
+    @Value('${blackduck.proxy.port}')
     String blackduckHubProxyPort
 
-    @Value('${blackduck.hub.proxy.username}')
+    @Value('${blackduck.proxy.username}')
     String blackduckHubProxyUsername
 
-    @Value('${blackduck.hub.proxy.password}')
+    @Value('${blackduck.proxy.password}')
     String blackduckHubProxyPassword
 
     //Inspector
-    @Value('${hub.artifactory.inspect.repos}')
+    @Value('${blackduck.artifactory.inspect.repos}')
     String hubArtifactoryInspectRepositoriesList
 
-    @Value('${hub.artifactory.inspect.repos.csv.path}')
+    @Value('${blackduck.artifactory.inspect.repos.csv.path}')
     String hubArtifactoryInspectRepositoriesCsvPath
 
-    @Value('${hub.artifactory.inspect.patterns.rubygems}')
+    @Value('${blackduck.artifactory.inspect.patterns.rubygems}')
     String hubArtifactoryInspectPatternsRubygems
 
-    @Value('${hub.artifactory.inspect.patterns.maven}')
+    @Value('${blackduck.artifactory.inspect.patterns.maven}')
     String hubArtifactoryInspectPatternsMaven
 
-    @Value('${hub.artifactory.inspect.patterns.gradle}')
+    @Value('${blackduck.artifactory.inspect.patterns.gradle}')
     String hubArtifactoryInspectPatternsGradle
 
-    @Value('${hub.artifactory.inspect.patterns.pypi}')
+    @Value('${blackduck.artifactory.inspect.patterns.pypi}')
     String hubArtifactoryInspectPatternsPypi
 
-    @Value('${hub.artifactory.inspect.patterns.nuget}')
+    @Value('${blackduck.artifactory.inspect.patterns.nuget}')
     String hubArtifactoryInspectPatternsNuget
 
-    @Value('${hub.artifactory.inspect.patterns.npm}')
+    @Value('${blackduck.artifactory.inspect.patterns.npm}')
     String hubArtifactoryInspectPatternsNpm
 
-    @Value('${hub.artifactory.inspect.date.time.pattern}')
+    @Value('${blackduck.artifactory.inspect.date.time.pattern}')
     String hubArtifactoryInspectDateTimePattern
 
-    @Value('${hub.artifactory.inspect.identify.artifacts.cron}')
+    @Value('${blackduck.artifactory.inspect.identify.artifacts.cron}')
     String hubArtifactoryInspectIdentifyArtifactsCron
 
-    @Value('${hub.artifactory.inspect.populate.metadata.cron}')
+    @Value('${blackduck.artifactory.inspect.populate.metadata.cron}')
     String hubArtifactoryInspectPopulateMetadataCron
 
-    @Value('${hub.artifactory.inspect.update.metadata.cron}')
+    @Value('${blackduck.artifactory.inspect.update.metadata.cron}')
     String hubArtifactoryInspectUpdateMetadataCron
 
-    @Value('${hub.artifactory.inspect.add.pending.artifacts.cron}')
+    @Value('${blackduck.artifactory.inspect.add.pending.artifacts.cron}')
     String hubArtifactoryInspectAddPendingArtifactsCron
 
     //Scanner
-    @Value('${hub.artifactory.scan.repos}')
+    @Value('${blackduck.artifactory.scan.repos}')
     String hubArtifactoryScanRepositoriesList
 
-    @Value('${hub.artifactory.scan.repos.csv.path}')
+    @Value('${blackduck.artifactory.scan.repos.csv.path}')
     String hubArtifactoryScanRepositoriesCsvPath
 
-    @Value('${hub.artifactory.scan.name.patterns}')
+    @Value('${blackduck.artifactory.scan.name.patterns}')
     String hubArtifactoryScanNamePatterns
 
-    @Value('${hub.artifactory.scan.binaries.directory.path}')
+    @Value('${blackduck.artifactory.scan.binaries.directory.path}')
     String hubArtifactoryScanBinariesDirectoryPath
 
-    @Value('${hub.artifactory.scan.memory}')
+    @Value('${blackduck.artifactory.scan.memory}')
     String hubArtifactoryScanMemory
 
-    @Value('${hub.artifactory.scan.dry.run}')
+    @Value('${blackduck.artifactory.scan.dry.run}')
     String hubArtifactoryScanDryRun
 
-    @Value('${hub.artifactory.scan.date.time.pattern}')
+    @Value('${blackduck.artifactory.scan.date.time.pattern}')
     String hubArtifactoryScanDateTimePattern
 
-    @Value('${hub.artifactory.scan.cutoff.date}')
+    @Value('${blackduck.artifactory.scan.cutoff.date}')
     String hubArtifactoryScanCutoffDate
 
-    @Value('${hub.artifactory.scan.cron')
+    @Value('${blackduck.artifactory.scan.cron')
     String hubArtifactoryScanCron
 
-    @Value('${hub.artifactory.scan.add.policy.status.cron')
+    @Value('${blackduck.artifactory.scan.add.policy.status.cron')
     String hubArtifactoryScanAddPolicyStatusCron
 
-    @Value('${hub.artifactory.scan.repo.path.codelocation}')
+    @Value('${blackduck.artifactory.scan.repo.path.codelocation}')
     String hubArtifactoryScanRepoPathCodelocation
 
 }
