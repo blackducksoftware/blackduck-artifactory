@@ -26,7 +26,7 @@ package com.blackducksoftware.integration.hub.artifactory.inspect
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
 import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
-import com.blackducksoftware.integration.hub.artifactory.HubConnectionService
+import com.blackducksoftware.integration.hub.artifactory.BlackDuckConnectionService
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.blackducksoftware.integration.hub.artifactory.inspect.metadata.ArtifactMetaDataService
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
@@ -39,7 +39,7 @@ import org.artifactory.repo.RepoPath
 @Field String propertiesFilePathOverride = ""
 
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig
-@Field HubConnectionService hubConnectionService
+@Field BlackDuckConnectionService blackDuckConnectionService
 @Field ArtifactoryPropertyService artifactoryPropertyService
 @Field ArtifactIdentificationService artifactIdentificationService
 @Field MetaDataPopulationService metadataPopulationService
@@ -79,7 +79,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFrom(repoKey) }
 
         log.info('...completed blackDuckDeleteInspectionProperties REST request.')
-        hubConnectionService.phoneHome()
+        blackDuckConnectionService.phoneHome()
     }
 
     /**
@@ -106,7 +106,7 @@ executions {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckManuallyIdentifyArtifacts REST request.')
-        hubConnectionService.phoneHome()
+        blackDuckConnectionService.phoneHome()
     }
 
     /**
@@ -131,7 +131,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyPopulateMetadata REST request.')
-        hubConnectionService.phoneHome()
+        blackDuckConnectionService.phoneHome()
     }
 
     /**
@@ -158,7 +158,7 @@ executions {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
-        hubConnectionService.phoneHome()
+        blackDuckConnectionService.phoneHome()
     }
 }
 
@@ -181,7 +181,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
 
         log.info('...completed blackDuckIdentifyArtifacts CRON job.')
-        hubConnectionService.phoneHome()
+        blackDuckConnectionService.phoneHome()
     }
 
     /**
@@ -200,7 +200,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
 
         log.info('...completed blackDuckPopulateMetadata CRON job.')
-        hubConnectionService.phoneHome()
+        blackDuckConnectionService.phoneHome()
     }
 
     /**
@@ -221,7 +221,7 @@ jobs {
         repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
 
         log.info('...completed blackDuckUpdateMetadata CRON job.')
-        hubConnectionService.phoneHome()
+        blackDuckConnectionService.phoneHome()
     }
 }
 
@@ -264,15 +264,15 @@ private void initialize() {
     PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
     packageTypePatternManager.loadPatterns(blackDuckArtifactoryConfig)
     artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager)
-    hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, dateTimeManager)
+    blackDuckConnectionService = new BlackDuckConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, dateTimeManager)
 
     final CacheInspectorService cacheInspectorService = new CacheInspectorService(blackDuckArtifactoryConfig, repositories, artifactoryPropertyService)
-    final ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(hubConnectionService)
-    artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService, cacheInspectorService, hubConnectionService)
+    final ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(blackDuckConnectionService)
+    artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService, cacheInspectorService, blackDuckConnectionService)
     metadataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService)
     metadataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metadataPopulationService)
 
     repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect()
 
-    hubConnectionService.phoneHome()
+    blackDuckConnectionService.phoneHome()
 }
