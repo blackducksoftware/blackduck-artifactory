@@ -1,5 +1,5 @@
 /*
- * hub-artifactory
+ * blackduck-artifactory
  *
  * Copyright (C) 2018 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
@@ -26,7 +26,7 @@ package com.synopsys.integration.blackduck.artifactory.scan
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryConfig
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.HubConnectionService
+import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService
 import groovy.transform.Field
 import org.apache.commons.io.FileUtils
 import org.artifactory.repo.RepoPath
@@ -40,7 +40,7 @@ import org.artifactory.repo.RepoPath
 @Field ArtifactScanService artifactScanService
 @Field ScanArtifactoryConfig scanArtifactoryConfig
 @Field ArtifactoryPropertyService artifactoryPropertyService
-@Field HubConnectionService hubConnectionService
+@Field BlackDuckConnectionService blackDuckConnectionService
 @Field StatusCheckService statusCheckService
 
 initialize()
@@ -198,7 +198,7 @@ jobs {
         log.info('Starting blackDuckAddPolicyStatus cron job...')
 
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
-        hubConnectionService.populatePolicyStatuses(repoPaths)
+        blackDuckConnectionService.populatePolicyStatuses(repoPaths)
 
         log.info('...completed blackDuckAddPolicyStatus cron job.')
     }
@@ -222,8 +222,8 @@ private void initialize() {
     scanArtifactoryConfig.setUpBlackDuckDirectory()
 
     artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, scanArtifactoryConfig.getDateTimeManager())
-    hubConnectionService = new HubConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, scanArtifactoryConfig.getDateTimeManager())
+    blackDuckConnectionService = new BlackDuckConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, scanArtifactoryConfig.getDateTimeManager())
     repositoryIdentificationService = new RepositoryIdentificationService(blackDuckArtifactoryConfig, scanArtifactoryConfig, repositories, searches)
-    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanArtifactoryConfig, hubConnectionService, artifactoryPropertyService, repositories)
-    statusCheckService = new StatusCheckService(scanArtifactoryConfig, hubConnectionService, repositoryIdentificationService)
+    artifactScanService = new ArtifactScanService(blackDuckArtifactoryConfig, repositoryIdentificationService, scanArtifactoryConfig, blackDuckConnectionService, artifactoryPropertyService, repositories)
+    statusCheckService = new StatusCheckService(scanArtifactoryConfig, blackDuckConnectionService, repositoryIdentificationService)
 }
