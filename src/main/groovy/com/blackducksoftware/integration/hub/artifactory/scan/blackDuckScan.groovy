@@ -31,8 +31,8 @@ import groovy.transform.Field
 import org.apache.commons.io.FileUtils
 import org.artifactory.repo.RepoPath
 
-// propertiesFilePathOverride allows you to specify an absolute path to the blackDuckScanForHub.properties file.
-// If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckScanForHub.properties
+// propertiesFilePathOverride allows you to specify an absolute path to the blackDuckScan.properties file.
+// If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckScan.properties
 @Field String propertiesFilePathOverride = ""
 
 @Field BlackDuckArtifactoryConfig blackDuckArtifactoryConfig

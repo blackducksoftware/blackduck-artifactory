@@ -23,8 +23,9 @@
  */
 package com.blackducksoftware.integration.hub.artifactory
 
-import javax.annotation.PostConstruct
-
+import com.blackducksoftware.integration.hub.artifactory.inspect.InspectorConfigurationManager
+import com.blackducksoftware.integration.hub.artifactory.scan.ScannerConfigurationManager
+import embedded.org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -32,10 +33,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 
-import com.blackducksoftware.integration.hub.artifactory.inspect.InspectorConfigurationManager
-import com.blackducksoftware.integration.hub.artifactory.scan.ScannerConfigurationManager
-
-import embedded.org.apache.commons.lang3.StringUtils
+import javax.annotation.PostConstruct
 
 @SpringBootApplication
 class Application {
@@ -82,18 +80,18 @@ class Application {
         }
 
         if ('configure-scanner' == mode && (null != System.console() && null != System.out)) {
-            System.out.println('Updating ./plugins/lib/blackDuckScanForHub.properties - just hit enter to make no change to a value:')
+            System.out.println('Updating ./plugins/lib/blackDuckScan.properties - just hit enter to make no change to a value:')
             scannerConfigurationManager.configure(System.console(), System.out)
             if (scannerConfigurationManager.needsUpdate()) {
                 System.out.println('The scanner was not completely configured. Would you like to restart configuration? Enter \'y\' to re-configure the scanner, or press <enter> to exit configuration.')
                 def userValue = StringUtils.trimToEmpty(System.console().readLine())
                 if ('y' == userValue) {
                     configurePlugin()
-                }else {
-                    System.out.println('Exiting configuration. You can finish configuring the scanner manually by editing the properties file located at \'./plugins/lib/blackDuckScanForHub.properties\'')
+                } else {
+                    System.out.println('Exiting configuration. You can finish configuring the scanner manually by editing the properties file located at \'./plugins/lib/blackDuckScan.properties\'')
                 }
             } else {
-                System.out.println('The scanner has been configured successfully, the properties file has been generated in \'./plugins/lib/blackDuckScanForHub.properties\'')
+                System.out.println('The scanner has been configured successfully, the properties file has been generated in \'./plugins/lib/blackDuckScan.properties\'')
             }
         }
     }

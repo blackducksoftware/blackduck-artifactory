@@ -23,18 +23,16 @@
  */
 package com.blackducksoftware.integration.hub.artifactory.scan
 
-import javax.annotation.PostConstruct
-
+import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
+import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
+import embedded.org.apache.commons.lang3.StringUtils
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.fluent.Configurations
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
 
-import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
-import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
-
-import embedded.org.apache.commons.lang3.StringUtils
+import javax.annotation.PostConstruct
 
 @Component
 class ScannerConfigurationManager {
@@ -49,13 +47,13 @@ class ScannerConfigurationManager {
 
     @PostConstruct
     void init() {
-        def pluginsDirectory = new File (configurationProperties.currentUserDirectory, 'plugins')
-        def libDirectory = new File (pluginsDirectory, 'lib')
+        def pluginsDirectory = new File(configurationProperties.currentUserDirectory, 'plugins')
+        def libDirectory = new File(pluginsDirectory, 'lib')
         def configs = new Configurations()
 
-        scannerPropertiesFile = new File(libDirectory, 'blackDuckScanForHub.properties')
+        scannerPropertiesFile = new File(libDirectory, 'blackDuckScan.properties')
         if (!scannerPropertiesFile.exists()) {
-            scannerConfig = configs.properties(ResourceUtils.getFile('blackDuckScanForHub.properties'))
+            scannerConfig = configs.properties(ResourceUtils.getFile('blackDuckScan.properties'))
             libDirectory.mkdirs()
             persistScannerProperties()
         }
@@ -64,16 +62,16 @@ class ScannerConfigurationManager {
 
     boolean needsUpdate() {
         return ((StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepositoriesList) && StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepositoriesCsvPath))
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanNamePatterns)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanMemory)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDateTimePattern)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCutoffDate)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCron)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepoPathCodelocation)
-                || commonConfigurationManager.needsBaseConfigUpdate())
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanNamePatterns)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanMemory)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDateTimePattern)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCutoffDate)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCron)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepoPathCodelocation)
+        || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
     void configure(Console console, PrintStream out) {
@@ -99,13 +97,13 @@ class ScannerConfigurationManager {
         out.println('If you would like to provide a path to a file, enter \'y\' now. Otherwise, just press <enter> to manually add a list of repositories.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.hubArtifactoryScanRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan',ScanPluginProperty.REPOS_CSV_PATH)
+            configurationProperties.hubArtifactoryScanRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan', ScanPluginProperty.REPOS_CSV_PATH)
         } else {
             configurationProperties.hubArtifactoryScanRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Scan', ScanPluginProperty.REPOS)
             configurationProperties.hubArtifactoryScanRepositoriesCsvPath = ''
         }
 
-        configurationProperties.hubArtifactoryScanCron = setCronFromInput(console, out, 'blackDuckScanForHub CRON Expression', ScanPluginProperty.SCAN_CRON)
+        configurationProperties.hubArtifactoryScanCron = setCronFromInput(console, out, 'blackDuckScan CRON Expression', ScanPluginProperty.SCAN_CRON)
         configurationProperties.hubArtifactoryScanAddPolicyStatusCron = setCronFromInput(console, out, 'blackDuckAddPolicyStatus CRON Expression', ScanPluginProperty.ADD_POLICY_STATUS_CRON)
     }
 
