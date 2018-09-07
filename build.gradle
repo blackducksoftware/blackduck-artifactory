@@ -77,7 +77,7 @@ task createFinalZip(type: Zip) {
     }
 
     from(configurations.runtime) {
-        include 'blackduck-artifactory-common*.jar'
+        include 'hub-artifactory-common*.jar'
         into 'plugins/lib'
     }
 }
