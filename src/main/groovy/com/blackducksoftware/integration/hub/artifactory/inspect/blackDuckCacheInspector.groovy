@@ -25,8 +25,8 @@ package com.blackducksoftware.integration.hub.artifactory.inspect
 
 import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyService
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
-import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
 import com.blackducksoftware.integration.hub.artifactory.BlackDuckConnectionService
+import com.blackducksoftware.integration.hub.artifactory.DateTimeManager
 import com.blackducksoftware.integration.hub.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.blackducksoftware.integration.hub.artifactory.inspect.metadata.ArtifactMetaDataService
 import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
