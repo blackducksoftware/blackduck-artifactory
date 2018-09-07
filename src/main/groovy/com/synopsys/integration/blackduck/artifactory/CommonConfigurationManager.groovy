@@ -21,17 +21,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory
+package com.synopsys.integration.blackduck.artifactory
 
-import java.text.ParseException
-
+import com.synopsys.integration.blackduck.artifactory.ConfigurationProperty
+import embedded.org.apache.commons.lang3.StringUtils
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.io.FileHandler
 import org.quartz.CronExpression
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import embedded.org.apache.commons.lang3.StringUtils
+import java.text.ParseException
 
 @Component
 class CommonConfigurationManager {
@@ -49,9 +49,9 @@ class CommonConfigurationManager {
 
     boolean needsBaseConfigUpdate() {
         return (StringUtils.isBlank(configurationProperties.blackduckHubUrl)
-                || StringUtils.isBlank(configurationProperties.blackduckHubApiToken)
-                || StringUtils.isBlank(configurationProperties.blackduckHubTimeout)
-                || StringUtils.isBlank(configurationProperties.blackduckHubTrustCert))
+        || StringUtils.isBlank(configurationProperties.blackduckHubApiToken)
+        || StringUtils.isBlank(configurationProperties.blackduckHubTimeout)
+        || StringUtils.isBlank(configurationProperties.blackduckHubTrustCert))
     }
 
     void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {

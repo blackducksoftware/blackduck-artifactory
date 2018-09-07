@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory;
+package com.synopsys.integration.blackduck.artifactory;
 
 import java.net.URI;
 import java.util.List;

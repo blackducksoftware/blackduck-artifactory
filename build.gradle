@@ -61,17 +61,17 @@ task createFinalZip(type: Zip) {
         exclude '*javadoc.jar'
     }
 
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory/scan") {
         include 'blackDuckScan.groovy'
         into 'plugins'
     }
 
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/inspect") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory/inspect") {
         include 'blackDuckCacheInspector.groovy'
         into 'plugins'
     }
 
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
         include 'blackDuckPolicyEnforcer.groovy'
         into 'plugins'
     }
@@ -82,4 +82,4 @@ task createFinalZip(type: Zip) {
     }
 }
 
-springBoot { mainClassName = 'com.blackducksoftware.integration.hub.artifactory.Application' }
+springBoot { mainClassName = 'com.synopsys.integration.blackduck.artifactory.Application' }

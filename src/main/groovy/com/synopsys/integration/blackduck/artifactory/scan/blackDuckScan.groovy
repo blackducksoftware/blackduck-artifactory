@@ -21,12 +21,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory.scan
+package com.synopsys.integration.blackduck.artifactory.scan
 
-import com.blackducksoftware.integration.hub.artifactory.ArtifactoryPropertyService
-import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryConfig
-import com.blackducksoftware.integration.hub.artifactory.BlackDuckArtifactoryProperty
-import com.blackducksoftware.integration.hub.artifactory.BlackDuckConnectionService
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryConfig
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
+import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService
 import groovy.transform.Field
 import org.apache.commons.io.FileUtils
 import org.artifactory.repo.RepoPath

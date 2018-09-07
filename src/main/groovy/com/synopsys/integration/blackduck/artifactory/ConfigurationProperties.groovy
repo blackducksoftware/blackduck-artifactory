@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory
+package com.synopsys.integration.blackduck.artifactory
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.PropertySource
@@ -30,8 +30,8 @@ import org.springframework.stereotype.Component
 
 @Component
 @PropertySources([
-    @PropertySource('blackDuckCacheInspector.properties'),
-    @PropertySource('blackDuckScanForHub.properties')
+@PropertySource('blackDuckCacheInspector.properties'),
+@PropertySource('blackDuckScanForHub.properties')
 ])
 class ConfigurationProperties {
     @Value('${user.dir}')

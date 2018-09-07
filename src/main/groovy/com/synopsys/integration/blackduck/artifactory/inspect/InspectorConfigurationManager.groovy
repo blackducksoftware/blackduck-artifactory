@@ -21,20 +21,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory.inspect
+package com.synopsys.integration.blackduck.artifactory.inspect
 
-import javax.annotation.PostConstruct
-
+import com.synopsys.integration.blackduck.artifactory.CommonConfigurationManager
+import com.synopsys.integration.blackduck.artifactory.ConfigurationProperties
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.fluent.Configurations
+import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
 
-import com.blackducksoftware.integration.hub.artifactory.CommonConfigurationManager
-import com.blackducksoftware.integration.hub.artifactory.ConfigurationProperties
-
-import embedded.org.apache.commons.lang3.StringUtils
+import javax.annotation.PostConstruct
 
 @Component
 class InspectorConfigurationManager {
@@ -49,8 +47,8 @@ class InspectorConfigurationManager {
 
     @PostConstruct
     void init() {
-        def pluginsDirectory = new File (configurationProperties.currentUserDirectory, 'plugins')
-        def libDirectory = new File (pluginsDirectory, 'lib')
+        def pluginsDirectory = new File(configurationProperties.currentUserDirectory, 'plugins')
+        def libDirectory = new File(pluginsDirectory, 'lib')
         def configs = new Configurations()
 
         inspectorPropertiesFile = new File(libDirectory, 'blackDuckCacheInspector.properties')
@@ -64,18 +62,18 @@ class InspectorConfigurationManager {
 
     boolean needsUpdate() {
         return ((StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepositoriesList) && StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepositoriesCsvPath))
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsRubygems)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsMaven)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsGradle)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsPypi)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectIdentifyArtifactsCron)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPopulateMetadataCron)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectUpdateMetadataCron)
-                || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectAddPendingArtifactsCron)
-                || commonConfigurationManager.needsBaseConfigUpdate())
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsRubygems)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsMaven)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsGradle)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsPypi)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectIdentifyArtifactsCron)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPopulateMetadataCron)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectUpdateMetadataCron)
+        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectAddPendingArtifactsCron)
+        || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
     void configure(Console console, PrintStream out) {

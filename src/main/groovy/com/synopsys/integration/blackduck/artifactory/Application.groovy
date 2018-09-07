@@ -21,10 +21,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.blackducksoftware.integration.hub.artifactory
+package com.synopsys.integration.blackduck.artifactory
 
-import com.blackducksoftware.integration.hub.artifactory.inspect.InspectorConfigurationManager
-import com.blackducksoftware.integration.hub.artifactory.scan.ScannerConfigurationManager
+import com.synopsys.integration.blackduck.artifactory.scan.ScannerConfigurationManager
 import embedded.org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -40,7 +39,7 @@ class Application {
     private final Logger logger = LoggerFactory.getLogger(Application.class)
 
     @Autowired
-    InspectorConfigurationManager inspectorConfigurationManager
+    com.synopsys.integration.blackduck.artifactory.inspect.InspectorConfigurationManager inspectorConfigurationManager
 
     @Autowired
     ScannerConfigurationManager scannerConfigurationManager
