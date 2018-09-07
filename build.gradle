@@ -23,7 +23,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
-    compile 'com.blackducksoftware.integration:blackduck-artifactory-common:0.3.0-SNAPSHOT'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.3.0-SNAPSHOT'
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
     compile 'org.quartz-scheduler:quartz:2.2.1'
@@ -61,23 +61,23 @@ task createFinalZip(type: Zip) {
         exclude '*javadoc.jar'
     }
 
-    from("${projectDir}/src/main/groovy/com/synopsys/integration/hub/artifactory/scan") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory/scan") {
         include 'blackDuckScan.groovy'
         into 'plugins'
     }
 
-    from("${projectDir}/src/main/groovy/com/synopsys/integration/hub/artifactory/inspect") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory/inspect") {
         include 'blackDuckCacheInspector.groovy'
         into 'plugins'
     }
 
-    from("${projectDir}/src/main/groovy/com/synopsys/integration/hub/artifactory") {
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
         include 'blackDuckPolicyEnforcer.groovy'
         into 'plugins'
     }
 
     from(configurations.runtime) {
-        include 'blackduck-artifactory-common*.jar'
+        include 'hub-artifactory-common*.jar'
         into 'plugins/lib'
     }
 }
