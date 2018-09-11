@@ -61,16 +61,16 @@ class ScannerConfigurationManager {
 
     boolean needsUpdate() {
         return ((StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepositoriesList) && StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepositoriesCsvPath))
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanNamePatterns)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanMemory)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDateTimePattern)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCutoffDate)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepoPathCodelocation)
-        || commonConfigurationManager.needsBaseConfigUpdate())
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanNamePatterns)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanMemory)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDryRun)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanDateTimePattern)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCutoffDate)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryScanRepoPathCodelocation)
+            || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
     void configure(Console console, PrintStream out) {

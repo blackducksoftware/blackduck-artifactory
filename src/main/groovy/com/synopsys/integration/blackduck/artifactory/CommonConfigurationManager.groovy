@@ -49,9 +49,9 @@ class CommonConfigurationManager {
 
     boolean needsBaseConfigUpdate() {
         return (StringUtils.isBlank(configurationProperties.blackduckHubUrl)
-        || StringUtils.isBlank(configurationProperties.blackduckHubApiToken)
-        || StringUtils.isBlank(configurationProperties.blackduckHubTimeout)
-        || StringUtils.isBlank(configurationProperties.blackduckHubTrustCert))
+            || StringUtils.isBlank(configurationProperties.blackduckHubApiToken)
+            || StringUtils.isBlank(configurationProperties.blackduckHubTimeout)
+            || StringUtils.isBlank(configurationProperties.blackduckHubTrustCert))
     }
 
     void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {

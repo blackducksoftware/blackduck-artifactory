@@ -62,18 +62,18 @@ class InspectorConfigurationManager {
 
     boolean needsUpdate() {
         return ((StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepositoriesList) && StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepositoriesCsvPath))
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsRubygems)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsMaven)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsGradle)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsPypi)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectIdentifyArtifactsCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPopulateMetadataCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectUpdateMetadataCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectAddPendingArtifactsCron)
-        || commonConfigurationManager.needsBaseConfigUpdate())
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsRubygems)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsMaven)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsGradle)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsPypi)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectIdentifyArtifactsCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPopulateMetadataCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectUpdateMetadataCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectAddPendingArtifactsCron)
+            || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
     void configure(Console console, PrintStream out) {

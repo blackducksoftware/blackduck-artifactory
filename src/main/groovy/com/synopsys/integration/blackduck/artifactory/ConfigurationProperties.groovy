@@ -30,8 +30,8 @@ import org.springframework.stereotype.Component
 
 @Component
 @PropertySources([
-@PropertySource('blackDuckCacheInspector.properties'),
-@PropertySource('blackDuckScanForHub.properties')
+    @PropertySource('blackDuckCacheInspector.properties'),
+    @PropertySource('blackDuckScanForHub.properties')
 ])
 class ConfigurationProperties {
     @Value('${user.dir}')

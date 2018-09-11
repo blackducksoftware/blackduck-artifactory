@@ -58,7 +58,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadInspector"
-     */
+     **/
     blackDuckReloadInspector(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckReloadInspector REST request...')
 
@@ -72,7 +72,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties"
-     */
+     **/
     blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckDeleteInspectionProperties REST request...')
 
@@ -99,7 +99,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyIdentifyArtifacts"
-     */
+     **/
     blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckManuallyIdentifyArtifacts REST request...')
 
@@ -124,7 +124,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
-     */
+     **/
     blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckManuallyPopulateMetadata REST request...')
 
@@ -151,7 +151,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyUpdateMetadata"
-     */
+     **/
     blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckManuallyUpdateMetadata REST request...')
 
@@ -174,7 +174,7 @@ jobs {
      * Metadata populated on repositories:
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
-     */
+     **/
     blackDuckIdentifyArtifacts(cron: blackDuckIdentifyArtifactsCron) {
         log.info('Starting blackDuckIdentifyArtifacts CRON job...')
 
@@ -193,7 +193,7 @@ jobs {
      * blackduck.mediumVulnerabilities
      * blackduck.lowVulnerabilities
      * blackduck.policyStatus
-     */
+     **/
     blackDuckPopulateMetadata(cron: blackDuckPopulateMetadataCron) {
         log.info('Starting blackDuckPopulateMetadata CRON job...')
 
@@ -214,7 +214,7 @@ jobs {
      * Metadata updated on repositories:
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
-     */
+     **/
     blackDuckUpdateMetadata(cron: blackDuckUpdateMetadataCron) {
         log.info('Starting blackDuckUpdateMetadata CRON job...')
 

@@ -51,7 +51,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadScanner"
-     */
+     **/
     blackDuckReloadScanner(httpMethod: 'POST') { params ->
         log.info('Starting blackDuckReloadScanner REST request...')
 
@@ -79,7 +79,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
-     */
+     **/
     blackDuckScan(httpMethod: 'GET') { params ->
         log.info('Starting blackDuckScan REST request...')
 
@@ -94,7 +94,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckTestConfig"
-     */
+     **/
     blackDuckTestConfig(httpMethod: 'GET') { params ->
         log.info('Starting blackDuckTestConfig REST request...')
 
@@ -108,7 +108,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
-     */
+     **/
     blackDuckReloadDirectory() { params ->
         log.info('Starting blackDuckReloadDirectory REST request...')
 
@@ -129,7 +129,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties"
-     */
+     **/
     blackDuckDeleteScanProperties() { params ->
         log.info('Starting blackDuckDeleteScanProperties REST request...')
 
@@ -151,7 +151,7 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures"
-     */
+     **/
     blackDuckDeleteScanPropertiesFromFailures() { params ->
         log.info('Starting blackDuckDeleteScanPropertiesFromFailures REST request...')
 
@@ -184,7 +184,7 @@ jobs {
      * blackduck.apiUrl - the api url for your project which is needed for further Hub REST calls.
      *
      * The same functionality is provided via the scanForHub execution to enable a one-time scan triggered via a REST call.
-     */
+     **/
     blackDuckScan(cron: scanArtifactoryConfig.blackDuckScanCron) {
         log.info('Starting blackDuckScan cron job...')
 
@@ -203,10 +203,6 @@ jobs {
         log.info('...completed blackDuckAddPolicyStatus cron job.')
     }
 }
-
-//####################################################
-//PLEASE MAKE NO EDITS BELOW THIS LINE - NO TOUCHY!!!
-//####################################################
 
 private void initialize() {
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
