@@ -23,6 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory
 
+import com.synopsys.integration.blackduck.artifactory.ConfigurationProperty
 import embedded.org.apache.commons.lang3.StringUtils
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.io.FileHandler
@@ -48,9 +49,9 @@ class CommonConfigurationManager {
 
     boolean needsBaseConfigUpdate() {
         return (StringUtils.isBlank(configurationProperties.blackduckHubUrl)
-        || StringUtils.isBlank(configurationProperties.blackduckHubApiToken)
-        || StringUtils.isBlank(configurationProperties.blackduckHubTimeout)
-        || StringUtils.isBlank(configurationProperties.blackduckHubTrustCert))
+            || StringUtils.isBlank(configurationProperties.blackduckHubApiToken)
+            || StringUtils.isBlank(configurationProperties.blackduckHubTimeout)
+            || StringUtils.isBlank(configurationProperties.blackduckHubTrustCert))
     }
 
     void updateBaseConfigValues(PropertiesConfiguration config, File outputFile, Console console, PrintStream out) {

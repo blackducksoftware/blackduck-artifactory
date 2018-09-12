@@ -25,9 +25,9 @@ package com.synopsys.integration.blackduck.artifactory.inspect
 
 import com.synopsys.integration.blackduck.artifactory.CommonConfigurationManager
 import com.synopsys.integration.blackduck.artifactory.ConfigurationProperties
-import embedded.org.apache.commons.lang3.StringUtils
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.fluent.Configurations
+import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
@@ -62,18 +62,18 @@ class InspectorConfigurationManager {
 
     boolean needsUpdate() {
         return ((StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepositoriesList) && StringUtils.isBlank(configurationProperties.hubArtifactoryInspectRepositoriesCsvPath))
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsRubygems)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsMaven)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsGradle)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsPypi)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectIdentifyArtifactsCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPopulateMetadataCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectUpdateMetadataCron)
-        || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectAddPendingArtifactsCron)
-        || commonConfigurationManager.needsBaseConfigUpdate())
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsRubygems)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsMaven)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsGradle)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsPypi)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNuget)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPatternsNpm)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectDateTimePattern)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectIdentifyArtifactsCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectPopulateMetadataCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectUpdateMetadataCron)
+            || StringUtils.isBlank(configurationProperties.hubArtifactoryInspectAddPendingArtifactsCron)
+            || commonConfigurationManager.needsBaseConfigUpdate())
     }
 
     void configure(Console console, PrintStream out) {

@@ -82,4 +82,4 @@ task createFinalZip(type: Zip) {
     }
 }
 
-springBoot { mainClassName = 'com.blackducksoftware.integration.hub.artifactory.Application' }
+springBoot { mainClassName = 'com.synopsys.integration.blackduck.artifactory.Application' }
