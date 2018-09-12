@@ -23,13 +23,13 @@
  */
 package com.synopsys.integration.blackduck.artifactory.inspect
 
-import com.blackducksoftware.integration.hub.bdio.model.externalid.ExternalIdFactory
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryConfig
 import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager
 import com.synopsys.integration.blackduck.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.synopsys.integration.blackduck.artifactory.inspect.metadata.ArtifactMetaDataService
+import com.synopsys.integration.hub.bdio.model.externalid.ExternalIdFactory
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo
 import org.artifactory.repo.RepoPath
