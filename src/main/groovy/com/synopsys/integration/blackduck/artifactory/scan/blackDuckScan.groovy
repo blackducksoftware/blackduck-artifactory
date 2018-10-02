@@ -164,6 +164,27 @@ executions {
 
         log.info('...completed blackDuckDeleteScanPropertiesFromFailures REST request.')
     }
+
+    /**
+     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
+     * For example:
+     *
+     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
+     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
+     *
+     * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and update all the properties that the plugin sets.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScanUpdateDeprecatedProperties"
+     **/
+    blackDuckScanUpdateDeprecatedProperties() { params ->
+        log.info('Starting blackDuckUpdateDeprecatedProperties REST request...')
+
+        Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths()
+        repoPaths.each { artifactoryPropertyService.updateAllBlackDuckPropertiesFrom(it.repoKey) }
+
+        log.info('...completed blackDuckUpdateDeprecatedProperties REST request.')
+    }
 }
 
 jobs {

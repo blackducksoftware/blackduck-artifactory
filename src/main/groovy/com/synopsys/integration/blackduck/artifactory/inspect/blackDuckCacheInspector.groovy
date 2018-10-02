@@ -160,6 +160,21 @@ executions {
         log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
         blackDuckConnectionService.phoneHome()
     }
+
+    /**
+     * Rename all deprecated properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckUpdateDeprecatedProperties"
+     **/
+    blackDuckUpdateDeprecatedProperties() { params ->
+        // TODO: Move this to the metadata plugin
+        log.info('Starting blackDuckUpdateDeprecatedProperties REST request...')
+
+        repoKeysToInspect.each { artifactoryPropertyService.updateAllBlackDuckPropertiesFrom(it) }
+
+        log.info('...completed blackDuckUpdateDeprecatedProperties REST request.')
+    }
 }
 
 jobs {
