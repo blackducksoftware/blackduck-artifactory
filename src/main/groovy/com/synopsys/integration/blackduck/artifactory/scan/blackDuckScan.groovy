@@ -23,10 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.scan
 
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryConfig
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService
+import com.synopsys.integration.blackduck.artifactory.*
 import groovy.transform.Field
 import org.apache.commons.io.FileUtils
 import org.artifactory.repo.RepoPath
@@ -166,7 +163,7 @@ executions {
     }
 
     /**
-     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
+     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN and update the deprecated properties
      * For example:
      *
      * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
@@ -231,7 +228,7 @@ private void initialize() {
     blackDuckArtifactoryConfig.setHomeDirectory(ctx.artifactoryHome.homeDir.toString())
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
     blackDuckArtifactoryConfig.setThirdPartyVersion(ctx?.versionProvider?.running?.versionName?.toString())
-    blackDuckArtifactoryConfig.setPluginName(this.getClass().getSimpleName())
+    blackDuckArtifactoryConfig.setPluginType(PluginType.SCANNER)
     blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
 
     // The ScanArtifactoryConfig must be created before other services

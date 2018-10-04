@@ -23,10 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.inspect
 
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryConfig
-import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService
-import com.synopsys.integration.blackduck.artifactory.DateTimeManager
+import com.synopsys.integration.blackduck.artifactory.*
 import com.synopsys.integration.blackduck.artifactory.inspect.ArtifactIdentificationService.IdentifiedArtifact
 import com.synopsys.integration.blackduck.artifactory.inspect.metadata.ArtifactMetaDataService
 import com.synopsys.integration.hub.bdio.model.externalid.ExternalIdFactory
@@ -258,7 +255,7 @@ storage {
                 }
             }
         } catch (Exception e) {
-            log.debug("The ${blackDuckArtifactoryConfig.pluginName} encountered an unexpected exception", e)
+            log.debug("The ${blackDuckArtifactoryConfig.pluginType.getName()} encountered an unexpected exception", e)
         }
     }
 }
@@ -267,7 +264,7 @@ private void initialize() {
     blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
     blackDuckArtifactoryConfig.setThirdPartyVersion(ctx?.versionProvider?.running?.versionName?.toString())
-    blackDuckArtifactoryConfig.setPluginName(this.getClass().getSimpleName())
+    blackDuckArtifactoryConfig.setPluginType(PluginType.INSPECTOR)
 
     blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
     blackDuckIdentifyArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.IDENTIFY_ARTIFACTS_CRON)

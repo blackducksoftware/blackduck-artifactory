@@ -1,5 +1,5 @@
 /**
- * This is an Eclipse Groovy plugin specific file, which adds code completion and analysis to properties and methods of <a href="http://wiki.jfrog.org/confluence/display/RTF/User+Plugins">Artifactory User Plugins</a>.
+ * This is an Eclipse Groovy pluginType specific file, which adds code completion and analysis to properties and methods of <a href="http://wiki.jfrog.org/confluence/display/RTF/User+Plugins">Artifactory User Plugins</a>.
  */
 
 contribute(enclosingScript()){
@@ -11,7 +11,7 @@ contribute(enclosingScript()){
 	property name: 'builds', type: 'org.artifactory.build.Builds', doc: 'Allows CRUD operations on builds'
 	property name: 'ctx', type: 'org.artifactory.spring.InternalArtifactoryContext', doc: 'NOT A PUBLIC API - FOR INTERNAL USE ONLY!'
 
-	//plugin types
+	//pluginType types
 	method name: 'download', type: 'void', params: [closure: 'groovy.lang.Closure'], doc: 'A section for handling and manipulating download events'
 	method name: 'storage', type: 'void', params: [closure: 'groovy.lang.Closure'], doc: 'A section for handling and manipulating storage events'
 	method name: 'jobs', type: 'void', params: [closure: 'groovy.lang.Closure'], doc: '''A section for defining scheduled jobs.<p>
@@ -21,12 +21,12 @@ contribute(enclosingScript()){
                 <li>name: cron, type: java.lang.String - A valid cron expression used to schedule job runs (see: http://www.quartz-scheduler.org/docs/tutorial/TutorialLesson06.html)</li></ul>'''
 	method name: 'executions', type: 'void',
 			params: [closure: 'groovy.lang.Closure'], doc: '''A section for defining external executions.<p>
-                    Add arbitrary named closures as executable code blocks. Each closure will have a following plugin info annotation parameters:
+                    Add arbitrary named closures as executable code blocks. Each closure will have a following pluginType info annotation parameters:
                     <ul><li>name: version, type: java.lang.String - Closure version. Optional</li>
                     <li>name: description, type: java.lang.String - Closure description. Optional</li>
                     <li>name: params, type: java.util.Map<java.lang.String, java.lang.String> - Closure parameters. Optional</li>
-                    <li>name: users, type: java.util.Set<java.lang.String> - Users permitted to query this plugin for information or invoke it</li>
-                    <li>name: groups, type: java.util.Set<java.lang.String> - Groups permitted to query this plugin for information or invoke it</li></ul>
+                    <li>name: users, type: java.util.Set<java.lang.String> - Users permitted to query this pluginType for information or invoke it</li>
+                    <li>name: groups, type: java.util.Set<java.lang.String> - Groups permitted to query this pluginType for information or invoke it</li></ul>
                     <p>Each closure will have the following Closure parameters:
                     <ul><li>name: params, type: java.util.Map - An execution takes a read-only key-value map that corresponds to the REST request parameter 'params'.
                     Each entry in the map contains an array of values.</li></ul>'''
@@ -35,25 +35,25 @@ contribute(enclosingScript()){
                     User authentication will be attempted against these realms first, by the order they are defined.'''
 	method name: 'build', type: 'void', params: [closure: 'groovy.lang.Closure'], doc: 'A section for handling build info events'
 	method name: 'promotions', type: 'void', params: [closure: 'groovy.lang.Closure'], doc: '''A section for defining REST executable build promotion operations.<p>
-                        Add arbitrary named closures as promotion strategies. Each closure will have the following plugin info annotation parameters:
+                        Add arbitrary named closures as promotion strategies. Each closure will have the following pluginType info annotation parameters:
                        <ul><li>name: version, type:java.lang.String - Closure version. Optional.</li>
                        <li>name: description, type:java.lang.String - Closure description. Optional.</li>
                        <li>name: params, type: java.util.Map<java.lang.String, java.lang.String> - Closure parameters. Optional.</li>
-                       <li>name: users, type: java.util.Set<java.lang.String> - Users permitted to query this plugin for information or invoke it.</li>
-                       <li>name: groups, type: java.util.Set<java.lang.String> - Groups permitted to query this plugin for information or invoke it.</li></ul>
-                       <p>Each closure will have the following plugin info annotation parameters:
+                       <li>name: users, type: java.util.Set<java.lang.String> - Users permitted to query this pluginType for information or invoke it.</li>
+                       <li>name: groups, type: java.util.Set<java.lang.String> - Groups permitted to query this pluginType for information or invoke it.</li></ul>
+                       <p>Each closure will have the following pluginType info annotation parameters:
                        <ul><li>name: buildName, type:java.lang.String - The build name specified in the REST request.</li>
                        <li>name: buildNumber, type:java.lang.String - The build number specified in the REST request.</li>
                        <li>name: params, type:java.util.Map<java.lang.String, java.util.List<java.lang.String>> - The parameters specified in the REST request.</li></ul>'''
 	method name: 'staging', type: 'void', params: [closure: 'groovy.lang.Closure'], doc: '''A section for defining REST retrievable build staging strategy construction.<p>
                         Add arbitrary named closures as staging strategies. Each closure will have the following closure delegate:
                         <ul><li>org.artifactory.build.staging.BuildStagingStrategy - The strategy that's to be returned.</li></ul>
-                         <p>Each closure will have the following plugin info annotation parameters:
+                         <p>Each closure will have the following pluginType info annotation parameters:
                          <ul><li>name: version, type: java.lang.String - Closure version. Optional.</li>
                          <li>name: description, type: java.lang.String - Closure description. Optional.</li>
                          <li>name: params, type: java.util.Map<java.lang.String, java.lang.String> - Closure parameters. Optional.</li>
-                         <li>name: users, type: java.util.Set<java.lang.String> - Users permitted to query this plugin for information or invoke it.</li>
-                         <li>name: groups, type: java.util.Set<java.lang.String> - Groups permitted to query this plugin for information or invoke it.</li></ul>
+                         <li>name: users, type: java.util.Set<java.lang.String> - Users permitted to query this pluginType for information or invoke it.</li>
+                         <li>name: groups, type: java.util.Set<java.lang.String> - Groups permitted to query this pluginType for information or invoke it.</li></ul>
                          <p>Each closure will have the following closure parameters:
                          <ul><li>name: buildName, type: java.lang.String - The build name specified in the REST request.</li>
                          <li>name: params, type: java.util.Map<java.lang.String, java.util.List<java.lang.String>> - The parameters specified in the REST request.</li></ul>
