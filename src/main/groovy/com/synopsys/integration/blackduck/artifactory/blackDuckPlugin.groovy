@@ -30,11 +30,12 @@ import groovy.transform.Field
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckPlugin.properties
 @Field String propertiesFilePathOverride = ""
 @Field ScanModule scanModule
+@Field PluginService pluginService
 
-initialize()
+initialize(TriggerType.STARTUP)
 
 executions {
-    //////////////// Plugin EXECUTIONS ////////////////
+    //////////////////////////////////////////////// PLUGIN EXECUTIONS ////////////////////////////////////////////////
 
     /**
      * This will attempt to reload the properties file and initialize the scanner with the new values.
@@ -43,26 +44,8 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReload"
      **/
     blackDuckReload(httpMethod: 'POST') { params ->
-        log.info('Starting blackDuckReload REST request...')
-
-        initialize()
-
-        log.info('...completed blackDuckReload REST request.')
+        initialize(TriggerType.REST_REQUEST)
     }
-
-    /**
-     * This will return a current status of the plugin's configuration to verify things are setup properly.
-     *
-     * This can be triggered with the following curl command:
-     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckTestConfig"
-     **/
-    //    blackDuckTestConfig(httpMethod: 'GET') { params ->
-    //        log.info('Starting blackDuckTestConfig REST request...')
-    //
-    //        message = statusCheckService.getStatusMessage()
-    //
-    //        log.info('...completed blackDuckTestConfig REST request.')
-    //    }
 
     /**
      * This will delete, then recreate, the blackducksoftware directory which includes the cli, the cron job log, as well as all the cli logs.
@@ -70,16 +53,21 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
      **/
-    //    blackDuckReloadDirectory() { params ->
-    //        log.info('Starting blackDuckReloadDirectory REST request...')
-    //
-    //        FileUtils.deleteDirectory(blackDuckArtifactoryConfig.blackDuckDirectory)
-    //        blackDuckArtifactoryConfig.blackDuckDirectory.mkdirs()
-    //
-    //        log.info('...completed blackDuckReloadDirectory REST request.')
-    //    }
+    blackDuckReloadDirectory() { params ->
+        pluginService.reloadBlackDuckDirectory(TriggerType.REST_REQUEST)
+    }
 
-    //////////////// SCAN EXECUTIONS ////////////////
+    //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////
+
+    /**
+     * This will return a current status of the scan module's configuration configuration to verify things are setup properly.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckTestConfig"
+     **/
+    blackDuckTestConfig(httpMethod: 'GET') { params ->
+        message = scanModule.getStatusCheckMessage(TriggerType.REST_REQUEST)
+    }
 
     /**
      * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
@@ -171,7 +159,7 @@ executions {
         scanModule.updateDeprecatedProperties(TriggerType.REST_REQUEST)
     }
 
-    //////////////// INSPECTOR EXECUTIONS ////////////////
+    //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
 
     /**
      * Attempts to reload the properties file and initialize the inspector with the new values.
@@ -298,7 +286,7 @@ executions {
 }
 
 jobs {
-    /** SCAN JOBS **/
+    //////////////////////////////////////////////// SCAN JOBS ////////////////////////////////////////////////
 
     /**
      * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
@@ -326,7 +314,7 @@ jobs {
         scanModule.addPolicyStatus(TriggerType.CRON_JOB)
     }
 
-    /** SCAN INSPECTION JOBS **/
+    //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
 
     /**
      * Identifies artifacts in the repository and populates identifying metadata on them for use by the Populate Metadata and Update Metadata
@@ -390,7 +378,7 @@ jobs {
     //    }
 }
 
-/** INSPECTION **/
+//////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 //storage {
 //    afterCreate { ItemInfo item ->
 //        try {
@@ -413,7 +401,7 @@ jobs {
 //    }
 //}
 
-/** POLICY ENFORCER **/
+//////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 //download {
 //    beforeDownload { Request request, RepoPath repoPath ->
 //        def policyStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
@@ -423,21 +411,21 @@ jobs {
 //    }
 //}
 
-private void initialize() {
+private void initialize(final TriggerType triggerType) {
+    log.info("Initializing blackDuckPlugin from ${triggerType.getLogName()}...")
+
     final File etcDirectory = ctx.artifactoryHome.etcDir
     final File homeDirectory = ctx.artifactoryHome.homeDir
     final File pluginsDirectory = ctx.artifactoryHome.pluginsDir
     final String thirdPartyVersion = ctx?.versionProvider?.running?.versionName?.toString()
 
     final PluginConfig pluginConfig = new PluginConfig(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
-    final PluginService pluginService = new PluginService(pluginConfig, repositories, searches)
+    pluginService = new PluginService(pluginConfig, repositories, searches)
     pluginService.initializePlugin()
     scanModule = pluginService.createScanModule()
 
+    log.info("... completed intialization of blackDuckPlugin from ${triggerType.getLogName()}")
 
-    //
-    //    statusCheckService = new StatusCheckService(scanArtifactoryConfig, blackDuckConnectionService, repositoryIdentificationService)
-    //
     //    // INSPECTION
     //    blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
     //    blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
