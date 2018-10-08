@@ -64,7 +64,7 @@ class Application {
 
     void configurePlugin() {
         if ('configure-inspector' == mode && (null != System.console() && null != System.out)) {
-            System.out.println('Updating ./plugins/lib/blackDuckCacheInspector.properties - just hit enter to make no change to a value:')
+            System.out.println('Updating ./plugins/lib/blackDuckCacheInspector.blackDuckProperties - just hit enter to make no change to a value:')
             inspectorConfigurationManager.configure(System.console(), System.out)
             if (inspectorConfigurationManager.needsUpdate()) {
                 System.out.println('The inspector was not completely configured. Would you like to restart configuration? Enter \'y\' to re-configure the inspector, or press <enter> to exit configuration.')
@@ -72,15 +72,15 @@ class Application {
                 if ('y' == userValue) {
                     configurePlugin()
                 } else {
-                    System.out.println('Exiting configuration. You can finish configuring the inspector manually by editing the properties file located at \'./plugins/lib/blackDuckCacheInspector.properties\'')
+                    System.out.println('Exiting configuration. You can finish configuring the inspector manually by editing the blackDuckProperties file located at \'./plugins/lib/blackDuckCacheInspector.blackDuckProperties\'')
                 }
             } else {
-                System.out.println('The inspector has been configured successfully, the properties file has been generated in \'./plugins/lib/blackDuckCacheInspector.properties\'')
+                System.out.println('The inspector has been configured successfully, the blackDuckProperties file has been generated in \'./plugins/lib/blackDuckCacheInspector.blackDuckProperties\'')
             }
         }
 
         if ('configure-scanner' == mode && (null != System.console() && null != System.out)) {
-            System.out.println('Updating ./plugins/lib/blackDuckScan.properties - just hit enter to make no change to a value:')
+            System.out.println('Updating ./plugins/lib/blackDuckScan.blackDuckProperties - just hit enter to make no change to a value:')
             scannerConfigurationManager.configure(System.console(), System.out)
             if (scannerConfigurationManager.needsUpdate()) {
                 System.out.println('The scanner was not completely configured. Would you like to restart configuration? Enter \'y\' to re-configure the scanner, or press <enter> to exit configuration.')
@@ -88,10 +88,10 @@ class Application {
                 if ('y' == userValue) {
                     configurePlugin()
                 } else {
-                    System.out.println('Exiting configuration. You can finish configuring the scanner manually by editing the properties file located at \'./plugins/lib/blackDuckScan.properties\'')
+                    System.out.println('Exiting configuration. You can finish configuring the scanner manually by editing the blackDuckProperties file located at \'./plugins/lib/blackDuckScan.blackDuckProperties\'')
                 }
             } else {
-                System.out.println('The scanner has been configured successfully, the properties file has been generated in \'./plugins/lib/blackDuckScan.properties\'')
+                System.out.println('The scanner has been configured successfully, the blackDuckProperties file has been generated in \'./plugins/lib/blackDuckScan.blackDuckProperties\'')
             }
         }
     }

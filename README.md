@@ -1,9 +1,9 @@
 ## Overview ##
 The Hub Artifactory solution consists of two Artifactory plugins, blackDuckScanForHub and blackDuckCacheInspector.
 
-The scanner pluginType, blackDuckScanForHub, can be configured to routinely scan your artifacts for open source vulnerabilities via the Black Duck Signature Scanner.
+The scanner moduleType, blackDuckScanForHub, can be configured to routinely scan your artifacts for open source vulnerabilities via the Black Duck Signature Scanner.
 
-The inspector pluginType, blackDuckCacheInspector, can be configured to inspect your Artifactory remote repository caches for open source components and populate Black Duck vulnerability and policy metadata on them.
+The inspector moduleType, blackDuckCacheInspector, can be configured to inspect your Artifactory remote repository caches for open source components and populate Black Duck vulnerability and policy metadata on them.
 
 
 ## Build ##

@@ -40,13 +40,12 @@ def versionFile = new File("${projectDir}/src/main/resources/version.txt")
 versionFile.delete()
 versionFile << version
 
-apply from: 'generateScanConfig.gradle'
+apply from: 'generateConfig.gradle'
 
 task createFinalZip(type: Zip) {
     dependsOn build, generateScanConfig
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
-        include 'blackDuckCacheInspector.properties'
         into 'plugins/lib'
     }
 
@@ -61,18 +60,8 @@ task createFinalZip(type: Zip) {
         exclude '*javadoc.jar'
     }
 
-    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory/scan") {
-        include 'blackDuckScan.groovy'
-        into 'plugins'
-    }
-
-    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory/inspect") {
-        include 'blackDuckCacheInspector.groovy'
-        into 'plugins'
-    }
-
     from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
-        include 'blackDuckPolicyEnforcer.groovy'
+        include 'blackDuckPlugin.groovy'
         into 'plugins'
     }
 

@@ -51,9 +51,9 @@ class InspectorConfigurationManager {
         def libDirectory = new File(pluginsDirectory, 'lib')
         def configs = new Configurations()
 
-        inspectorPropertiesFile = new File(libDirectory, 'blackDuckCacheInspector.properties')
+        inspectorPropertiesFile = new File(libDirectory, 'blackDuckPlugin.properties')
         if (!inspectorPropertiesFile.exists()) {
-            inspectorConfig = configs.properties(ResourceUtils.getFile('blackDuckCacheInspector.properties'))
+            inspectorConfig = configs.properties(ResourceUtils.getFile('blackDuckPlugin.properties'))
             libDirectory.mkdirs()
             persistInspectorProperties()
         }
