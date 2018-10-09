@@ -174,11 +174,11 @@ class InspectorConfigurationManager {
         }
     }
 
-    String setValueFromInput(Console console, PrintStream out, String propertyDescription, InspectPluginProperty property) {
+    String setValueFromInput(Console console, PrintStream out, String propertyDescription, InspectModuleProperty property) {
         return commonConfigurationManager.setValueFromInput(console, out, propertyDescription, inspectorConfig, property)
     }
 
-    String setCronFromInput(Console console, PrintStream out, String propertyDescription, InspectPluginProperty property) {
+    String setCronFromInput(Console console, PrintStream out, String propertyDescription, InspectModuleProperty property) {
         return commonConfigurationManager.setCronFromInput(console, out, propertyDescription, inspectorConfig, property)
     }
 }

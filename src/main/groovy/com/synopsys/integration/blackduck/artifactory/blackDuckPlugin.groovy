@@ -23,14 +23,17 @@
  */
 package com.synopsys.integration.blackduck.artifactory
 
+import com.synopsys.integration.blackduck.artifactory.inspect.InspectionModule
 import com.synopsys.integration.blackduck.artifactory.scan.ScanModule
 import groovy.transform.Field
+import org.artifactory.fs.ItemInfo
 
 // propertiesFilePathOverride allows you to specify an absolute path to the blackDuckPlugin.properties file.
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckPlugin.properties
 @Field String propertiesFilePathOverride = ""
-@Field ScanModule scanModule
 @Field PluginService pluginService
+@Field ScanModule scanModule
+@Field InspectionModule inspectionModule
 
 initialize(TriggerType.STARTUP)
 
@@ -38,7 +41,7 @@ executions {
     //////////////////////////////////////////////// PLUGIN EXECUTIONS ////////////////////////////////////////////////
 
     /**
-     * This will attempt to reload the properties file and initialize the scanner with the new values.
+     * This will attempt to reload the properties file and initialize the plugin with the new values.
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReload"
@@ -162,33 +165,14 @@ executions {
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
 
     /**
-     * Attempts to reload the properties file and initialize the inspector with the new values.
-     *
-     * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadInspector"
-     **/
-    //    blackDuckReloadInspector(httpMethod: 'POST') { params ->
-    //        log.info('Starting blackDuckReloadInspector REST request...')
-    //
-    //        initialize()
-    //
-    //        log.info('...completed blackDuckReloadInspector REST request.')
-    //    }
-
-    /**
      * Removes all properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect.
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties"
      **/
-    //    blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
-    //        log.info('Starting blackDuckDeleteInspectionProperties REST request...')
-    //
-    //        repoKeysToInspect.each { repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoKey) }
-    //
-    //        log.info('...completed blackDuckDeleteInspectionProperties REST request.')
-    //        blackDuckConnectionService.phoneHome()
-    //    }
+    blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
+        inspectionModule.deleteInspectionProperties(TriggerType.REST_REQUEST)
+    }
 
     /**
      * Manual execution of the Identify Artifacts step of inspection on a specific repository.
@@ -208,14 +192,9 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyIdentifyArtifacts"
      **/
-    //    blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
-    //        log.info('Starting blackDuckManuallyIdentifyArtifacts REST request...')
-    //
-    //        repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
-    //
-    //        log.info('...completed blackDuckManuallyIdentifyArtifacts REST request.')
-    //        blackDuckConnectionService.phoneHome()
-    //    }
+    blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
+        inspectionModule.identifyArtifacts(TriggerType.REST_REQUEST)
+    }
 
     /**
      * Manual execution of the Populate Metadata step of inspection on a specific repository.
@@ -233,14 +212,9 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
      **/
-    //    blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
-    //        log.info('Starting blackDuckManuallyPopulateMetadata REST request...')
-    //
-    //        repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
-    //
-    //        log.info('...completed blackDuckManuallyPopulateMetadata REST request.')
-    //        blackDuckConnectionService.phoneHome()
-    //    }
+    blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
+        inspectionModule.populateMetadata(TriggerType.REST_REQUEST)
+    }
 
     /**
      * Manual execution of the Identify Artifacts step of inspection on a specific repository.
@@ -260,14 +234,9 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyUpdateMetadata"
      **/
-    //    blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
-    //        log.info('Starting blackDuckManuallyUpdateMetadata REST request...')
-    //
-    //        repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
-    //
-    //        log.info('...completed blackDuckManuallyUpdateMetadata REST request.')
-    //        blackDuckConnectionService.phoneHome()
-    //    }
+    blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
+        inspectionModule.updateMetadata(TriggerType.REST_REQUEST)
+    }
 
     /**
      * Rename all deprecated properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect.
@@ -275,14 +244,9 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckUpdateDeprecatedProperties"
      **/
-    //    blackDuckUpdateDeprecatedProperties() { params ->
-    //        // TODO: Move this to the metadata plugin
-    //        log.info('Starting blackDuckUpdateDeprecatedProperties REST request...')
-    //
-    //        repoKeysToInspect.each { artifactoryPropertyService.updateAllBlackDuckPropertiesFrom(it) }
-    //
-    //        log.info('...completed blackDuckUpdateDeprecatedProperties REST request.')
-    //    }
+    blackDuckInspectionUpdateDeprecatedProperties(httpMethod: 'POST') { params ->
+        inspectionModule.updateDeprecatedProperties(TriggerType.REST_REQUEST)
+    }
 }
 
 jobs {
@@ -328,14 +292,9 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      **/
-    //    blackDuckIdentifyArtifacts(cron: blackDuckIdentifyArtifactsCron) {
-    //        log.info('Starting blackDuckIdentifyArtifacts CRON job...')
-    //
-    //        repoKeysToInspect.each { repoKey -> artifactIdentificationService.identifyArtifacts(repoKey) }
-    //
-    //        log.info('...completed blackDuckIdentifyArtifacts CRON job.')
-    //        blackDuckConnectionService.phoneHome()
-    //    }
+    blackDuckIdentifyArtifacts(cron: inspectionModule.getInspectionModuleConfig().getBlackDuckIdentifyArtifactsCron()) {
+        inspectionModule.identifyArtifacts(TriggerType.CRON_JOB)
+    }
 
     /**
      * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying metadata
@@ -347,14 +306,9 @@ jobs {
      * blackduck.lowVulnerabilities
      * blackduck.policyStatus
      **/
-    //    blackDuckPopulateMetadata(cron: blackDuckPopulateMetadataCron) {
-    //        log.info('Starting blackDuckPopulateMetadata CRON job...')
-    //
-    //        repoKeysToInspect.each { repoKey -> metadataPopulationService.populateMetadata(repoKey) }
-    //
-    //        log.info('...completed blackDuckPopulateMetadata CRON job.')
-    //        blackDuckConnectionService.phoneHome()
-    //    }
+    blackDuckPopulateMetadata(cron: inspectionModule.getInspectionModuleConfig().getBlackDuckPopulateMetadataCron()) {
+        inspectionModule.populateMetadata(TriggerType.CRON_JOB)
+    }
 
     /**
      * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in the Hub
@@ -368,38 +322,17 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      **/
-    //    blackDuckUpdateMetadata(cron: blackDuckUpdateMetadataCron) {
-    //        log.info('Starting blackDuckUpdateMetadata CRON job...')
-    //
-    //        repoKeysToInspect.each { repoKey -> metadataUpdateService.updateMetadata(repoKey) }
-    //
-    //        log.info('...completed blackDuckUpdateMetadata CRON job.')
-    //        blackDuckConnectionService.phoneHome()
-    //    }
+    blackDuckUpdateMetadata(cron: inspectionModule.getInspectionModuleConfig().getBlackDuckUpdateMetadataCron()) {
+        inspectionModule.updateMetadata(TriggerType.CRON_JOB)
+    }
 }
 
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
-//storage {
-//    afterCreate { ItemInfo item ->
-//        try {
-//            String repoKey = item.getRepoKey()
-//            RepoPath repoPath = item.getRepoPath()
-//            String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType()
-//
-//            if (repoKeysToInspect.contains(repoKey)) {
-//                Optional<Set<RepoPath>> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey)
-//                if (identifiableArtifacts.isPresent() && identifiableArtifacts.get().contains(repoPath)) {
-//                    Optional<ArtifactIdentificationService.IdentifiedArtifact> optionalIdentifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType)
-//                    if (optionalIdentifiedArtifact.isPresent()) {
-//                        artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(optionalIdentifiedArtifact.get())
-//                    }
-//                }
-//            }
-//        } catch (Exception e) {
-//            log.debug("The ${blackDuckArtifactoryConfig.pluginType.getName()} encountered an unexpected exception", e)
-//        }
-//    }
-//}
+storage {
+    afterCreate { ItemInfo item ->
+        inspectionModule.inspectItem(item, TriggerType.STORAGE_AFTER_CREATE)
+    }
+}
 
 //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 //download {
@@ -423,6 +356,7 @@ private void initialize(final TriggerType triggerType) {
     pluginService = new PluginService(pluginConfig, repositories, searches)
     pluginService.initializePlugin()
     scanModule = pluginService.createScanModule()
+    inspectionModule = pluginService.createInspectionModule()
 
     log.info("... completed intialization of blackDuckPlugin from ${triggerType.getLogName()}")
 
