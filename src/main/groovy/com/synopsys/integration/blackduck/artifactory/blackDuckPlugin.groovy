@@ -24,9 +24,12 @@
 package com.synopsys.integration.blackduck.artifactory
 
 import com.synopsys.integration.blackduck.artifactory.inspect.InspectionModule
+import com.synopsys.integration.blackduck.artifactory.policy.PolicyModule
 import com.synopsys.integration.blackduck.artifactory.scan.ScanModule
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo
+import org.artifactory.repo.RepoPath
+import org.artifactory.request.Request
 
 // propertiesFilePathOverride allows you to specify an absolute path to the blackDuckPlugin.properties file.
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckPlugin.properties
@@ -34,6 +37,7 @@ import org.artifactory.fs.ItemInfo
 @Field PluginService pluginService
 @Field ScanModule scanModule
 @Field InspectionModule inspectionModule
+@Field PolicyModule policyModule
 
 initialize(TriggerType.STARTUP)
 
@@ -98,6 +102,7 @@ executions {
 
     /**
      * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
+     * It will then remove any and all blackduck properties from the artifact.
      * For example:
      *
      * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
@@ -330,19 +335,16 @@ jobs {
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
     afterCreate { ItemInfo item ->
-        inspectionModule.inspectItem(item, TriggerType.STORAGE_AFTER_CREATE)
+        inspectionModule.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
 }
 
 //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
-//download {
-//    beforeDownload { Request request, RepoPath repoPath ->
-//        def policyStatus = repositories.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS.getName())
-//        if (PolicySummaryStatusType.IN_VIOLATION.name().equals(policyStatus)) {
-//            throw new CancelException("Black Duck Policy Enforcer has prevented the download of ${repoPath.toPath()} because it violates a policy in your Black Duck Hub.", 403)
-//        }
-//    }
-//}
+download {
+    beforeDownload { Request request, RepoPath repoPath ->
+        policyModule.handleBeforeDownloadEvent(repoPath)
+    }
+}
 
 private void initialize(final TriggerType triggerType) {
     log.info("Initializing blackDuckPlugin from ${triggerType.getLogName()}...")
@@ -351,41 +353,14 @@ private void initialize(final TriggerType triggerType) {
     final File homeDirectory = ctx.artifactoryHome.homeDir
     final File pluginsDirectory = ctx.artifactoryHome.pluginsDir
     final String thirdPartyVersion = ctx?.versionProvider?.running?.versionName?.toString()
-
     final PluginConfig pluginConfig = new PluginConfig(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
+
     pluginService = new PluginService(pluginConfig, repositories, searches)
     pluginService.initializePlugin()
     scanModule = pluginService.createScanModule()
     inspectionModule = pluginService.createInspectionModule()
+    policyModule = pluginService.createPolicyModule()
 
     log.info("... completed intialization of blackDuckPlugin from ${triggerType.getLogName()}")
-
-    //    // INSPECTION
-    //    blackDuckArtifactoryConfig = new BlackDuckArtifactoryConfig()
-    //    blackDuckArtifactoryConfig.setPluginsDirectory(ctx.artifactoryHome.pluginsDir.toString())
-    //    blackDuckArtifactoryConfig.setThirdPartyVersion(ctx?.versionProvider?.running?.versionName?.toString())
-    //    blackDuckArtifactoryConfig.setPluginType(PluginType.INSPECTOR)
-    //
-    //    blackDuckArtifactoryConfig.loadProperties(propertiesFilePathOverride)
-    //    blackDuckIdentifyArtifactsCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.IDENTIFY_ARTIFACTS_CRON)
-    //    blackDuckPopulateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.POPULATE_METADATA_CRON)
-    //    blackDuckUpdateMetadataCron = blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.UPDATE_METADATA_CRON)
-    //
-    //    dateTimeManager = new DateTimeManager(blackDuckArtifactoryConfig.getProperty(InspectPluginProperty.DATE_TIME_PATTERN))
-    //    final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory())
-    //    PackageTypePatternManager packageTypePatternManager = new PackageTypePatternManager()
-    //    packageTypePatternManager.loadPatterns(blackDuckArtifactoryConfig)
-    //    artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager)
-    //    blackDuckConnectionService = new BlackDuckConnectionService(blackDuckArtifactoryConfig, artifactoryPropertyService, dateTimeManager)
-    //
-    //    final CacheInspectorService cacheInspectorService = new CacheInspectorService(blackDuckArtifactoryConfig, repositories, artifactoryPropertyService)
-    //    final ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(blackDuckConnectionService)
-    //    artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService, cacheInspectorService, blackDuckConnectionService)
-    //    metadataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService)
-    //    metadataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metadataPopulationService)
-    //
-    //    repoKeysToInspect = cacheInspectorService.getRepositoriesToInspect()
-    //
-    //    blackDuckConnectionService.phoneHome()
 }
 
