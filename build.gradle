@@ -23,7 +23,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.3.0-SNAPSHOT'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:1.0.0-SNAPSHOT'
     compile 'org.springframework.boot:spring-boot-starter'
     compile 'org.springframework:spring-web'
     compile 'org.quartz-scheduler:quartz:2.2.1'
