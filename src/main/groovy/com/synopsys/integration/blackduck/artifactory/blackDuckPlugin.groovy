@@ -250,13 +250,23 @@ executions {
     }
 
     /**
-     * Submit the analytics. This endpoint is intended for development purposes only
+     * Submits usage analytics. This endpoint is intended for developer use only
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSubmitAnalytics"
      */
     blackDuckSubmitAnalytics(httpMethod: 'POST') { params ->
         moduleManager.submitAnalytics(TriggerType.REST_REQUEST)
+    }
+
+    /**
+     * Update repo analytics. This endpoint is intended for developer use only
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckUpdateAnalytics"
+     */
+    blackDuckUpdateAnalytics(httpMethod: 'POST') { params ->
+        moduleManager.updateAnalytics(TriggerType.REST_REQUEST)
     }
 }
 
@@ -338,10 +348,14 @@ jobs {
     }
 
     /**
-     *
+     * Submits usage analytics
      **/
     blackDuckSubmitAnalytics(cron: AnalyticsModule.SUBMIT_ANALYTICS_CRON) {
         moduleManager.submitAnalytics(TriggerType.CRON_JOB)
+    }
+
+    blackDuckUpdateAnalytics(cron: AnalyticsModule.UPDATE_ANALYTICS_CRON) {
+        moduleManager.updateAnalytics(TriggerType.CRON_JOB)
     }
 }
 
