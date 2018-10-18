@@ -69,7 +69,8 @@ executions {
      *      PolicyModule
      *      AnalyticsModule
      *
-     * NOTE: Enabling
+     * NOTE: Enabling or disabling an endpoint via this endpoint is only persistent as long as the plugin is loaded.
+     *       Set the state in the blackDuckPlugin.properties file to allow the state to survive reinitialization.
      *
      * This can be triggered with the following curl command for enabling the InspectionModule:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=InspectionModule=true"
@@ -79,7 +80,6 @@ executions {
      **/
     blackDuckSetModuleState() { params ->
         pluginService.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
-        // initialize(TriggerType.SECONDARY_REST_REQUEST)
     }
 
     //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////
