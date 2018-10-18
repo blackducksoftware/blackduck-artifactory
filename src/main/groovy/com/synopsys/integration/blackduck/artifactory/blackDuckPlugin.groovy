@@ -60,6 +60,28 @@ executions {
         pluginService.reloadBlackDuckDirectory(TriggerType.REST_REQUEST)
     }
 
+    /**
+     * This will enabled or disable a particular module within the plugin and then reinitialize the plugin.
+     * This endpoint requires parameters to be set. Each module has an enabled state of 'true' or 'false'
+     * The names for the modules available are:
+     *      ScanModule
+     *      InspectionModule
+     *      PolicyModule
+     *      AnalyticsModule
+     *
+     * NOTE: Enabling
+     *
+     * This can be triggered with the following curl command for enabling the InspectionModule:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=InspectionModule=true"
+     *
+     * This can be triggered with the following curl command for disabling the ScanModule and the PolicyModule:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
+     **/
+    blackDuckSetModuleState() { params ->
+        pluginService.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        // initialize(TriggerType.SECONDARY_REST_REQUEST)
+    }
+
     //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////
 
     /**
@@ -90,9 +112,9 @@ executions {
      * The same functionality is provided via the scanForHub cron job to enable scheduled scans to run consistently.
      *
      * This can be triggered with the following curl command:
-     * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
      **/
-    blackDuckScan(httpMethod: 'GET') { params ->
+    blackDuckScan(httpMethod: 'POST') { params ->
         moduleManager.triggerScan(TriggerType.REST_REQUEST)
     }
 
@@ -258,16 +280,6 @@ executions {
     blackDuckSubmitAnalytics(httpMethod: 'POST') { params ->
         moduleManager.submitAnalytics(TriggerType.REST_REQUEST)
     }
-
-    /**
-     * Update repo analytics. This endpoint is intended for developer use only
-     *
-     * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckUpdateAnalytics"
-     */
-    blackDuckUpdateAnalytics(httpMethod: 'POST') { params ->
-        moduleManager.updateAnalytics(TriggerType.REST_REQUEST)
-    }
 }
 
 jobs {
@@ -291,11 +303,12 @@ jobs {
      *
      * The same functionality is provided via the scanForHub execution to enable a one-time scan triggered via a REST call.
      **/
-    blackDuckScan(cron: moduleManager.getScanModuleConfig().getBlackDuckScanCron()) {
+
+    blackDuckScan(cron: moduleManager.getBlackDuckScanCron()) {
         moduleManager.triggerScan(TriggerType.CRON_JOB)
     }
 
-    blackDuckAddPolicyStatus(cron: moduleManager.getScanModuleConfig().getBlackDuckAddPolicyStatusCron()) {
+    blackDuckAddPolicyStatus(cron: moduleManager.getBlackDuckAddPolicyStatusCron()) {
         moduleManager.addPolicyStatus(TriggerType.CRON_JOB)
     }
 
@@ -313,7 +326,7 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      **/
-    blackDuckIdentifyArtifacts(cron: moduleManager.getInspectionModuleConfig().getBlackDuckIdentifyArtifactsCron()) {
+    blackDuckIdentifyArtifacts(cron: moduleManager.getBlackDuckIdentifyArtifactsCron()) {
         moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
     }
 
@@ -327,7 +340,7 @@ jobs {
      * blackduck.lowVulnerabilities
      * blackduck.policyStatus
      **/
-    blackDuckPopulateMetadata(cron: moduleManager.getInspectionModuleConfig().getBlackDuckPopulateMetadataCron()) {
+    blackDuckPopulateMetadata(cron: moduleManager.getBlackDuckPopulateMetadataCron()) {
         moduleManager.populateMetadata(TriggerType.CRON_JOB)
     }
 
@@ -343,19 +356,16 @@ jobs {
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      **/
-    blackDuckUpdateMetadata(cron: moduleManager.getInspectionModuleConfig().getBlackDuckUpdateMetadataCron()) {
+    blackDuckUpdateMetadata(cron: moduleManager.getBlackDuckUpdateMetadataCron()) {
         moduleManager.updateMetadata(TriggerType.CRON_JOB)
     }
+
 
     /**
      * Submits usage analytics
      **/
     blackDuckSubmitAnalytics(cron: AnalyticsModule.SUBMIT_ANALYTICS_CRON) {
         moduleManager.submitAnalytics(TriggerType.CRON_JOB)
-    }
-
-    blackDuckUpdateAnalytics(cron: AnalyticsModule.UPDATE_ANALYTICS_CRON) {
-        moduleManager.updateAnalytics(TriggerType.CRON_JOB)
     }
 }
 
@@ -369,7 +379,7 @@ storage {
 //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 download {
     beforeDownload { Request request, RepoPath repoPath ->
-        moduleManager.handleBeforeDownloadEvent(repoPath)
+        moduleManager.handleBeforeDownloadEvent(TriggerType.BEFORE_DOWNLOAD, repoPath)
     }
 }
 
