@@ -23,8 +23,10 @@
  */
 package com.synopsys.integration.blackduck.artifactory.inspect
 
+import com.synopsys.integration.blackduck.artifactory.BlackDuckProperty
 import com.synopsys.integration.blackduck.artifactory.CommonConfigurationManager
 import com.synopsys.integration.blackduck.artifactory.ConfigurationProperties
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.fluent.Configurations
 import org.apache.commons.lang3.StringUtils
@@ -111,15 +113,15 @@ class InspectorConfigurationManager {
     }
 
     void persistInspectorProperties() {
-        inspectorConfig.setProperty(InspectPluginProperty.REPOS.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesList)
-        inspectorConfig.setProperty(InspectPluginProperty.REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)
-        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_RUBYGEMS.getKey(), configurationProperties.hubArtifactoryInspectPatternsRubygems)
-        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_MAVEN.getKey(), configurationProperties.hubArtifactoryInspectPatternsMaven)
-        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_GRADLE.getKey(), configurationProperties.hubArtifactoryInspectPatternsGradle)
-        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_PYPI.getKey(), configurationProperties.hubArtifactoryInspectPatternsPypi)
-        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_NUGET.getKey(), configurationProperties.hubArtifactoryInspectPatternsNuget)
-        inspectorConfig.setProperty(InspectPluginProperty.PATTERNS_NPM.getKey(), configurationProperties.hubArtifactoryInspectPatternsNpm)
-        inspectorConfig.setProperty(InspectPluginProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryInspectDateTimePattern)
+        inspectorConfig.setProperty(InspectionModuleProperty.REPOS.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesList)
+        inspectorConfig.setProperty(InspectionModuleProperty.REPOS_CSV_PATH.getKey(), configurationProperties.hubArtifactoryInspectRepositoriesCsvPath)
+        inspectorConfig.setProperty(InspectionModuleProperty.PATTERNS_RUBYGEMS.getKey(), configurationProperties.hubArtifactoryInspectPatternsRubygems)
+        inspectorConfig.setProperty(InspectionModuleProperty.PATTERNS_MAVEN.getKey(), configurationProperties.hubArtifactoryInspectPatternsMaven)
+        inspectorConfig.setProperty(InspectionModuleProperty.PATTERNS_GRADLE.getKey(), configurationProperties.hubArtifactoryInspectPatternsGradle)
+        inspectorConfig.setProperty(InspectionModuleProperty.PATTERNS_PYPI.getKey(), configurationProperties.hubArtifactoryInspectPatternsPypi)
+        inspectorConfig.setProperty(InspectionModuleProperty.PATTERNS_NUGET.getKey(), configurationProperties.hubArtifactoryInspectPatternsNuget)
+        inspectorConfig.setProperty(InspectionModuleProperty.PATTERNS_NPM.getKey(), configurationProperties.hubArtifactoryInspectPatternsNpm)
+        inspectorConfig.setProperty(BlackDuckProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryInspectDateTimePattern)
 
         commonConfigurationManager.persistConfigToFile(inspectorConfig, inspectorPropertiesFile)
     }
@@ -174,11 +176,11 @@ class InspectorConfigurationManager {
         }
     }
 
-    String setValueFromInput(Console console, PrintStream out, String propertyDescription, InspectModuleProperty property) {
+    String setValueFromInput(Console console, PrintStream out, String propertyDescription, InspectionModuleProperty property) {
         return commonConfigurationManager.setValueFromInput(console, out, propertyDescription, inspectorConfig, property)
     }
 
-    String setCronFromInput(Console console, PrintStream out, String propertyDescription, InspectModuleProperty property) {
+    String setCronFromInput(Console console, PrintStream out, String propertyDescription, InspectionModuleProperty property) {
         return commonConfigurationManager.setCronFromInput(console, out, propertyDescription, inspectorConfig, property)
     }
 }

@@ -23,8 +23,10 @@
  */
 package com.synopsys.integration.blackduck.artifactory.scan
 
+import com.synopsys.integration.blackduck.artifactory.BlackDuckProperty
 import com.synopsys.integration.blackduck.artifactory.CommonConfigurationManager
 import com.synopsys.integration.blackduck.artifactory.ConfigurationProperties
+import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty
 import embedded.org.apache.commons.lang3.StringUtils
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.fluent.Configurations
@@ -84,34 +86,38 @@ class ScannerConfigurationManager {
     void updateValues(Console console, PrintStream out) {
         commonConfigurationManager.updateBaseConfigValues(scannerConfig, scannerPropertiesFile, console, out)
 
-        configurationProperties.hubArtifactoryScanBinariesDirectoryPath = setValueFromInput(console, out, 'Plugin Scan Binaries Directory', ScanModuleProperty.BINARIES_DIRECTORY_PATH)
-        configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Scan Memory Allocation', ScanModuleProperty.MEMORY)
-        configurationProperties.hubArtifactoryScanDryRun = setValueFromInput(console, out, 'Scan Dry Run', ScanModuleProperty.DRY_RUN)
-        configurationProperties.hubArtifactoryScanDateTimePattern = setValueFromInput(console, out, 'Scan Date Time Pattern', ScanModuleProperty.DATE_TIME_PATTERN)
-        configurationProperties.hubArtifactoryScanCutoffDate = setValueFromInput(console, out, 'Scan Cutoff Date', ScanModuleProperty.CUTOFF_DATE)
-        configurationProperties.hubArtifactoryScanNamePatterns = setValueFromInput(console, out, 'Scan Artifact Patterns', ScanModuleProperty.NAME_PATTERNS)
-        configurationProperties.hubArtifactoryScanRepoPathCodelocation = setValueFromInput(console, out, 'Use Repo Path as Codelocation Name', ScanModuleProperty.REPO_PATH_CODELOCATION)
+        configurationProperties.hubArtifactoryScanBinariesDirectoryPath =
+            setValueFromInput(console, out, 'Plugin Scan Binaries Directory', BINARIES_DIRECTORY_PATH)
+        configurationProperties.hubArtifactoryScanMemory = setValueFromInput(console, out, 'Scan Memory Allocation', MEMORY)
+        configurationProperties.hubArtifactoryScanDryRun = setValueFromInput(console, out, 'Scan Dry Run', DRY_RUN)
+        configurationProperties.hubArtifactoryScanDateTimePattern = setValueFromInput(console, out, 'Scan Date Time Pattern', com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty.DATE_TIME_PATTERN)
+        configurationProperties.hubArtifactoryScanCutoffDate = setValueFromInput(console, out, 'Scan Cutoff Date', CUTOFF_DATE)
+        configurationProperties.hubArtifactoryScanNamePatterns = setValueFromInput(console, out, 'Scan Artifact Patterns', NAME_PATTERNS)
+        configurationProperties.hubArtifactoryScanRepoPathCodelocation =
+            setValueFromInput(console, out, 'Use Repo Path as Codelocation Name', REPO_PATH_CODELOCATION)
 
         String reposToSearch = configurationProperties.hubArtifactoryScanRepositoriesList
         out.println('The artifactory scanner can be configured to either read a list of repositories to scan, or a file containing a comma separated list of repositories.')
         out.println('If you would like to provide a path to a file, enter \'y\' now. Otherwise, just press <enter> to manually add a list of repositories.')
         String userValue = StringUtils.trimToEmpty(console.readLine())
         if ('y' == userValue) {
-            configurationProperties.hubArtifactoryScanRepositoriesCsvPath = setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan', ScanModuleProperty.REPOS_CSV_PATH)
+            configurationProperties.hubArtifactoryScanRepositoriesCsvPath =
+                setValueFromInput(console, out, 'Path to File of Artifactory Repositories to Scan', REPOS_CSV_PATH)
         } else {
-            configurationProperties.hubArtifactoryScanRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Scan', ScanModuleProperty.REPOS)
+            configurationProperties.hubArtifactoryScanRepositoriesList = setValueFromInput(console, out, 'Artifactory Repositories to Scan', REPOS)
             configurationProperties.hubArtifactoryScanRepositoriesCsvPath = ''
         }
 
-        configurationProperties.hubArtifactoryScanCron = setCronFromInput(console, out, 'blackDuckScan CRON Expression', ScanModuleProperty.SCAN_CRON)
-        configurationProperties.hubArtifactoryScanAddPolicyStatusCron = setCronFromInput(console, out, 'blackDuckAddPolicyStatus CRON Expression', ScanModuleProperty.ADD_POLICY_STATUS_CRON)
+        configurationProperties.hubArtifactoryScanCron = setCronFromInput(console, out, 'blackDuckScan CRON Expression', SCAN_CRON)
+        configurationProperties.hubArtifactoryScanAddPolicyStatusCron =
+            setCronFromInput(console, out, 'blackDuckAddPolicyStatus CRON Expression', ADD_POLICY_STATUS_CRON)
     }
 
     void persistScannerProperties() {
         scannerConfig.setProperty(ScanModuleProperty.ADD_POLICY_STATUS_CRON.getKey(), configurationProperties.hubArtifactoryScanAddPolicyStatusCron)
         scannerConfig.setProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH.getKey(), configurationProperties.hubArtifactoryScanBinariesDirectoryPath)
         scannerConfig.setProperty(ScanModuleProperty.CUTOFF_DATE.getKey(), configurationProperties.hubArtifactoryScanCutoffDate)
-        scannerConfig.setProperty(ScanModuleProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryScanDateTimePattern)
+        scannerConfig.setProperty(BlackDuckProperty.DATE_TIME_PATTERN.getKey(), configurationProperties.hubArtifactoryScanDateTimePattern)
         scannerConfig.setProperty(ScanModuleProperty.DRY_RUN.getKey(), configurationProperties.hubArtifactoryScanDryRun)
         scannerConfig.setProperty(ScanModuleProperty.MEMORY.getKey(), configurationProperties.hubArtifactoryScanMemory)
         scannerConfig.setProperty(ScanModuleProperty.NAME_PATTERNS.getKey(), configurationProperties.hubArtifactoryScanNamePatterns)
@@ -159,11 +165,11 @@ class ScannerConfigurationManager {
         }
     }
 
-    String setValueFromInput(Console console, PrintStream out, String propertyDescription, ScanModuleProperty property) {
+    String setValueFromInput(Console console, PrintStream out, String propertyDescription, com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty property) {
         return commonConfigurationManager.setValueFromInput(console, out, propertyDescription, scannerConfig, property)
     }
 
-    String setCronFromInput(Console console, PrintStream out, String propertyDescription, ScanModuleProperty property) {
+    String setCronFromInput(Console console, PrintStream out, String propertyDescription, com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty property) {
         return commonConfigurationManager.setCronFromInput(console, out, propertyDescription, scannerConfig, property)
     }
 }
