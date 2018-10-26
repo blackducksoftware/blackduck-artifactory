@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        mavenLocal() // TODO: Remove me
         jcenter()
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -7,7 +8,9 @@ buildscript {
 
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.0.3.RELEASE'
+        classpath 'com.blackducksoftware.integration:hub-artifactory-common:1.0.0-SNAPSHOT' //TODO: Don't use snapshot
+        classpath 'org.apache.commons:commons-configuration2:2.2'
+        classpath 'joda-time:joda-time:2.10'
     }
 }
 
@@ -19,21 +22,16 @@ version = '6.0.0-SNAPSHOT'
 def artifactoryMinimumVersion = '5.6.2'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
 
 dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:1.0.0-SNAPSHOT'
-    compile 'org.springframework.boot:spring-boot-starter'
-    compile 'org.springframework:spring-web'
-    compile 'org.quartz-scheduler:quartz:2.2.1'
-    compile 'org.apache.commons:commons-configuration2:2.2'
-    compile 'commons-beanutils:commons-beanutils:1.9.3'
+    compile 'com.blackducksoftware.integration:hub-artifactory-common:1.0.0-SNAPSHOT' // TODO: Don't use snapshot
+
+    compileOnly 'org.apache.commons:commons-configuration2:2.2'
+    compileOnly 'joda-time:joda-time:2.10'
 
     compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
 
     testCompile 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
 
 def versionFile = new File("${projectDir}/src/main/resources/version.txt")
@@ -71,4 +69,3 @@ task createFinalZip(type: Zip) {
     }
 }
 
-springBoot { mainClassName = 'com.synopsys.integration.blackduck.artifactory.Application' }
