@@ -23,6 +23,8 @@
  */
 package com.synopsys.integration.blackduck.artifactory
 
+import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager
+import com.synopsys.integration.blackduck.artifactory.modules.TriggerType
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo
@@ -33,9 +35,9 @@ import org.artifactory.request.Request
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckPlugin.properties
 @Field String propertiesFilePathOverride = ""
 @Field PluginService pluginService
-@Field com.synopsys.integration.blackduck.artifactory.modules.ModuleManager moduleManager
+@Field ModuleManager moduleManager
 
-initialize(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.STARTUP)
+initialize(TriggerType.STARTUP)
 
 executions {
     //////////////////////////////////////////////// PLUGIN EXECUTIONS ////////////////////////////////////////////////
@@ -47,7 +49,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReload"
      **/
     blackDuckReload(httpMethod: 'POST') { params ->
-        initialize(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        initialize(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -57,7 +59,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
      **/
     blackDuckReloadDirectory() { params ->
-        pluginService.reloadBlackDuckDirectory(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        pluginService.reloadBlackDuckDirectory(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -79,7 +81,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
      **/
     blackDuckSetModuleState() { params ->
-        pluginService.setModuleState(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        pluginService.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////
@@ -91,7 +93,7 @@ executions {
      * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckTestConfig"
      **/
     blackDuckTestConfig(httpMethod: 'GET') { params ->
-        message = moduleManager.getStatusCheckMessage(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        message = moduleManager.getStatusCheckMessage(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -115,7 +117,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
      **/
     blackDuckScan(httpMethod: 'POST') { params ->
-        moduleManager.triggerScan(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.triggerScan(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -130,9 +132,12 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties"
+     *
+     * To delete properties with exclusions use the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanProperties() { params ->
-        moduleManager.deleteScanProperties(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.deleteScanProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -147,9 +152,12 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures"
+     *
+     * To delete properties with exclusions use the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanPropertiesFromFailures() { params ->
-        moduleManager.deleteScanPropertiesFromFailures(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.deleteScanPropertiesFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -164,9 +172,12 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromOutOfDate"
+     *
+     * To delete properties with exclusions use the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromOutOfDate?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanPropertiesFromOutOfDate() { params ->
-        moduleManager.deleteScanPropertiesFromOutOfDate(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.deleteScanPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -182,7 +193,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScanUpdateDeprecatedProperties"
      **/
     blackDuckScanUpdateDeprecatedProperties() { params ->
-        moduleManager.updateDeprecatedScanProperties(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.updateDeprecatedScanProperties(TriggerType.REST_REQUEST)
     }
 
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
@@ -194,7 +205,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties"
      **/
     blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
-        moduleManager.deleteInspectionProperties(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.deleteInspectionProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -216,7 +227,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyIdentifyArtifacts"
      **/
     blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
-        moduleManager.identifyArtifacts(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.identifyArtifacts(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -236,7 +247,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
      **/
     blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
-        moduleManager.populateMetadata(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.populateMetadata(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -258,7 +269,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyUpdateMetadata"
      **/
     blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
-        moduleManager.updateMetadata(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.updateMetadata(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -268,7 +279,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckUpdateDeprecatedProperties"
      **/
     blackDuckInspectionUpdateDeprecatedProperties(httpMethod: 'POST') { params ->
-        moduleManager.updateDeprecatedInspectionProperties(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.updateDeprecatedInspectionProperties(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -278,7 +289,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSubmitAnalytics"
      */
     blackDuckSubmitAnalytics(httpMethod: 'POST') { params ->
-        moduleManager.submitAnalytics(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.REST_REQUEST)
+        moduleManager.submitAnalytics(TriggerType.REST_REQUEST)
     }
 }
 
@@ -305,11 +316,11 @@ jobs {
      **/
 
     blackDuckScan(cron: moduleManager.getBlackDuckScanCron()) {
-        moduleManager.triggerScan(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.CRON_JOB)
+        moduleManager.triggerScan(TriggerType.CRON_JOB)
     }
 
     blackDuckAddPolicyStatus(cron: moduleManager.getBlackDuckAddPolicyStatusCron()) {
-        moduleManager.addPolicyStatus(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.CRON_JOB)
+        moduleManager.addPolicyStatus(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
@@ -327,7 +338,7 @@ jobs {
      * blackduck.inspectionStatus
      **/
     blackDuckIdentifyArtifacts(cron: moduleManager.getBlackDuckIdentifyArtifactsCron()) {
-        moduleManager.identifyArtifacts(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.CRON_JOB)
+        moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
     }
 
     /**
@@ -341,7 +352,7 @@ jobs {
      * blackduck.policyStatus
      **/
     blackDuckPopulateMetadata(cron: moduleManager.getBlackDuckPopulateMetadataCron()) {
-        moduleManager.populateMetadata(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.CRON_JOB)
+        moduleManager.populateMetadata(TriggerType.CRON_JOB)
     }
 
     /**
@@ -357,7 +368,7 @@ jobs {
      * blackduck.inspectionStatus
      **/
     blackDuckUpdateMetadata(cron: moduleManager.getBlackDuckUpdateMetadataCron()) {
-        moduleManager.updateMetadata(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.CRON_JOB)
+        moduleManager.updateMetadata(TriggerType.CRON_JOB)
     }
 
 
@@ -365,32 +376,32 @@ jobs {
      * Submits usage analytics
      **/
     blackDuckSubmitAnalytics(cron: AnalyticsModule.SUBMIT_ANALYTICS_CRON) {
-        moduleManager.submitAnalytics(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.CRON_JOB)
+        moduleManager.submitAnalytics(TriggerType.CRON_JOB)
     }
 }
 
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
     afterCreate { ItemInfo item ->
-        moduleManager.handleAfterCreateEvent(item, com.synopsys.integration.blackduck.artifactory.modules.TriggerType.STORAGE_AFTER_CREATE)
+        moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
 }
 
 //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 download {
     beforeDownload { Request request, RepoPath repoPath ->
-        moduleManager.handleBeforeDownloadEvent(com.synopsys.integration.blackduck.artifactory.modules.TriggerType.BEFORE_DOWNLOAD, repoPath)
+        moduleManager.handleBeforeDownloadEvent(TriggerType.BEFORE_DOWNLOAD, repoPath)
     }
 }
 
-private void initialize(final com.synopsys.integration.blackduck.artifactory.modules.TriggerType triggerType) {
+private void initialize(final TriggerType triggerType) {
     log.info("Initializing blackDuckPlugin from ${triggerType.getLogName()}...")
 
     final File etcDirectory = ctx.artifactoryHome.etcDir
     final File homeDirectory = ctx.artifactoryHome.homeDir
     final File pluginsDirectory = ctx.artifactoryHome.pluginsDir
     final String thirdPartyVersion = ctx?.versionProvider?.running?.versionName?.toString()
-    final PluginConfig pluginConfig = new PluginConfig(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
+    final PluginConfig pluginConfig = PluginConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
 
     pluginService = new PluginService(pluginConfig, repositories, searches)
     moduleManager = pluginService.initializePlugin()
