@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory
+package main.groovy.com.synopsys.integration.blackduck.artifactory
 
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager
 import com.synopsys.integration.blackduck.artifactory.modules.TriggerType

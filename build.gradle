@@ -5,12 +5,8 @@ buildscript {
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
     }
-
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
-        classpath 'com.blackducksoftware.integration:hub-artifactory-common:1.0.0-SNAPSHOT' //TODO: Don't use snapshot
-        classpath 'org.apache.commons:commons-configuration2:2.2'
-        classpath 'joda-time:joda-time:2.10'
     }
 }
 
@@ -18,54 +14,26 @@ plugins {
     id 'groovy'
 }
 
-version = '6.0.0-SNAPSHOT'
-def artifactoryMinimumVersion = '5.6.2'
+version = '6.0.0'
+final String parentVersion = project.version
 
-apply plugin: 'com.blackducksoftware.integration.solution'
-
-dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:1.0.0-SNAPSHOT' // TODO: Don't use snapshot
-
-    compileOnly 'org.apache.commons:commons-configuration2:2.2'
-    compileOnly 'joda-time:joda-time:2.10'
-
-    compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
-
-    testCompile 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+allprojects {
+    task dependencies(type: DependencyReportTask) {}
 }
 
-def versionFile = new File("${projectDir}/src/main/resources/version.txt")
-versionFile.delete()
-versionFile << version
+configure(subprojects) { project ->
+    group = 'com.blackducksoftware.integration'
+    version = parentVersion
 
-apply from: 'generateConfig.gradle'
+    apply plugin: 'com.blackducksoftware.integration.solution'
+    apply plugin: 'groovy'
 
-task createFinalZip(type: Zip) {
-    dependsOn build, generateScanConfig
-    from("${projectDir}/src/main/resources/") {
-        include 'version.txt'
-        into 'plugins/lib'
+    license {
+        header rootProject.file('LICENSE')
     }
 
-    from("${projectDir}/build/configs/") {
-        include 'blackDuckScan.properties'
-        into 'plugins/lib'
-    }
-
-    from("${buildDir}/libs") {
-        include '*.jar'
-        exclude '*sources.jar'
-        exclude '*javadoc.jar'
-    }
-
-    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
-        include 'blackDuckPlugin.groovy'
-        into 'plugins'
-    }
-
-    from(configurations.runtime) {
-        include 'hub-artifactory-common*.jar'
-        into 'plugins/lib'
+    dependencies {
+        compile 'com.blackducksoftware.integration:hub-common:38.5.0'
+        compile 'org.codehaus.groovy:groovy-all:2.4.15'
     }
 }
-
