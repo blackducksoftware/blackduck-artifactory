@@ -1,5 +1,5 @@
 /**
- * hub-artifactory-common
+ * blackduck-artifactory-common
  *
  * Copyright (C) 2018 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/

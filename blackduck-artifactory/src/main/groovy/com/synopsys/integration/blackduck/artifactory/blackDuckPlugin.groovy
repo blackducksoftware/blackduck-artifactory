@@ -1,5 +1,5 @@
 /*
- * hub-artifactory
+ * blackduck-artifactory
  *
  * Copyright (C) 2018 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package main.groovy.com.synopsys.integration.blackduck.artifactory
+package com.synopsys.integration.blackduck.artifactory
 
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager
 import com.synopsys.integration.blackduck.artifactory.modules.TriggerType

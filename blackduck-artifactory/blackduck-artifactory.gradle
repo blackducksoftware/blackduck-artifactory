@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        mavenLocal() // TODO: Remove me
         jcenter()
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -8,7 +7,6 @@ buildscript {
 
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
-        classpath project(":blackduck-artifactory-common")
         classpath 'org.apache.commons:commons-configuration2:2.2'
         classpath 'joda-time:joda-time:2.10'
     }

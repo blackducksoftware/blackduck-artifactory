@@ -1,1 +1,7 @@
-rootProject.name = "hub-artifactory"
+include "blackduck-artifactory"
+include "blackduck-artifactory-common"
+
+rootProject.name = 'blackduck-artifactory'
+rootProject.children.each { project ->
+    project.buildFileName = "${project.name}.gradle"
+}
