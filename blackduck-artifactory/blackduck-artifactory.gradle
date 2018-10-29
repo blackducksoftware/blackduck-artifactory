@@ -16,7 +16,6 @@ plugins {
     id 'groovy'
 }
 
-version = '6.0.0-SNAPSHOT'
 def artifactoryMinimumVersion = '5.6.2'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
@@ -46,7 +45,7 @@ task createFinalZip(type: Zip) {
     }
 
     from("${projectDir}/build/configs/") {
-        include 'blackDuckScan.properties'
+        include 'blackDuckPlugin.properties'
         into 'plugins/lib'
     }
 
@@ -61,8 +60,8 @@ task createFinalZip(type: Zip) {
         into 'plugins'
     }
 
-    from(configurations.runtime) {
-        include 'hub-artifactory-common*.jar'
+    from(configurations.compile) {
+        include 'blackduck-artifactory-common*.jar'
         into 'plugins/lib'
     }
 }
