@@ -38,7 +38,7 @@ versionFile << version
 apply from: 'generateConfig.gradle'
 
 task createFinalZip(type: Zip) {
-    dependsOn build, generateScanConfig
+    dependsOn build, generateConfig
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
         into 'plugins/lib'

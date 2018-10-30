@@ -21,8 +21,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory.util;
 
-public class TestConstants {
-    public static final String BLACK_DUCK_ENV_VAR = "BLACKDUCK_CREDENTIALS";
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@EnabledIfEnvironmentVariable(named = TestUtil.BLACKDUCK_CREDENTIALS_ENV_VAR, matches = ".*")
+public @interface EnabledOnBlackDuckCredentials {
+    // A meta-annotation used to enable a test if credentials to a BlackDuck instance are available via environment variables
 }

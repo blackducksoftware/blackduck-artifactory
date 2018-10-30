@@ -45,7 +45,6 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeClient;
 import com.synopsys.integration.phonehome.PhoneHomeService;
-import com.synopsys.integration.phonehome.google.analytics.GoogleAnalyticsConstants;
 
 public class BlackDuckConnectionService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
@@ -56,14 +55,13 @@ public class BlackDuckConnectionService {
     private final HubServicesFactory hubServicesFactory;
     private final HubServerConfig hubServerConfig;
 
-    public BlackDuckConnectionService(final PluginConfig pluginConfig, final HubServerConfig hubServerConfig) throws EncryptionException {
+    public BlackDuckConnectionService(final PluginConfig pluginConfig, final HubServerConfig hubServerConfig, final String googleAnalyticsTrackingId) throws EncryptionException {
         this.pluginConfig = pluginConfig;
         this.hubServerConfig = hubServerConfig;
 
         final BlackduckRestConnection restConnection = this.hubServerConfig.createRestConnection(logger);
         this.hubServicesFactory = new HubServicesFactory(HubServicesFactory.createDefaultGson(), HubServicesFactory.createDefaultJsonParser(), restConnection, logger);
 
-        final String googleAnalyticsTrackingId = GoogleAnalyticsConstants.TEST_INTEGRATIONS_TRACKING_ID; // TODO: Replace with real tracking id
         final HttpClientBuilder httpClientBuilder = hubServerConfig.createRestConnection(logger).getClientBuilder();
         phoneHomeClient = new PhoneHomeClient(googleAnalyticsTrackingId, logger, httpClientBuilder, HubServicesFactory.createDefaultGson());
     }

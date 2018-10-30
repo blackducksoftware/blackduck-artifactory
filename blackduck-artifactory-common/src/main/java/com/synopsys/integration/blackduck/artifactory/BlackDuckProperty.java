@@ -23,6 +23,8 @@
  */
 package com.synopsys.integration.blackduck.artifactory;
 
+import com.sun.istack.internal.NotNull;
+
 public enum BlackDuckProperty implements ConfigurationProperty {
     URL("url"),
     USERNAME("username"),
@@ -38,7 +40,7 @@ public enum BlackDuckProperty implements ConfigurationProperty {
 
     private final String key;
 
-    BlackDuckProperty(final String key) {
+    BlackDuckProperty(@NotNull final String key) {
         this.key = "blackduck." + key;
     }
 

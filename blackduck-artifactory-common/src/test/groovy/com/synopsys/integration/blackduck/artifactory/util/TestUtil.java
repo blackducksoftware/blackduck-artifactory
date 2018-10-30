@@ -21,16 +21,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory.util;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.Properties;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.synopsys.integration.blackduck.configuration.HubServerConfig;
+import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
+
 public class TestUtil {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    public static final String DEFAULT_PROPERTIES_RESOURCE_PATH = "/blackDuckPlugin.properties";
+    public static final String BLACKDUCK_CREDENTIALS_ENV_VAR = HubServerConfigBuilder.BLACKDUCK_SERVER_CONFIG_ENVIRONMENT_VARIABLE_PREFIX + "CREDENTIALS";
+
     public static Properties getDefaultProperties() throws IOException {
-        return getResourceAsProperties("/blackDuckPlugin.properties");
+        return getResourceAsProperties(DEFAULT_PROPERTIES_RESOURCE_PATH);
     }
 
     public static Properties getResourceAsProperties(final String resourcePath) throws IOException {
@@ -48,5 +61,16 @@ public class TestUtil {
 
     public static File getResourceAsFile(final String resourcePath) {
         return new File(getResourceAsFilePath(resourcePath));
+    }
+
+    public static HubServerConfig getHubServerConfigFromEnvVar() {
+        final String credentials = System.getenv(BLACKDUCK_CREDENTIALS_ENV_VAR);
+        final Type type = new TypeToken<Map<String, String>>() {}.getType();
+        final Map<String, String> properties = GSON.fromJson(credentials, type);
+
+        final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
+        hubServerConfigBuilder.setFromProperties(properties);
+
+        return hubServerConfigBuilder.build();
     }
 }

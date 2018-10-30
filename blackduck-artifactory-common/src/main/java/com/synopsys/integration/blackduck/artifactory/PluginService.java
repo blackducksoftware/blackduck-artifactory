@@ -73,6 +73,7 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.hub.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
+import com.synopsys.integration.phonehome.google.analytics.GoogleAnalyticsConstants;
 
 public class PluginService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
@@ -110,7 +111,7 @@ public class PluginService {
 
         dateTimeManager = new DateTimeManager(blackDuckPropertyManager.getProperty(BlackDuckProperty.DATE_TIME_PATTERN));
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager);
-        blackDuckConnectionService = new BlackDuckConnectionService(pluginConfig, hubServerConfig);
+        blackDuckConnectionService = new BlackDuckConnectionService(pluginConfig, hubServerConfig, GoogleAnalyticsConstants.TEST_INTEGRATIONS_TRACKING_ID); // TODO: Replace with real tracking id
         analyticsService = new AnalyticsService(blackDuckConnectionService);
 
         registeredModules = new ArrayList<>();

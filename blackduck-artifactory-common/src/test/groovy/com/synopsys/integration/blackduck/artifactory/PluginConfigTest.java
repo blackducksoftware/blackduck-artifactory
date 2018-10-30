@@ -21,18 +21,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.jupiter;
+package com.synopsys.integration.blackduck.artifactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import com.synopsys.integration.blackduck.artifactory.PluginConfig;
+import com.synopsys.integration.blackduck.artifactory.util.FastTest;
 
-class PluginConfigTest {
+public class PluginConfigTest {
     private PluginConfig pluginConfig;
 
     @BeforeEach
@@ -44,32 +43,32 @@ class PluginConfigTest {
         pluginConfig = PluginConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, "1.2.3", "path/to/properties/file");
     }
 
-    @Test
+    @FastTest
     void getHomeDirectory() {
         assertEquals(new File("home"), pluginConfig.getHomeDirectory());
     }
 
-    @Test
+    @FastTest
     void getEtcDirectory() {
         assertEquals(new File("etc"), pluginConfig.getEtcDirectory());
     }
 
-    @Test
+    @FastTest
     void getPluginsLibDirectory() {
         assertEquals(new File("plugins", "lib"), pluginConfig.getPluginsLibDirectory());
     }
 
-    @Test
+    @FastTest
     void getVersionFile() {
         assertEquals(new File(pluginConfig.getPluginsLibDirectory(), "version.txt"), pluginConfig.getVersionFile());
     }
 
-    @Test
+    @FastTest
     void getThirdPartyVersion() {
         assertEquals("1.2.3", pluginConfig.getThirdPartyVersion());
     }
 
-    @Test
+    @FastTest
     void getPropertiesFilePathOverride() {
         assertEquals("path/to/properties/file", pluginConfig.getPropertiesFilePathOverride());
     }

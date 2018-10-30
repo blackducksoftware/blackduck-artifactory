@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.jupiter;
+package com.synopsys.integration.blackduck.artifactory;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,10 +35,9 @@ import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
-import com.synopsys.integration.blackduck.artifactory.ConfigurationProperty;
-import com.synopsys.integration.blackduck.artifactory.TestUtil;
-import com.synopsys.integration.blackduck.artifactory.jupiter.annotations.FileIO;
+import com.synopsys.integration.blackduck.artifactory.util.FastTest;
+import com.synopsys.integration.blackduck.artifactory.util.FileIO;
+import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
 
 class BlackDuckPropertyManagerTest {
     private final ConfigurationProperty repositoryKeyListProperty = () -> "blackduck.artifactory.scan.repos";
@@ -53,7 +52,7 @@ class BlackDuckPropertyManagerTest {
         blackDuckPropertyManager = new BlackDuckPropertyManager(properties);
     }
 
-    @Test
+    @FastTest
     void getRepositoryKeysFromProperties() throws IOException {
         final List<String> repositoryKeysFromProperties = blackDuckPropertyManager.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty);
         assertAll("repo keys",
@@ -76,17 +75,17 @@ class BlackDuckPropertyManagerTest {
         );
     }
 
-    @Test
+    @FastTest
     void getProperties() {
         assertEquals(properties, blackDuckPropertyManager.getProperties());
     }
 
-    @Test
+    @FastTest
     void getProperty() {
         assertEquals("ext-release-local,libs-release", blackDuckPropertyManager.getProperty(repositoryKeyListProperty));
     }
 
-    @Test
+    @FastTest
     void getBooleanProperty() {
         assertTrue(blackDuckPropertyManager.getBooleanProperty(isEnabledProperty));
     }

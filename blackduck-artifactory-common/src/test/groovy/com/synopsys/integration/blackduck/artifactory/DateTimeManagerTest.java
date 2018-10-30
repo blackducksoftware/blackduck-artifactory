@@ -21,16 +21,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.jupiter;
+package com.synopsys.integration.blackduck.artifactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Date;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
+import com.synopsys.integration.blackduck.artifactory.util.FastTest;
 
 class DateTimeManagerTest {
     private final String dateTimePattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
@@ -44,24 +43,24 @@ class DateTimeManagerTest {
         dateTimeManager = new DateTimeManager(dateTimePattern);
     }
 
-    @Test
+    @FastTest
     void getDateTimePattern() {
         assertEquals(dateTimePattern, dateTimeManager.getDateTimePattern());
     }
 
-    @Test
+    @FastTest
     void getTimeFromString() {
         final long actualTime = dateTimeManager.getTimeFromString(dateAsString);
         assertEquals(dateAsMilliseconds, actualTime);
     }
 
-    @Test
+    @FastTest
     void getStringFromDate() {
         final Date providedDate = new Date(dateAsMilliseconds);
         assertEquals(dateAsString, dateTimeManager.getStringFromDate(providedDate));
     }
 
-    @Test
+    @FastTest
     void getDateFromString() {
         final Date actualDate = dateTimeManager.getDateFromString(dateAsString);
         final Date expectedDate = new Date(dateAsMilliseconds);

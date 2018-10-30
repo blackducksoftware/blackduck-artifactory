@@ -21,22 +21,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.legacy;
+package com.synopsys.integration.blackduck.artifactory.util;
 
-import java.io.IOException;
-import java.util.Properties;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
-import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
-
-// TODO: Investigate the usefulness of this test
-public class LoadHubServerConfigFromPropertiesTest {
-    @Test
-    public void loadFromProperties() throws IOException {
-        final Properties properties = TestUtil.getResourceAsProperties("/blackDuckCacheInspector.properties");
-        final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setFromProperties(properties);
-    }
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Test
+@Fast
+public @interface FastTest {
+    // A meta-annotation for fast unit test. This is the same as fast, but includes a test annotation
 }

@@ -33,7 +33,7 @@ configure(subprojects) { project ->
     }
 
     dependencies {
-        compile 'com.blackducksoftware.integration:hub-common:38.5.0'
+        compile 'com.blackducksoftware.integration:hub-common:38.7.0'
         compile 'org.codehaus.groovy:groovy-all:2.4.15'
     }
 }

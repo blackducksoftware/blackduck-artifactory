@@ -21,22 +21,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.legacy;
+package com.synopsys.integration.blackduck.artifactory.util;
 
-import java.io.IOException;
-import java.util.Properties;
-
-import org.junit.Test;
-
-import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
-import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
-
-// TODO: Investigate the usefulness of this test
-public class LoadHubServerConfigFromPropertiesTest {
-    @Test
-    public void loadFromProperties() throws IOException {
-        final Properties properties = TestUtil.getResourceAsProperties("/blackDuckCacheInspector.properties");
-        final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setFromProperties(properties);
-    }
+public class TestConstants {
+    public static final String BLACK_DUCK_ENV_VAR = "BLACKDUCK_CREDENTIALS";
 }

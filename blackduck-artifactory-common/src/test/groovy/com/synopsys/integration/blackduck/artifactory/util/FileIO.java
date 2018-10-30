@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.jupiter.annotations;
+package com.synopsys.integration.blackduck.artifactory.util;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Tag;
 
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-@Tag("integration")
-public @interface Integration {
-    // A meta-annotation for a test that is an integration test instead of a unit test
+@Tag("file-io")
+public @interface FileIO {
+    // A meta-annotation for a test that involves IO Operations
 }
