@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        mavenLocal() // TODO: Remove me
         jcenter()
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -35,5 +34,11 @@ configure(subprojects) { project ->
     dependencies {
         compile 'com.blackducksoftware.integration:hub-common:38.7.0'
         compile 'org.codehaus.groovy:groovy-all:2.4.15'
+    }
+}
+
+subprojects {
+    tasks.withType(Test) {
+        maxParallelForks = 4
     }
 }

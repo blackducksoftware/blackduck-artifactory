@@ -48,7 +48,7 @@ public class TestUtil {
 
     public static Properties getResourceAsProperties(final String resourcePath) throws IOException {
         final Properties properties = new Properties();
-        try (final InputStream inputStream = TestUtil.class.getResourceAsStream(resourcePath)) {
+        try (final InputStream inputStream = getResourceAsStream(resourcePath)) {
             properties.load(inputStream);
         }
 
@@ -61,6 +61,10 @@ public class TestUtil {
 
     public static File getResourceAsFile(final String resourcePath) {
         return new File(getResourceAsFilePath(resourcePath));
+    }
+
+    public static InputStream getResourceAsStream(final String resourcePath) {
+        return TestUtil.class.getResourceAsStream(resourcePath);
     }
 
     public static HubServerConfig getHubServerConfigFromEnvVar() {
