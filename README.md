@@ -16,4 +16,4 @@ The inspector plugin, blackDuckCacheInspector, can be configured to inspect your
 Download the latest from release page: https://github.com/blackducksoftware/blackduck-artifactory/releases
 
 ## Documentation ##
-All documentation for blackduck-artifactory can be found on our public [Black Duck Confluence](https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/47192662/Hub+Artifactory+Plugin)
+All documentation for blackduck-artifactory can be found on our public [Confluence](https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/622799/Black+Duck+Artifactory+Plugin)
