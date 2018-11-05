@@ -16,7 +16,10 @@ plugins {
     id 'groovy'
 }
 
-def artifactoryMinimumVersion = '5.6.2'
+final String artifactoryMinimumVersion = '5.6.2'
+final String artifactoryIntegrationPath = "com/synopsys/integration"
+final String distributionsFolder = "${buildDir}/distributions"
+final String finalZipName = "${project.name}-${version}.zip"
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 
@@ -36,6 +39,13 @@ versionFile.delete()
 versionFile << version
 
 apply from: 'generateConfig.gradle'
+
+task printProperties {
+    println(project.ext.artifactoryDeployerUsername)
+    println(project.ext.artifactoryDeployerPassword)
+    println(project.ext.artifactoryUrl)
+    println(project.ext.artifactoryRepo)
+}
 
 task createFinalZip(type: Zip) {
     dependsOn build, generateConfig
@@ -64,5 +74,16 @@ task createFinalZip(type: Zip) {
         include 'blackduck-artifactory-common*.jar'
         into 'plugins/lib'
     }
+
+    archiveName finalZipName
 }
 
+task publishZip() {
+    dependsOn createFinalZip
+    doLast {
+        exec {
+            commandLine 'curl', '--insecure', '-u', "${project.ext.artifactoryDeployerUsername}:${project.ext.artifactoryDeployerPassword}", '-X', 'PUT',
+                "${project.ext.artifactoryUrl}/${project.ext.artifactoryRepo}/${artifactoryIntegrationPath}/${project.name}/${version}/${finalZipName}", '-T', "${distributionsFolder}/${finalZipName}", '-f'
+        }
+    }
+}

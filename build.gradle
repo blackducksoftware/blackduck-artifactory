@@ -21,7 +21,7 @@ allprojects {
 }
 
 configure(subprojects) { project ->
-    group = 'com.blackducksoftware.integration'
+    group = 'com.synopsys.integration'
     version = parentVersion
 
     apply plugin: 'com.blackducksoftware.integration.solution'
