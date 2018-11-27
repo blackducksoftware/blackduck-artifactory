@@ -87,9 +87,14 @@ public class RepositoryIdentificationService {
         final List<String> patternsToScan = Arrays.asList(blackDuckPropertyManager.getProperty(ScanModuleProperty.NAME_PATTERNS).split(","));
         final List<RepoPath> repoPaths = new ArrayList<>();
 
-        for (final String pattern : patternsToScan) {
-            repoPaths.addAll(searches.artifactsByName(pattern, repoKeysToScan.toArray(new String[repoKeysToScan.size()])));
+        if (repoKeysToScan.size() > 0) {
+            for (final String pattern : patternsToScan) {
+                repoPaths.addAll(searches.artifactsByName(pattern, repoKeysToScan.toArray(new String[repoKeysToScan.size()])));
+            }
+        } else {
+            logger.info(String.format("Please specify valid repos to scan or disable the %s", ScanModule.class.getSimpleName()));
         }
+
         logger.debug(String.format("patternsToScan: %d", patternsToScan.size()));
         logger.debug(String.format("repoKeysToScan: %d", repoKeysToScan.size()));
         logger.debug(String.format("repoPaths: %d", repoPaths.size()));

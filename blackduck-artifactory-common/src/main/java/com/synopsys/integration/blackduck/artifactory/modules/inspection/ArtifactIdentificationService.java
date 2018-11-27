@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
@@ -175,8 +176,13 @@ public class ArtifactIdentificationService {
 
     private void createHubProjectFromRepo(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) throws IOException, IntegrationException {
         final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
-        final MutableDependencyGraph mutableDependencyGraph = repoPaths.stream()
-                                                                  .map(repoPath -> identifyArtifact(repoPath, repoPackageType))
+
+        final List<Pair<RepoPath, Optional<IdentifiedArtifact>>> repoPathIndentifiedArtifactPair = repoPaths.stream()
+                                                                                                       .map(repoPath -> Pair.of(repoPath, identifyArtifact(repoPath, repoPackageType)))
+                                                                                                       .collect(Collectors.toList());
+
+        final MutableDependencyGraph mutableDependencyGraph = repoPathIndentifiedArtifactPair.stream()
+                                                                  .map(Pair::getRight)
                                                                   .filter(Optional::isPresent)
                                                                   .map(Optional::get)
                                                                   .peek(this::populateIdMetadataOnIdentifiedArtifact)
@@ -196,7 +202,13 @@ public class ArtifactIdentificationService {
 
         blackDuckConnectionService.importBomFile(bdioFile);
 
-        repoPaths.forEach(repoPath -> cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS));
+        for (final Pair<RepoPath, Optional<IdentifiedArtifact>> pair : repoPathIndentifiedArtifactPair) {
+            InspectionStatus inspectionStatus = InspectionStatus.NO_EXTERNAL_ID_FOUND;
+            if (pair.getValue().isPresent()) {
+                inspectionStatus = InspectionStatus.SUCCESS;
+            }
+            cacheInspectorService.setInspectionStatus(pair.getKey(), inspectionStatus);
+        }
     }
 
     private void addDeltaToHubProject(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) {

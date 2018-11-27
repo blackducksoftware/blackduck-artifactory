@@ -26,5 +26,6 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 public enum InspectionStatus {
     SUCCESS,
     FAILURE,
-    PENDING
+    PENDING,
+    NO_EXTERNAL_ID_FOUND
 }

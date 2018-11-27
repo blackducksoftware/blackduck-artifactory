@@ -26,6 +26,8 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 import java.util.Arrays;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.synopsys.integration.hub.bdio.model.Forge;
 
 public enum SupportedPackageType {
@@ -40,12 +42,10 @@ public enum SupportedPackageType {
     private final Forge forge;
     private final String artifactoryNameProperty;
     private final String artifactoryVersionProperty;
-    private final boolean hasNameVersionProperties;
 
     SupportedPackageType(final String artifactoryName, final Forge forge, final String artifactoryNameProperty, final String artifactoryVersionProperty) {
         this.artifactoryName = artifactoryName;
         this.forge = forge;
-        this.hasNameVersionProperties = true;
         this.artifactoryNameProperty = artifactoryNameProperty;
         this.artifactoryVersionProperty = artifactoryVersionProperty;
     }
@@ -53,7 +53,6 @@ public enum SupportedPackageType {
     SupportedPackageType(final String artifactoryName, final Forge forge) {
         this.artifactoryName = artifactoryName;
         this.forge = forge;
-        this.hasNameVersionProperties = false;
         this.artifactoryNameProperty = null;
         this.artifactoryVersionProperty = null;
     }
@@ -81,6 +80,6 @@ public enum SupportedPackageType {
     }
 
     public boolean hasNameVersionProperties() {
-        return hasNameVersionProperties;
+        return StringUtils.isNoneBlank(artifactoryNameProperty, artifactoryVersionProperty);
     }
 }
