@@ -152,13 +152,14 @@ public class ArtifactIdentificationService {
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
             } else {
                 logger.warn(String.format("The Black Duck %s could not successfully inspect %s because of a %d status code", InspectionModule.class.getSimpleName(), repoPath, statusCode));
-                logger.debug(String.format("Inspection of component failed: %s", repoPath), e);
+                logger.debug(String.format(e.getMessage(), repoPath), e);
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
             }
         } catch (final HubIntegrationException e) {
             // TODO: Can't find exact match in hub error.
         } catch (final Exception e) {
-            logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath), e);
+            logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath));
+            logger.debug(e.getMessage(), e);
             cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
         }
     }
