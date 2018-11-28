@@ -142,11 +142,17 @@ public class ArtifactIdentificationService {
             blackDuckConnectionService.addComponentToProjectVersion(artifact.getExternalId(), projectName, projectVersionName);
             cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
         } catch (final IntegrationRestException e) {
-            if (e.getHttpStatusCode() == 412) {
+            final int statusCode = e.getHttpStatusCode();
+            if (statusCode == 412) {
                 logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath));
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
+            } else if (statusCode == 401) {
+                logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
+                    repoPath, statusCode));
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
             } else {
-                logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath), e);
+                logger.warn(String.format("The Black Duck %s could not successfully inspect %s because of a %d status code", InspectionModule.class.getSimpleName(), repoPath, statusCode));
+                logger.debug(String.format("Inspection of component failed: %s", repoPath), e);
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
             }
         } catch (final HubIntegrationException e) {
