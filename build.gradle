@@ -32,10 +32,10 @@ configure(subprojects) { project ->
     }
 
     dependencies {
-        compile 'com.blackducksoftware.integration:hub-common:38.7.0'
-        compile 'org.codehaus.groovy:groovy-all:2.4.15'
+        implementation 'com.blackducksoftware.integration:hub-common:39.0.0'
+        implementation 'org.codehaus.groovy:groovy-all:2.4.15'
 
-        testCompile 'com.blackducksoftware.integration:integration-test-common:4.0.5' // TODO: Remove after upgrade to hub-common 39
+        testImplementation 'com.blackducksoftware.integration:integration-test-common:4.+'
     }
 }
 

@@ -28,7 +28,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.hub.bdio.model.Forge;
+import com.synopsys.integration.bdio.model.Forge;
 
 public enum SupportedPackageType {
     GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version"),

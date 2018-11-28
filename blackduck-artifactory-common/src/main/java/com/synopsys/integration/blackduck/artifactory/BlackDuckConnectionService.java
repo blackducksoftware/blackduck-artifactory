@@ -32,18 +32,22 @@ import org.apache.commons.io.FileUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadBatch;
+import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadRunner;
+import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.blackduck.configuration.HubServerConfig;
-import com.synopsys.integration.blackduck.rest.BlackduckRestConnection;
-import com.synopsys.integration.blackduck.service.CodeLocationService;
+import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeCallable;
+import com.synopsys.integration.blackduck.rest.BlackDuckRestConnection;
 import com.synopsys.integration.blackduck.service.HubServicesFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
-import com.synopsys.integration.blackduck.service.model.BlackDuckPhoneHomeCallable;
-import com.synopsys.integration.exception.EncryptionException;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.jsonfield.JsonFieldResolver;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeClient;
+import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
 import com.synopsys.integration.phonehome.PhoneHomeService;
 
 public class BlackDuckConnectionService {
@@ -55,12 +59,13 @@ public class BlackDuckConnectionService {
     private final HubServicesFactory hubServicesFactory;
     private final HubServerConfig hubServerConfig;
 
-    public BlackDuckConnectionService(final PluginConfig pluginConfig, final HubServerConfig hubServerConfig, final String googleAnalyticsTrackingId) throws EncryptionException {
+    public BlackDuckConnectionService(final PluginConfig pluginConfig, final HubServerConfig hubServerConfig, final String googleAnalyticsTrackingId) {
         this.pluginConfig = pluginConfig;
         this.hubServerConfig = hubServerConfig;
 
-        final BlackduckRestConnection restConnection = this.hubServerConfig.createRestConnection(logger);
-        this.hubServicesFactory = new HubServicesFactory(HubServicesFactory.createDefaultGson(), HubServicesFactory.createDefaultJsonParser(), restConnection, logger);
+        final BlackDuckRestConnection restConnection = this.hubServerConfig.createRestConnection(logger);
+        final Gson gson = HubServicesFactory.createDefaultGson();
+        this.hubServicesFactory = new HubServicesFactory(gson, HubServicesFactory.createDefaultJsonParser(), new JsonFieldResolver(gson), restConnection, logger);
 
         final HttpClientBuilder httpClientBuilder = hubServerConfig.createRestConnection(logger).getClientBuilder();
         phoneHomeClient = new PhoneHomeClient(googleAnalyticsTrackingId, logger, httpClientBuilder, HubServicesFactory.createDefaultGson());
@@ -96,26 +101,30 @@ public class BlackDuckConnectionService {
             thirdPartyVersion = "UNKNOWN_VERSION";
         }
 
+        final PhoneHomeService phoneHomeService = hubServicesFactory.createPhoneHomeService(Executors.newSingleThreadExecutor());
+        final PhoneHomeRequestBody.Builder phoneHomeRequestBodyBuilder = new PhoneHomeRequestBody.Builder();
+        phoneHomeRequestBodyBuilder.addToMetaData("third.party.version", thirdPartyVersion);
+        phoneHomeRequestBodyBuilder.addAllToMetaData(metadataMap);
         final BlackDuckPhoneHomeCallable blackDuckPhoneHomeCallable = new BlackDuckPhoneHomeCallable(
             logger,
             phoneHomeClient,
-            hubServerConfig.getHubUrl(),
+            hubServerConfig.getBlackDuckUrl(),
             "blackduck-artifactory",
             pluginVersion,
             hubServicesFactory.getEnvironmentVariables(),
             hubServicesFactory.createHubService(),
-            hubServicesFactory.createHubRegistrationService()
+            hubServicesFactory.createHubRegistrationService(),
+            phoneHomeRequestBodyBuilder
         );
-        blackDuckPhoneHomeCallable.addMetaData("third.party.version", thirdPartyVersion);
-        blackDuckPhoneHomeCallable.addAllMetadata(metadataMap);
-        final PhoneHomeService phoneHomeService = hubServicesFactory.createPhoneHomeService(Executors.newSingleThreadExecutor());
 
         return phoneHomeService.phoneHome(blackDuckPhoneHomeCallable);
     }
 
-    public void importBomFile(final File bdioFile) throws IntegrationException {
-        final CodeLocationService codeLocationService = hubServicesFactory.createCodeLocationService();
-        codeLocationService.importBomFile(bdioFile);
+    public void importBomFile(final String codeLocationName, final File bdioFile) throws IntegrationException {
+        final UploadRunner uploadRunner = new UploadRunner(logger, getHubServicesFactory().createHubService()); // TODO: Don't recreate hub service
+        final UploadBatch uploadBatch = new UploadBatch();
+        uploadBatch.addUploadTarget(UploadTarget.createDefault(codeLocationName, bdioFile));
+        uploadRunner.executeUploads(uploadBatch);
     }
 
     public void addComponentToProjectVersion(final ExternalId componentExternalId, final String projectName, final String projectVersionName) throws IntegrationException {

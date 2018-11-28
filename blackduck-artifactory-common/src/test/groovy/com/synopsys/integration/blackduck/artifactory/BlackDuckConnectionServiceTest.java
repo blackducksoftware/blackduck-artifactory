@@ -4,7 +4,6 @@ import static com.synopsys.integration.blackduck.artifactory.util.TestUtil.getHu
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -12,40 +11,47 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.time.Duration;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.synopsys.integration.bdio.BdioReader;
+import com.synopsys.integration.bdio.BdioWriter;
+import com.synopsys.integration.bdio.model.Forge;
+import com.synopsys.integration.bdio.model.SimpleBdioDocument;
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionDistributionType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionPhaseType;
 import com.synopsys.integration.blackduck.api.generated.view.CodeLocationView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.util.BlackDuckIntegrationTest;
 import com.synopsys.integration.blackduck.artifactory.util.FileIO;
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
+import com.synopsys.integration.blackduck.codelocation.CodeLocationCreationService;
 import com.synopsys.integration.blackduck.configuration.HubServerConfig;
-import com.synopsys.integration.blackduck.exception.DoesNotExistException;
 import com.synopsys.integration.blackduck.service.CodeLocationService;
 import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.NotificationTaskRange;
 import com.synopsys.integration.blackduck.service.model.ProjectRequestBuilder;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
-import com.synopsys.integration.exception.EncryptionException;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.hub.bdio.BdioReader;
-import com.synopsys.integration.hub.bdio.BdioWriter;
-import com.synopsys.integration.hub.bdio.model.Forge;
-import com.synopsys.integration.hub.bdio.model.SimpleBdioDocument;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.phonehome.google.analytics.GoogleAnalyticsConstants;
+import com.synopsys.integration.rest.RestConstants;
 
 // TODO: Replace with scenario https://github.com/junit-team/junit5/issues/48
 @FileIO
@@ -55,7 +61,7 @@ class BlackDuckConnectionServiceTest {
     private String generatedProjectName;
 
     @BeforeEach
-    void setUp() throws EncryptionException {
+    void setUp() {
         final File versionFile = TestUtil.getResourceAsFile("/version.txt");
         final PluginConfig pluginConfig = new PluginConfig(null, null, null, versionFile, null, null);
         final HubServerConfig hubServerConfig = getHubServerConfigFromEnvVar();
@@ -80,7 +86,7 @@ class BlackDuckConnectionServiceTest {
      * If the test fails. Attempt to rerun a few seconds later while BlackDuck processes the bdio.
      */
     @Test
-    void importBomFile() throws IntegrationException, IOException {
+    void importBomFile() throws IntegrationException, IOException, InterruptedException {
         final Gson gson = new GsonBuilder().setPrettyPrinting().create();
         final String codelocationName = String.format("%s-codelocation", generatedProjectName);
         final InputStream inputStream = TestUtil.getResourceAsStream("/test-project-bdio.jsonld");
@@ -97,18 +103,21 @@ class BlackDuckConnectionServiceTest {
 
         final CodeLocationService codeLocationService = blackDuckConnectionService.getHubServicesFactory().createCodeLocationService();
         final ProjectService projectService = blackDuckConnectionService.getHubServicesFactory().createProjectService();
+        final CodeLocationCreationService codeLocationCreationService = blackDuckConnectionService.getHubServicesFactory().createCodeLocationCreationService();
+        final NotificationTaskRange notificationTaskRange = codeLocationCreationService.calculateCodeLocationRange();
+        final Set<String> codeLocationNames = new HashSet<>(Collections.singleton(codelocationName));
 
-        blackDuckConnectionService.importBomFile(bdioFile);
-        assertTimeout(Duration.ofSeconds(5), () -> waitForProjectCreation(projectService, generatedProjectName, 500));
+        blackDuckConnectionService.importBomFile(codelocationName, bdioFile);
+        codeLocationCreationService.waitForCodeLocations(notificationTaskRange, codeLocationNames, 120);
 
-        final ProjectView projectView = projectService.getProjectByName(generatedProjectName);
-        assertNotNull(generatedProjectName);
+        final Optional<ProjectView> projectView = projectService.getProjectByName(generatedProjectName);
+        assertTrue(projectView.isPresent());
 
         final CodeLocationView codeLocationView = codeLocationService.getCodeLocationByName(codelocationName);
         assertNotNull(codeLocationView);
 
         codeLocationService.deleteCodeLocation(codeLocationView);
-        projectService.deleteHubProject(projectView);
+        projectService.deleteProject(projectView.get());
     }
 
     @Test
@@ -125,18 +134,22 @@ class BlackDuckConnectionServiceTest {
         projectRequestBuilder.setVersionName(projectVersionName);
         projectRequestBuilder.setDistribution(ProjectVersionDistributionType.OPENSOURCE);
         projectRequestBuilder.setPhase(ProjectVersionPhaseType.PRERELEASE);
-        projectRequestBuilder.setReleasedOn(new Date().toString());
-        projectRequestBuilder.createValidator().assertValid();
+        final DateFormat dateFormat = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
+        projectRequestBuilder.setReleasedOn(dateFormat.format(new Date()));
+        
+        assertTrue(projectRequestBuilder.isValid());
 
-        projectService.createHubProject(projectRequestBuilder.buildObject());
-        final ProjectView projectView = projectService.getProjectByName(generatedProjectName);
-
-        assertNotNull(projectView);
+        projectService.createProject(projectRequestBuilder.build());
+        final Optional<ProjectView> projectView = projectService.getProjectByName(generatedProjectName);
+        assertTrue(projectView.isPresent());
 
         blackDuckConnectionService.addComponentToProjectVersion(externalId, generatedProjectName, projectVersionName);
 
-        final ProjectVersionWrapper projectVersionWrapper = projectService.getProjectVersion(generatedProjectName, projectVersionName);
-        final List<VersionBomComponentView> componentsForProjectVersion = projectService.getComponentsForProjectVersion(projectVersionWrapper.getProjectVersionView());
+        final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(generatedProjectName, projectVersionName);
+        assertTrue(projectVersionWrapper.isPresent());
+
+        final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+        final List<VersionBomComponentView> componentsForProjectVersion = projectService.getComponentsForProjectVersion(projectVersionView);
 
         System.out.println(String.format("Temp project name: %s", generatedProjectName));
         assertAll("component added", () -> {
@@ -145,28 +158,14 @@ class BlackDuckConnectionServiceTest {
                            .map(versionBomComponentView -> versionBomComponentView.origins)
                            .flatMap(List::stream)
                            .map(versionBomOriginView -> versionBomOriginView.externalId)
-                           .anyMatch(foundExternalId -> externalId.createHubOriginId().equals(foundExternalId)), "components did not match");
+                           .anyMatch(foundExternalId -> externalId.createBlackDuckOriginId().equals(foundExternalId)), "components did not match");
         });
 
-        projectService.deleteHubProject(projectView);
+        projectService.deleteProject(projectView.get());
     }
 
     @Test
     void getHubServicesFactory() {
         assertNotNull(blackDuckConnectionService.getHubServicesFactory());
-    }
-
-    private void waitForProjectCreation(final ProjectService projectService, final String projectName, final long period) throws IntegrationException {
-        long elapsedTime = 0L;
-
-        while (elapsedTime < 300000) {
-            try {
-                projectService.getProjectByName(projectName);
-                break; // Retrieving the code location succeeded
-            } catch (final DoesNotExistException ignored) {
-                // Retrieving the code location failed
-                elapsedTime += period;
-            }
-        }
     }
 }

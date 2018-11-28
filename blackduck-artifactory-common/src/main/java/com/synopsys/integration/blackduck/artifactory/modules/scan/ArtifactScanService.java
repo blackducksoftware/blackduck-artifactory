@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
@@ -46,16 +47,16 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
+import com.synopsys.integration.blackduck.codelocation.Result;
+import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatch;
+import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchBuilder;
+import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchManager;
+import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchOutput;
+import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanCommandOutput;
+import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanTarget;
 import com.synopsys.integration.blackduck.configuration.HubServerConfig;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuess;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuesser;
-import com.synopsys.integration.blackduck.signaturescanner.ScanJob;
-import com.synopsys.integration.blackduck.signaturescanner.ScanJobBuilder;
-import com.synopsys.integration.blackduck.signaturescanner.ScanJobManager;
-import com.synopsys.integration.blackduck.signaturescanner.ScanJobOutput;
-import com.synopsys.integration.blackduck.signaturescanner.command.ScanCommandOutput;
-import com.synopsys.integration.blackduck.signaturescanner.command.ScanTarget;
-import com.synopsys.integration.blackduck.summary.Result;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.HostNameHelper;
@@ -102,8 +103,8 @@ public class ArtifactScanService {
                 final String timeString = dateTimeManager.getStringFromDate(new Date());
                 artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME, timeString);
                 final NameVersion projectNameVersion = determineProjectNameVersion(repoPath);
-                final ScanJobOutput scanJobOutput = scanArtifact(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion());
-                writeScanProperties(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion(), scanJobOutput);
+                final ScanBatchOutput scanBatchOutput = scanArtifact(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion());
+                writeScanProperties(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion(), scanBatchOutput);
             } catch (final Exception e) {
                 logger.error(String.format("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully on %s", repoPath.getName()), e);
                 artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT, Result.FAILURE.toString());
@@ -134,18 +135,18 @@ public class ArtifactScanService {
         return fileLayoutInfo;
     }
 
-    private ScanJobOutput scanArtifact(final RepoPath repoPath, final String projectName, final String projectVersionName) throws IntegrationException, IOException {
+    private ScanBatchOutput scanArtifact(final RepoPath repoPath, final String projectName, final String projectVersionName) throws IntegrationException, IOException {
         final int scanMemory = Integer.parseInt(blackDuckPropertyManager.getProperty(ScanModuleProperty.MEMORY));
         final boolean dryRun = Boolean.parseBoolean(blackDuckPropertyManager.getProperty(ScanModuleProperty.DRY_RUN));
         final boolean useRepoPathAsCodeLocationName = Boolean.parseBoolean(blackDuckPropertyManager.getProperty(ScanModuleProperty.REPO_PATH_CODELOCATION));
-        final ScanJobManager scanJobManager = ScanJobManager.createDefaultScanManager(new Slf4jIntLogger(logger), hubServerConfig);
-        final ScanJobBuilder scanJobBuilder = new ScanJobBuilder()
-                                                  .fromHubServerConfig(hubServerConfig)
-                                                  .scanMemoryInMegabytes(scanMemory)
-                                                  .dryRun(dryRun)
-                                                  .installDirectory(scanModuleConfig.getCliDirectory())
-                                                  .outputDirectory(blackDuckDirectory)
-                                                  .projectAndVersionNames(projectName, projectVersionName);
+        final ScanBatchManager scanBatchManager = ScanBatchManager.createDefaultScanManager(new Slf4jIntLogger(logger), hubServerConfig);
+        final ScanBatchBuilder scanJobBuilder = new ScanBatchBuilder()
+                                                    .fromHubServerConfig(hubServerConfig)
+                                                    .scanMemoryInMegabytes(scanMemory)
+                                                    .dryRun(dryRun)
+                                                    .installDirectory(scanModuleConfig.getCliDirectory())
+                                                    .outputDirectory(blackDuckDirectory)
+                                                    .projectAndVersionNames(projectName, projectVersionName);
 
         final File scanFile = new File(blackDuckDirectory, repoPath.getName());
         final String scanTargetPath = scanFile.getCanonicalPath();
@@ -159,10 +160,10 @@ public class ArtifactScanService {
         final ScanTarget scanTarget = ScanTarget.createBasicTarget(scanTargetPath, null, codeLocationName);
         scanJobBuilder.addTarget(scanTarget);
 
-        final ScanJob scanJob = scanJobBuilder.build();
+        final ScanBatch scanBatch = scanJobBuilder.build();
         logger.info(String.format("Performing scan on '%s'", scanTargetPath));
 
-        return scanJobManager.executeScans(scanJob);
+        return scanBatchManager.executeScans(scanBatch);
     }
 
     private NameVersion determineProjectNameVersion(final RepoPath repoPath) {
@@ -191,16 +192,16 @@ public class ArtifactScanService {
         return new NameVersion(project, version);
     }
 
-    private void writeScanProperties(final RepoPath repoPath, final String projectName, final String projectNameVersion, final ScanJobOutput scanJobOutput) {
-        final ScanCommandOutput scanCommandOutput = getFirstScanCommandOutput(scanJobOutput);
-        if (scanCommandOutput == null) {
+    private void writeScanProperties(final RepoPath repoPath, final String projectName, final String projectNameVersion, final ScanBatchOutput scanBatchOutput) {
+        final Optional<ScanCommandOutput> scanCommandOutput = getFirstScanCommandOutput(scanBatchOutput);
+        if (!scanCommandOutput.isPresent()) {
             logger.warn("No scan summaries were available for a successful scan. This is expected if this was a dry run, but otherwise there should be summaries.");
             return;
         }
+        final Result scanResult = scanCommandOutput.get().getResult();
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT, scanResult.name());
 
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT, scanCommandOutput.getResult().name());
-
-        if (scanCommandOutput.getResult().equals(Result.FAILURE)) {
+        if (scanResult.equals(Result.FAILURE)) {
             logger.warn(String.format("The BlackDuck CLI failed to scan %s", repoPath.getName()));
             return;
         }
@@ -211,16 +212,14 @@ public class ArtifactScanService {
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectNameVersion);
     }
 
-    private ScanCommandOutput getFirstScanCommandOutput(final ScanJobOutput scanJobOutput) {
-        final List<ScanCommandOutput> scanCommandOutputs = scanJobOutput.getScanCommandOutputs();
-        final ScanCommandOutput scanCommandOutput;
+    private Optional<ScanCommandOutput> getFirstScanCommandOutput(final ScanBatchOutput scanBatchOutput) {
+        final List<ScanCommandOutput> scanCommandOutputs = scanBatchOutput.getScanCommandOutputs();
+        ScanCommandOutput scanCommandOutput = null;
         if (scanCommandOutputs != null && !scanCommandOutputs.isEmpty()) {
             scanCommandOutput = scanCommandOutputs.get(0);
-        } else {
-            scanCommandOutput = null;
         }
 
-        return scanCommandOutput;
+        return Optional.ofNullable(scanCommandOutput);
     }
 
     private void deletePathArtifact(final String fileName) {

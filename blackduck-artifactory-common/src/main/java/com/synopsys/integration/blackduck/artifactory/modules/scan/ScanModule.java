@@ -41,7 +41,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.UpdateStatus;
-import com.synopsys.integration.blackduck.summary.Result;
+import com.synopsys.integration.blackduck.codelocation.Result;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class ScanModule implements Analyzable, Module {
@@ -74,6 +74,7 @@ public class ScanModule implements Analyzable, Module {
         return cliDirectory;
     }
 
+    @Override
     public ScanModuleConfig getModuleConfig() {
         return scanModuleConfig;
     }

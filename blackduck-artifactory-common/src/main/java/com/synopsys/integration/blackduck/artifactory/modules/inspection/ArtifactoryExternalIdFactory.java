@@ -30,9 +30,9 @@ import org.artifactory.fs.FileLayoutInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.hub.bdio.model.Forge;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalId;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalIdFactory;
+import com.synopsys.integration.bdio.model.Forge;
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 
 public class ArtifactoryExternalIdFactory {
     private final Logger logger = LoggerFactory.getLogger(ArtifactoryExternalIdFactory.class);

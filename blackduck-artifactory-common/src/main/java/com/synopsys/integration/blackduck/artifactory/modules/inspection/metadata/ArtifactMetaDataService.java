@@ -24,11 +24,12 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ import com.synopsys.integration.blackduck.service.HubService;
 import com.synopsys.integration.blackduck.service.HubServicesFactory;
 import com.synopsys.integration.blackduck.service.NotificationService;
 import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -70,18 +72,23 @@ public class ArtifactMetaDataService {
         final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, hubService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
-        final ProjectVersionView projectVersionView = projectDataService.getProjectVersion(projectName, projectVersionName).getProjectVersionView();
-        final List<VersionBomComponentView> versionBomComponentViews = hubService.getAllResponses(projectVersionView, ProjectVersionView.COMPONENTS_LINK_RESPONSE);
-        final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseBom(projectVersionView, versionBomComponentViews);
+        final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
 
-        for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
-            populateMetaDataMap(repoKey, idToArtifactMetaData, hubService, projectVersionComponentVersionModel);
+        if (projectVersionWrapper.isPresent()) {
+            final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+            final List<VersionBomComponentView> versionBomComponentViews = hubService.getAllResponses(projectVersionView, ProjectVersionView.COMPONENTS_LINK_RESPONSE);
+            final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseBom(projectVersionView, versionBomComponentViews);
+
+            for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
+                populateMetaDataMap(repoKey, idToArtifactMetaData, hubService, projectVersionComponentVersionModel);
+            }
         }
 
         return new ArrayList<>(idToArtifactMetaData.values());
     }
 
-    public ArtifactMetaDataFromNotifications getArtifactMetadataFromNotifications(final String repoKey, final String projectName, final String projectVersionName, final Date startDate, final Date endDate) throws IntegrationException {
+    public Optional<ArtifactMetaDataFromNotifications> getArtifactMetadataFromNotifications(final String repoKey, final String projectName, final String projectVersionName, final Date startDate, final Date endDate)
+        throws IntegrationException {
         final HubServicesFactory hubServicesFactory = blackDuckConnectionService.getHubServicesFactory();
         final NotificationService notificationService = hubServicesFactory.createNotificationService();
         final CommonNotificationService commonNotificationService = hubServicesFactory
@@ -94,15 +101,22 @@ public class ArtifactMetaDataService {
         final List<NotificationView> notificationViews = notificationService.getAllNotifications(startDate, endDate);
         final List<CommonNotificationView> commonNotificationViews = commonNotificationService.getCommonNotifications(notificationViews);
         final NotificationDetailResults notificationDetailResults = commonNotificationService.getNotificationDetailResults(commonNotificationViews);
-        final ProjectVersionView projectVersionView = projectDataService.getProjectVersion(projectName, projectVersionName).getProjectVersionView();
-        final List<ProjectVersionView> projectVersionViews = Arrays.asList(projectVersionView);
-        final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseNotifications(notificationDetailResults, projectVersionViews);
+        final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
 
-        for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
-            populateMetaDataMap(repoKey, idToArtifactMetaData, hubService, projectVersionComponentVersionModel);
+        ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = null;
+        if (projectVersionWrapper.isPresent()) {
+            final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+            final List<ProjectVersionView> projectVersionViews = Collections.singletonList(projectVersionView);
+            final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseNotifications(notificationDetailResults, projectVersionViews);
+
+            for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
+                populateMetaDataMap(repoKey, idToArtifactMetaData, hubService, projectVersionComponentVersionModel);
+            }
+
+            artifactMetaDataFromNotifications = new ArtifactMetaDataFromNotifications(notificationDetailResults.getLatestNotificationCreatedAtDate(), new ArrayList<>(idToArtifactMetaData.values()));
         }
 
-        return new ArtifactMetaDataFromNotifications(notificationDetailResults.getLatestNotificationCreatedAtDate(), new ArrayList<>(idToArtifactMetaData.values()));
+        return Optional.ofNullable(artifactMetaDataFromNotifications);
     }
 
     private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final HubService hubService, final CompositeComponentModel compositeComponentModel) {

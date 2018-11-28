@@ -42,17 +42,17 @@ import org.artifactory.search.Searches;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.bdio.SimpleBdioFactory;
+import com.synopsys.integration.bdio.graph.MutableDependencyGraph;
+import com.synopsys.integration.bdio.model.Forge;
+import com.synopsys.integration.bdio.model.SimpleBdioDocument;
+import com.synopsys.integration.bdio.model.dependency.Dependency;
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
 import com.synopsys.integration.blackduck.exception.HubIntegrationException;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.hub.bdio.SimpleBdioFactory;
-import com.synopsys.integration.hub.bdio.graph.MutableDependencyGraph;
-import com.synopsys.integration.hub.bdio.model.Forge;
-import com.synopsys.integration.hub.bdio.model.SimpleBdioDocument;
-import com.synopsys.integration.hub.bdio.model.dependency.Dependency;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.rest.exception.IntegrationRestException;
 import com.synopsys.integration.util.IntegrationEscapeUtil;
 
@@ -127,10 +127,10 @@ public class ArtifactIdentificationService {
         final ExternalId externalId = identifiedArtifact.getExternalId();
         final RepoPath repoPath = identifiedArtifact.getRepoPath();
 
-        final String hubOriginId = externalId.createHubOriginId();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, hubOriginId);
-        final String hubForge = externalId.forge.getName();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, hubForge);
+        final String blackDuckOriginId = externalId.createBlackDuckOriginId();
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId);
+        final String blackduckForge = externalId.forge.getName();
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge);
 
         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
     }
@@ -207,7 +207,7 @@ public class ArtifactIdentificationService {
         bdioFile.delete();
         simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
 
-        blackDuckConnectionService.importBomFile(bdioFile);
+        blackDuckConnectionService.importBomFile(codeLocationName, bdioFile);
 
         for (final Pair<RepoPath, Optional<IdentifiedArtifact>> pair : repoPathIndentifiedArtifactPair) {
             InspectionStatus inspectionStatus = InspectionStatus.NO_EXTERNAL_ID_FOUND;

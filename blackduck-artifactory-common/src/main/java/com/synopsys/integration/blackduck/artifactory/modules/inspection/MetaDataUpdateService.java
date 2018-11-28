@@ -90,10 +90,14 @@ public class MetaDataUpdateService {
     }
 
     private Date updateFromHubProjectNotifications(final String repoKey, final String projectName, final String projectVersionName, final Date startDate, final Date endDate) throws IntegrationException {
-        final ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataService.getArtifactMetadataFromNotifications(repoKey, projectName, projectVersionName, startDate, endDate);
-        metadataPopulationService.populateBlackDuckMetadataFromIdMetadata(repoKey, artifactMetaDataFromNotifications.getArtifactMetaData());
+        final Optional<ArtifactMetaDataFromNotifications> artifactMetaDataFromNotificationsOptional = artifactMetaDataService.getArtifactMetadataFromNotifications(repoKey, projectName, projectVersionName, startDate, endDate);
 
-        final Optional<Date> lastNotificationDate = artifactMetaDataFromNotifications.getLastNotificationDate();
+        Optional<Date> lastNotificationDate = Optional.empty();
+        if (artifactMetaDataFromNotificationsOptional.isPresent()) {
+            final ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataFromNotificationsOptional.get();
+            metadataPopulationService.populateBlackDuckMetadataFromIdMetadata(repoKey, artifactMetaDataFromNotifications.getArtifactMetaData());
+            lastNotificationDate = artifactMetaDataFromNotifications.getLastNotificationDate();
+        }
 
         // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
         return lastNotificationDate.orElse(startDate);

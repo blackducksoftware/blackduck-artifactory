@@ -101,11 +101,12 @@ public class ScanPolicyService {
         boolean success = false;
 
         try {
-            final VersionBomPolicyStatusView versionBomPolicyStatusView = getVersionBomPolicyStatus(projectName, projectVersionName);
-            if (versionBomPolicyStatusView == null) {
+            final Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = getVersionBomPolicyStatus(projectName, projectVersionName);
+            if (!versionBomPolicyStatusViewOptional.isPresent()) {
                 throw new IntegrationException("BlackDuck failed to return a policy status");
             }
 
+            final VersionBomPolicyStatusView versionBomPolicyStatusView = versionBomPolicyStatusViewOptional.get();
             logger.debug(String.format("Policy status json for %s is: %s", repoPath.toPath(), versionBomPolicyStatusView.json));
             final PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView);
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusDescription.getPolicyStatusMessage());
@@ -128,24 +129,34 @@ public class ScanPolicyService {
 
     private void updateProjectUIUrl(final String projectName, final String projectVersionName, final ProjectService projectService, final RepoPath repoPath) {
         try {
-            final ProjectVersionWrapper projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
-            final String projectVersionUIUrl = getProjectVersionUIUrlFromView(projectVersionWrapper.getProjectVersionView());
+            final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
 
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, projectVersionUIUrl);
+            if (projectVersionWrapper.isPresent()) {
+                final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+                final String projectVersionUIUrl = getProjectVersionUIUrlFromView(projectVersionView);
+
+                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, projectVersionUIUrl);
+            }
+
         } catch (final IntegrationException e) {
             logger.debug(String.format("Failed to update property %s on %s", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoPath.toPath()), e);
         }
     }
 
-    // TODO: Check if project exists before attempting to get the policy
-    private VersionBomPolicyStatusView getVersionBomPolicyStatus(final String projectName, final String projectVersion) throws IntegrationException {
-        final ProjectVersionWrapper projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersion);
-
-        return projectService.getPolicyStatusForVersion(projectVersionWrapper.getProjectVersionView());
-    }
-
     private String getProjectVersionUIUrlFromView(final ProjectVersionView projectVersionView) {
         return hubService.getFirstLinkSafely(projectVersionView, "components");
+    }
+
+    private Optional<VersionBomPolicyStatusView> getVersionBomPolicyStatus(final String projectName, final String projectVersion) throws IntegrationException {
+        final Optional<ProjectVersionWrapper> projectVersionWrapperOptional = projectService.getProjectVersion(projectName, projectVersion);
+
+        VersionBomPolicyStatusView versionBomPolicyStatusView = null;
+        if (projectVersionWrapperOptional.isPresent()) {
+            final ProjectVersionView projectVersionView = projectVersionWrapperOptional.get().getProjectVersionView();
+            versionBomPolicyStatusView = projectService.getPolicyStatusForVersion(projectVersionView);
+        }
+
+        return Optional.ofNullable(versionBomPolicyStatusView);
     }
 
     // TODO: Replace instances of this with ArtifactoryPropertyService::resolveProjectNameVersion once BlackDuckArtifactoryProperty.PROJECT_VERSION_URL has been removed

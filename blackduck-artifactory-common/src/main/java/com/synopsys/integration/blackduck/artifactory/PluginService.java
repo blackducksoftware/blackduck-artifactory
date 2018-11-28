@@ -39,6 +39,7 @@ import org.artifactory.repo.Repositories;
 import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.LogUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
@@ -70,7 +71,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.StatusCheckSe
 import com.synopsys.integration.blackduck.configuration.HubServerConfig;
 import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.google.analytics.GoogleAnalyticsConstants;

@@ -42,10 +42,10 @@ import org.junit.Test;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactoryExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.SupportedPackageType;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalId;
-import com.synopsys.integration.hub.bdio.model.externalid.ExternalIdFactory;
 
 public class ArtifactoryExternalIdFactoryTest {
     @Test
