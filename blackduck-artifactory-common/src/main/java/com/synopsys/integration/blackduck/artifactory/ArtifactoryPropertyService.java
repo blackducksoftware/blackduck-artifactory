@@ -56,6 +56,13 @@ public class ArtifactoryPropertyService {
         this.dateTimeManager = dateTimeManager;
     }
 
+    public boolean hasProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
+        final boolean currentNameExists = repositories.hasProperty(repoPath, property.getName());
+        final boolean oldNameExists = StringUtils.isNotBlank(property.getOldName()) && repositories.hasProperty(repoPath, property.getOldName());
+
+        return currentNameExists || oldNameExists;
+    }
+
     public Optional<String> getProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
         String propertyValue = StringUtils.stripToNull(repositories.getProperty(repoPath, property.getName()));
 

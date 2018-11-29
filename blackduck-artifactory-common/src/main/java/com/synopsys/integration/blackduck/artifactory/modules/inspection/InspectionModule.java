@@ -26,7 +26,6 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,6 +67,7 @@ public class InspectionModule implements Analyzable, Module {
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
     }
 
+    @Override
     public InspectionModuleConfig getModuleConfig() {
         return inspectionModuleConfig;
     }
@@ -111,11 +111,11 @@ public class InspectionModule implements Analyzable, Module {
             final String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType();
 
             if (inspectionModuleConfig.getRepoKeys().contains(repoKey)) {
-                final Optional<Set<RepoPath>> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey);
+                final Set<RepoPath> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey);
 
-                if (identifiableArtifacts.isPresent() && identifiableArtifacts.get().contains(repoPath)) {
-                    final Optional<ArtifactIdentificationService.IdentifiedArtifact> optionalIdentifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
-                    optionalIdentifiedArtifact.ifPresent(artifactIdentificationService::populateIdMetadataOnIdentifiedArtifact);
+                if (identifiableArtifacts.contains(repoPath)) {
+                    final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
+                    artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
                 }
             }
             successfulInspection = true;

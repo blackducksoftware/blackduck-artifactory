@@ -57,6 +57,7 @@ public class MetaDataPopulationService {
         final Optional<InspectionStatus> inspectionStatus = cacheInspectorService.getInspectionStatus(repoKeyPath);
 
         if (inspectionStatus.isPresent() && inspectionStatus.get().equals(InspectionStatus.PENDING)) {
+            logger.debug(String.format("Populating metadata on repoKey: %s", repoKey));
             try {
                 final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
@@ -75,7 +76,7 @@ public class MetaDataPopulationService {
 
     public void populateBlackDuckMetadataFromIdMetadata(final String repoKey, final List<ArtifactMetaData> artifactMetaDataList) {
         for (final ArtifactMetaData artifactMetaData : artifactMetaDataList) {
-            if (StringUtils.isNotBlank(artifactMetaData.originId) && StringUtils.isNotBlank(artifactMetaData.forge)) {
+            if (StringUtils.isNoneBlank(artifactMetaData.originId, artifactMetaData.forge)) {
                 final SetMultimap<String, String> setMultimap = HashMultimap.create();
                 setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName(), artifactMetaData.originId);
                 setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), artifactMetaData.forge);

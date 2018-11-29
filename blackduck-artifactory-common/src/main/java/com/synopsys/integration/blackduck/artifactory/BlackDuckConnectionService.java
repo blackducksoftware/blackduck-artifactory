@@ -121,7 +121,8 @@ public class BlackDuckConnectionService {
     }
 
     public void importBomFile(final String codeLocationName, final File bdioFile) throws IntegrationException {
-        final UploadRunner uploadRunner = new UploadRunner(logger, getHubServicesFactory().createHubService()); // TODO: Don't recreate hub service
+        // TODO: Use CodeLocationCreationService in blackduck-common:40
+        final UploadRunner uploadRunner = new UploadRunner(logger, getHubServicesFactory().createHubService());
         final UploadBatch uploadBatch = new UploadBatch();
         uploadBatch.addUploadTarget(UploadTarget.createDefault(codeLocationName, bdioFile));
         uploadRunner.executeUploads(uploadBatch);

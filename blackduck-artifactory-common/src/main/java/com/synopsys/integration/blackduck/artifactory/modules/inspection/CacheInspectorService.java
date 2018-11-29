@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.artifactory.repo.Repositories;
@@ -54,8 +55,18 @@ public class CacheInspectorService {
     }
 
     public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status) {
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name());
+        setInspectionStatus(repoPath, status, null);
+    }
+
+    public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status, final String inspectionStatusMessage) {
         artifactoryPropertyService.setPropertyToDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, new Date());
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name());
+
+        if (StringUtils.isNotBlank(inspectionStatusMessage)) {
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, inspectionStatusMessage);
+        } else if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE)) {
+            artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE);
+        }
     }
 
     public Optional<InspectionStatus> getInspectionStatus(final RepoPath repoPath) {

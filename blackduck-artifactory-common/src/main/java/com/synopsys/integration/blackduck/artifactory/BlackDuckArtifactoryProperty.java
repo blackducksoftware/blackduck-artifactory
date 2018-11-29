@@ -38,6 +38,7 @@ public enum BlackDuckArtifactoryProperty {
     OVERALL_POLICY_STATUS("overallPolicyStatus"),
     LAST_INSPECTION("lastInspection"),
     INSPECTION_STATUS("inspectionStatus"),
+    INSPECTION_STATUS_MESSAGE("inspectionStatusMessage"),
     LAST_UPDATE("lastUpdate"),
     UPDATE_STATUS("updateStatus"),
     SCAN_TIME("scanTime"),
