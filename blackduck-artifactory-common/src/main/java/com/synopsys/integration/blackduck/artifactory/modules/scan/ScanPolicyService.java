@@ -46,6 +46,7 @@ import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
+import com.synopsys.integration.rest.exception.IntegrationRestException;
 import com.synopsys.integration.util.NameVersion;
 
 public class ScanPolicyService {
@@ -116,16 +117,23 @@ public class ScanPolicyService {
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString());
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LAST_UPDATE, dateTimeManager.getStringFromDate(new Date()));
             success = true;
+        } catch (final IntegrationRestException e) {
+            logger.warn(String.format("Update policy status failed with status code (%d)", e.getHttpStatusCode()));
+            failPolicyStatusUpdate(repoPath, e);
         } catch (final IntegrationException e) {
-            logger.debug(String.format("An error occurred while attempting to update policy status on %s", repoPath.getPath()), e);
-            final Optional<String> policyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
-            final Optional<String> overallPolicyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS);
-            if (policyStatus.isPresent() || overallPolicyStatus.isPresent()) {
-                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString());
-            }
+            failPolicyStatusUpdate(repoPath, e);
         }
 
         return success;
+    }
+
+    private void failPolicyStatusUpdate(final RepoPath repoPath, final Exception e) {
+        logger.debug(String.format("An error occurred while attempting to update policy status on %s", repoPath.getPath()), e);
+        final Optional<String> policyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
+        final Optional<String> overallPolicyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS);
+        if (policyStatus.isPresent() || overallPolicyStatus.isPresent()) {
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString());
+        }
     }
 
     private void updateProjectUIUrl(final String projectName, final String projectVersionName, final ProjectService projectService, final RepoPath repoPath) {
