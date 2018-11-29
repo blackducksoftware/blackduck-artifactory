@@ -133,7 +133,7 @@ public class ScanPolicyService {
 
             if (projectVersionWrapper.isPresent()) {
                 final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
-                final String projectVersionUIUrl = getProjectVersionUIUrlFromView(projectVersionView);
+                final String projectVersionUIUrl = hubService.getHref(projectVersionView);
 
                 artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, projectVersionUIUrl);
             }
@@ -141,10 +141,6 @@ public class ScanPolicyService {
         } catch (final IntegrationException e) {
             logger.debug(String.format("Failed to update property %s on %s", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoPath.toPath()), e);
         }
-    }
-
-    private String getProjectVersionUIUrlFromView(final ProjectVersionView projectVersionView) {
-        return hubService.getFirstLinkSafely(projectVersionView, "components");
     }
 
     private Optional<VersionBomPolicyStatusView> getVersionBomPolicyStatus(final String projectName, final String projectVersion) throws IntegrationException {
