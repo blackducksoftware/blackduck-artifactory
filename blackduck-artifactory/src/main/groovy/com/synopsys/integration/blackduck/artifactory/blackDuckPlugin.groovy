@@ -73,18 +73,20 @@ executions {
      *
      * NOTE: Enabling or disabling an endpoint via this endpoint is only persistent as long as the plugin is loaded.
      *       Set the state in the blackDuckPlugin.properties file to allow the state to survive reinitialization.
+     *       All permanent changes made to configuration must be made in the blackDuckPlugin.properties file
+     *
+     * This can be triggered with the following curl command for setting the state of a module
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=<moduleName>=<enabledState>"
      *
      * This can be triggered with the following curl command for enabling the InspectionModule:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=InspectionModule=true"
      *
-     * This can be triggered with the following curl command for disabling the ScanModule and the PolicyModule:
+     * This can be triggered with the following curl command for disabling multiple modules (ScanModule and the PolicyModule):
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
      **/
     blackDuckSetModuleState() { params ->
         pluginService.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
-
-    //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////
 
     /**
      * This will return a current status of the scan module's configuration configuration to verify things are setup properly.
@@ -96,22 +98,30 @@ executions {
         message = moduleManager.getStatusCheckMessage(TriggerType.REST_REQUEST)
     }
 
+    //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////
+
     /**
-     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
+     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * For example:
      *
-     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
+     * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
+     * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
      *
-     * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided Hub server.
+     * Then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided BlackDuck server.
      *
      * The scanning process will add several properties to your artifacts in artifactory. Namely:
      *
-     * blackDuckScanResult - SUCCESS or FAILURE, depending on the result of the scan
-     * blackDuckScanTime - the last time a SUCCESS scan was completed
-     * blackDuckScanCodeLocationUrl - the url for the code location created in the Hub
+     * blackduck.scanTime - the last time a SUCCESS scan was completed
+     * blackduck.scanResult - SUCCESS or FAILURE, depending on the result of the scan
+     * blackduck.projectName - the name of the project in BlackDuck
+     * blackduck.projectVersionName - the name of the project version in BlackDuck
+     * blackduck.uiUrl - the url for the project version created in BlackDuck
+     * blackduck.policyStatus - a short description of the policy status from BlackDuck
+     * blackduck.overallPolicyStatus - the overall policy status of artifact in BlackDuck (ex. NOT_IN_VIOLATION)
+     * blackduck.updateStatus - the status of policy updates (ex. OUT_OF_DATE implies the policyStatus on this artifact is out of date)
+     * blackduck.lastUpdate - the last time policy status was updated on this artifact
      *
-     * The same functionality is provided via the scanForHub cron job to enable scheduled scans to run consistently.
+     * The same functionality is provided via the blackDuckScan cron job to enable scheduled scans to run consistently.
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
@@ -121,19 +131,19 @@ executions {
     }
 
     /**
-     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
+     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * It will then remove any and all blackduck properties from the artifact.
      * For example:
      *
-     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
+     * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
+     * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
      *
      * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and delete all the properties that the plugin sets.
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties"
      *
-     * To delete properties with exclusions use the following curl command:
+     * To delete properties with property exclusions use the following curl command (the properties "blackduck.projectName" and "blackduck.projectVersionName" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanProperties() { params ->
@@ -141,11 +151,11 @@ executions {
     }
 
     /**
-     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
+     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * For example:
      *
-     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
+     * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
+     * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
      *
      * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and checks for the 'blackduck.scanResult' property
      * if that property indicates a scan failure, it delete all the properties that the plugin set on it.
@@ -153,7 +163,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures"
      *
-     * To delete properties with exclusions use the following curl command:
+     * To delete properties with property exclusions use the following curl command (the properties "blackduck.projectName" and "blackduck.projectVersionName" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanPropertiesFromFailures() { params ->
@@ -161,19 +171,19 @@ executions {
     }
 
     /**
-     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
+     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * For example:
      *
-     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
+     * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
+     * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
      *
      * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and checks for the 'blackduck.scanResult' property
-     * if that property indicates a scan failure, it delete all the properties that the plugin set on it.
+     * if that property indicates the policy information is out of date, it delete all the properties that the plugin set on it.
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromOutOfDate"
      *
-     * To delete properties with exclusions use the following curl command:
+     * To delete properties with property exclusions use the following curl command (the properties "blackduck.projectName" and "blackduck.projectVersionName" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromOutOfDate?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanPropertiesFromOutOfDate() { params ->
@@ -181,11 +191,15 @@ executions {
     }
 
     /**
-     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN and update the deprecated properties
+     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
+     * The following artifact properties are deprecated and should be updated with this endpoint:
+     * blackduck.hubProjectName -> blackduck.projectName
+     * blackduck.hubProjectVersionName -> blackduck.projectVersionName
+     *
      * For example:
      *
-     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
+     * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
+     * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
      *
      * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and update all the properties that the plugin sets.
      *
@@ -203,6 +217,9 @@ executions {
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties"
+     *
+     * To delete properties with property exclusions use the following curl command (the property "blackduck.inspectionStatus" will not be removed from the artifact)
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties?params=properties=blackduck.inspectionStatus"
      **/
     blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
         moduleManager.deleteInspectionProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
@@ -216,8 +233,8 @@ executions {
      * steps.
      *
      * Metadata populated on artifacts:
-     * blackduck.hubForge
-     * blackduck.hubOriginId
+     * blackduck.forge
+     * blackduck.originId
      *
      * Metadata populated on repositories:
      * blackduck.inspectionTime
@@ -251,15 +268,15 @@ executions {
     }
 
     /**
-     * Manual execution of the Identify Artifacts step of inspection on a specific repository.
+     * Manual execution of the Update Metadata step of inspection on a specific repository.
      * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
      *
-     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in the Hub
+     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in BlackDuck
      * since the last time the repository was inspected.
      *
      * Metadata updated on artifacts:
-     * blackduck.hubForge
-     * blackduck.hubOriginId
+     * blackduck.forge
+     * blackduck.originId
      *
      * Metadata updated on repositories:
      * blackduck.inspectionTime
@@ -274,6 +291,9 @@ executions {
 
     /**
      * Rename all deprecated properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect.
+     *
+     * blackduck.hubForge -> blackduck.forge
+     * blackduck.hubOriginId -> blackduck.originId
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckUpdateDeprecatedProperties"
@@ -297,24 +317,8 @@ jobs {
     //////////////////////////////////////////////// SCAN JOBS ////////////////////////////////////////////////
 
     /**
-     * This will search your artifactory ARTIFACTORY_REPOS_TO_SEARCH repositories for the filename patterns designated in ARTIFACT_NAME_PATTERNS_TO_SCAN.
-     * For example:
-     *
-     * ARTIFACTORY_REPOS_TO_SEARCH="my-releases,my-snapshots"
-     * ARTIFACT_NAME_PATTERNS_TO_SCAN="*.war,*.zip"
-     *
-     * then this cron job will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided Hub server.
-     *
-     * The scanning process will add several properties to your artifacts in artifactory. Namely:
-     *
-     * blackduck.scanResult - SUCCESS or FAILURE, depending on the result of the scan
-     * blackduck.scanTime - the last time a SUCCESS scan was completed
-     * blackduck.uiUrl - the url directly to the scanned BOM in the Hub
-     * blackduck.apiUrl - the api url for your project which is needed for further Hub REST calls.
-     *
-     * The same functionality is provided via the scanForHub execution to enable a one-time scan triggered via a REST call.
+     * The functionality is described above the blackDuckScan execution
      **/
-
     blackDuckScan(cron: moduleManager.getBlackDuckScanCron()) {
         moduleManager.triggerScan(TriggerType.CRON_JOB)
     }
@@ -326,54 +330,28 @@ jobs {
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
 
     /**
-     * Identifies artifacts in the repository and populates identifying metadata on them for use by the Populate Metadata and Update Metadata
-     * steps.
-     *
-     * Metadata populated on artifacts:
-     * blackduck.hubForge
-     * blackduck.hubOriginId
-     *
-     * Metadata populated on repositories:
-     * blackduck.inspectionTime
-     * blackduck.inspectionStatus
+     * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
      **/
     blackDuckIdentifyArtifacts(cron: moduleManager.getBlackDuckIdentifyArtifactsCron()) {
         moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
     }
 
     /**
-     * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying metadata
-     * to look up vulnerability metadata in the Hub, then populates that vulnerability metadata on the artifact in Artifactory.
-     *
-     * Metadata populated:
-     * blackduck.highVulnerabilities
-     * blackduck.mediumVulnerabilities
-     * blackduck.lowVulnerabilities
-     * blackduck.policyStatus
+     * The functionality is described above the blackDuckManuallyPopulateMetadata execution
      **/
     blackDuckPopulateMetadata(cron: moduleManager.getBlackDuckPopulateMetadataCron()) {
         moduleManager.populateMetadata(TriggerType.CRON_JOB)
     }
 
     /**
-     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in the Hub
-     * since the last time the repository was inspected.
-     *
-     * Metadata updated on artifacts:
-     * blackduck.hubForge
-     * blackduck.hubOriginId
-     *
-     * Metadata updated on repositories:
-     * blackduck.inspectionTime
-     * blackduck.inspectionStatus
+     * The functionality is described above the blackDuckManuallyUpdateMetadata execution
      **/
     blackDuckUpdateMetadata(cron: moduleManager.getBlackDuckUpdateMetadataCron()) {
         moduleManager.updateMetadata(TriggerType.CRON_JOB)
     }
 
-
     /**
-     * Submits usage analytics
+     * Submits usage analytics. For developer use only
      **/
     blackDuckSubmitAnalytics(cron: AnalyticsModule.SUBMIT_ANALYTICS_CRON) {
         moduleManager.submitAnalytics(TriggerType.CRON_JOB)

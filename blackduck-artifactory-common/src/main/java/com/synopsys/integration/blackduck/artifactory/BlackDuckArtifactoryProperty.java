@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory;
 
-// TODO: Remove oldName in hub-artifactorty:7.0.0
+// TODO: Remove oldName in blackduck-artifactory:7.0.0
 public enum BlackDuckArtifactoryProperty {
     BLACKDUCK_ORIGIN_ID("originId", "hubOriginId"),
     BLACKDUCK_FORGE("forge", "hubForge"),
