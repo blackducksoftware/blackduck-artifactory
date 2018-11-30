@@ -55,9 +55,11 @@ public class MetaDataUpdateService {
 
     public void updateMetadata(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final Optional<InspectionStatus> inspectionStatus = cacheInspectorService.getInspectionStatus(repoKeyPath);
+        final boolean hasSuccessfulInspectionStatus = cacheInspectorService.getInspectionStatus(repoKeyPath)
+                                                          .filter(InspectionStatus.SUCCESS::equals)
+                                                          .isPresent();
 
-        if (inspectionStatus.isPresent() && inspectionStatus.get().equals(InspectionStatus.SUCCESS)) {
+        if (hasSuccessfulInspectionStatus) {
             final Optional<Date> lastUpdateProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE);
             final Optional<Date> lastInspectionProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION);
 
