@@ -296,7 +296,7 @@ executions {
      * blackduck.hubOriginId -> blackduck.originId
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckUpdateDeprecatedProperties"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckInspectionUpdateDeprecatedProperties"
      **/
     blackDuckInspectionUpdateDeprecatedProperties(httpMethod: 'POST') { params ->
         moduleManager.updateDeprecatedInspectionProperties(TriggerType.REST_REQUEST)
