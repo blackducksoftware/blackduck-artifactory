@@ -69,7 +69,7 @@ public class ArtifactMetaDataService {
         final HubServicesFactory hubServicesFactory = blackDuckConnectionService.getHubServicesFactory();
         final HubService hubService = hubServicesFactory.createHubService();
         final ProjectService projectDataService = hubServicesFactory.createProjectService();
-        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, hubService);
+        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, hubService, blackDuckConnectionService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
         final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
@@ -95,7 +95,7 @@ public class ArtifactMetaDataService {
                                                                         .createCommonNotificationService(new NotificationContentDetailFactory(HubServicesFactory.createDefaultGson(), HubServicesFactory.createDefaultJsonParser()), false);
         final ProjectService projectDataService = hubServicesFactory.createProjectService();
         final HubService hubService = hubServicesFactory.createHubService();
-        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, hubService);
+        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, hubService, blackDuckConnectionService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
         final List<NotificationView> notificationViews = notificationService.getAllNotifications(startDate, endDate);

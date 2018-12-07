@@ -37,6 +37,7 @@ import org.artifactory.repo.RepositoryConfiguration;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
@@ -116,6 +117,7 @@ public class InspectionModule implements Analyzable, Module {
                 if (identifiableArtifacts.contains(repoPath)) {
                     final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
                     artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
+                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name());
                 }
             }
             successfulInspection = true;

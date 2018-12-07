@@ -35,6 +35,8 @@ import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionVie
 import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
+import com.synopsys.integration.blackduck.notification.NotificationDetailResult;
 import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
 import com.synopsys.integration.blackduck.notification.content.detail.NotificationContentDetail;
 import com.synopsys.integration.blackduck.service.HubService;
@@ -44,11 +46,14 @@ import com.synopsys.integration.log.IntLogger;
 public class CompositeComponentManager {
     private final IntLogger intLogger;
     private final HubService hubService;
+    private final BlackDuckConnectionService blackDuckConnectionService;
+
     private Set<String> projectVersionUrisToLookFor;
 
-    public CompositeComponentManager(final IntLogger intLogger, final HubService hubService) {
+    public CompositeComponentManager(final IntLogger intLogger, final HubService hubService, final BlackDuckConnectionService blackDuckConnectionService) {
         this.intLogger = intLogger;
         this.hubService = hubService;
+        this.blackDuckConnectionService = blackDuckConnectionService;
         projectVersionUrisToLookFor = new HashSet<>();
     }
 
@@ -56,11 +61,10 @@ public class CompositeComponentManager {
         projectVersionUrisToLookFor = new HashSet<>();
         projectVersionUrisToLookFor.add(projectVersionView._meta.href);
 
-        final List<CompositeComponentModel> compositeComponentModels = versionBomComponentViews
-                                                                           .stream()
-                                                                           .map(versionBomComponentView -> generateCompositeComponentModel(versionBomComponentView))
-                                                                           .collect(Collectors.toList());
-        return compositeComponentModels;
+        return versionBomComponentViews
+                   .stream()
+                   .map(this::generateCompositeComponentModel)
+                   .collect(Collectors.toList());
     }
 
     public List<CompositeComponentModel> parseNotifications(final NotificationDetailResults notificationDetailResults, final List<ProjectVersionView> projectVersionViewsToLookFor) {
@@ -71,21 +75,19 @@ public class CompositeComponentManager {
 
         return notificationDetailResults.getResults()
                    .stream()
-                   .map(notificationDetailResult -> notificationDetailResult.getNotificationContentDetails())
-                   .map(notificationContentDetails -> generateCompositeComponentModels(notificationContentDetails))
+                   .map(NotificationDetailResult::getNotificationContentDetails)
+                   .map(this::generateCompositeComponentModels)
                    .collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
     }
 
     private List<CompositeComponentModel> generateCompositeComponentModels(final List<NotificationContentDetail> notificationContentDetails) {
-        final List<CompositeComponentModel> compositeComponentModels;
-        compositeComponentModels = notificationContentDetails
-                                       .stream()
-                                       .filter(notificationContentDetail -> containsRelevantProjectVersionInformation(notificationContentDetail))
-                                       .map(notificationContentDetail -> generateCompositeComponentModel(notificationContentDetail))
-                                       .filter(compositeComponentModel -> compositeComponentModel.isPresent())
-                                       .map(compositeComponentModel -> compositeComponentModel.get())
-                                       .collect(Collectors.toList());
-        return compositeComponentModels;
+        return notificationContentDetails
+                   .stream()
+                   .filter(this::containsRelevantProjectVersionInformation)
+                   .map(this::generateCompositeComponentModel)
+                   .filter(Optional::isPresent)
+                   .map(Optional::get)
+                   .collect(Collectors.toList());
     }
 
     private boolean containsRelevantProjectVersionInformation(final NotificationContentDetail notificationContentDetail) {
@@ -108,7 +110,7 @@ public class CompositeComponentManager {
             if (optionalProjectVersionUriResponse.isPresent()) {
                 if (optionalComponentVersionUriResponse.isPresent()) {
                     final UriSingleResponse<ComponentVersionView> componentVersionUriResponse = optionalComponentVersionUriResponse.get();
-                    final UriSingleResponse<VersionBomComponentView> versionBomComponentUriResponse = getVersionBomComponentUriResponse(optionalProjectVersionUriResponse.get(), componentVersionUriResponse);
+                    final UriSingleResponse<VersionBomComponentView> versionBomComponentUriResponse = blackDuckConnectionService.getVersionBomComponentUriResponse(optionalProjectVersionUriResponse.get(), componentVersionUriResponse);
 
                     compositeComponentModel = createCompositeComponentModel(componentVersionUriResponse, versionBomComponentUriResponse);
                 }
@@ -148,16 +150,4 @@ public class CompositeComponentManager {
 
         return new CompositeComponentModel(versionBomComponentView, componentVersionView, originViews);
     }
-
-    // not a good practice, but right now, I do not know a better way, short of searching the entire BOM, to match up a BOM component with a component/version
-    // ejk - 2018-01-15
-    public UriSingleResponse<VersionBomComponentView> getVersionBomComponentUriResponse(final UriSingleResponse<ProjectVersionView> projectVersionUriResponse, final UriSingleResponse<ComponentVersionView> componentVersionUriResponse) {
-        final String projectVersionUri = projectVersionUriResponse.uri;
-        final String componentVersionUri = componentVersionUriResponse.uri;
-        final String apiComponentsLinkPrefix = "/api/components/";
-        final int apiComponentsStart = componentVersionUri.indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
-        final String versionBomComponentUri = projectVersionUri + "/components/" + componentVersionUri.substring(apiComponentsStart);
-        return new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
-    }
-
 }

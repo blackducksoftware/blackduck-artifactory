@@ -160,6 +160,10 @@ public class ModuleManager {
         return inspectionModuleConfig.getBlackDuckUpdateMetadataCron();
     }
 
+    public String getBlackDuckAddPendingArtifactsCron() {
+        return inspectionModuleConfig.getBlackDuckAddPendingArtifactsCron();
+    }
+
     public void handleBeforeDownloadEvent(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {
         runMethod(policyModuleConfig, triggerType, repoPath, policyModule::handleBeforeDownloadEvent);
     }

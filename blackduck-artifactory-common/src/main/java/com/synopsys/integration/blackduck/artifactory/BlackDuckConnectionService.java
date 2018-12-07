@@ -26,20 +26,30 @@ package com.synopsys.integration.blackduck.artifactory;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.blackduck.api.UriSingleResponse;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentSearchResultView;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
+import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadBatch;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadRunner;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.blackduck.configuration.HubServerConfig;
 import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeCallable;
 import com.synopsys.integration.blackduck.rest.BlackDuckRestConnection;
+import com.synopsys.integration.blackduck.service.ComponentService;
+import com.synopsys.integration.blackduck.service.HubService;
 import com.synopsys.integration.blackduck.service.HubServicesFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.exception.IntegrationException;
@@ -128,9 +138,42 @@ public class BlackDuckConnectionService {
         uploadRunner.executeUploads(uploadBatch);
     }
 
-    public void addComponentToProjectVersion(final ExternalId componentExternalId, final String projectName, final String projectVersionName) throws IntegrationException {
+    // TODO: Take in a ProjectVersionView instead after blackduck-common:40 upgrade. projectService.addComponentToProjectVersion can accept a projectVersionView.
+    public Optional<String> addComponentToProjectVersion(final ExternalId componentExternalId, final String projectName, final String projectVersionName) throws IntegrationException {
+        final HubService hubService = hubServicesFactory.createHubService();
         final ProjectService projectService = hubServicesFactory.createProjectService();
-        projectService.addComponentToProjectVersion(componentExternalId, projectName, projectVersionName);
+        final ComponentService componentService = hubServicesFactory.createComponentService();
+        String componentVersionUrl = null;
+        // projectService.addComponentToProjectVersion(componentExternalId, projectName, projectVersionName);
+
+        // TODO: projectService.addComponentToProjectVersion should return the componentVersionUrl in blackduck-common:40 so the below code won't be necessary.
+        final Optional<ProjectView> projectItem = projectService.getProjectByName(projectName);
+        if (projectItem.isPresent()) {
+            final Optional<ProjectVersionView> projectVersionView = projectService.getProjectVersion(projectItem.get(), projectVersionName);
+            if (projectVersionView.isPresent()) {
+                final String projectVersionComponentsUrl = hubService.getFirstLink(projectVersionView.get(), ProjectVersionView.COMPONENTS_LINK);
+                final ComponentSearchResultView componentSearchResultView = componentService.getExactComponentMatch(componentExternalId);
+                if (StringUtils.isNotBlank(componentSearchResultView.variant)) {
+                    componentVersionUrl = componentSearchResultView.variant;
+                } else {
+                    componentVersionUrl = componentSearchResultView.version;
+                }
+                projectService.addComponentToProjectVersion("application/json", projectVersionComponentsUrl, componentVersionUrl);
+            }
+        }
+
+        return Optional.ofNullable(componentVersionUrl);
+    }
+
+    // not a good practice, but right now, I do not know a better way, short of searching the entire BOM, to match up a BOM component with a component/version
+    // ejk - 2018-01-15
+    public UriSingleResponse<VersionBomComponentView> getVersionBomComponentUriResponse(final UriSingleResponse<ProjectVersionView> projectVersionUriResponse, final UriSingleResponse<ComponentVersionView> componentVersionUriResponse) {
+        final String projectVersionUri = projectVersionUriResponse.uri;
+        final String componentVersionUri = componentVersionUriResponse.uri;
+        final String apiComponentsLinkPrefix = "/api/components/";
+        final int apiComponentsStart = componentVersionUri.indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
+        final String versionBomComponentUri = projectVersionUri + "/components/" + componentVersionUri.substring(apiComponentsStart);
+        return new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
     }
 
     public HubServicesFactory getHubServicesFactory() {

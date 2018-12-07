@@ -48,10 +48,20 @@ import com.synopsys.integration.bdio.model.Forge;
 import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.blackduck.api.UriSingleResponse;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
 import com.synopsys.integration.blackduck.exception.HubIntegrationException;
+import com.synopsys.integration.blackduck.service.ComponentService;
+import com.synopsys.integration.blackduck.service.HubService;
+import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.rest.exception.IntegrationRestException;
 import com.synopsys.integration.util.IntegrationEscapeUtil;
@@ -67,9 +77,11 @@ public class ArtifactIdentificationService {
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final CacheInspectorService cacheInspectorService;
     private final BlackDuckConnectionService blackDuckConnectionService;
+    private final MetaDataPopulationService metaDataPopulationService;
 
     public ArtifactIdentificationService(final Repositories repositories, final Searches searches, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
-        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckConnectionService blackDuckConnectionService) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckConnectionService blackDuckConnectionService,
+        final MetaDataPopulationService metaDataPopulationService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
         this.blackDuckConnectionService = blackDuckConnectionService;
@@ -77,6 +89,7 @@ public class ArtifactIdentificationService {
         this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
         this.repositories = repositories;
         this.searches = searches;
+        this.metaDataPopulationService = metaDataPopulationService;
     }
 
     public void identifyArtifacts(final String repoKey) {
@@ -93,7 +106,7 @@ public class ArtifactIdentificationService {
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
 
                 if (repositoryStatus.isPresent() && repositoryStatus.get().equals(InspectionStatus.SUCCESS)) {
-                    addDeltaToHubProject(projectName, projectVersionName, packageType, identifiableArtifacts);
+                    addDeltaToBlackDuckProject(projectName, projectVersionName, packageType, identifiableArtifacts);
                 } else if (!repositoryStatus.isPresent()) {
                     createHubProjectFromRepo(projectName, projectVersionName, packageType, identifiableArtifacts);
                     cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
@@ -142,14 +155,17 @@ public class ArtifactIdentificationService {
 
         try {
             if (artifact.getExternalId().isPresent()) {
+                // TODO: Might not need to return componentVersionUrl
                 blackDuckConnectionService.addComponentToProjectVersion(artifact.getExternalId().get(), projectName, projectVersionName);
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+            } else {
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
             }
         } catch (final IntegrationRestException e) {
             final int statusCode = e.getHttpStatusCode();
             if (statusCode == 412) {
                 logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath.toPath()));
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
             } else if (statusCode == 401) {
                 logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
                     repoPath.toPath(), statusCode));
@@ -167,6 +183,7 @@ public class ArtifactIdentificationService {
             logger.debug(e.getMessage(), e);
             cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
         }
+
     }
 
     public Set<RepoPath> getIdentifiableArtifacts(final String repoKey) {
@@ -216,21 +233,54 @@ public class ArtifactIdentificationService {
         blackDuckConnectionService.importBomFile(codeLocationName, bdioFile);
     }
 
-    private void addDeltaToHubProject(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) {
-        final List<IdentifiedArtifact> identifiedArtifacts = repoPaths.stream()
-                                                                 .filter(repoPath -> assertInspectionStatusIs(repoPath, InspectionStatus.PENDING))
-                                                                 .map(repoPath -> identifyArtifact(repoPath, repoPackageType))
-                                                                 .collect(Collectors.toList());
+    private void addDeltaToBlackDuckProject(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) {
+        final ComponentService componentService = blackDuckConnectionService.getHubServicesFactory().createComponentService();
+        final HubService hubService = blackDuckConnectionService.getHubServicesFactory().createHubService();
 
-        identifiedArtifacts.forEach(identifiedArtifact -> {
-            populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
-            addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectName, projectVersionName);
-        });
-    }
+        for (final RepoPath repoPath : repoPaths) {
+            final boolean isArtifactPending = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)
+                                                  .map(InspectionStatus::valueOf)
+                                                  .filter(InspectionStatus.PENDING::equals)
+                                                  .isPresent();
 
-    private boolean assertInspectionStatusIs(final RepoPath repoPath, final InspectionStatus status) {
-        final Optional<InspectionStatus> inspectionStatus = cacheInspectorService.getInspectionStatus(repoPath);
-        return inspectionStatus.isPresent() && inspectionStatus.get().equals(status);
+            if (isArtifactPending) {
+                final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = identifyArtifact(repoPath, repoPackageType);
+                addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectName, projectVersionName);
+                final Optional<ExternalId> externalIdOptional = identifiedArtifact.getExternalId();
+
+                if (externalIdOptional.isPresent()) {
+                    final ExternalId externalId = externalIdOptional.get();
+                    try {
+                        final ProjectService projectService = blackDuckConnectionService.getHubServicesFactory().createProjectService();
+                        final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
+
+                        if (projectVersionWrapper.isPresent()) {
+                            // Get componentVersionView
+                            final ComponentVersionView componentVersionView = componentService.getComponentVersion(externalId);
+
+                            // Get vulnerabilities
+                            final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
+                            final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityV2Views(componentVersionVulnerabilities.getVulnerabilities());
+
+                            // Get policy status
+                            final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+                            final UriSingleResponse<ProjectVersionView> projectVersionUriResponse = new UriSingleResponse<>(hubService.getHref(projectVersionView), ProjectVersionView.class);
+                            final UriSingleResponse<ComponentVersionView> componentVersionUriResponse = new UriSingleResponse<>(hubService.getHref(componentVersionView), ComponentVersionView.class);
+                            final UriSingleResponse<VersionBomComponentView> versionBomComponentUriResponse = blackDuckConnectionService.getVersionBomComponentUriResponse(projectVersionUriResponse, componentVersionUriResponse);
+                            final VersionBomComponentView versionBomComponentView = hubService.getResponse(versionBomComponentUriResponse);
+                            final PolicySummaryStatusType policyStatus = versionBomComponentView.policyStatus;
+
+                            // Populate metadata
+                            metaDataPopulationService.populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, policyStatus, hubService.getHref(componentVersionView));
+                        }
+                    } catch (final IntegrationException e) {
+                        cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to retrieve vulnerability information");
+                        logger.info(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));
+                        logger.debug(e.getMessage(), e);
+                    }
+                }
+            }
+        }
     }
 
     public Long getArtifactCount(final List<String> repoKeys) {
