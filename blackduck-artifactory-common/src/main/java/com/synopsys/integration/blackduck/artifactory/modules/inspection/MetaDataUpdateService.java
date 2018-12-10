@@ -84,7 +84,7 @@ public class MetaDataUpdateService {
                 artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString());
                 artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate);
             } catch (final IntegrationException e) {
-                logger.error(String.format("The Black Duck %s encountered a problem while updating artifact metadata from BlackDuck notifications in repository [%s]:", InspectionModule.class.getSimpleName(), repoKey));
+                logger.error(String.format("The Black Duck %s encountered a problem while updating artifact metadata from BlackDuck notifications in repository [%s]", InspectionModule.class.getSimpleName(), repoKey));
                 logger.debug(e.getMessage(), e);
                 artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString());
             }
