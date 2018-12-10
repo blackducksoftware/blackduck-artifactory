@@ -27,17 +27,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.LoggerFactory;
-
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class AnalyticsModule implements Analyzable, Module {
-    public final static String SUBMIT_ANALYTICS_CRON = "0 0 0 ? * * *"; // Every day at 12 am
-
-    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+    public final static String SUBMIT_ANALYTICS_CRON = "0 0 0 1/1 * ? *"; // Every day at 12 am
 
     private final AnalyticsModuleConfig analyticsModuleConfig;
     private final AnalyticsService analyticsService;

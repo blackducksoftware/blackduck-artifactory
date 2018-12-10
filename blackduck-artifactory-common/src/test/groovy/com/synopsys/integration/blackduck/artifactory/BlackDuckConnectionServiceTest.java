@@ -15,10 +15,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -50,7 +48,6 @@ import com.synopsys.integration.blackduck.service.model.NotificationTaskRange;
 import com.synopsys.integration.blackduck.service.model.ProjectRequestBuilder;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.phonehome.google.analytics.GoogleAnalyticsConstants;
 import com.synopsys.integration.rest.RestConstants;
 
 // TODO: Replace with scenario https://github.com/junit-team/junit5/issues/48
@@ -65,21 +62,22 @@ class BlackDuckConnectionServiceTest {
         final File versionFile = TestUtil.getResourceAsFile("/version.txt");
         final PluginConfig pluginConfig = new PluginConfig(null, null, null, versionFile, null, null);
         final HubServerConfig hubServerConfig = getHubServerConfigFromEnvVar();
-        blackDuckConnectionService = new BlackDuckConnectionService(pluginConfig, hubServerConfig, GoogleAnalyticsConstants.TEST_INTEGRATIONS_TRACKING_ID);
+        blackDuckConnectionService = new BlackDuckConnectionService(hubServerConfig);
 
         final int randomNumber = new Random().nextInt();
         generatedProjectName = String.format("IARTH-BlackDuckConnectionService-%d", randomNumber);
     }
 
-    @Test
-    void phoneHome() {
-        final Map<String, String> metadataMap = new HashMap<>();
-        metadataMap.put("testKey1", "test1");
-        metadataMap.put("testKey2", "test2");
-
-        final boolean success = blackDuckConnectionService.phoneHome(metadataMap);
-        assertTrue(success);
-    }
+    // TODO: Move to a new AnalyticsService test
+    //    @Test
+    //    void phoneHome() {
+    //        final Map<String, String> metadataMap = new HashMap<>();
+    //        metadataMap.put("testKey1", "test1");
+    //        metadataMap.put("testKey2", "test2");
+    //
+    //        final boolean success = blackDuckConnectionService.phoneHome(metadataMap);
+    //        assertTrue(success);
+    //    }
 
     /**
      * Tests the uploading of a bdio document. Will occasionally fail because BlackDuck has not yet created a project.
@@ -136,7 +134,7 @@ class BlackDuckConnectionServiceTest {
         projectRequestBuilder.setPhase(ProjectVersionPhaseType.PRERELEASE);
         final DateFormat dateFormat = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
         projectRequestBuilder.setReleasedOn(dateFormat.format(new Date()));
-        
+
         assertTrue(projectRequestBuilder.isValid());
 
         projectService.createProject(projectRequestBuilder.build());

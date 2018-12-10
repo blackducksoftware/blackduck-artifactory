@@ -111,8 +111,8 @@ public class PluginService {
 
         dateTimeManager = new DateTimeManager(blackDuckPropertyManager.getProperty(BlackDuckProperty.DATE_TIME_PATTERN));
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager);
-        blackDuckConnectionService = new BlackDuckConnectionService(pluginConfig, hubServerConfig, GoogleAnalyticsConstants.PRODUCTION_INTEGRATIONS_TRACKING_ID);
-        analyticsService = new AnalyticsService(blackDuckConnectionService);
+        blackDuckConnectionService = new BlackDuckConnectionService(hubServerConfig);
+        analyticsService = new AnalyticsService(pluginConfig, blackDuckConnectionService, GoogleAnalyticsConstants.PRODUCTION_INTEGRATIONS_TRACKING_ID);
 
         registeredModules = new ArrayList<>();
         final ScanModule scanModule = createAndRegisterScanModule();

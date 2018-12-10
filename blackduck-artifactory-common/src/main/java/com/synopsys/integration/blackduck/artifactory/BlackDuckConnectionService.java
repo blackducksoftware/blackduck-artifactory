@@ -24,110 +24,50 @@
 package com.synopsys.integration.blackduck.artifactory;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
+import java.net.URL;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
-import com.synopsys.integration.blackduck.api.generated.view.ComponentSearchResultView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadBatch;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadRunner;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.blackduck.configuration.HubServerConfig;
-import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeCallable;
 import com.synopsys.integration.blackduck.rest.BlackDuckRestConnection;
-import com.synopsys.integration.blackduck.service.ComponentService;
-import com.synopsys.integration.blackduck.service.HubService;
 import com.synopsys.integration.blackduck.service.HubServicesFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jsonfield.JsonFieldResolver;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.phonehome.PhoneHomeClient;
-import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
-import com.synopsys.integration.phonehome.PhoneHomeService;
+import com.synopsys.integration.rest.connection.RestConnection;
 
+// TODO: Remove this class in favor of using blackduck-common directly
 public class BlackDuckConnectionService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-
-    private final PluginConfig pluginConfig;
-    private final PhoneHomeClient phoneHomeClient;
 
     private final HubServicesFactory hubServicesFactory;
     private final HubServerConfig hubServerConfig;
 
-    public BlackDuckConnectionService(final PluginConfig pluginConfig, final HubServerConfig hubServerConfig, final String googleAnalyticsTrackingId) {
-        this.pluginConfig = pluginConfig;
+    private final ProjectService projectService;
+
+    public BlackDuckConnectionService(final HubServerConfig hubServerConfig) {
         this.hubServerConfig = hubServerConfig;
 
         final BlackDuckRestConnection restConnection = this.hubServerConfig.createRestConnection(logger);
         final Gson gson = HubServicesFactory.createDefaultGson();
         this.hubServicesFactory = new HubServicesFactory(gson, HubServicesFactory.createDefaultJsonParser(), new JsonFieldResolver(gson), restConnection, logger);
 
-        final HttpClientBuilder httpClientBuilder = hubServerConfig.createRestConnection(logger).getClientBuilder();
-        phoneHomeClient = new PhoneHomeClient(googleAnalyticsTrackingId, logger, httpClientBuilder, HubServicesFactory.createDefaultGson());
+        projectService = hubServicesFactory.createProjectService();
     }
 
-    public Boolean phoneHome(final Map<String, String> metadataMap) {
-        Boolean result = Boolean.FALSE;
-
-        try {
-            String pluginVersion = null;
-            final File versionFile = pluginConfig.getVersionFile();
-            if (versionFile != null) {
-                pluginVersion = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
-            }
-
-            result = phoneHome(pluginVersion, pluginConfig.getThirdPartyVersion(), metadataMap);
-        } catch (final Exception ignored) {
-            // Phone home is not a critical operation
-        }
-
-        return result;
-    }
-
-    private Boolean phoneHome(final String reportedPluginVersion, final String reportedThirdPartyVersion, final Map<String, String> metadataMap) {
-        String pluginVersion = reportedPluginVersion;
-        String thirdPartyVersion = reportedThirdPartyVersion;
-
-        if (pluginVersion == null) {
-            pluginVersion = "UNKNOWN_VERSION";
-        }
-
-        if (thirdPartyVersion == null) {
-            thirdPartyVersion = "UNKNOWN_VERSION";
-        }
-
-        final PhoneHomeService phoneHomeService = hubServicesFactory.createPhoneHomeService(Executors.newSingleThreadExecutor());
-        final PhoneHomeRequestBody.Builder phoneHomeRequestBodyBuilder = new PhoneHomeRequestBody.Builder();
-        phoneHomeRequestBodyBuilder.addToMetaData("third.party.version", thirdPartyVersion);
-        phoneHomeRequestBodyBuilder.addAllToMetaData(metadataMap);
-        final BlackDuckPhoneHomeCallable blackDuckPhoneHomeCallable = new BlackDuckPhoneHomeCallable(
-            logger,
-            phoneHomeClient,
-            hubServerConfig.getBlackDuckUrl(),
-            "blackduck-artifactory",
-            pluginVersion,
-            hubServicesFactory.getEnvironmentVariables(),
-            hubServicesFactory.createHubService(),
-            hubServicesFactory.createHubRegistrationService(),
-            phoneHomeRequestBodyBuilder
-        );
-
-        return phoneHomeService.phoneHome(blackDuckPhoneHomeCallable);
+    public RestConnection createRestConnection() {
+        return hubServerConfig.createRestConnection(logger);
     }
 
     public void importBomFile(final String codeLocationName, final File bdioFile) throws IntegrationException {
@@ -139,30 +79,8 @@ public class BlackDuckConnectionService {
     }
 
     // TODO: Take in a ProjectVersionView instead after blackduck-common:40 upgrade. projectService.addComponentToProjectVersion can accept a projectVersionView.
-    public Optional<String> addComponentToProjectVersion(final ExternalId componentExternalId, final String projectName, final String projectVersionName) throws IntegrationException {
-        final HubService hubService = hubServicesFactory.createHubService();
-        final ProjectService projectService = hubServicesFactory.createProjectService();
-        final ComponentService componentService = hubServicesFactory.createComponentService();
-        String componentVersionUrl = null;
-        // projectService.addComponentToProjectVersion(componentExternalId, projectName, projectVersionName);
-
-        // TODO: projectService.addComponentToProjectVersion should return the componentVersionUrl in blackduck-common:40 so the below code won't be necessary.
-        final Optional<ProjectView> projectItem = projectService.getProjectByName(projectName);
-        if (projectItem.isPresent()) {
-            final Optional<ProjectVersionView> projectVersionView = projectService.getProjectVersion(projectItem.get(), projectVersionName);
-            if (projectVersionView.isPresent()) {
-                final String projectVersionComponentsUrl = hubService.getFirstLink(projectVersionView.get(), ProjectVersionView.COMPONENTS_LINK);
-                final ComponentSearchResultView componentSearchResultView = componentService.getExactComponentMatch(componentExternalId);
-                if (StringUtils.isNotBlank(componentSearchResultView.variant)) {
-                    componentVersionUrl = componentSearchResultView.variant;
-                } else {
-                    componentVersionUrl = componentSearchResultView.version;
-                }
-                projectService.addComponentToProjectVersion("application/json", projectVersionComponentsUrl, componentVersionUrl);
-            }
-        }
-
-        return Optional.ofNullable(componentVersionUrl);
+    public void addComponentToProjectVersion(final ExternalId componentExternalId, final String projectName, final String projectVersionName) throws IntegrationException {
+        projectService.addComponentToProjectVersion(componentExternalId, projectName, projectVersionName);
     }
 
     // not a good practice, but right now, I do not know a better way, short of searching the entire BOM, to match up a BOM component with a component/version
@@ -178,5 +96,9 @@ public class BlackDuckConnectionService {
 
     public HubServicesFactory getHubServicesFactory() {
         return hubServicesFactory;
+    }
+
+    public URL getBlackDuckUrl() {
+        return hubServerConfig.getBlackDuckUrl();
     }
 }
