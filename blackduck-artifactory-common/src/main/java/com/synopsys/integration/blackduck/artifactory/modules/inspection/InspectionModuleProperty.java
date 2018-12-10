@@ -37,8 +37,7 @@ public enum InspectionModuleProperty implements ConfigurationProperty {
     POPULATE_METADATA_CRON("populate.metadata.cron"),
     REPOS("repos"),
     REPOS_CSV_PATH("repos.csv.path"),
-    UPDATE_METADATA_CRON("update.metadata.cron"),
-    ADD_PENDING_ARTIFACTS_CRON("add.pending.artifacts.cron");
+    UPDATE_METADATA_CRON("update.metadata.cron");
 
     private final String key;
 

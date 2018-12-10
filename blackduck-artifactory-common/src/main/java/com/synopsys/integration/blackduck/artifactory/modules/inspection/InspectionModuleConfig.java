@@ -32,17 +32,14 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final String blackDuckIdentifyArtifactsCron;
     private final String blackDuckPopulateMetadataCron;
     private final String blackDuckUpdateMetadataCron;
-    private final String blackDuckAddPendingArtifactsCron;
 
     private final List<String> repoKeys;
 
-    public InspectionModuleConfig(final boolean enabled, final String blackDuckIdentifyArtifactsCron, final String blackDuckPopulateMetadataCron, final String blackDuckUpdateMetadataCron,
-        final String blackDuckAddPendingArtifactsCron, final List<String> repoKeys) {
+    public InspectionModuleConfig(final boolean enabled, final String blackDuckIdentifyArtifactsCron, final String blackDuckPopulateMetadataCron, final String blackDuckUpdateMetadataCron, final List<String> repoKeys) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.blackDuckIdentifyArtifactsCron = blackDuckIdentifyArtifactsCron;
         this.blackDuckPopulateMetadataCron = blackDuckPopulateMetadataCron;
         this.blackDuckUpdateMetadataCron = blackDuckUpdateMetadataCron;
-        this.blackDuckAddPendingArtifactsCron = blackDuckAddPendingArtifactsCron;
         this.repoKeys = repoKeys;
     }
 
@@ -51,9 +48,8 @@ public class InspectionModuleConfig extends ModuleConfig {
         final String blackDuckIdentifyArtifactsCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON);
         final String blackDuckPopulateMetadataCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.POPULATE_METADATA_CRON);
         final String blackDuckUpdateMetadataCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.UPDATE_METADATA_CRON);
-        final String blackDuckAddPendingArtifactsCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.ADD_PENDING_ARTIFACTS_CRON);
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, blackDuckPopulateMetadataCron, blackDuckUpdateMetadataCron, blackDuckAddPendingArtifactsCron, repoKeys);
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, blackDuckPopulateMetadataCron, blackDuckUpdateMetadataCron, repoKeys);
     }
 
     public String getBlackDuckIdentifyArtifactsCron() {
@@ -66,10 +62,6 @@ public class InspectionModuleConfig extends ModuleConfig {
 
     public String getBlackDuckUpdateMetadataCron() {
         return blackDuckUpdateMetadataCron;
-    }
-
-    public String getBlackDuckAddPendingArtifactsCron() {
-        return blackDuckAddPendingArtifactsCron;
     }
 
     public List<String> getRepoKeys() {
