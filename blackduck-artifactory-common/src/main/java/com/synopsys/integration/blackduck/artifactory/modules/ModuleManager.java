@@ -26,7 +26,6 @@ package com.synopsys.integration.blackduck.artifactory.modules;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.artifactory.exception.CancelException;
@@ -165,7 +164,8 @@ public class ModuleManager {
     }
 
     public String submitAnalytics(final TriggerType triggerType) {
-        return runMethod(analyticsModuleConfig, triggerType, analyticsModule::submitAnalytics).toString();
+        final Boolean success = runMethod(analyticsModuleConfig, triggerType, analyticsModule::submitAnalytics);
+        return success == null ? "AnalyticsModule disabled" : success.toString();
     }
 
     /**
@@ -191,17 +191,6 @@ public class ModuleManager {
 
         if (startMethodRun(moduleConfig, triggerType)) {
             result = supplier.get();
-            finishMethodRun(moduleConfig, triggerType, result);
-        }
-
-        return result;
-    }
-
-    private <T> Object runMethod(final ModuleConfig moduleConfig, final TriggerType triggerType, final T parameter, final Function<T, ?> function) {
-        Object result = null;
-
-        if (startMethodRun(moduleConfig, triggerType)) {
-            result = function.apply(parameter);
             finishMethodRun(moduleConfig, triggerType, result);
         }
 

@@ -311,7 +311,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSubmitAnalytics"
      */
     blackDuckSubmitAnalytics(httpMethod: 'POST') { params ->
-        moduleManager.submitAnalytics(TriggerType.REST_REQUEST)
+        message = moduleManager.submitAnalytics(TriggerType.REST_REQUEST)
     }
 }
 
@@ -351,6 +351,8 @@ jobs {
     blackDuckUpdateMetadata(cron: moduleManager.getBlackDuckUpdateMetadataCron()) {
         moduleManager.updateMetadata(TriggerType.CRON_JOB)
     }
+
+    //////////////////////////////////////////////// ANALYTICS JOBS ////////////////////////////////////////////////
 
     /**
      * Submits usage analytics. For developer use only

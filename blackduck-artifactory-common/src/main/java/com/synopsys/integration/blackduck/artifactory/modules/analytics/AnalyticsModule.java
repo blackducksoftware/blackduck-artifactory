@@ -64,7 +64,7 @@ public class AnalyticsModule implements Analyzable, Module {
      * Submits a payload to phone home with data from all the collectors ({@link FeatureAnalyticsCollector})
      * This should be used infrequently such as once a day due to quota
      */
-    public boolean submitAnalytics() {
+    public Boolean submitAnalytics() {
         moduleConfigs.forEach(this::updateModuleStatus);
 
         final boolean analyticsSuccess = analyticsService.submitAnalytics();
