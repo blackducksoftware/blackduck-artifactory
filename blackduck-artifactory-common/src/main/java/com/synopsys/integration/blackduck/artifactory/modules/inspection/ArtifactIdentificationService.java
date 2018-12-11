@@ -150,14 +150,16 @@ public class ArtifactIdentificationService {
         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
     }
 
-    public void addIdentifiedArtifactToProjectVersion(final IdentifiedArtifact artifact, final String projectName, final String projectVersionName) {
+    public boolean addIdentifiedArtifactToProjectVersion(final IdentifiedArtifact artifact, final String projectName, final String projectVersionName) {
         final RepoPath repoPath = artifact.getRepoPath();
 
+        boolean success = false;
         try {
             if (artifact.getExternalId().isPresent()) {
                 // TODO: Might not need to return componentVersionUrl
                 blackDuckConnectionService.addComponentToProjectVersion(artifact.getExternalId().get(), projectName, projectVersionName);
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+                success = true;
             } else {
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
             }
@@ -184,6 +186,7 @@ public class ArtifactIdentificationService {
             cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
         }
 
+        return success;
     }
 
     public Set<RepoPath> getIdentifiableArtifacts(final String repoKey) {
@@ -245,10 +248,10 @@ public class ArtifactIdentificationService {
 
             if (isArtifactPending) {
                 final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = identifyArtifact(repoPath, repoPackageType);
-                addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectName, projectVersionName);
+                final boolean successfullyAdded = addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectName, projectVersionName);
                 final Optional<ExternalId> externalIdOptional = identifiedArtifact.getExternalId();
 
-                if (externalIdOptional.isPresent()) {
+                if (successfullyAdded && externalIdOptional.isPresent()) {
                     final ExternalId externalId = externalIdOptional.get();
                     try {
                         final ProjectService projectService = blackDuckConnectionService.getHubServicesFactory().createProjectService();
