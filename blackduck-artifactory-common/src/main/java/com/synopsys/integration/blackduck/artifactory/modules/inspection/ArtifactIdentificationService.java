@@ -168,6 +168,7 @@ public class ArtifactIdentificationService {
             if (statusCode == 412) {
                 logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath.toPath()));
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+                success = true;
             } else if (statusCode == 401) {
                 logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
                     repoPath.toPath(), statusCode));
@@ -281,6 +282,8 @@ public class ArtifactIdentificationService {
                         logger.info(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));
                         logger.debug(e.getMessage(), e);
                     }
+                } else {
+                    logger.debug(String.format("Artifact was not successfully added to BlackDuck project [%s] version [%s]: %s = %s", projectName, projectVersionName, repoPath.getName(), repoPath.toPath()));
                 }
             }
         }
