@@ -44,6 +44,7 @@ executions {
 
     /**
      * This will attempt to reload the properties file and initialize the plugin with the new values.
+     * Does not apply to CRON expressions. An Artifactory restart is required for changing cron expressions.
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReload"
