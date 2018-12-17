@@ -104,7 +104,7 @@ public class ScanPolicyService {
         try {
             final Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = getVersionBomPolicyStatus(projectName, projectVersionName);
             if (!versionBomPolicyStatusViewOptional.isPresent()) {
-                throw new IntegrationException("BlackDuck failed to return a policy status");
+                throw new IntegrationException(String.format("BlackDuck failed to return a policy status. Project '%s' with version '%s' may not exist in BlackDuck", projectName, projectVersionName));
             }
 
             final VersionBomPolicyStatusView versionBomPolicyStatusView = versionBomPolicyStatusViewOptional.get();
