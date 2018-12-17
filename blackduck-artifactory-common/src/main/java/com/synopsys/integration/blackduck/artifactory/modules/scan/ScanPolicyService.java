@@ -121,6 +121,7 @@ public class ScanPolicyService {
             logger.warn(String.format("Update policy status failed with status code (%d)", e.getHttpStatusCode()));
             failPolicyStatusUpdate(repoPath, e);
         } catch (final IntegrationException e) {
+            logger.warn(String.format("Update policy status failed. Project '%s' with version '%s' may not exist in BlackDuck", projectName, projectVersionName));
             failPolicyStatusUpdate(repoPath, e);
         }
 
