@@ -1,0 +1,36 @@
+[
+  {
+    "specVersion": "1.1.0",
+    "spdx:name": "test-project/com.synopsys.integration/test-project/1.0.0 gradle/bom",
+    "creationInfo": {
+      "spdx:creator": [
+        "Tool: HubDetect-4.4.2",
+        "Tool: IntegrationBdio-16.1.1"
+      ],
+      "spdx:created": "2018-10-29T19:56:48.221Z"
+    },
+    "@id": "uuid:6a9f78c2-5eca-4572-bf37-ad7e3bb904c4",
+    "@type": "BillOfMaterials",
+    "relationship": []
+  },
+  {
+    "name": "test-project",
+    "revision": "1.0.0",
+    "@id": "http:maven/com_synopsys_integration/test_project/1_0_0",
+    "@type": "Project",
+    "externalIdentifier": {
+      "externalSystemTypeId": "maven",
+      "externalId": "com.synopsys.integration:test-project:1.0.0",
+      "externalIdMetaData": {
+        "forge": {
+          "name": "maven",
+          "separator": ":",
+          "kbSeparator": ":"
+        },
+        "group": "com.synopsys.integration",
+        "name": "test-project",
+        "version": "1.0.0"
+      }
+    }
+  }
+]

@@ -4,10 +4,8 @@ buildscript {
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
     }
-
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.0.3.RELEASE'
     }
 }
 
@@ -15,72 +13,34 @@ plugins {
     id 'groovy'
 }
 
-version = '5.1.2-SNAPSHOT'
-def artifactoryMinimumVersion = '5.6.2'
+version = '6.0.1-SNAPSHOT'
+final String parentVersion = project.version
 
-apply plugin: 'com.blackducksoftware.integration.solution'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
-
-dependencies {
-    compile 'com.blackducksoftware.integration:hub-artifactory-common:0.2.2'
-    compile 'org.springframework.boot:spring-boot-starter'
-    compile 'org.springframework:spring-web'
-    compile 'org.quartz-scheduler:quartz:2.2.1'
-    compile 'org.apache.commons:commons-configuration2:2.2'
-    compile 'commons-beanutils:commons-beanutils:1.9.3'
-    
-    compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
-    
-    testCompile 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
+allprojects {
+    task dependencies(type: DependencyReportTask) {}
 }
 
-def versionFile = new File("${projectDir}/src/main/resources/version.txt")
-versionFile.delete()
-versionFile << version
+configure(subprojects) { project ->
+    group = 'com.blackducksoftware.integration'
+    version = parentVersion
 
-apply from: 'generateScanConfig.gradle'
+    apply plugin: 'com.blackducksoftware.integration.solution'
+    apply plugin: 'groovy'
 
-task createFinalZip(type: Zip) {
-    dependsOn build, generateScanConfig
-    from("${projectDir}/src/main/resources/") {
-        include 'version.txt'
-        include 'blackDuckCacheInspector.properties'
-        into 'plugins/lib'
-    }
-    
-    from ("${projectDir}/build/configs/") {
-        include 'blackDuckScanForHub.properties'
-        into 'plugins/lib'
+    license {
+        header rootProject.file('LICENSE')
     }
 
-    from("${buildDir}/libs") { 
-        include '*.jar' 
-        exclude '*sources.jar'
-        exclude '*javadoc.jar'
-    }
+    dependencies {
+        implementation 'com.blackducksoftware.integration:hub-common:39.0.0'
+        implementation 'org.codehaus.groovy:groovy-all:2.4.15'
 
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/scan") {
-        include 'blackDuckScanForHub.groovy'
-        into 'plugins'
-    }
-
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory/inspect") {
-        include 'blackDuckCacheInspector.groovy'
-        into 'plugins'
-    }
-    
-    from("${projectDir}/src/main/groovy/com/blackducksoftware/integration/hub/artifactory") {
-        include 'blackDuckPolicyEnforcer.groovy'
-        into 'plugins'
-    }
-
-    from(configurations.runtime) {
-        include 'hub-artifactory-common*.jar'
-
-        into 'plugins/lib'
+        testImplementation 'com.blackducksoftware.integration:integration-test-common:4.+'
     }
 }
 
-springBoot { mainClassName = 'com.blackducksoftware.integration.hub.artifactory.Application' }
+subprojects {
+    tasks.withType(Test) {
+        maxParallelForks = 4
+    }
+}

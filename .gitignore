@@ -14,5 +14,7 @@ bin/
 # build tool
 .gradle/
 build/
+out/
 
 version.txt
+scratch/

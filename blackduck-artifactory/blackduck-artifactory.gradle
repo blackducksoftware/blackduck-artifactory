@@ -1,0 +1,68 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+
+    dependencies {
+        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
+        classpath 'org.apache.commons:commons-configuration2:2.2'
+        classpath 'joda-time:joda-time:2.10'
+    }
+}
+
+plugins {
+    id 'groovy'
+}
+
+def artifactoryMinimumVersion = '5.6.2'
+
+apply plugin: 'com.blackducksoftware.integration.solution'
+
+dependencies {
+    compile project(":blackduck-artifactory-common")
+
+    compileOnly 'org.apache.commons:commons-configuration2:2.2'
+    compileOnly 'joda-time:joda-time:2.10'
+
+    compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+
+    testCompile 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+}
+
+def versionFile = new File("${projectDir}/src/main/resources/version.txt")
+versionFile.delete()
+versionFile << version
+
+apply from: 'generateConfig.gradle'
+
+task createFinalZip(type: Zip) {
+    dependsOn build, generateConfig
+    from("${projectDir}/src/main/resources/") {
+        include 'version.txt'
+        into 'plugins/lib'
+    }
+
+    from("${projectDir}/build/configs/") {
+        include 'blackDuckPlugin.properties'
+        into 'plugins/lib'
+    }
+
+    from("${buildDir}/libs") {
+        include '*.jar'
+        exclude '*sources.jar'
+        exclude '*javadoc.jar'
+    }
+
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
+        include 'blackDuckPlugin.groovy'
+        into 'plugins'
+    }
+
+    from(configurations.compile) {
+        include 'blackduck-artifactory-common*.jar'
+        into 'plugins/lib'
+    }
+}
+

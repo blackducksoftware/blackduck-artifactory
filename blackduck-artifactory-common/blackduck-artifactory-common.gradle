@@ -1,0 +1,37 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+}
+
+jar.finalizedBy shadowJar
+
+final String artifactoryMinimumVersion = '5.6.2'
+
+dependencies {
+    compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+
+    testCompile 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.3.1'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.3.1'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+}
+
+shadowJar {
+    dependencies {
+        exclude(dependency('org.artifactory:artifactory-papi:.*'))
+        exclude(dependency('org.codehaus.groovy:groovy-all:.*'))
+    }
+    // Relocating is powerful and should be used judiciously.
+    // This list should be updated only when we hit a noClassDefFound or noSuchMethodException due to clashing dependencies between us and Artifactory
+    relocate('org.apache.commons.lang3', 'embedded.org.apache.commons.lang3')
+    relocate('org.apache.http', 'embedded.org.apache.http')
+
+    classifier null
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
