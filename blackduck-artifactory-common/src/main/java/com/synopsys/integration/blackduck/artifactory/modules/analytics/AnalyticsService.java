@@ -89,7 +89,6 @@ public class AnalyticsService {
         return phoneHomeSuccess;
     }
 
-    // TODO: Move to AnalyticsService
     public Boolean phoneHome(final Map<String, String> metadataMap) {
         Boolean result = Boolean.FALSE;
 

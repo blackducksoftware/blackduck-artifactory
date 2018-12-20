@@ -9,10 +9,10 @@ public class PluginConfig extends ConfigurationValidator {
     private final String dateTimePattern;
     private final HubServerConfigBuilder hubServerConfigBuilder;
 
-    public static PluginConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager) {
-        final String dateTimePattern = blackDuckPropertyManager.getProperty(BlackDuckProperty.DATE_TIME_PATTERN);
+    public static PluginConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
+        final String dateTimePattern = configurationPropertyManager.getProperty(GeneralProperty.DATE_TIME_PATTERN);
         final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setFromProperties(blackDuckPropertyManager.getProperties());
+        hubServerConfigBuilder.setFromProperties(configurationPropertyManager.getProperties());
 
         return new PluginConfig(dateTimePattern, hubServerConfigBuilder);
     }
@@ -24,13 +24,13 @@ public class PluginConfig extends ConfigurationValidator {
 
     @Override
     public void validate(final BuilderStatus builderStatus) {
-        final boolean dateTimePatternExists = validateNotBlank(builderStatus, BlackDuckProperty.DATE_TIME_PATTERN, dateTimePattern);
+        final boolean dateTimePatternExists = validateNotBlank(builderStatus, GeneralProperty.DATE_TIME_PATTERN, dateTimePattern);
 
         if (dateTimePatternExists) {
             try {
                 DateTimeFormatter.ofPattern(dateTimePattern);
             } catch (final IllegalArgumentException ignore) {
-                builderStatus.addErrorMessage(String.format("Property %s has an invalid format", BlackDuckProperty.DATE_TIME_PATTERN.getKey()));
+                builderStatus.addErrorMessage(String.format("Property %s has an invalid format", GeneralProperty.DATE_TIME_PATTERN.getKey()));
             }
         }
 

@@ -9,11 +9,11 @@ import org.junit.platform.commons.util.StringUtils;
 
 import com.synopsys.integration.blackduck.artifactory.util.Fast;
 
-class BlackDuckPropertyTest {
+class GeneralPropertyTest {
     @ParameterizedTest
     @Fast
-    @EnumSource(BlackDuckProperty.class)
-    void getKey(final BlackDuckProperty property) {
+    @EnumSource(GeneralProperty.class)
+    void getKey(final GeneralProperty property) {
         assertNotNull(property.getKey());
         assertTrue(StringUtils.isNotBlank(property.getKey()));
     }

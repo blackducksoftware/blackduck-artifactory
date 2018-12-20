@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.analytics;
 
-import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.util.BuilderStatus;
 
@@ -32,8 +32,8 @@ public class AnalyticsModuleConfig extends ModuleConfig {
         super(AnalyticsModule.class.getSimpleName(), enabled);
     }
 
-    public static AnalyticsModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager) {
-        final Boolean enabled = blackDuckPropertyManager.getBooleanProperty(AnalyticsModuleProperty.ENABLED);
+    public static AnalyticsModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
+        final Boolean enabled = configurationPropertyManager.getBooleanProperty(AnalyticsModuleProperty.ENABLED);
 
         return new AnalyticsModuleConfig(enabled);
     }

@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory;
 
-public enum BlackDuckProperty implements ConfigurationProperty {
+public enum GeneralProperty implements ConfigurationProperty {
     URL("url"),
     USERNAME("username"),
     PASSWORD("password"),
@@ -38,7 +38,7 @@ public enum BlackDuckProperty implements ConfigurationProperty {
 
     private final String key;
 
-    BlackDuckProperty(final String key) {
+    GeneralProperty(final String key) {
         this.key = "blackduck." + key;
     }
 

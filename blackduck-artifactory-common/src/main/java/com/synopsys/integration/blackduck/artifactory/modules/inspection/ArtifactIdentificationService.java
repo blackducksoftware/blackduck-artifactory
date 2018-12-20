@@ -156,7 +156,6 @@ public class ArtifactIdentificationService {
         boolean success = false;
         try {
             if (artifact.getExternalId().isPresent()) {
-                // TODO: Might not need to return componentVersionUrl
                 blackDuckConnectionService.addComponentToProjectVersion(artifact.getExternalId().get(), projectName, projectVersionName);
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
                 success = true;

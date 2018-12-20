@@ -39,22 +39,22 @@ import com.synopsys.integration.blackduck.artifactory.util.FastTest;
 import com.synopsys.integration.blackduck.artifactory.util.FileIO;
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
 
-class BlackDuckPropertyManagerTest {
+class ConfigurationPropertyManagerTest {
     private final ConfigurationProperty repositoryKeyListProperty = () -> "blackduck.artifactory.scan.repos";
     private final ConfigurationProperty repositoryKeyCsvProperty = () -> "blackduck.artifactory.scan.repos.csv.path";
     private final ConfigurationProperty isEnabledProperty = () -> "blackduck.artifactory.scan.enabled";
-    private BlackDuckPropertyManager blackDuckPropertyManager;
+    private ConfigurationPropertyManager configurationPropertyManager;
     private Properties properties;
 
     @BeforeEach
     void init() throws IOException {
         properties = TestUtil.getDefaultProperties();
-        blackDuckPropertyManager = new BlackDuckPropertyManager(properties);
+        configurationPropertyManager = new ConfigurationPropertyManager(properties);
     }
 
     @FastTest
     void getRepositoryKeysFromProperties() throws IOException {
-        final List<String> repositoryKeysFromProperties = blackDuckPropertyManager.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty);
+        final List<String> repositoryKeysFromProperties = configurationPropertyManager.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty);
         assertAll("repo keys",
             () -> assertEquals(2, repositoryKeysFromProperties.size()),
             () -> assertTrue(repositoryKeysFromProperties.contains("ext-release-local")),
@@ -66,8 +66,8 @@ class BlackDuckPropertyManagerTest {
     @Test
     @FileIO
     void getRepositoryKeysFromPropertiesCsv() throws IOException {
-        blackDuckPropertyManager.getProperties().setProperty(repositoryKeyCsvProperty.getKey(), TestUtil.getResourceAsFilePath("/repoCSV"));
-        final List<String> repositoryKeysFromProperties = blackDuckPropertyManager.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty);
+        configurationPropertyManager.getProperties().setProperty(repositoryKeyCsvProperty.getKey(), TestUtil.getResourceAsFilePath("/repoCSV"));
+        final List<String> repositoryKeysFromProperties = configurationPropertyManager.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty);
 
         assertAll("repo keys",
             () -> assertEquals(7, repositoryKeysFromProperties.size()),
@@ -77,16 +77,16 @@ class BlackDuckPropertyManagerTest {
 
     @FastTest
     void getProperties() {
-        assertEquals(properties, blackDuckPropertyManager.getProperties());
+        assertEquals(properties, configurationPropertyManager.getProperties());
     }
 
     @FastTest
     void getProperty() {
-        assertEquals("ext-release-local,libs-release", blackDuckPropertyManager.getProperty(repositoryKeyListProperty));
+        assertEquals("ext-release-local,libs-release", configurationPropertyManager.getProperty(repositoryKeyListProperty));
     }
 
     @FastTest
     void getBooleanProperty() {
-        assertTrue(blackDuckPropertyManager.getBooleanProperty(isEnabledProperty));
+        assertTrue(configurationPropertyManager.getBooleanProperty(isEnabledProperty));
     }
 }

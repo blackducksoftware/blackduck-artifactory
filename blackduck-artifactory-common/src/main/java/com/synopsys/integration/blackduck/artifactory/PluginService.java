@@ -79,7 +79,7 @@ public class PluginService {
     private final Repositories repositories;
     private final Searches searches;
 
-    private BlackDuckPropertyManager blackDuckPropertyManager;
+    private ConfigurationPropertyManager configurationPropertyManager;
     private HubServerConfig hubServerConfig;
     private File blackDuckDirectory;
     private DateTimeManager dateTimeManager;
@@ -101,9 +101,9 @@ public class PluginService {
 
         final File propertiesFile = getPropertiesFile();
         final Properties unprocessedProperties = loadPropertiesFromFile(propertiesFile);
-        blackDuckPropertyManager = new BlackDuckPropertyManager(unprocessedProperties);
+        configurationPropertyManager = new ConfigurationPropertyManager(unprocessedProperties);
 
-        pluginConfig = PluginConfig.createFromProperties(blackDuckPropertyManager);
+        pluginConfig = PluginConfig.createFromProperties(configurationPropertyManager);
         hubServerConfig = pluginConfig.getHubServerConfigBuilder().build();
 
         this.blackDuckDirectory = setUpBlackDuckDirectory();
@@ -205,7 +205,7 @@ public class PluginService {
 
     private ScanModule createAndRegisterScanModule() throws IOException, IntegrationException {
         final File cliDirectory = ScanModule.setUpCliDuckDirectory(blackDuckDirectory);
-        final ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(blackDuckPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
+        final ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
         final RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
         final ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, hubServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, repositories, dateTimeManager);
         final StatusCheckService statusCheckService = new StatusCheckService(scanModuleConfig, blackDuckConnectionService, repositoryIdentificationService, dateTimeManager);
@@ -221,7 +221,7 @@ public class PluginService {
     }
 
     private InspectionModule createAndRegisterInspectionModule() throws IOException {
-        final InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(blackDuckPropertyManager, artifactoryPAPIService);
+        final InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
         final CacheInspectorService cacheInspectorService = new CacheInspectorService(artifactoryPropertyService);
         final PackageTypePatternManager packageTypePatternManager = PackageTypePatternManager.fromInspectionModuleConfig(inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
@@ -242,7 +242,7 @@ public class PluginService {
     }
 
     private PolicyModule createAndRegisterPolicyModule() {
-        final PolicyModuleConfig policyModuleConfig = PolicyModuleConfig.createFromProperties(blackDuckPropertyManager);
+        final PolicyModuleConfig policyModuleConfig = PolicyModuleConfig.createFromProperties(configurationPropertyManager);
         final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PolicyModule.class);
         final PolicyModule policyModule = new PolicyModule(policyModuleConfig, artifactoryPropertyService, featureAnalyticsCollector);
 
@@ -253,7 +253,7 @@ public class PluginService {
     }
 
     private AnalyticsModule createAndRegisterAnalyticsModule() {
-        final AnalyticsModuleConfig analyticsModuleConfig = AnalyticsModuleConfig.createFromProperties(blackDuckPropertyManager);
+        final AnalyticsModuleConfig analyticsModuleConfig = AnalyticsModuleConfig.createFromProperties(configurationPropertyManager);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final AnalyticsModule analyticsModule = new AnalyticsModule(analyticsModuleConfig, analyticsService, simpleAnalyticsCollector);
 
@@ -280,7 +280,7 @@ public class PluginService {
 
     private File determineBlackDuckDirectory() {
         final File blackDuckDirectory;
-        final String scanBinariesDirectory = blackDuckPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
+        final String scanBinariesDirectory = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
         if (StringUtils.isNotEmpty(scanBinariesDirectory)) {
             blackDuckDirectory = new File(directoryConfig.getHomeDirectory(), scanBinariesDirectory);
         } else {

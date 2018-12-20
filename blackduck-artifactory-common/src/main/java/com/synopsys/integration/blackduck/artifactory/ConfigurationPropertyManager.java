@@ -39,10 +39,10 @@ import org.apache.commons.lang3.StringUtils;
  * Gets configuration properties and coerces them.
  * Should only be consumed by configs with validation
  */
-public class BlackDuckPropertyManager {
+public class ConfigurationPropertyManager {
     private final Properties properties;
 
-    public BlackDuckPropertyManager(final Properties properties) {
+    public ConfigurationPropertyManager(final Properties properties) {
         this.properties = properties;
     }
 

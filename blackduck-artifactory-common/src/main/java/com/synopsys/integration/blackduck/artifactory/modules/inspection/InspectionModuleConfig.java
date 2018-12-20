@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.util.BuilderStatus;
 
@@ -59,18 +59,18 @@ public class InspectionModuleConfig extends ModuleConfig {
         this.repos = repos;
     }
 
-    public static InspectionModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
-        final Boolean enabled = blackDuckPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
-        final String blackDuckIdentifyArtifactsCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON);
-        final List<String> patternsRubygems = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS, blackDuckPropertyManager::getProperty);
-        final List<String> patternsMaven = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN, blackDuckPropertyManager::getProperty);
-        final List<String> patternsGradle = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE, blackDuckPropertyManager::getProperty);
-        final List<String> patternsPypi = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_PYPI, blackDuckPropertyManager::getProperty);
-        final List<String> patternsNuget = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NUGET, blackDuckPropertyManager::getProperty);
-        final List<String> patternsNpm = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NPM, blackDuckPropertyManager::getProperty);
-        final String blackDuckPopulateMetadataCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.POPULATE_METADATA_CRON);
-        final String blackDuckUpdateMetadataCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.UPDATE_METADATA_CRON);
-        final List<String> repos = blackDuckPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
+    public static InspectionModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
+        final Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
+        final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON);
+        final List<String> patternsRubygems = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS, configurationPropertyManager::getProperty);
+        final List<String> patternsMaven = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN, configurationPropertyManager::getProperty);
+        final List<String> patternsGradle = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE, configurationPropertyManager::getProperty);
+        final List<String> patternsPypi = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_PYPI, configurationPropertyManager::getProperty);
+        final List<String> patternsNuget = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NUGET, configurationPropertyManager::getProperty);
+        final List<String> patternsNpm = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NPM, configurationPropertyManager::getProperty);
+        final String blackDuckPopulateMetadataCron = configurationPropertyManager.getProperty(InspectionModuleProperty.POPULATE_METADATA_CRON);
+        final String blackDuckUpdateMetadataCron = configurationPropertyManager.getProperty(InspectionModuleProperty.UPDATE_METADATA_CRON);
+        final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
 

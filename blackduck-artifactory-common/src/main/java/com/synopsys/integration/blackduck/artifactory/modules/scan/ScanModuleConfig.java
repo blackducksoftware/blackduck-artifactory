@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.util.BuilderStatus;
@@ -65,20 +65,20 @@ public class ScanModuleConfig extends ModuleConfig {
         this.dateTimeManager = dateTimeManager;
     }
 
-    public static ScanModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService, final File cliDirectory, final DateTimeManager dateTimeManager)
+    public static ScanModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService, final File cliDirectory, final DateTimeManager dateTimeManager)
         throws IOException {
-        final String addPolicyStatusCron = blackDuckPropertyManager.getProperty(ScanModuleProperty.ADD_POLICY_STATUS_CRON);
-        final String binariesDirectoryPath = blackDuckPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
-        final String artifactCutoffDate = blackDuckPropertyManager.getProperty(ScanModuleProperty.CUTOFF_DATE);
-        final Boolean dryRun = blackDuckPropertyManager.getBooleanProperty(ScanModuleProperty.DRY_RUN);
-        final Boolean enabled = blackDuckPropertyManager.getBooleanProperty(ScanModuleProperty.ENABLED);
-        final List<String> namePatterns = blackDuckPropertyManager.getPropertyAsList(ScanModuleProperty.NAME_PATTERNS, blackDuckPropertyManager::getProperty);
-        final Integer memory = blackDuckPropertyManager.getIntegerProperty(ScanModuleProperty.MEMORY);
-        final Boolean repoPathCodelocation = blackDuckPropertyManager.getBooleanProperty(ScanModuleProperty.REPO_PATH_CODELOCATION);
-        final List<String> repos = blackDuckPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()
+        final String addPolicyStatusCron = configurationPropertyManager.getProperty(ScanModuleProperty.ADD_POLICY_STATUS_CRON);
+        final String binariesDirectoryPath = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
+        final String artifactCutoffDate = configurationPropertyManager.getProperty(ScanModuleProperty.CUTOFF_DATE);
+        final Boolean dryRun = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.DRY_RUN);
+        final Boolean enabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.ENABLED);
+        final List<String> namePatterns = configurationPropertyManager.getPropertyAsList(ScanModuleProperty.NAME_PATTERNS, configurationPropertyManager::getProperty);
+        final Integer memory = configurationPropertyManager.getIntegerProperty(ScanModuleProperty.MEMORY);
+        final Boolean repoPathCodelocation = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.REPO_PATH_CODELOCATION);
+        final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
-        final String scanCron = blackDuckPropertyManager.getProperty(ScanModuleProperty.SCAN_CRON);
+        final String scanCron = configurationPropertyManager.getProperty(ScanModuleProperty.SCAN_CRON);
 
         return new ScanModuleConfig(enabled, addPolicyStatusCron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, scanCron, cliDirectory, dateTimeManager);
     }

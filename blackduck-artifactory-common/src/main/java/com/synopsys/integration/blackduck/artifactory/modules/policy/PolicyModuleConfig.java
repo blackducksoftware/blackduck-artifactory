@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
-import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.util.BuilderStatus;
 
@@ -35,9 +35,9 @@ public class PolicyModuleConfig extends ModuleConfig {
         this.metadataBlockEnabled = metadataBlockEnabled;
     }
 
-    public static PolicyModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager) {
-        final Boolean enabled = blackDuckPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
-        final Boolean metadataBlockEnabled = blackDuckPropertyManager.getBooleanProperty(PolicyModuleProperty.METADATA_BLOCK);
+    public static PolicyModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
+        final Boolean enabled = configurationPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
+        final Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(PolicyModuleProperty.METADATA_BLOCK);
 
         return new PolicyModuleConfig(enabled, metadataBlockEnabled);
     }
