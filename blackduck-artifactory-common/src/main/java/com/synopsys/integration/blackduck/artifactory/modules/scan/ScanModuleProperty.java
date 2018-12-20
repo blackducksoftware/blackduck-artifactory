@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.scan;
 
-import com.synopsys.integration.blackduck.artifactory.ConfigurationProperty;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
 public enum ScanModuleProperty implements ConfigurationProperty {
     ADD_POLICY_STATUS_CRON("add.policy.status.cron"),

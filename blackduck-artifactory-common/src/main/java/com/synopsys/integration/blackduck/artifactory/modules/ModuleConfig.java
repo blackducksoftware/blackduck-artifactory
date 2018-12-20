@@ -25,7 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules;
 
 import org.apache.commons.lang3.BooleanUtils;
 
-import com.synopsys.integration.blackduck.artifactory.ConfigurationValidator;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationValidator;
 
 public abstract class ModuleConfig extends ConfigurationValidator {
     private final String moduleName;

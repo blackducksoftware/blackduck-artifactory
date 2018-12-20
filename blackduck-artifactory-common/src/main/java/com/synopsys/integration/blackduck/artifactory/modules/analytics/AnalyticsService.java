@@ -38,7 +38,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
-import com.synopsys.integration.blackduck.artifactory.DirectoryConfig;
+import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeCallable;
 import com.synopsys.integration.blackduck.service.HubServicesFactory;
 import com.synopsys.integration.log.IntLogger;

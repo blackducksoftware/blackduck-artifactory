@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.ConfigurationPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.util.BuilderStatus;
 

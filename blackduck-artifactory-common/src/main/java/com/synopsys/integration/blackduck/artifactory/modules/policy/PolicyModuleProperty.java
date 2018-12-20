@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
-import com.synopsys.integration.blackduck.artifactory.ConfigurationProperty;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
 public enum PolicyModuleProperty implements ConfigurationProperty {
     ENABLED("enabled"),

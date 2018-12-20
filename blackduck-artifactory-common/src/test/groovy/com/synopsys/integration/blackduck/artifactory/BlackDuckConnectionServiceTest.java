@@ -37,6 +37,7 @@ import com.synopsys.integration.blackduck.api.generated.view.CodeLocationView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.util.BlackDuckIntegrationTest;
 import com.synopsys.integration.blackduck.artifactory.util.FileIO;
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;

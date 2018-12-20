@@ -21,29 +21,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory.configuration;
 
-public enum GeneralProperty implements ConfigurationProperty {
-    URL("url"),
-    USERNAME("username"),
-    PASSWORD("password"),
-    API_TOKEN("api.token"),
-    TIMEOUT("timeout"),
-    PROXY_HOST("proxy.host"),
-    PROXY_PORT("proxy.port"),
-    PROXY_USERNAME("proxy.username"),
-    PROXY_PASSWORD("proxy.password"),
-    TRUST_CERT("trust.cert"),
-    DATE_TIME_PATTERN("date.time.pattern");
-
-    private final String key;
-
-    GeneralProperty(final String key) {
-        this.key = "blackduck." + key;
-    }
-
-    @Override
-    public String getKey() {
-        return key;
-    }
+public interface ConfigurationProperty {
+    String getKey();
 }

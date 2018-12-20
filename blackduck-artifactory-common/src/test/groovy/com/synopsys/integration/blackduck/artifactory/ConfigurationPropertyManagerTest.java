@@ -35,6 +35,8 @@ import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.util.FastTest;
 import com.synopsys.integration.blackduck.artifactory.util.FileIO;
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;

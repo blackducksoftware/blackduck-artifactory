@@ -29,6 +29,7 @@ import java.io.File;
 
 import org.junit.jupiter.api.BeforeEach;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.util.FastTest;
 
 public class DirectoryConfigTest {

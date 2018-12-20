@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import java.io.File;
 

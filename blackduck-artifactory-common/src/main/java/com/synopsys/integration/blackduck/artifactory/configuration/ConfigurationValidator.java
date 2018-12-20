@@ -1,10 +1,11 @@
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.util.BuilderStatus;
 
 public abstract class ConfigurationValidator {

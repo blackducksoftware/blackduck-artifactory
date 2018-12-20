@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
-import com.synopsys.integration.blackduck.artifactory.ConfigurationProperty;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
 public enum InspectionModuleProperty implements ConfigurationProperty {
     ENABLED("enabled"),

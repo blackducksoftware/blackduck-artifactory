@@ -38,6 +38,9 @@ import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
+import com.synopsys.integration.blackduck.artifactory.configuration.PluginConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.LogUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;

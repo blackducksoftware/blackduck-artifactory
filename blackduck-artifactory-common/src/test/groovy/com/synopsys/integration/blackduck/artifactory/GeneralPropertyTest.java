@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.platform.commons.util.StringUtils;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.GeneralProperty;
 import com.synopsys.integration.blackduck.artifactory.util.Fast;
 
 class GeneralPropertyTest {

@@ -24,5 +24,5 @@
 package com.synopsys.integration.blackduck.artifactory;
 
 public class PluginConstants {
-    public static final String PUBLIC_DOCUMENTATION_LINK = "https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/148242433/Black+Duck+Artifactory+Plugin?atlOrigin=eyJpIjoiMjBhMzVmNDE0ODAyNDE4ZWI0OGQ3ZjUwZDMyOGMxNDIiLCJwIjoiYyJ9";
+    public static final String PUBLIC_DOCUMENTATION_LINK = "https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/32178187/Black+Duck+Artifactory+Plugin";
 }

@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import java.time.format.DateTimeFormatter;
 
