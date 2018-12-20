@@ -23,29 +23,19 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
-import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
-import org.artifactory.repo.Repositories;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
 import com.synopsys.integration.util.HostNameHelper;
 
+// TODO: Perhaps this can be generalized and moved into ArtifactoryPropertyService
 public class CacheInspectorService {
-    private final Logger logger = LoggerFactory.getLogger(CacheInspectorService.class);
-
-    private final BlackDuckPropertyManager blackDuckPropertyManager;
-    private final Repositories repositories;
     private final ArtifactoryPropertyService artifactoryPropertyService;
 
     public CacheInspectorService(final BlackDuckPropertyManager blackDuckPropertyManager, final Repositories repositories, final ArtifactoryPropertyService artifactoryPropertyService) {
@@ -88,25 +78,4 @@ public class CacheInspectorService {
 
         return projectVersionNameProperty.orElse(HostNameHelper.getMyHostName("UNKNOWN_HOST"));
     }
-
-    public List<String> getRepositoriesToInspect() throws IOException {
-        final List<String> repoKeys = blackDuckPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH);
-        return repoKeys.stream().filter(this::isValidRepository).collect(Collectors.toList());
-    }
-
-    // TODO: Move to ArtifactoryPropertyService
-    private boolean isValidRepository(final String repoKey) {
-        final boolean isValid;
-
-        final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        if (repositories.exists(repoKeyPath) && repositories.getRepositoryConfiguration(repoKey) != null) {
-            isValid = true;
-        } else {
-            logger.warn(String.format("The Black Duck %s will ignore configured repository \'%s\': Repository was not found or is not a valid repository.", InspectionModule.class.getSimpleName(), repoKey));
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
 }

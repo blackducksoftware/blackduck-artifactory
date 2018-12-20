@@ -34,6 +34,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * Gets configuration properties and coerces them.
+ * Should only be consumed by configs with validation
+ */
 public class BlackDuckPropertyManager {
     final Properties properties;
 
@@ -55,7 +59,9 @@ public class BlackDuckPropertyManager {
                                  .filter(StringUtils::isNotBlank)
                                  .collect(Collectors.toList());
         } else {
-            repositoryKeys = Arrays.asList(repositoryKeyListString.split(","));
+            repositoryKeys = Arrays.stream(repositoryKeyListString.split(","))
+                                 .filter(StringUtils::isNotBlank)
+                                 .collect(Collectors.toList());
         }
 
         return repositoryKeys;

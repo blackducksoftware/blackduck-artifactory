@@ -25,23 +25,34 @@ package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
 import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
+import com.synopsys.integration.util.BuilderStatus;
 
 public class PolicyModuleConfig extends ModuleConfig {
-    private final boolean metadataBlockEnabled;
+    private final Boolean metadataBlockEnabled;
 
-    public PolicyModuleConfig(final boolean enabled, final boolean metadataBlockEnabled) {
+    public PolicyModuleConfig(final Boolean enabled, final Boolean metadataBlockEnabled) {
         super(PolicyModule.class.getSimpleName(), enabled);
         this.metadataBlockEnabled = metadataBlockEnabled;
     }
 
     public static PolicyModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager) {
-        final boolean enabled = blackDuckPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
-        final boolean metadataBlockEnabled = blackDuckPropertyManager.getBooleanProperty(PolicyModuleProperty.METADATA_BLOCK);
+        final Boolean enabled = blackDuckPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
+        final Boolean metadataBlockEnabled = blackDuckPropertyManager.getBooleanProperty(PolicyModuleProperty.METADATA_BLOCK);
 
         return new PolicyModuleConfig(enabled, metadataBlockEnabled);
     }
 
     public boolean isMetadataBlockEnabled() {
         return metadataBlockEnabled;
+    }
+
+    @Override
+    public void validate(final BuilderStatus builderStatus) {
+        // Until feature is re-enabled, don't verify the property's existence
+        // validateBoolean(builderStatus, PolicyModuleProperty.ENABLED, isEnabledUnverified());
+        if (metadataBlockEnabled != null) {
+            // TODO: This is temporary until the feature it released or removed
+            builderStatus.addErrorMessage("The metadata block feature is not available right now. Please remove from configuration");
+        }
     }
 }

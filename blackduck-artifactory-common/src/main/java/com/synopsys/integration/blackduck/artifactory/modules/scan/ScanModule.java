@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import org.artifactory.repo.RepoPath;
 
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
@@ -50,16 +51,19 @@ public class ScanModule implements Analyzable, Module {
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final ArtifactScanService artifactScanService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final ArtifactoryPAPIService artifactoryPAPIService;
     private final StatusCheckService statusCheckService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
     private final ScanPolicyService scanPolicyService;
 
     public ScanModule(final ScanModuleConfig scanModuleConfig, final RepositoryIdentificationService repositoryIdentificationService, final ArtifactScanService artifactScanService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final StatusCheckService statusCheckService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ScanPolicyService scanPolicyService) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final StatusCheckService statusCheckService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
+        final ScanPolicyService scanPolicyService) {
         this.scanModuleConfig = scanModuleConfig;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactScanService = artifactScanService;
         this.artifactoryPropertyService = artifactoryPropertyService;
+        this.artifactoryPAPIService = artifactoryPAPIService;
         this.statusCheckService = statusCheckService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
         this.scanPolicyService = scanPolicyService;
@@ -92,13 +96,13 @@ public class ScanModule implements Analyzable, Module {
     }
 
     public void deleteScanProperties(final Map<String, List<String>> params) {
-        repositoryIdentificationService.getRepoKeysToScan()
+        scanModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params));
         updateAnalyticsData();
     }
 
     public void deleteScanPropertiesFromFailures(final Map<String, List<String>> params) {
-        final List<RepoPath> repoPathsWithFailures = repositoryIdentificationService.getRepoKeysToScan().stream()
+        final List<RepoPath> repoPathsWithFailures = scanModuleConfig.getRepos().stream()
                                                          .map(repoKey -> artifactoryPropertyService.getAllItemsInRepoWithProperties(repoKey, BlackDuckArtifactoryProperty.SCAN_RESULT))
                                                          .flatMap(List::stream)
                                                          .filter(repoPath -> artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT).equals(Optional.of(Result.FAILURE.toString())))
@@ -109,7 +113,7 @@ public class ScanModule implements Analyzable, Module {
     }
 
     public void deleteScanPropertiesFromOutOfDate(final Map<String, List<String>> params) {
-        final List<RepoPath> repoPathsOutOfDate = repositoryIdentificationService.getRepoKeysToScan().stream()
+        final List<RepoPath> repoPathsOutOfDate = scanModuleConfig.getRepos().stream()
                                                       .map(repoKey -> artifactoryPropertyService.getAllItemsInRepoWithProperties(repoKey, BlackDuckArtifactoryProperty.UPDATE_STATUS))
                                                       .flatMap(List::stream)
                                                       .filter(repoPath -> artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS).equals(Optional.of(UpdateStatus.OUT_OF_DATE.toString())))
@@ -120,13 +124,9 @@ public class ScanModule implements Analyzable, Module {
     }
 
     public void updateDeprecatedProperties() {
-        repositoryIdentificationService.getRepoKeysToScan()
+        scanModuleConfig.getRepos()
             .forEach(artifactoryPropertyService::updateAllBlackDuckPropertiesFromRepoKey);
         updateAnalyticsData();
-    }
-
-    public String getStatusCheckMessage() {
-        return statusCheckService.getStatusMessage();
     }
 
     @Override
@@ -135,8 +135,8 @@ public class ScanModule implements Analyzable, Module {
     }
 
     private void updateAnalyticsData() {
-        final List<String> scanRepositoryKeys = repositoryIdentificationService.getRepoKeysToScan();
+        final List<String> scanRepositoryKeys = scanModuleConfig.getRepos();
         simpleAnalyticsCollector.putMetadata("scan.repo.count", scanRepositoryKeys.size());
-        simpleAnalyticsCollector.putMetadata("scan.artifact.count", repositoryIdentificationService.getArtifactCount(scanRepositoryKeys));
+        simpleAnalyticsCollector.putMetadata("scan.artifact.count", artifactoryPAPIService.getArtifactCount(scanRepositoryKeys));
     }
 }

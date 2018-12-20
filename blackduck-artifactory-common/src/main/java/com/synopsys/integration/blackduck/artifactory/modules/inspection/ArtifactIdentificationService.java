@@ -195,10 +195,9 @@ public class ArtifactIdentificationService {
 
         final RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
         final String packageType = repositoryConfiguration.getPackageType();
-        final Optional<String> patterns = packageTypePatternManager.getPattern(packageType);
+        final Optional<List<String>> patterns = packageTypePatternManager.getPatterns(packageType);
         if (patterns.isPresent()) {
-            final String[] patternsToFind = patterns.get().split(",");
-            final Set<RepoPath> repoPaths = Arrays.stream(patternsToFind)
+            final Set<RepoPath> repoPaths = patterns.get().stream()
                                                 .map(pattern -> searches.artifactsByName(pattern, repoKey))
                                                 .flatMap(List::stream)
                                                 .collect(Collectors.toSet());

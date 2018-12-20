@@ -85,7 +85,7 @@ public class PolicyModule implements Analyzable, Module {
                    .isPresent();
     }
 
-    // TODO: DISABLED: This should aways return false. Add the blackduck.artifactory.policy.metadata.block=false property to blackDuckPlugin.properties
+    // TODO: DISABLED: This should aways return false due to validation. Add the blackduck.artifactory.policy.metadata.block=false property to blackDuckPlugin.properties
     private boolean shouldCancelOnMetadataBlock(final RepoPath repoPath) {
         final boolean missingMetadata = !artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS).isPresent();
         final boolean shouldBlock = policyModuleConfig.isMetadataBlockEnabled();

@@ -111,10 +111,6 @@ public class ModuleManager {
         runMethod(scanModuleConfig, triggerType, scanModule::updateDeprecatedProperties);
     }
 
-    public String getStatusCheckMessage(final TriggerType triggerType) {
-        return runMethod(scanModuleConfig, triggerType, scanModule::getStatusCheckMessage);
-    }
-
     public String getBlackDuckScanCron() {
         return scanModuleConfig.getBlackDuckScanCron();
     }
@@ -148,15 +144,15 @@ public class ModuleManager {
     }
 
     public String getBlackDuckIdentifyArtifactsCron() {
-        return inspectionModuleConfig.getBlackDuckIdentifyArtifactsCron();
+        return inspectionModuleConfig.getIdentifyArtifactsCron();
     }
 
     public String getBlackDuckPopulateMetadataCron() {
-        return inspectionModuleConfig.getBlackDuckPopulateMetadataCron();
+        return inspectionModuleConfig.getPopulateMetadataCron();
     }
 
     public String getBlackDuckUpdateMetadataCron() {
-        return inspectionModuleConfig.getBlackDuckUpdateMetadataCron();
+        return inspectionModuleConfig.getUpdateMetadataCron();
     }
 
     public void handleBeforeDownloadEvent(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {

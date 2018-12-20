@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.codelocation.Result;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatch;
@@ -69,18 +68,16 @@ public class ArtifactScanService {
     private final ScanModuleConfig scanModuleConfig;
     private final HubServerConfig hubServerConfig;
     private final File blackDuckDirectory;
-    private final BlackDuckPropertyManager blackDuckPropertyManager;
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final Repositories repositories;
     private final DateTimeManager dateTimeManager;
 
-    public ArtifactScanService(final ScanModuleConfig scanModuleConfig, final HubServerConfig hubServerConfig, final File blackDuckDirectory, final BlackDuckPropertyManager blackDuckPropertyManager,
-        final RepositoryIdentificationService repositoryIdentificationService, final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories, final DateTimeManager dateTimeManager) {
+    public ArtifactScanService(final ScanModuleConfig scanModuleConfig, final HubServerConfig hubServerConfig, final File blackDuckDirectory, final RepositoryIdentificationService repositoryIdentificationService,
+        final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories, final DateTimeManager dateTimeManager) {
         this.scanModuleConfig = scanModuleConfig;
         this.hubServerConfig = hubServerConfig;
         this.blackDuckDirectory = blackDuckDirectory;
-        this.blackDuckPropertyManager = blackDuckPropertyManager;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.repositories = repositories;
@@ -136,9 +133,9 @@ public class ArtifactScanService {
     }
 
     private ScanBatchOutput scanArtifact(final RepoPath repoPath, final String projectName, final String projectVersionName) throws IntegrationException, IOException {
-        final int scanMemory = Integer.parseInt(blackDuckPropertyManager.getProperty(ScanModuleProperty.MEMORY));
-        final boolean dryRun = Boolean.parseBoolean(blackDuckPropertyManager.getProperty(ScanModuleProperty.DRY_RUN));
-        final boolean useRepoPathAsCodeLocationName = Boolean.parseBoolean(blackDuckPropertyManager.getProperty(ScanModuleProperty.REPO_PATH_CODELOCATION));
+        final int scanMemory = scanModuleConfig.getMemory();
+        final boolean dryRun = scanModuleConfig.getDryRun();
+        final boolean useRepoPathAsCodeLocationName = scanModuleConfig.getRepoPathCodelocation();
         final ScanBatchManager scanBatchManager = ScanBatchManager.createDefaultScanManager(new Slf4jIntLogger(logger), hubServerConfig);
         final ScanBatchBuilder scanJobBuilder = new ScanBatchBuilder()
                                                     .fromHubServerConfig(hubServerConfig)

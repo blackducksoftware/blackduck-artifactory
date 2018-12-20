@@ -25,15 +25,21 @@ package com.synopsys.integration.blackduck.artifactory.modules.analytics;
 
 import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
+import com.synopsys.integration.util.BuilderStatus;
 
 public class AnalyticsModuleConfig extends ModuleConfig {
-    public AnalyticsModuleConfig(final boolean enabled) {
+    public AnalyticsModuleConfig(final Boolean enabled) {
         super(AnalyticsModule.class.getSimpleName(), enabled);
     }
 
     public static AnalyticsModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager) {
-        final boolean enabled = blackDuckPropertyManager.getBooleanProperty(AnalyticsModuleProperty.ENABLED);
+        final Boolean enabled = blackDuckPropertyManager.getBooleanProperty(AnalyticsModuleProperty.ENABLED);
 
         return new AnalyticsModuleConfig(enabled);
+    }
+
+    @Override
+    public void validate(final BuilderStatus builderStatus) {
+        validateBoolean(builderStatus, AnalyticsModuleProperty.ENABLED, isEnabledUnverified());
     }
 }

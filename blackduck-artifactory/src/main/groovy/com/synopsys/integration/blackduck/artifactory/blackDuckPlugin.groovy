@@ -96,7 +96,7 @@ executions {
      * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckTestConfig"
      **/
     blackDuckTestConfig(httpMethod: 'GET') { params ->
-        message = moduleManager.getStatusCheckMessage(TriggerType.REST_REQUEST)
+        message = pluginService.logStatusCheckMessage(TriggerType.REST_REQUEST)
     }
 
     //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////

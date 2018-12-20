@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.Repositories;
-import org.artifactory.repo.RepositoryConfiguration;
 import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
@@ -56,10 +55,6 @@ public class ArtifactoryPropertyService {
         this.repositories = repositories;
         this.searches = searches;
         this.dateTimeManager = dateTimeManager;
-    }
-
-    public RepositoryConfiguration getRepositoryConfiguration(final String repoKey) {
-        return repositories.getRepositoryConfiguration(repoKey);
     }
 
     public boolean hasProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
@@ -103,8 +98,10 @@ public class ArtifactoryPropertyService {
     }
 
     public void deleteProperty(final RepoPath repoPath, final String propertyName) {
-        repositories.deleteProperty(repoPath, propertyName);
-        logger.debug(String.format("Removed property %s from %s", propertyName, repoPath.toPath()));
+        if (repositories.hasProperty(repoPath, propertyName)) {
+            repositories.deleteProperty(repoPath, propertyName);
+            logger.debug(String.format("Removed property %s from %s", propertyName, repoPath.toPath()));
+        }
     }
 
     public void deleteProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {

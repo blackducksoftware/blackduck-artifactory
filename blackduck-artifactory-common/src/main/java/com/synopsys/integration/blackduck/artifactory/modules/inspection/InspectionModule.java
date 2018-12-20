@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,8 +57,7 @@ public class InspectionModule implements Analyzable, Module {
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final MetaDataPopulationService metaDataPopulationService,
-        final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories,
-        final SimpleAnalyticsCollector simpleAnalyticsCollector) {
+        final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories, final SimpleAnalyticsCollector simpleAnalyticsCollector) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactIdentificationService = artifactIdentificationService;
         this.metaDataPopulationService = metaDataPopulationService;
@@ -74,31 +73,31 @@ public class InspectionModule implements Analyzable, Module {
     }
 
     public void identifyArtifacts() {
-        inspectionModuleConfig.getRepoKeys()
+        inspectionModuleConfig.getRepos()
             .forEach(artifactIdentificationService::identifyArtifacts);
         updateAnalytics();
     }
 
     public void populateMetadata() {
-        inspectionModuleConfig.getRepoKeys()
+        inspectionModuleConfig.getRepos()
             .forEach(metaDataPopulationService::populateMetadata);
         updateAnalytics();
     }
 
     public void updateMetadata() {
-        inspectionModuleConfig.getRepoKeys()
+        inspectionModuleConfig.getRepos()
             .forEach(metaDataUpdateService::updateMetadata);
         updateAnalytics();
     }
 
     public void deleteInspectionProperties(final Map<String, List<String>> params) {
-        inspectionModuleConfig.getRepoKeys()
+        inspectionModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params));
         updateAnalytics();
     }
 
     public void updateDeprecatedProperties() {
-        inspectionModuleConfig.getRepoKeys()
+        inspectionModuleConfig.getRepos()
             .forEach(artifactoryPropertyService::updateAllBlackDuckPropertiesFromRepoKey);
         updateAnalytics();
     }
@@ -111,7 +110,7 @@ public class InspectionModule implements Analyzable, Module {
         try {
             final String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType();
 
-            if (inspectionModuleConfig.getRepoKeys().contains(repoKey)) {
+            if (inspectionModuleConfig.getRepos().contains(repoKey)) {
                 final Set<RepoPath> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey);
 
                 if (identifiableArtifacts.contains(repoPath)) {
@@ -134,11 +133,11 @@ public class InspectionModule implements Analyzable, Module {
 
     @Override
     public List<AnalyticsCollector> getAnalyticsCollectors() {
-        return Arrays.asList(simpleAnalyticsCollector);
+        return Collections.singletonList(simpleAnalyticsCollector);
     }
 
     private void updateAnalytics() {
-        final List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepoKeys();
+        final List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepos();
         simpleAnalyticsCollector.putMetadata("cache.repo.count", cacheRepositoryKeys.size());
         simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactIdentificationService.getArtifactCount(cacheRepositoryKeys));
         simpleAnalyticsCollector.putMetadata("cache.package.managers", StringUtils.join(getPackageManagers(cacheRepositoryKeys), "/"));

@@ -23,48 +23,114 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
+import com.synopsys.integration.util.BuilderStatus;
 
 public class InspectionModuleConfig extends ModuleConfig {
-    private final String blackDuckIdentifyArtifactsCron;
-    private final String blackDuckPopulateMetadataCron;
-    private final String blackDuckUpdateMetadataCron;
+    private final String identifyArtifactsCron;
+    private final List<String> patternsRubygems;
+    private final List<String> patternsMaven;
+    private final List<String> patternsGradle;
+    private final List<String> patternsPypi;
+    private final List<String> patternsNuget;
+    private final List<String> patternsNpm;
+    private final String populateMetadataCron;
+    private final List<String> repos;
+    private final String updateMetadataCron;
 
-    private final List<String> repoKeys;
-
-    public InspectionModuleConfig(final boolean enabled, final String blackDuckIdentifyArtifactsCron, final String blackDuckPopulateMetadataCron, final String blackDuckUpdateMetadataCron, final List<String> repoKeys) {
+    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final List<String> patternsRubygems, final List<String> patternsMaven, final List<String> patternsGradle, final List<String> patternsPypi,
+        final List<String> patternsNuget, final List<String> patternsNpm, final String blackDuckPopulateMetadataCron, final String blackDuckUpdateMetadataCron, final List<String> repos) {
         super(InspectionModule.class.getSimpleName(), enabled);
-        this.blackDuckIdentifyArtifactsCron = blackDuckIdentifyArtifactsCron;
-        this.blackDuckPopulateMetadataCron = blackDuckPopulateMetadataCron;
-        this.blackDuckUpdateMetadataCron = blackDuckUpdateMetadataCron;
-        this.repoKeys = repoKeys;
+        this.identifyArtifactsCron = blackDuckIdentifyArtifactsCron;
+        this.patternsRubygems = patternsRubygems;
+        this.patternsMaven = patternsMaven;
+        this.patternsGradle = patternsGradle;
+        this.patternsPypi = patternsPypi;
+        this.patternsNuget = patternsNuget;
+        this.patternsNpm = patternsNpm;
+        this.populateMetadataCron = blackDuckPopulateMetadataCron;
+        this.updateMetadataCron = blackDuckUpdateMetadataCron;
+        this.repos = repos;
     }
 
-    public static InspectionModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager, final List<String> repoKeys) {
-        final boolean enabled = blackDuckPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
+    public static InspectionModuleConfig createFromProperties(final BlackDuckPropertyManager blackDuckPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
+        final Boolean enabled = blackDuckPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
         final String blackDuckIdentifyArtifactsCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON);
+        final List<String> patternsRubygems = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS, blackDuckPropertyManager::getProperty);
+        final List<String> patternsMaven = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN, blackDuckPropertyManager::getProperty);
+        final List<String> patternsGradle = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE, blackDuckPropertyManager::getProperty);
+        final List<String> patternsPypi = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_PYPI, blackDuckPropertyManager::getProperty);
+        final List<String> patternsNuget = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NUGET, blackDuckPropertyManager::getProperty);
+        final List<String> patternsNpm = blackDuckPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NPM, blackDuckPropertyManager::getProperty);
         final String blackDuckPopulateMetadataCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.POPULATE_METADATA_CRON);
         final String blackDuckUpdateMetadataCron = blackDuckPropertyManager.getProperty(InspectionModuleProperty.UPDATE_METADATA_CRON);
+        final List<String> repos = blackDuckPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
+                                       .filter(artifactoryPAPIService::isValidRepository)
+                                       .collect(Collectors.toList());
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, blackDuckPopulateMetadataCron, blackDuckUpdateMetadataCron, repoKeys);
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm, blackDuckPopulateMetadataCron, blackDuckUpdateMetadataCron,
+            repos);
     }
 
-    public String getBlackDuckIdentifyArtifactsCron() {
-        return blackDuckIdentifyArtifactsCron;
+    @Override
+    public void validate(final BuilderStatus builderStatus) {
+        validateBoolean(builderStatus, InspectionModuleProperty.ENABLED, isEnabledUnverified());
+        validateCronExpression(builderStatus, InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON, identifyArtifactsCron);
+        validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
+        validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_MAVEN, patternsMaven);
+        validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_GRADLE, patternsGradle);
+        validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_PYPI, patternsPypi);
+        validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_NUGET, patternsNuget);
+        validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_NPM, patternsNpm);
+        validateCronExpression(builderStatus, InspectionModuleProperty.POPULATE_METADATA_CRON, populateMetadataCron);
+        validateList(builderStatus, InspectionModuleProperty.REPOS, repos,
+            String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
+        validateCronExpression(builderStatus, InspectionModuleProperty.UPDATE_METADATA_CRON, updateMetadataCron);
     }
 
-    public String getBlackDuckPopulateMetadataCron() {
-        return blackDuckPopulateMetadataCron;
+    public String getIdentifyArtifactsCron() {
+        return identifyArtifactsCron;
     }
 
-    public String getBlackDuckUpdateMetadataCron() {
-        return blackDuckUpdateMetadataCron;
+    public String getPopulateMetadataCron() {
+        return populateMetadataCron;
     }
 
-    public List<String> getRepoKeys() {
-        return repoKeys;
+    public String getUpdateMetadataCron() {
+        return updateMetadataCron;
+    }
+
+    public List<String> getRepos() {
+        return repos;
+    }
+
+    public List<String> getPatternsRubygems() {
+        return patternsRubygems;
+    }
+
+    public List<String> getPatternsMaven() {
+        return patternsMaven;
+    }
+
+    public List<String> getPatternsGradle() {
+        return patternsGradle;
+    }
+
+    public List<String> getPatternsPypi() {
+        return patternsPypi;
+    }
+
+    public List<String> getPatternsNuget() {
+        return patternsNuget;
+    }
+
+    public List<String> getPatternsNpm() {
+        return patternsNpm;
     }
 }
