@@ -23,7 +23,17 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules;
 
-public class ModuleConfig {
+import java.time.format.DateTimeParseException;
+import java.util.List;
+
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import com.synopsys.integration.blackduck.artifactory.ConfigurationProperty;
+import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
+import com.synopsys.integration.util.BuilderStatus;
+
+public abstract class ModuleConfig {
     private final String moduleName;
     private final Boolean enabledProperty;
     private boolean enabled;

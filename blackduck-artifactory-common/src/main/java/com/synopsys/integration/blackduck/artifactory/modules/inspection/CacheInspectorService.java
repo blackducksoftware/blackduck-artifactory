@@ -38,9 +38,7 @@ import com.synopsys.integration.util.HostNameHelper;
 public class CacheInspectorService {
     private final ArtifactoryPropertyService artifactoryPropertyService;
 
-    public CacheInspectorService(final BlackDuckPropertyManager blackDuckPropertyManager, final Repositories repositories, final ArtifactoryPropertyService artifactoryPropertyService) {
-        this.repositories = repositories;
-        this.blackDuckPropertyManager = blackDuckPropertyManager;
+    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
     }
 

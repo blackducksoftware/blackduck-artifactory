@@ -112,11 +112,11 @@ public class ModuleManager {
     }
 
     public String getBlackDuckScanCron() {
-        return scanModuleConfig.getBlackDuckScanCron();
+        return scanModuleConfig.getScanCron();
     }
 
     public String getBlackDuckAddPolicyStatusCron() {
-        return scanModuleConfig.getBlackDuckAddPolicyStatusCron();
+        return scanModuleConfig.getAddPolicyStatusCron();
     }
 
     public void updateDeprecatedInspectionProperties(final TriggerType triggerType) {

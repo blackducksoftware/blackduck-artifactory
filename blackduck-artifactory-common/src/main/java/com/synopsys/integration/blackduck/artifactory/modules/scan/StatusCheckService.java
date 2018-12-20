@@ -37,8 +37,8 @@ public class StatusCheckService {
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final DateTimeManager dateTimeManager;
 
-    public StatusCheckService(final ScanModuleConfig scanModuleConfig, final BlackDuckConnectionService blackDuckConnectionService,
-        final RepositoryIdentificationService repositoryIdentificationService, final DateTimeManager dateTimeManager) {
+    public StatusCheckService(final ScanModuleConfig scanModuleConfig, final BlackDuckConnectionService blackDuckConnectionService, final RepositoryIdentificationService repositoryIdentificationService,
+        final DateTimeManager dateTimeManager) {
         this.scanModuleConfig = scanModuleConfig;
         this.blackDuckConnectionService = blackDuckConnectionService;
         this.repositoryIdentificationService = repositoryIdentificationService;

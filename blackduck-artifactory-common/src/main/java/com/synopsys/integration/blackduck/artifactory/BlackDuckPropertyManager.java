@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.BooleanUtils;
@@ -71,11 +72,44 @@ public class BlackDuckPropertyManager {
         return properties;
     }
 
-    public String getProperty(final ConfigurationProperty property) {
-        return properties.getProperty(property.getKey());
+    public String getProperty(final ConfigurationProperty configurationProperty) {
+        return properties.getProperty(configurationProperty.getKey());
     }
 
-    public Boolean getBooleanProperty(final ConfigurationProperty property) {
-        return BooleanUtils.toBoolean(getProperty(property));
+    public String getProperty(final String propertyKey) {
+        return properties.getProperty(propertyKey);
+    }
+
+    public Boolean getBooleanProperty(final ConfigurationProperty configurationProperty) {
+        return getBooleanProperty(configurationProperty.getKey());
+    }
+
+    public Boolean getBooleanProperty(final String propertyKey) {
+        return BooleanUtils.toBooleanObject(getProperty(propertyKey));
+    }
+
+    public Integer getIntegerProperty(final ConfigurationProperty configurationProperty) {
+        return getIntegerProperty(configurationProperty.getKey());
+    }
+
+    public Integer getIntegerProperty(final String propertyKey) {
+        Integer value = null;
+
+        try {
+            value = Integer.valueOf(getProperty(propertyKey));
+        } catch (final NumberFormatException ignored) {
+
+        }
+
+        return value;
+    }
+
+    public <T> List<T> getPropertyAsList(final ConfigurationProperty configurationProperty, final Function<String, T> propertyAccessFunction) {
+        final String property = getProperty(configurationProperty);
+        final String[] propertyValues = property.split(",");
+
+        return Arrays.stream(propertyValues)
+                   .map(propertyAccessFunction)
+                   .collect(Collectors.toList());
     }
 }
