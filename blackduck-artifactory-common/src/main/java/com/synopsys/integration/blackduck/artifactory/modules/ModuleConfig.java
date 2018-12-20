@@ -66,7 +66,7 @@ public abstract class ModuleConfig {
     }
 
     protected void validateDate(final BuilderStatus builderStatus, final ConfigurationProperty property, final String date, final DateTimeManager dateTimeManager) {
-        if (StringUtils.isBlank(date)) {
+        if (StringUtils.isNotBlank(date)) {
             try {
                 dateTimeManager.getDateFromString(date);
             } catch (final DateTimeParseException ignored) {
