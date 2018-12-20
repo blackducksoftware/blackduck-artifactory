@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules;
+package com.synopsys.integration.blackduck.artifactory;
 
 public enum TriggerType {
     BEFORE_DOWNLOAD("download beforeDownload"),

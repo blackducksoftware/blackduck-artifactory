@@ -25,7 +25,6 @@ package com.synopsys.integration.blackduck.artifactory
 
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager
-import com.synopsys.integration.blackduck.artifactory.modules.TriggerType
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo

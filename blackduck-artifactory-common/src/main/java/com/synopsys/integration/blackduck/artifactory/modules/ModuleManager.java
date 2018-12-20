@@ -33,6 +33,8 @@ import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.artifactory.LogUtil;
+import com.synopsys.integration.blackduck.artifactory.TriggerType;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
