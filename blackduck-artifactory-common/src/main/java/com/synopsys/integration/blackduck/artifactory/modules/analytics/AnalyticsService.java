@@ -38,7 +38,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
-import com.synopsys.integration.blackduck.artifactory.PluginConfig;
+import com.synopsys.integration.blackduck.artifactory.DirectoryConfig;
 import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeCallable;
 import com.synopsys.integration.blackduck.service.HubServicesFactory;
 import com.synopsys.integration.log.IntLogger;
@@ -50,14 +50,14 @@ import com.synopsys.integration.phonehome.PhoneHomeService;
 public class AnalyticsService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
-    private final PluginConfig pluginConfig;
+    private final DirectoryConfig directoryConfig;
     private final BlackDuckConnectionService blackDuckConnectionService;
 
     private final PhoneHomeClient phoneHomeClient;
     private final List<AnalyticsCollector> analyticsCollectors = new ArrayList<>();
 
-    public AnalyticsService(final PluginConfig pluginConfig, final BlackDuckConnectionService blackDuckConnectionService, final String googleAnalyticsTrackingId) {
-        this.pluginConfig = pluginConfig;
+    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckConnectionService blackDuckConnectionService, final String googleAnalyticsTrackingId) {
+        this.directoryConfig = directoryConfig;
         this.blackDuckConnectionService = blackDuckConnectionService;
 
         final HttpClientBuilder httpClientBuilder = blackDuckConnectionService.createRestConnection().getClientBuilder();
@@ -95,12 +95,12 @@ public class AnalyticsService {
 
         try {
             String pluginVersion = null;
-            final File versionFile = pluginConfig.getVersionFile();
+            final File versionFile = directoryConfig.getVersionFile();
             if (versionFile != null) {
                 pluginVersion = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
             }
 
-            result = phoneHome(pluginVersion, pluginConfig.getThirdPartyVersion(), metadataMap);
+            result = phoneHome(pluginVersion, directoryConfig.getThirdPartyVersion(), metadataMap);
         } catch (final Exception ignored) {
             // Phone home is not a critical operation
         }

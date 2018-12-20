@@ -384,7 +384,7 @@ private void initialize(final TriggerType triggerType) {
     final File homeDirectory = ctx.artifactoryHome.homeDir
     final File pluginsDirectory = ctx.artifactoryHome.pluginsDir
     final String thirdPartyVersion = ctx?.versionProvider?.running?.versionName?.toString()
-    final PluginConfig pluginConfig = PluginConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
+    final DirectoryConfig pluginConfig = DirectoryConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
 
     pluginService = new PluginService(pluginConfig, repositories, searches)
     moduleManager = pluginService.initializePlugin()

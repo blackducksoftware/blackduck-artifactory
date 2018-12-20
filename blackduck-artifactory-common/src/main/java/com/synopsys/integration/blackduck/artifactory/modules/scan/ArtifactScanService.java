@@ -111,6 +111,7 @@ public class ArtifactScanService {
         }
     }
 
+    // TODO: Don't use repositories. Use ArtifactoryPAPIService
     private FileLayoutInfo getArtifactFromPath(final RepoPath repoPath) {
         final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
 

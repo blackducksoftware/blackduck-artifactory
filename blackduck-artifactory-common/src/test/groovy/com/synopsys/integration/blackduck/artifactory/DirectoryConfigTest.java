@@ -31,8 +31,8 @@ import org.junit.jupiter.api.BeforeEach;
 
 import com.synopsys.integration.blackduck.artifactory.util.FastTest;
 
-public class PluginConfigTest {
-    private PluginConfig pluginConfig;
+public class DirectoryConfigTest {
+    private DirectoryConfig directoryConfig;
 
     @BeforeEach
     void setUp() {
@@ -40,36 +40,36 @@ public class PluginConfigTest {
         final File etcDirectory = new File("etc");
         final File pluginsDirectory = new File("plugins");
 
-        pluginConfig = PluginConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, "1.2.3", "path/to/properties/file");
+        directoryConfig = DirectoryConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, "1.2.3", "path/to/properties/file");
     }
 
     @FastTest
     void getHomeDirectory() {
-        assertEquals(new File("home"), pluginConfig.getHomeDirectory());
+        assertEquals(new File("home"), directoryConfig.getHomeDirectory());
     }
 
     @FastTest
     void getEtcDirectory() {
-        assertEquals(new File("etc"), pluginConfig.getEtcDirectory());
+        assertEquals(new File("etc"), directoryConfig.getEtcDirectory());
     }
 
     @FastTest
     void getPluginsLibDirectory() {
-        assertEquals(new File("plugins", "lib"), pluginConfig.getPluginsLibDirectory());
+        assertEquals(new File("plugins", "lib"), directoryConfig.getPluginsLibDirectory());
     }
 
     @FastTest
     void getVersionFile() {
-        assertEquals(new File(pluginConfig.getPluginsLibDirectory(), "version.txt"), pluginConfig.getVersionFile());
+        assertEquals(new File(directoryConfig.getPluginsLibDirectory(), "version.txt"), directoryConfig.getVersionFile());
     }
 
     @FastTest
     void getThirdPartyVersion() {
-        assertEquals("1.2.3", pluginConfig.getThirdPartyVersion());
+        assertEquals("1.2.3", directoryConfig.getThirdPartyVersion());
     }
 
     @FastTest
     void getPropertiesFilePathOverride() {
-        assertEquals("path/to/properties/file", pluginConfig.getPropertiesFilePathOverride());
+        assertEquals("path/to/properties/file", directoryConfig.getPropertiesFilePathOverride());
     }
 }

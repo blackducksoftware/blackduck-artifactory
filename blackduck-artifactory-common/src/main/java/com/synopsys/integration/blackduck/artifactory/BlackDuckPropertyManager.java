@@ -40,7 +40,7 @@ import org.apache.commons.lang3.StringUtils;
  * Should only be consumed by configs with validation
  */
 public class BlackDuckPropertyManager {
-    final Properties properties;
+    private final Properties properties;
 
     public BlackDuckPropertyManager(final Properties properties) {
         this.properties = properties;

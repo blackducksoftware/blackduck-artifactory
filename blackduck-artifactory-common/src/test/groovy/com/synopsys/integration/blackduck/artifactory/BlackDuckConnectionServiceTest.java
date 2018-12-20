@@ -60,7 +60,7 @@ class BlackDuckConnectionServiceTest {
     @BeforeEach
     void setUp() {
         final File versionFile = TestUtil.getResourceAsFile("/version.txt");
-        final PluginConfig pluginConfig = new PluginConfig(null, null, null, versionFile, null, null);
+        final DirectoryConfig directoryConfig = new DirectoryConfig(null, null, null, versionFile, null, null);
         final HubServerConfig hubServerConfig = getHubServerConfigFromEnvVar();
         blackDuckConnectionService = new BlackDuckConnectionService(hubServerConfig);
 

@@ -67,7 +67,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModulePro
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPolicyService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.StatusCheckService;
 import com.synopsys.integration.blackduck.configuration.HubServerConfig;
-import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -76,7 +75,7 @@ import com.synopsys.integration.util.BuilderStatus;
 
 public class PluginService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-    private final PluginConfig pluginConfig;
+    private final DirectoryConfig directoryConfig;
     private final Repositories repositories;
     private final Searches searches;
 
@@ -89,14 +88,14 @@ public class PluginService {
     private BlackDuckConnectionService blackDuckConnectionService;
     private AnalyticsService analyticsService;
     private ModuleRegistry moduleRegistry;
+    private PluginConfig pluginConfig;
 
-    public PluginService(final PluginConfig pluginConfig, final Repositories repositories, final Searches searches) {
-        this.pluginConfig = pluginConfig;
+    public PluginService(final DirectoryConfig directoryConfig, final Repositories repositories, final Searches searches) {
+        this.directoryConfig = directoryConfig;
         this.repositories = repositories;
         this.searches = searches;
     }
 
-    // TODO: Validate the plugin's general properties including blackduck properties
     public ModuleManager initializePlugin() throws IOException, IntegrationException {
         logger.info("initializing blackDuckPlugin...");
 
@@ -104,17 +103,16 @@ public class PluginService {
         final Properties unprocessedProperties = loadPropertiesFromFile(propertiesFile);
         blackDuckPropertyManager = new BlackDuckPropertyManager(unprocessedProperties);
 
-        final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setFromProperties(blackDuckPropertyManager.properties);
-        hubServerConfig = hubServerConfigBuilder.build();
+        pluginConfig = PluginConfig.createFromProperties(blackDuckPropertyManager);
+        hubServerConfig = pluginConfig.getHubServerConfigBuilder().build();
 
         this.blackDuckDirectory = setUpBlackDuckDirectory();
 
-        dateTimeManager = new DateTimeManager(blackDuckPropertyManager.getProperty(BlackDuckProperty.DATE_TIME_PATTERN));
+        dateTimeManager = new DateTimeManager(pluginConfig.getDateTimePattern());
         artifactoryPAPIService = new ArtifactoryPAPIService(repositories, searches);
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager);
         blackDuckConnectionService = new BlackDuckConnectionService(hubServerConfig);
-        analyticsService = new AnalyticsService(pluginConfig, blackDuckConnectionService, GoogleAnalyticsConstants.PRODUCTION_INTEGRATIONS_TRACKING_ID);
+        analyticsService = new AnalyticsService(directoryConfig, blackDuckConnectionService, GoogleAnalyticsConstants.PRODUCTION_INTEGRATIONS_TRACKING_ID);
 
         moduleRegistry = new ModuleRegistry();
         final ScanModule scanModule = createAndRegisterScanModule();
@@ -171,12 +169,21 @@ public class PluginService {
         final String lineSeparator = System.lineSeparator();
         final String blockSeparator = lineSeparator + StringUtils.repeat("-", 100) + lineSeparator;
 
-        final StringBuilder statusCheckMessage = new StringBuilder(blockSeparator + "Status Check");
+        final StringBuilder statusCheckMessage = new StringBuilder(blockSeparator + "Status Check" + blockSeparator);
+
+        statusCheckMessage.append("General Settings:").append(lineSeparator);
+        final BuilderStatus generalBuilderStatus = new BuilderStatus();
+        pluginConfig.validate(generalBuilderStatus);
+        if (generalBuilderStatus.isValid()) {
+            statusCheckMessage.append("General properties validated");
+        } else {
+            statusCheckMessage.append(generalBuilderStatus.getFullErrorMessage(lineSeparator));
+        }
+        statusCheckMessage.append(blockSeparator);
+
         for (final ModuleConfig moduleConfig : moduleRegistry.getAllModuleConfigs()) {
-            statusCheckMessage.append(blockSeparator);
             statusCheckMessage.append(String.format("Module Name: %s", moduleConfig.getModuleName())).append(lineSeparator);
             statusCheckMessage.append(String.format("Enabled: %b", moduleConfig.isEnabled())).append(lineSeparator);
-            statusCheckMessage.append("Validation:").append(lineSeparator);
             final BuilderStatus builderStatus = new BuilderStatus();
             moduleConfig.validate(builderStatus);
 
@@ -185,8 +192,9 @@ public class PluginService {
             } else {
                 statusCheckMessage.append(builderStatus.getFullErrorMessage(lineSeparator));
             }
+
+            statusCheckMessage.append(blockSeparator);
         }
-        statusCheckMessage.append(blockSeparator);
 
         final String finalMessage = statusCheckMessage.toString();
         logger.info(finalMessage);
@@ -274,22 +282,22 @@ public class PluginService {
         final File blackDuckDirectory;
         final String scanBinariesDirectory = blackDuckPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
         if (StringUtils.isNotEmpty(scanBinariesDirectory)) {
-            blackDuckDirectory = new File(pluginConfig.getHomeDirectory(), scanBinariesDirectory);
+            blackDuckDirectory = new File(directoryConfig.getHomeDirectory(), scanBinariesDirectory);
         } else {
-            blackDuckDirectory = new File(pluginConfig.getEtcDirectory(), "blackducksoftware");
+            blackDuckDirectory = new File(directoryConfig.getEtcDirectory(), "blackducksoftware");
         }
 
         return blackDuckDirectory;
     }
 
     private File getPropertiesFile() {
-        final String propertiesFilePathOverride = pluginConfig.getPropertiesFilePathOverride();
+        final String propertiesFilePathOverride = directoryConfig.getPropertiesFilePathOverride();
         final File propertiesFile;
 
         if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
             propertiesFile = new File(propertiesFilePathOverride);
         } else {
-            propertiesFile = new File(pluginConfig.getPluginsLibDirectory(), "blackDuckPlugin.properties");
+            propertiesFile = new File(directoryConfig.getPluginsLibDirectory(), "blackDuckPlugin.properties");
         }
 
         return propertiesFile;
