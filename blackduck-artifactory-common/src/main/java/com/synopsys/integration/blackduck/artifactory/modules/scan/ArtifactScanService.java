@@ -137,7 +137,7 @@ public class ArtifactScanService {
         final int scanMemory = scanModuleConfig.getMemory();
         final boolean dryRun = scanModuleConfig.getDryRun();
         final boolean useRepoPathAsCodeLocationName = scanModuleConfig.getRepoPathCodelocation();
-        final ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(logger), blackDuckServerConfig);
+        final ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(LoggerFactory.getLogger("SignatureScanner")), blackDuckServerConfig);
         final ScanBatchBuilder scanJobBuilder = new ScanBatchBuilder()
                                                     .fromBlackDuckServerConfig(blackDuckServerConfig)
                                                     .scanMemoryInMegabytes(scanMemory)
