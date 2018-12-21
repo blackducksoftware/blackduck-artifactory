@@ -28,7 +28,6 @@ import java.util.Optional;
 
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
@@ -36,9 +35,11 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProper
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataFromNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class MetaDataUpdateService {
-    private final Logger logger = LoggerFactory.getLogger(MetaDataUpdateService.class);
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(MetaDataUpdateService.class));
 
     private final ArtifactMetaDataService artifactMetaDataService;
     private final MetaDataPopulationService metadataPopulationService;
@@ -60,8 +61,8 @@ public class MetaDataUpdateService {
                                                           .isPresent();
 
         if (hasSuccessfulInspectionStatus) {
-            final Optional<Date> lastUpdateProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE);
-            final Optional<Date> lastInspectionProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION);
+            final Optional<Date> lastUpdateProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, logger);
+            final Optional<Date> lastInspectionProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, logger);
 
             try {
                 final Date now = new Date();
@@ -81,12 +82,12 @@ public class MetaDataUpdateService {
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
 
                 final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
-                artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString());
-                artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate);
+                artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString(), logger);
+                artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
             } catch (final IntegrationException e) {
                 logger.error(String.format("The Black Duck %s encountered a problem while updating artifact metadata from BlackDuck notifications in repository [%s]", InspectionModule.class.getSimpleName(), repoKey));
                 logger.debug(e.getMessage(), e);
-                artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString());
+                artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString(), logger);
             }
         }
     }

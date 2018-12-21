@@ -32,16 +32,17 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class RepositoryIdentificationService {
-    private final Logger logger = LoggerFactory.getLogger(RepositoryIdentificationService.class);
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(RepositoryIdentificationService.class));
 
     private final ScanModuleConfig scanModuleConfig;
     private final DateTimeManager dateTimeManager;
@@ -98,7 +99,7 @@ public class RepositoryIdentificationService {
             return false;
         }
 
-        final Optional<String> blackDuckScanTimeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME);
+        final Optional<String> blackDuckScanTimeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME, logger);
         if (!blackDuckScanTimeProperty.isPresent()) {
             return true;
         }

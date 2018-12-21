@@ -83,7 +83,7 @@ public class ScanPolicyService {
                 final ProjectVersionWrapper projectVersionWrapper = projectVersionWrapperOptional.get();
                 final Optional<String> projectVersionUIUrl = projectVersionWrapper.getProjectVersionView().getHref();
 
-                projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl));
+                projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
             } else {
                 logger.debug(
@@ -116,11 +116,11 @@ public class ScanPolicyService {
             logger.debug(String.format("Policy status json for %s is: %s", repoPath.toPath(), versionBomPolicyStatusView.getJson()));
             final PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView);
             final String patchedPolicyStatusMessage = policyStatusDescription.getPolicyStatusMessage();
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, patchedPolicyStatusMessage);
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, versionBomPolicyStatusView.getOverallStatus().toString());
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, patchedPolicyStatusMessage, logger);
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, versionBomPolicyStatusView.getOverallStatus().toString(), logger);
             logger.info(String.format("Updated policy status of %s: %s", repoPath.getName(), repoPath.toPath()));
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString());
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LAST_UPDATE, dateTimeManager.getStringFromDate(new Date()));
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString(), logger);
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LAST_UPDATE, dateTimeManager.getStringFromDate(new Date()), logger);
             success = true;
         } catch (final IntegrationRestException e) {
             logger.warn(String.format("Update policy status failed with status code (%d)", e.getHttpStatusCode()));
@@ -135,17 +135,17 @@ public class ScanPolicyService {
 
     private void failPolicyStatusUpdate(final RepoPath repoPath, final Exception e) {
         logger.debug(String.format("An error occurred while attempting to update policy status on %s", repoPath.getPath()), e);
-        final Optional<String> policyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
-        final Optional<String> overallPolicyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS);
+        final Optional<String> policyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, logger);
+        final Optional<String> overallPolicyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, logger);
         if (policyStatus.isPresent() || overallPolicyStatus.isPresent()) {
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString());
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString(), logger);
         }
     }
 
     // TODO: Replace instances of this with ArtifactoryPropertyService::resolveProjectVersionWrapper once BlackDuckArtifactoryProperty.PROJECT_VERSION_URL has been removed
     private Optional<ProjectVersionWrapper> resolveProjectVersionWrapper(final BlackDuckService hubService, final RepoPath repoPath) {
-        final Optional<String> apiUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL);
-        final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
+        final Optional<String> apiUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL, logger);
+        final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath, logger);
 
         Optional<ProjectVersionWrapper> projectVersionViewWrapper = Optional.empty();
         if (nameVersion.isPresent()) {
@@ -163,8 +163,8 @@ public class ScanPolicyService {
                 final Optional<ProjectView> projectViewOptional = hubService.getResponse(projectVersionView, ProjectVersionView.PROJECT_LINK_RESPONSE);
 
                 if (projectViewOptional.isPresent()) {
-                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectViewOptional.get().getName());
-                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionView.getVersionName());
+                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectViewOptional.get().getName(), logger);
+                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionView.getVersionName(), logger);
 
                     projectVersionViewWrapper = Optional.of(new ProjectVersionWrapper(projectViewOptional.get(), projectVersionView));
                 } else {

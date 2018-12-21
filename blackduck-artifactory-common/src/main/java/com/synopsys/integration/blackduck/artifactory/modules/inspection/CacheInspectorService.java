@@ -29,13 +29,18 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.HostNameHelper;
 
 // TODO: Perhaps this can be generalized and moved into ArtifactoryPropertyService
 public class CacheInspectorService {
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+
     private final ArtifactoryPropertyService artifactoryPropertyService;
 
     public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService) {
@@ -47,32 +52,32 @@ public class CacheInspectorService {
     }
 
     public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status, final String inspectionStatusMessage) {
-        artifactoryPropertyService.setPropertyToDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, new Date());
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name());
+        artifactoryPropertyService.setPropertyToDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, new Date(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name(), logger);
 
         if (StringUtils.isNotBlank(inspectionStatusMessage)) {
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, inspectionStatusMessage);
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, inspectionStatusMessage, logger);
         } else if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE)) {
-            artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE);
+            artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, logger);
         }
     }
 
     public Optional<InspectionStatus> getInspectionStatus(final RepoPath repoPath) {
-        final Optional<String> inspectionStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS);
+        final Optional<String> inspectionStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, logger);
 
         return inspectionStatus.map(InspectionStatus::valueOf);
     }
 
     public String getRepoProjectName(final String repoKey) {
         final RepoPath repoPath = RepoPathFactory.create(repoKey);
-        final Optional<String> projectNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
+        final Optional<String> projectNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, logger);
 
         return projectNameProperty.orElse(repoKey);
     }
 
     public String getRepoProjectVersionName(final String repoKey) {
         final RepoPath repoPath = RepoPathFactory.create(repoKey);
-        final Optional<String> projectVersionNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
+        final Optional<String> projectVersionNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, logger);
 
         return projectVersionNameProperty.orElse(HostNameHelper.getMyHostName("UNKNOWN_HOST"));
     }

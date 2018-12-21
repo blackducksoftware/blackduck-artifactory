@@ -39,7 +39,6 @@ import org.artifactory.repo.RepoPathFactory;
 import org.artifactory.repo.Repositories;
 import org.artifactory.repo.RepositoryConfiguration;
 import org.artifactory.search.Searches;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.SimpleBdioFactory;
@@ -66,11 +65,13 @@ import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.rest.exception.IntegrationRestException;
 import com.synopsys.integration.util.IntegrationEscapeUtil;
 
 public class ArtifactIdentificationService {
-    private final Logger logger = LoggerFactory.getLogger(ArtifactIdentificationService.class);
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class));
 
     private final Repositories repositories; // TODO: Use ArtifactoryPAPIService
     private final Searches searches;
@@ -151,9 +152,9 @@ public class ArtifactIdentificationService {
         final RepoPath repoPath = identifiedArtifact.getRepoPath();
 
         final String blackDuckOriginId = externalId.createBlackDuckOriginId();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId, logger);
         final String blackduckForge = externalId.forge.getName();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);
 
         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
     }
@@ -251,7 +252,7 @@ public class ArtifactIdentificationService {
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
 
         for (final RepoPath repoPath : repoPaths) {
-            final boolean isArtifactPending = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)
+            final boolean isArtifactPending = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, logger)
                                                   .map(InspectionStatus::valueOf)
                                                   .filter(InspectionStatus.PENDING::equals)
                                                   .isPresent();

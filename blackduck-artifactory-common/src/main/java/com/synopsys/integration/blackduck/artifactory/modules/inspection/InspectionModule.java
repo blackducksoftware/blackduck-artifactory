@@ -92,13 +92,13 @@ public class InspectionModule implements Analyzable, Module {
 
     public void deleteInspectionProperties(final Map<String, List<String>> params) {
         inspectionModuleConfig.getRepos()
-            .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params));
+            .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
         updateAnalytics();
     }
 
     public void updateDeprecatedProperties() {
         inspectionModuleConfig.getRepos()
-            .forEach(artifactoryPropertyService::updateAllBlackDuckPropertiesFromRepoKey);
+            .forEach(repoKey -> artifactoryPropertyService.updateAllBlackDuckPropertiesFromRepoKey(repoKey, logger));
         updateAnalytics();
     }
 
@@ -116,7 +116,7 @@ public class InspectionModule implements Analyzable, Module {
                 if (identifiableArtifacts.contains(repoPath)) {
                     final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
                     artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
-                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name());
+                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
                 }
             }
             successfulInspection = true;

@@ -29,6 +29,7 @@ import java.util.Optional;
 
 import org.artifactory.exception.CancelException;
 import org.artifactory.repo.RepoPath;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
@@ -37,8 +38,12 @@ import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class PolicyModule implements Analyzable, Module {
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+
     private final PolicyModuleConfig policyModuleConfig;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final FeatureAnalyticsCollector featureAnalyticsCollector;
@@ -78,7 +83,7 @@ public class PolicyModule implements Analyzable, Module {
     }
 
     private boolean shouldCancelOnPolicyViolation(final RepoPath repoPath) {
-        final Optional<String> policyStatusProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
+        final Optional<String> policyStatusProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, logger);
 
         return policyStatusProperty
                    .filter(policyStatus -> policyStatus.equalsIgnoreCase(PolicySummaryStatusType.IN_VIOLATION.name()))
@@ -87,7 +92,7 @@ public class PolicyModule implements Analyzable, Module {
 
     // TODO: DISABLED: This should aways return false due to validation. Add the blackduck.artifactory.policy.metadata.block=false property to blackDuckPlugin.properties
     private boolean shouldCancelOnMetadataBlock(final RepoPath repoPath) {
-        final boolean missingMetadata = !artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS).isPresent();
+        final boolean missingMetadata = !artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, logger).isPresent();
         final boolean shouldBlock = policyModuleConfig.isMetadataBlockEnabled();
 
         return shouldBlock && missingMetadata;

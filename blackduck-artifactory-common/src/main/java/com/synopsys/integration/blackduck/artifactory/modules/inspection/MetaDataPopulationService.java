@@ -29,7 +29,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
@@ -39,9 +38,11 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaData;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class MetaDataPopulationService {
-    private final Logger logger = LoggerFactory.getLogger(MetaDataPopulationService.class);
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(MetaDataPopulationService.class));
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final CacheInspectorService cacheInspectorService;
@@ -76,11 +77,11 @@ public class MetaDataPopulationService {
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate, final PolicySummaryStatusType policySummaryStatusType, final String componentVersionUrl) {
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getHighSeverityCount()));
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getMediumSeverityCount()));
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getLowSeverityCount()));
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policySummaryStatusType.toString());
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, componentVersionUrl);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getHighSeverityCount()), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getMediumSeverityCount()), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getLowSeverityCount()), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policySummaryStatusType.toString(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, componentVersionUrl, logger);
         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
     }
 
