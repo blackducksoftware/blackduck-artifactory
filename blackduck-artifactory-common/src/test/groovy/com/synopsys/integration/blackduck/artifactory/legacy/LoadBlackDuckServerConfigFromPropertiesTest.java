@@ -29,14 +29,14 @@ import java.util.Properties;
 import org.junit.Test;
 
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
-import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
 
 // TODO: Investigate the usefulness of this test
-public class LoadHubServerConfigFromPropertiesTest {
+public class LoadBlackDuckServerConfigFromPropertiesTest {
     @Test
     public void loadFromProperties() throws IOException {
         final Properties properties = TestUtil.getResourceAsProperties("/blackDuckCacheInspector.properties");
-        final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setFromProperties(properties);
+        final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
+        blackDuckServerConfigBuilder.setFromProperties(properties);
     }
 }
