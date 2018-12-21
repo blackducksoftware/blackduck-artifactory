@@ -24,11 +24,9 @@
 package com.synopsys.integration.blackduck.artifactory;
 
 import java.io.File;
-import java.net.URL;
 
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
@@ -37,68 +35,52 @@ import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponent
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadBatch;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadRunner;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
-import com.synopsys.integration.blackduck.configuration.HubServerConfig;
-import com.synopsys.integration.blackduck.rest.BlackDuckRestConnection;
-import com.synopsys.integration.blackduck.service.HubServicesFactory;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.jsonfield.JsonFieldResolver;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.rest.connection.RestConnection;
 
 // TODO: Remove this class in favor of using blackduck-common directly
 public class BlackDuckConnectionService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
-    private final HubServicesFactory hubServicesFactory;
-    private final HubServerConfig hubServerConfig;
+    private final BlackDuckServicesFactory blackDuckServicesFactory;
 
     private final ProjectService projectService;
 
-    public BlackDuckConnectionService(final HubServerConfig hubServerConfig) {
-        this.hubServerConfig = hubServerConfig;
+    public BlackDuckConnectionService(final BlackDuckServerConfig BlackDuckServerConfig) {
+        this.blackDuckServicesFactory = BlackDuckServerConfig.createBlackDuckServicesFactory(logger);
 
-        final BlackDuckRestConnection restConnection = this.hubServerConfig.createRestConnection(logger);
-        final Gson gson = HubServicesFactory.createDefaultGson();
-        this.hubServicesFactory = new HubServicesFactory(gson, HubServicesFactory.createDefaultJsonParser(), new JsonFieldResolver(gson), restConnection, logger);
-
-        projectService = hubServicesFactory.createProjectService();
-    }
-
-    public RestConnection createRestConnection() {
-        return hubServerConfig.createRestConnection(logger);
+        projectService = blackDuckServicesFactory.createProjectService();
     }
 
     public void importBomFile(final String codeLocationName, final File bdioFile) throws IntegrationException {
         // TODO: Use CodeLocationCreationService in blackduck-common:40
-        final UploadRunner uploadRunner = new UploadRunner(logger, getHubServicesFactory().createHubService());
+        final UploadRunner uploadRunner = new UploadRunner(logger, getBlackDuckServicesFactory().createBlackDuckService());
         final UploadBatch uploadBatch = new UploadBatch();
         uploadBatch.addUploadTarget(UploadTarget.createDefault(codeLocationName, bdioFile));
         uploadRunner.executeUploads(uploadBatch);
     }
 
     // TODO: Take in a ProjectVersionView instead after blackduck-common:40 upgrade. projectService.addComponentToProjectVersion can accept a projectVersionView.
-    public void addComponentToProjectVersion(final ExternalId componentExternalId, final String projectName, final String projectVersionName) throws IntegrationException {
-        projectService.addComponentToProjectVersion(componentExternalId, projectName, projectVersionName);
+    public void addComponentToProjectVersion(final ExternalId componentExternalId, final ProjectVersionView projectVersionView) throws IntegrationException {
+        projectService.addComponentToProjectVersion(componentExternalId, projectVersionView);
     }
 
     // not a good practice, but right now, I do not know a better way, short of searching the entire BOM, to match up a BOM component with a component/version
     // ejk - 2018-01-15
     public UriSingleResponse<VersionBomComponentView> getVersionBomComponentUriResponse(final UriSingleResponse<ProjectVersionView> projectVersionUriResponse, final UriSingleResponse<ComponentVersionView> componentVersionUriResponse) {
-        final String projectVersionUri = projectVersionUriResponse.uri;
-        final String componentVersionUri = componentVersionUriResponse.uri;
+        final String projectVersionUri = projectVersionUriResponse.getUri();
+        final String componentVersionUri = componentVersionUriResponse.getUri();
         final String apiComponentsLinkPrefix = "/api/components/";
         final int apiComponentsStart = componentVersionUri.indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
         final String versionBomComponentUri = projectVersionUri + "/components/" + componentVersionUri.substring(apiComponentsStart);
         return new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
     }
 
-    public HubServicesFactory getHubServicesFactory() {
-        return hubServicesFactory;
-    }
-
-    public URL getBlackDuckUrl() {
-        return hubServerConfig.getBlackDuckUrl();
+    public BlackDuckServicesFactory getBlackDuckServicesFactory() {
+        return blackDuckServicesFactory;
     }
 }

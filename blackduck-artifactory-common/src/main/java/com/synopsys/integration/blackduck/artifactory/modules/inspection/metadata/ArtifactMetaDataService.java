@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +43,9 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService
 import com.synopsys.integration.blackduck.notification.CommonNotificationView;
 import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
 import com.synopsys.integration.blackduck.notification.content.detail.NotificationContentDetailFactory;
+import com.synopsys.integration.blackduck.service.BlackDuckService;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.CommonNotificationService;
-import com.synopsys.integration.blackduck.service.HubService;
-import com.synopsys.integration.blackduck.service.HubServicesFactory;
 import com.synopsys.integration.blackduck.service.NotificationService;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
@@ -55,6 +54,7 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class ArtifactMetaDataService {
+    // TODO: Duplicate loggers
     private final Logger logger = LoggerFactory.getLogger(ArtifactMetaDataService.class);
 
     private final IntLogger intLogger;
@@ -66,21 +66,21 @@ public class ArtifactMetaDataService {
     }
 
     public List<ArtifactMetaData> getArtifactMetadataOfRepository(final String repoKey, final String projectName, final String projectVersionName) throws IntegrationException {
-        final HubServicesFactory hubServicesFactory = blackDuckConnectionService.getHubServicesFactory();
-        final HubService hubService = hubServicesFactory.createHubService();
-        final ProjectService projectDataService = hubServicesFactory.createProjectService();
-        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, hubService, blackDuckConnectionService);
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckConnectionService.getBlackDuckServicesFactory();
+        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+        final ProjectService projectDataService = blackDuckServicesFactory.createProjectService();
+        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, blackDuckService, blackDuckConnectionService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
         final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
 
         if (projectVersionWrapper.isPresent()) {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
-            final List<VersionBomComponentView> versionBomComponentViews = hubService.getAllResponses(projectVersionView, ProjectVersionView.COMPONENTS_LINK_RESPONSE);
+            final List<VersionBomComponentView> versionBomComponentViews = blackDuckService.getAllResponses(projectVersionView, ProjectVersionView.COMPONENTS_LINK_RESPONSE);
             final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseBom(projectVersionView, versionBomComponentViews);
 
             for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
-                populateMetaDataMap(repoKey, idToArtifactMetaData, hubService, projectVersionComponentVersionModel);
+                populateMetaDataMap(repoKey, idToArtifactMetaData, blackDuckService, projectVersionComponentVersionModel);
             }
         }
 
@@ -89,13 +89,12 @@ public class ArtifactMetaDataService {
 
     public Optional<ArtifactMetaDataFromNotifications> getArtifactMetadataFromNotifications(final String repoKey, final String projectName, final String projectVersionName, final Date startDate, final Date endDate)
         throws IntegrationException {
-        final HubServicesFactory hubServicesFactory = blackDuckConnectionService.getHubServicesFactory();
-        final NotificationService notificationService = hubServicesFactory.createNotificationService();
-        final CommonNotificationService commonNotificationService = hubServicesFactory
-                                                                        .createCommonNotificationService(new NotificationContentDetailFactory(HubServicesFactory.createDefaultGson(), HubServicesFactory.createDefaultJsonParser()), false);
-        final ProjectService projectDataService = hubServicesFactory.createProjectService();
-        final HubService hubService = hubServicesFactory.createHubService();
-        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, hubService, blackDuckConnectionService);
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckConnectionService.getBlackDuckServicesFactory();
+        final NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
+        final CommonNotificationService commonNotificationService = blackDuckServicesFactory.createCommonNotificationService(new NotificationContentDetailFactory(BlackDuckServicesFactory.createDefaultGson()), false);
+        final ProjectService projectDataService = blackDuckServicesFactory.createProjectService();
+        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, blackDuckService, blackDuckConnectionService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
         final List<NotificationView> notificationViews = notificationService.getAllNotifications(startDate, endDate);
@@ -110,7 +109,7 @@ public class ArtifactMetaDataService {
             final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseNotifications(notificationDetailResults, projectVersionViews);
 
             for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
-                populateMetaDataMap(repoKey, idToArtifactMetaData, hubService, projectVersionComponentVersionModel);
+                populateMetaDataMap(repoKey, idToArtifactMetaData, blackDuckService, projectVersionComponentVersionModel);
             }
 
             artifactMetaDataFromNotifications = new ArtifactMetaDataFromNotifications(notificationDetailResults.getLatestNotificationCreatedAtDate(), new ArrayList<>(idToArtifactMetaData.values()));
@@ -119,41 +118,42 @@ public class ArtifactMetaDataService {
         return Optional.ofNullable(artifactMetaDataFromNotifications);
     }
 
-    private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final HubService hubService, final CompositeComponentModel compositeComponentModel) {
+    private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final BlackDuckService blackDuckService, final CompositeComponentModel compositeComponentModel) {
         compositeComponentModel.originViews.forEach(originView -> {
-            final String forge = originView.originName;
-            final String originId = originView.originId;
+            final String forge = originView.getOriginName();
+            final String originId = originView.getOriginId();
             if (!idToArtifactMetaData.containsKey(key(forge, originId))) {
                 final ArtifactMetaData artifactMetaData = new ArtifactMetaData();
                 artifactMetaData.repoKey = repoKey;
                 artifactMetaData.forge = forge;
                 artifactMetaData.originId = originId;
-                artifactMetaData.componentVersionLink = compositeComponentModel.componentVersionView._meta.href;
-                artifactMetaData.policyStatus = compositeComponentModel.versionBomComponentView.policyStatus;
+                artifactMetaData.componentVersionLink = compositeComponentModel.componentVersionView.getMeta().getHref();
+                artifactMetaData.policyStatus = compositeComponentModel.versionBomComponentView.getPolicyStatus();
 
-                populateVulnerabilityCounts(artifactMetaData, compositeComponentModel.componentVersionView, hubService);
+                populateVulnerabilityCounts(artifactMetaData, compositeComponentModel.componentVersionView, blackDuckService);
 
                 idToArtifactMetaData.put(key(forge, originId), artifactMetaData);
             }
         });
     }
 
-    private void populateVulnerabilityCounts(final ArtifactMetaData artifactMetaData, final ComponentVersionView componentVersionView, final HubService hubService) {
-        final String vulnerabilitiesLink = hubService.getFirstLinkSafely(componentVersionView, ComponentVersionView.VULNERABILITIES_LINK);
-        if (StringUtils.isNotBlank(vulnerabilitiesLink)) {
+    private void populateVulnerabilityCounts(final ArtifactMetaData artifactMetaData, final ComponentVersionView componentVersionView, final BlackDuckService blackDuckService) {
+        final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
+
+        if (vulnerabilitiesLink.isPresent()) {
             try {
-                final List<VulnerabilityV2View> componentVulnerabilities = hubService.getAllResponses(vulnerabilitiesLink, VulnerabilityV2View.class);
+                final List<VulnerabilityV2View> componentVulnerabilities = blackDuckService.getAllResponses(vulnerabilitiesLink.get(), VulnerabilityV2View.class);
                 componentVulnerabilities.forEach(vulnerability -> {
-                    if ("HIGH".equals(vulnerability.severity)) {
+                    if ("HIGH".equals(vulnerability.getSeverity())) {
                         artifactMetaData.highSeverityCount++;
-                    } else if ("MEDIUM".equals(vulnerability.severity)) {
+                    } else if ("MEDIUM".equals(vulnerability.getSeverity())) {
                         artifactMetaData.mediumSeverityCount++;
-                    } else if ("LOW".equals(vulnerability.severity)) {
+                    } else if ("LOW".equals(vulnerability.getSeverity())) {
                         artifactMetaData.lowSeverityCount++;
                     }
                 });
             } catch (final IntegrationException e) {
-                intLogger.error(String.format("Can't populate vulnerability counts for %s: %s", componentVersionView._meta.href, e.getMessage()));
+                intLogger.error(String.format("Can't populate vulnerability counts for %s: %s", componentVersionView.getMeta().getHref(), e.getMessage()));
             }
         }
     }

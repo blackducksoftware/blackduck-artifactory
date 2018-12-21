@@ -2,24 +2,24 @@ package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import java.time.format.DateTimeFormatter;
 
-import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
 import com.synopsys.integration.util.BuilderStatus;
 
 public class PluginConfig extends ConfigurationValidator {
     private final String dateTimePattern;
-    private final HubServerConfigBuilder hubServerConfigBuilder;
+    private final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder;
 
     public static PluginConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
         final String dateTimePattern = configurationPropertyManager.getProperty(GeneralProperty.DATE_TIME_PATTERN);
-        final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setFromProperties(configurationPropertyManager.getProperties());
+        final BlackDuckServerConfigBuilder BlackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
+        BlackDuckServerConfigBuilder.setFromProperties(configurationPropertyManager.getProperties());
 
-        return new PluginConfig(dateTimePattern, hubServerConfigBuilder);
+        return new PluginConfig(dateTimePattern, BlackDuckServerConfigBuilder);
     }
 
-    public PluginConfig(final String dateTimePattern, final HubServerConfigBuilder hubServerConfigBuilder) {
+    public PluginConfig(final String dateTimePattern, final BlackDuckServerConfigBuilder BlackDuckServerConfigBuilder) {
         this.dateTimePattern = dateTimePattern;
-        this.hubServerConfigBuilder = hubServerConfigBuilder;
+        this.blackDuckServerConfigBuilder = BlackDuckServerConfigBuilder;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class PluginConfig extends ConfigurationValidator {
             }
         }
 
-        final BuilderStatus blackDuckServerConfigBuilderStatus = hubServerConfigBuilder.validateAndGetBuilderStatus();
+        final BuilderStatus blackDuckServerConfigBuilderStatus = blackDuckServerConfigBuilder.validateAndGetBuilderStatus();
         builderStatus.addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
     }
 
@@ -42,7 +42,7 @@ public class PluginConfig extends ConfigurationValidator {
         return dateTimePattern;
     }
 
-    public HubServerConfigBuilder getHubServerConfigBuilder() {
-        return hubServerConfigBuilder;
+    public BlackDuckServerConfigBuilder getBlackDuckServerConfigBuilder() {
+        return blackDuckServerConfigBuilder;
     }
 }

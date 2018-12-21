@@ -38,8 +38,8 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProper
 import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.UpdateStatus;
-import com.synopsys.integration.blackduck.service.HubService;
-import com.synopsys.integration.blackduck.service.HubServicesFactory;
+import com.synopsys.integration.blackduck.service.BlackDuckService;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.PolicyStatusDescription;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
@@ -53,21 +53,21 @@ public class ScanPolicyService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ProjectService projectService;
-    private final HubService hubService;
+    private final BlackDuckService blackDuckService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final DateTimeManager dateTimeManager;
 
-    public ScanPolicyService(final ProjectService projectService, final HubService hubService, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
+    public ScanPolicyService(final ProjectService projectService, final BlackDuckService hubService, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
         this.projectService = projectService;
-        this.hubService = hubService;
+        this.blackDuckService = hubService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.dateTimeManager = dateTimeManager;
     }
 
     public static ScanPolicyService createDefault(final BlackDuckConnectionService blackDuckConnectionService, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
-        final HubServicesFactory hubServicesFactory = blackDuckConnectionService.getHubServicesFactory();
+        final BlackDuckServicesFactory hubServicesFactory = blackDuckConnectionService.getBlackDuckServicesFactory();
         final ProjectService projectService = hubServicesFactory.createProjectService();
-        final HubService hubService = hubServicesFactory.createHubService();
+        final BlackDuckService hubService = hubServicesFactory.createBlackDuckService();
 
         return new ScanPolicyService(projectService, hubService, artifactoryPropertyService, dateTimeManager);
     }
@@ -77,11 +77,14 @@ public class ScanPolicyService {
 
         logger.info(String.format("Attempting to update policy status of %d repoPaths", repoPaths.size()));
         for (final RepoPath repoPath : repoPaths) {
-            final Optional<NameVersion> nameVersion = resolveProjectNameVersion(hubService, repoPath);
+            final Optional<ProjectVersionWrapper> projectVersionWrapperOptional = resolveProjectVersionWrapper(blackDuckService, repoPath);
 
-            if (nameVersion.isPresent()) {
-                updateProjectUIUrl(nameVersion.get().getName(), nameVersion.get().getVersion(), projectService, repoPath);
-                problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, nameVersion.get().getName(), nameVersion.get().getVersion());
+            if (projectVersionWrapperOptional.isPresent()) {
+                final ProjectVersionWrapper projectVersionWrapper = projectVersionWrapperOptional.get();
+                final Optional<String> projectVersionUIUrl = projectVersionWrapper.getProjectVersionView().getHref();
+
+                projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl));
+                problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
             } else {
                 logger.debug(
                     String.format("Properties %s and %s were not found on %s. Cannot update policy",
@@ -98,21 +101,23 @@ public class ScanPolicyService {
         }
     }
 
-    private boolean setPolicyStatusProperties(final RepoPath repoPath, final String projectName, final String projectVersionName) {
+    private boolean setPolicyStatusProperties(final RepoPath repoPath, final ProjectVersionWrapper projectVersionWrapper) {
+        final String projectName = projectVersionWrapper.getProjectView().getName();
+        final String projectVersionName = projectVersionWrapper.getProjectVersionView().getVersionName();
         boolean success = false;
 
         try {
-            final Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = getVersionBomPolicyStatus(projectName, projectVersionName);
+            final Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = projectService.getPolicyStatusForVersion(projectVersionWrapper.getProjectVersionView());
             if (!versionBomPolicyStatusViewOptional.isPresent()) {
                 throw new IntegrationException(String.format("BlackDuck failed to return a policy status. Project '%s' with version '%s' may not exist in BlackDuck", projectName, projectVersionName));
             }
 
             final VersionBomPolicyStatusView versionBomPolicyStatusView = versionBomPolicyStatusViewOptional.get();
-            logger.debug(String.format("Policy status json for %s is: %s", repoPath.toPath(), versionBomPolicyStatusView.json));
+            logger.debug(String.format("Policy status json for %s is: %s", repoPath.toPath(), versionBomPolicyStatusView.getJson()));
             final PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView);
-            final String patchedPolicyStatusMessage = policyStatusDescription.getPolicyStatusMessage().replaceAll("The Hub", "BlackDuck"); // TODO: Remove patch after upgrade to blackduck-common:40
+            final String patchedPolicyStatusMessage = policyStatusDescription.getPolicyStatusMessage();
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, patchedPolicyStatusMessage);
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, versionBomPolicyStatusView.overallStatus.toString());
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, versionBomPolicyStatusView.getOverallStatus().toString());
             logger.info(String.format("Updated policy status of %s: %s", repoPath.getName(), repoPath.toPath()));
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString());
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LAST_UPDATE, dateTimeManager.getStringFromDate(new Date()));
@@ -137,56 +142,40 @@ public class ScanPolicyService {
         }
     }
 
-    private void updateProjectUIUrl(final String projectName, final String projectVersionName, final ProjectService projectService, final RepoPath repoPath) {
-        try {
-            final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
-
-            if (projectVersionWrapper.isPresent()) {
-                final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
-                final String projectVersionUIUrl = hubService.getHref(projectVersionView);
-
-                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, projectVersionUIUrl);
-            }
-
-        } catch (final IntegrationException e) {
-            logger.debug(String.format("Failed to update property %s on %s", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoPath.toPath()), e);
-        }
-    }
-
-    private Optional<VersionBomPolicyStatusView> getVersionBomPolicyStatus(final String projectName, final String projectVersion) throws IntegrationException {
-        final Optional<ProjectVersionWrapper> projectVersionWrapperOptional = projectService.getProjectVersion(projectName, projectVersion);
-
-        VersionBomPolicyStatusView versionBomPolicyStatusView = null;
-        if (projectVersionWrapperOptional.isPresent()) {
-            final ProjectVersionView projectVersionView = projectVersionWrapperOptional.get().getProjectVersionView();
-            versionBomPolicyStatusView = projectService.getPolicyStatusForVersion(projectVersionView);
-        }
-
-        return Optional.ofNullable(versionBomPolicyStatusView);
-    }
-
-    // TODO: Replace instances of this with ArtifactoryPropertyService::resolveProjectNameVersion once BlackDuckArtifactoryProperty.PROJECT_VERSION_URL has been removed
-    private Optional<NameVersion> resolveProjectNameVersion(final HubService hubService, final RepoPath repoPath) {
+    // TODO: Replace instances of this with ArtifactoryPropertyService::resolveProjectVersionWrapper once BlackDuckArtifactoryProperty.PROJECT_VERSION_URL has been removed
+    private Optional<ProjectVersionWrapper> resolveProjectVersionWrapper(final BlackDuckService hubService, final RepoPath repoPath) {
         final Optional<String> apiUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_URL);
-        Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
+        final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
 
-        if (!nameVersion.isPresent() && apiUrl.isPresent()) {
+        Optional<ProjectVersionWrapper> projectVersionViewWrapper = Optional.empty();
+        if (nameVersion.isPresent()) {
+            final String projectName = nameVersion.get().getName();
+            final String projectVersionName = nameVersion.get().getVersion();
+            try {
+                projectVersionViewWrapper = projectService.getProjectVersion(projectName, projectVersionName);
+            } catch (final IntegrationException e) {
+                logger.error(String.format("Failed to find Black Duck project version with name '%s' and version '%s'", projectName, projectVersionName));
+                logger.debug(e.getMessage(), e);
+            }
+        } else if (apiUrl.isPresent()) {
             try {
                 final ProjectVersionView projectVersionView = hubService.getResponse(apiUrl.get(), ProjectVersionView.class);
-                final ProjectView projectView = hubService.getResponse(projectVersionView, ProjectVersionView.PROJECT_LINK_RESPONSE);
-                final NameVersion projectNameVersion = new NameVersion(projectView.name, projectVersionView.versionName);
+                final Optional<ProjectView> projectViewOptional = hubService.getResponse(projectVersionView, ProjectVersionView.PROJECT_LINK_RESPONSE);
 
-                // TODO: Move to a DeprecationService class
-                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectNameVersion.getName());
-                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectNameVersion.getVersion());
+                if (projectViewOptional.isPresent()) {
+                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectViewOptional.get().getName());
+                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionView.getVersionName());
 
-                nameVersion = Optional.of(projectNameVersion);
+                    projectVersionViewWrapper = Optional.of(new ProjectVersionWrapper(projectViewOptional.get(), projectVersionView));
+                } else {
+                    throw new IntegrationException("Failed to get ProjectView from ProjectVersionView");
+                }
             } catch (final IntegrationException e) {
-                logger.error(String.format("Failed to get project name and version from url: %s", apiUrl.get()));
+                logger.error(String.format("Failed to find Black Duck project version from url: %s", apiUrl.get()));
                 logger.debug(e.getMessage(), e);
             }
         }
 
-        return nameVersion;
+        return projectVersionViewWrapper;
     }
 }

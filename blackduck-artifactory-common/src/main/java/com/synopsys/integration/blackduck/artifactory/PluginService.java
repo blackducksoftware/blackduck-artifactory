@@ -67,11 +67,10 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleCon
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPolicyService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.StatusCheckService;
-import com.synopsys.integration.blackduck.configuration.HubServerConfig;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.phonehome.google.analytics.GoogleAnalyticsConstants;
 import com.synopsys.integration.util.BuilderStatus;
 
 public class PluginService {
@@ -81,7 +80,7 @@ public class PluginService {
     private final Searches searches;
 
     private ConfigurationPropertyManager configurationPropertyManager;
-    private HubServerConfig hubServerConfig;
+    private BlackDuckServerConfig blackDuckServerConfig;
     private File blackDuckDirectory;
     private DateTimeManager dateTimeManager;
     private ArtifactoryPropertyService artifactoryPropertyService;
@@ -105,15 +104,15 @@ public class PluginService {
         configurationPropertyManager = new ConfigurationPropertyManager(unprocessedProperties);
 
         pluginConfig = PluginConfig.createFromProperties(configurationPropertyManager);
-        hubServerConfig = pluginConfig.getHubServerConfigBuilder().build();
+        blackDuckServerConfig = pluginConfig.getBlackDuckServerConfigBuilder().build();
 
         this.blackDuckDirectory = setUpBlackDuckDirectory();
 
         dateTimeManager = new DateTimeManager(pluginConfig.getDateTimePattern());
         artifactoryPAPIService = new ArtifactoryPAPIService(repositories, searches);
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager);
-        blackDuckConnectionService = new BlackDuckConnectionService(hubServerConfig);
-        analyticsService = new AnalyticsService(directoryConfig, blackDuckConnectionService, GoogleAnalyticsConstants.PRODUCTION_INTEGRATIONS_TRACKING_ID);
+        blackDuckConnectionService = new BlackDuckConnectionService(blackDuckServerConfig);
+        analyticsService = new AnalyticsService(directoryConfig, blackDuckConnectionService.getBlackDuckServicesFactory());
 
         moduleRegistry = new ModuleRegistry();
         final ScanModule scanModule = createAndRegisterScanModule();
@@ -208,7 +207,7 @@ public class PluginService {
         final File cliDirectory = ScanModule.setUpCliDuckDirectory(blackDuckDirectory);
         final ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
         final RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
-        final ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, hubServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, repositories, dateTimeManager);
+        final ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, repositories, dateTimeManager);
         final StatusCheckService statusCheckService = new StatusCheckService(scanModuleConfig, blackDuckConnectionService, repositoryIdentificationService, dateTimeManager);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckConnectionService, artifactoryPropertyService, dateTimeManager);

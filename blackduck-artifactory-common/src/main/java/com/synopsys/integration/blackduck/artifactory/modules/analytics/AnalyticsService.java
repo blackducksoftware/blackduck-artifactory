@@ -27,41 +27,28 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
-import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeCallable;
-import com.synopsys.integration.blackduck.service.HubServicesFactory;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.phonehome.PhoneHomeClient;
-import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
-import com.synopsys.integration.phonehome.PhoneHomeService;
+import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeHelper;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
+import com.synopsys.integration.phonehome.PhoneHomeResponse;
 
 public class AnalyticsService {
-    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-
     private final DirectoryConfig directoryConfig;
-    private final BlackDuckConnectionService blackDuckConnectionService;
+    private final BlackDuckServicesFactory blackDuckServicesFactory;
 
-    private final PhoneHomeClient phoneHomeClient;
     private final List<AnalyticsCollector> analyticsCollectors = new ArrayList<>();
 
-    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckConnectionService blackDuckConnectionService, final String googleAnalyticsTrackingId) {
+    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckServicesFactory blackDuckServicesFactory) {
         this.directoryConfig = directoryConfig;
-        this.blackDuckConnectionService = blackDuckConnectionService;
-
-        final HttpClientBuilder httpClientBuilder = blackDuckConnectionService.createRestConnection().getClientBuilder();
-        phoneHomeClient = new PhoneHomeClient(googleAnalyticsTrackingId, logger, httpClientBuilder, HubServicesFactory.createDefaultGson());
+        this.blackDuckServicesFactory = blackDuckServicesFactory;
     }
 
     public void registerAnalyzable(final Analyzable analyzable) {
@@ -73,7 +60,7 @@ public class AnalyticsService {
      * Submits a payload to phone home with data from all the collectors ({@link AnalyticsCollector})
      * This should be used infrequently such as once a day due to quota
      */
-    public boolean submitAnalytics() {
+    public Boolean submitAnalytics() {
         // Flatten the metadata maps from all of the collectors
         final Map<String, String> metadataMap = analyticsCollectors.stream()
                                                     .map(AnalyticsCollector::getMetadataMap)
@@ -81,7 +68,7 @@ public class AnalyticsService {
                                                     .flatMap(Collection::stream)
                                                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        final boolean phoneHomeSuccess = phoneHome(metadataMap);
+        final Boolean phoneHomeSuccess = phoneHome(metadataMap);
         if (phoneHomeSuccess) {
             analyticsCollectors.forEach(AnalyticsCollector::clear);
         }
@@ -89,53 +76,28 @@ public class AnalyticsService {
         return phoneHomeSuccess;
     }
 
-    public Boolean phoneHome(final Map<String, String> metadataMap) {
-        Boolean result = Boolean.FALSE;
-
+    private Boolean phoneHome(final Map<String, String> metadataMap) {
         try {
-            String pluginVersion = null;
+            String pluginVersion = "UNKNOWN_VERSION";
             final File versionFile = directoryConfig.getVersionFile();
             if (versionFile != null) {
                 pluginVersion = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
             }
 
-            result = phoneHome(pluginVersion, directoryConfig.getThirdPartyVersion(), metadataMap);
+            String thirdPartyVersion = directoryConfig.getThirdPartyVersion();
+            if (thirdPartyVersion == null) {
+                thirdPartyVersion = "UNKNOWN_VERSION";
+            }
+
+            final Map<String, String> metadata = new HashMap<>(metadataMap);
+            metadata.put("third.party.version", thirdPartyVersion);
+            final BlackDuckPhoneHomeHelper phoneHomeHelper = BlackDuckPhoneHomeHelper.createPhoneHomeHelper(blackDuckServicesFactory);
+            final PhoneHomeResponse phoneHomeResponse = phoneHomeHelper.handlePhoneHome("blackduck-artifactory", pluginVersion, metadata);
+
+            return phoneHomeResponse.getImmediateResult();
         } catch (final Exception ignored) {
             // Phone home is not a critical operation
+            return Boolean.FALSE;
         }
-
-        return result;
-    }
-
-    private Boolean phoneHome(final String reportedPluginVersion, final String reportedThirdPartyVersion, final Map<String, String> metadataMap) {
-        final HubServicesFactory hubServicesFactory = blackDuckConnectionService.getHubServicesFactory();
-        String pluginVersion = reportedPluginVersion;
-        String thirdPartyVersion = reportedThirdPartyVersion;
-
-        if (pluginVersion == null) {
-            pluginVersion = "UNKNOWN_VERSION";
-        }
-
-        if (thirdPartyVersion == null) {
-            thirdPartyVersion = "UNKNOWN_VERSION";
-        }
-
-        final PhoneHomeService phoneHomeService = hubServicesFactory.createPhoneHomeService(Executors.newSingleThreadExecutor());
-        final PhoneHomeRequestBody.Builder phoneHomeRequestBodyBuilder = new PhoneHomeRequestBody.Builder();
-        phoneHomeRequestBodyBuilder.addToMetaData("third.party.version", thirdPartyVersion);
-        phoneHomeRequestBodyBuilder.addAllToMetaData(metadataMap);
-        final BlackDuckPhoneHomeCallable blackDuckPhoneHomeCallable = new BlackDuckPhoneHomeCallable(
-            logger,
-            phoneHomeClient,
-            blackDuckConnectionService.getBlackDuckUrl(),
-            "blackduck-artifactory",
-            pluginVersion,
-            hubServicesFactory.getEnvironmentVariables(),
-            hubServicesFactory.createHubService(),
-            hubServicesFactory.createHubRegistrationService(),
-            phoneHomeRequestBodyBuilder
-        );
-
-        return phoneHomeService.phoneHome(blackDuckPhoneHomeCallable);
     }
 }

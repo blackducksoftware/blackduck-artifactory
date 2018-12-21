@@ -39,27 +39,27 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService
 import com.synopsys.integration.blackduck.notification.NotificationDetailResult;
 import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
 import com.synopsys.integration.blackduck.notification.content.detail.NotificationContentDetail;
-import com.synopsys.integration.blackduck.service.HubService;
+import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 
 public class CompositeComponentManager {
     private final IntLogger intLogger;
-    private final HubService hubService;
+    private final BlackDuckService blackDuckService;
     private final BlackDuckConnectionService blackDuckConnectionService;
 
     private Set<String> projectVersionUrisToLookFor;
 
-    public CompositeComponentManager(final IntLogger intLogger, final HubService hubService, final BlackDuckConnectionService blackDuckConnectionService) {
+    public CompositeComponentManager(final IntLogger intLogger, final BlackDuckService blackDuckService, final BlackDuckConnectionService blackDuckConnectionService) {
         this.intLogger = intLogger;
-        this.hubService = hubService;
+        this.blackDuckService = blackDuckService;
         this.blackDuckConnectionService = blackDuckConnectionService;
         projectVersionUrisToLookFor = new HashSet<>();
     }
 
     public List<CompositeComponentModel> parseBom(final ProjectVersionView projectVersionView, final List<VersionBomComponentView> versionBomComponentViews) {
         projectVersionUrisToLookFor = new HashSet<>();
-        projectVersionUrisToLookFor.add(projectVersionView._meta.href);
+        projectVersionUrisToLookFor.add(projectVersionView.getMeta().getHref());
 
         return versionBomComponentViews
                    .stream()
@@ -70,7 +70,7 @@ public class CompositeComponentManager {
     public List<CompositeComponentModel> parseNotifications(final NotificationDetailResults notificationDetailResults, final List<ProjectVersionView> projectVersionViewsToLookFor) {
         projectVersionUrisToLookFor = projectVersionViewsToLookFor
                                           .stream()
-                                          .map(it -> it._meta.href)
+                                          .map(it -> it.getMeta().getHref())
                                           .collect(Collectors.toSet());
 
         return notificationDetailResults.getResults()
@@ -96,7 +96,7 @@ public class CompositeComponentManager {
 
         if (optionalProjectVersionUriResponse.isPresent()) {
             final UriSingleResponse<ProjectVersionView> projectVersionUriResponse = optionalProjectVersionUriResponse.get();
-            relevant = projectVersionUrisToLookFor.contains(projectVersionUriResponse.uri);
+            relevant = projectVersionUrisToLookFor.contains(projectVersionUriResponse.getUri());
         }
         return relevant;
     }
@@ -126,7 +126,7 @@ public class CompositeComponentManager {
 
     private CompositeComponentModel generateCompositeComponentModel(final VersionBomComponentView versionBomComponentView) {
         CompositeComponentModel compositeComponentModel = new CompositeComponentModel();
-        final UriSingleResponse<ComponentVersionView> componentVersionViewUriResponse = new UriSingleResponse<>(versionBomComponentView.componentVersion, ComponentVersionView.class);
+        final UriSingleResponse<ComponentVersionView> componentVersionViewUriResponse = new UriSingleResponse<>(versionBomComponentView.getComponentVersion(), ComponentVersionView.class);
 
         try {
             compositeComponentModel = createCompositeComponentModel(componentVersionViewUriResponse, versionBomComponentView);
@@ -139,14 +139,14 @@ public class CompositeComponentManager {
 
     private CompositeComponentModel createCompositeComponentModel(final UriSingleResponse<ComponentVersionView> componentVersionUriResponse, final UriSingleResponse<VersionBomComponentView> versionBomComponentUriResponse)
         throws IntegrationException {
-        final VersionBomComponentView versionBomComponentView = hubService.getResponse(versionBomComponentUriResponse);
+        final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentUriResponse);
 
         return createCompositeComponentModel(componentVersionUriResponse, versionBomComponentView);
     }
 
     private CompositeComponentModel createCompositeComponentModel(final UriSingleResponse<ComponentVersionView> componentVersionUriResponse, final VersionBomComponentView versionBomComponentView) throws IntegrationException {
-        final ComponentVersionView componentVersionView = hubService.getResponse(componentVersionUriResponse);
-        final List<OriginView> originViews = hubService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
+        final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionUriResponse);
+        final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
 
         return new CompositeComponentModel(versionBomComponentView, componentVersionView, originViews);
     }

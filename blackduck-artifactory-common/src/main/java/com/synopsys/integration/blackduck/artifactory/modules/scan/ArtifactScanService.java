@@ -49,11 +49,11 @@ import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.codelocation.Result;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatch;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchBuilder;
-import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchManager;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchOutput;
+import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchRunner;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanCommandOutput;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanTarget;
-import com.synopsys.integration.blackduck.configuration.HubServerConfig;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuess;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuesser;
 import com.synopsys.integration.exception.IntegrationException;
@@ -66,17 +66,17 @@ public class ArtifactScanService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final ScanModuleConfig scanModuleConfig;
-    private final HubServerConfig hubServerConfig;
+    private final BlackDuckServerConfig blackDuckServerConfig;
     private final File blackDuckDirectory;
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final Repositories repositories;
     private final DateTimeManager dateTimeManager;
 
-    public ArtifactScanService(final ScanModuleConfig scanModuleConfig, final HubServerConfig hubServerConfig, final File blackDuckDirectory, final RepositoryIdentificationService repositoryIdentificationService,
+    public ArtifactScanService(final ScanModuleConfig scanModuleConfig, final BlackDuckServerConfig blackDuckServerConfig, final File blackDuckDirectory, final RepositoryIdentificationService repositoryIdentificationService,
         final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories, final DateTimeManager dateTimeManager) {
         this.scanModuleConfig = scanModuleConfig;
-        this.hubServerConfig = hubServerConfig;
+        this.blackDuckServerConfig = blackDuckServerConfig;
         this.blackDuckDirectory = blackDuckDirectory;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactoryPropertyService = artifactoryPropertyService;
@@ -137,9 +137,9 @@ public class ArtifactScanService {
         final int scanMemory = scanModuleConfig.getMemory();
         final boolean dryRun = scanModuleConfig.getDryRun();
         final boolean useRepoPathAsCodeLocationName = scanModuleConfig.getRepoPathCodelocation();
-        final ScanBatchManager scanBatchManager = ScanBatchManager.createDefaultScanManager(new Slf4jIntLogger(logger), hubServerConfig);
+        final ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(logger), blackDuckServerConfig);
         final ScanBatchBuilder scanJobBuilder = new ScanBatchBuilder()
-                                                    .fromHubServerConfig(hubServerConfig)
+                                                    .fromBlackDuckServerConfig(blackDuckServerConfig)
                                                     .scanMemoryInMegabytes(scanMemory)
                                                     .dryRun(dryRun)
                                                     .installDirectory(scanModuleConfig.getCliDirectory())
@@ -161,7 +161,7 @@ public class ArtifactScanService {
         final ScanBatch scanBatch = scanJobBuilder.build();
         logger.info(String.format("Performing scan on '%s'", scanTargetPath));
 
-        return scanBatchManager.executeScans(scanBatch);
+        return scanBatchRunner.executeScans(scanBatch);
     }
 
     private NameVersion determineProjectNameVersion(final RepoPath repoPath) {
@@ -211,7 +211,7 @@ public class ArtifactScanService {
     }
 
     private Optional<ScanCommandOutput> getFirstScanCommandOutput(final ScanBatchOutput scanBatchOutput) {
-        final List<ScanCommandOutput> scanCommandOutputs = scanBatchOutput.getScanCommandOutputs();
+        final List<ScanCommandOutput> scanCommandOutputs = scanBatchOutput.getOutputs();
         ScanCommandOutput scanCommandOutput = null;
         if (scanCommandOutputs != null && !scanCommandOutputs.isEmpty()) {
             scanCommandOutput = scanCommandOutputs.get(0);
