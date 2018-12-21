@@ -2,10 +2,17 @@ package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import java.time.format.DateTimeFormatter;
 
+import org.slf4j.LoggerFactory;
+
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.BuilderStatus;
 
 public class PluginConfig extends ConfigurationValidator {
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+
     private final String dateTimePattern;
     private final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder;
 
@@ -36,6 +43,15 @@ public class PluginConfig extends ConfigurationValidator {
 
         final BuilderStatus blackDuckServerConfigBuilderStatus = blackDuckServerConfigBuilder.validateAndGetBuilderStatus();
         builderStatus.addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
+
+        if (blackDuckServerConfigBuilderStatus.isValid()) {
+            final BlackDuckServerConfig blackDuckServerConfig = blackDuckServerConfigBuilder.build();
+            final boolean canConnect = blackDuckServerConfig.canConnect(logger); // TODO: Improvements for this in blackduck-common:40.1.0
+
+            if (!canConnect) {
+                builderStatus.addErrorMessage("Failed to connect to Black Duck with provided configuration");
+            }
+        }
     }
 
     public String getDateTimePattern() {

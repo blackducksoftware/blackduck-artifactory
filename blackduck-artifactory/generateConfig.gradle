@@ -8,16 +8,16 @@ buildscript {
     dependencies {
         classpath 'org.apache.commons:commons-configuration2:2.2'
         classpath 'commons-beanutils:commons-beanutils:1.9.3'
-        classpath 'joda-time:joda-time:2.10'
     }
 }
 
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.fluent.Configurations
 import org.apache.commons.configuration2.io.FileHandler
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
-import org.joda.time.format.DateTimeFormat
+
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 final pluginPropertiesFileName = 'blackDuckPlugin.properties'
 final String dateTimePatternKey = 'blackduck.date.time.pattern'
@@ -25,13 +25,15 @@ final String scanCutoffDateKey = 'blackduck.artifactory.scan.cutoff.date'
 
 task generateConfig {
     doLast {
-        def configs = new Configurations()
-        def pluginConfigFile = new File("${projectDir}/src/main/resources/$pluginPropertiesFileName")
-        PropertiesConfiguration propertiesConfiguration = configs.properties(pluginConfigFile)
-        def dateTimePattern = propertiesConfiguration.getString(dateTimePatternKey)
-        String nowString = DateTime.now().toLocalDate().toDateTimeAtStartOfDay(DateTimeZone.UTC).minusYears(1).toString(DateTimeFormat.forPattern(dateTimePattern).withZoneUTC())
+        final Configurations configurations = new Configurations()
+        final File pluginConfigFile = new File("${projectDir}/src/main/resources/$pluginPropertiesFileName")
+        final PropertiesConfiguration propertiesConfiguration = configurations.properties(pluginConfigFile)
+        final String dateTimePattern = propertiesConfiguration.getString(dateTimePatternKey)
+        final String nowString = Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(dateTimePattern))
+
         propertiesConfiguration.setProperty(scanCutoffDateKey, nowString)
-        FileHandler handler = new FileHandler(propertiesConfiguration)
+        
+        final FileHandler handler = new FileHandler(propertiesConfiguration)
         handler.save(new File("${projectDir}/build/configs/$pluginPropertiesFileName"))
     }
 }

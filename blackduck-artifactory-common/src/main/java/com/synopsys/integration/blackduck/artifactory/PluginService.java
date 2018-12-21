@@ -173,7 +173,8 @@ public class PluginService {
         final BuilderStatus generalBuilderStatus = new BuilderStatus();
         pluginConfig.validate(generalBuilderStatus);
         if (generalBuilderStatus.isValid()) {
-            statusCheckMessage.append("General properties validated");
+            statusCheckMessage.append("General properties validated").append(lineSeparator);
+            statusCheckMessage.append("Connection to BlackDuck successful");
         } else {
             statusCheckMessage.append(generalBuilderStatus.getFullErrorMessage(lineSeparator));
         }
