@@ -35,7 +35,6 @@ import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionVie
 import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
 import com.synopsys.integration.blackduck.notification.NotificationDetailResult;
 import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
 import com.synopsys.integration.blackduck.notification.content.detail.NotificationContentDetail;
@@ -46,14 +45,12 @@ import com.synopsys.integration.log.IntLogger;
 public class CompositeComponentManager {
     private final IntLogger intLogger;
     private final BlackDuckService blackDuckService;
-    private final BlackDuckConnectionService blackDuckConnectionService;
 
     private Set<String> projectVersionUrisToLookFor;
 
-    public CompositeComponentManager(final IntLogger intLogger, final BlackDuckService blackDuckService, final BlackDuckConnectionService blackDuckConnectionService) {
+    public CompositeComponentManager(final IntLogger intLogger, final BlackDuckService blackDuckService) {
         this.intLogger = intLogger;
         this.blackDuckService = blackDuckService;
-        this.blackDuckConnectionService = blackDuckConnectionService;
         projectVersionUrisToLookFor = new HashSet<>();
     }
 
@@ -105,15 +102,13 @@ public class CompositeComponentManager {
         CompositeComponentModel compositeComponentModel = null;
         try {
             final Optional<UriSingleResponse<ComponentVersionView>> optionalComponentVersionUriResponse = notificationContentDetail.getComponentVersion();
-            final Optional<UriSingleResponse<ProjectVersionView>> optionalProjectVersionUriResponse = notificationContentDetail.getProjectVersion();
+            final Optional<UriSingleResponse<VersionBomComponentView>> optionalVersionBomComponentViewUriSingleResponse = notificationContentDetail.getBomComponent();
 
-            if (optionalProjectVersionUriResponse.isPresent()) {
-                if (optionalComponentVersionUriResponse.isPresent()) {
-                    final UriSingleResponse<ComponentVersionView> componentVersionUriResponse = optionalComponentVersionUriResponse.get();
-                    final UriSingleResponse<VersionBomComponentView> versionBomComponentUriResponse = blackDuckConnectionService.getVersionBomComponentUriResponse(optionalProjectVersionUriResponse.get(), componentVersionUriResponse);
+            if (optionalComponentVersionUriResponse.isPresent() && optionalVersionBomComponentViewUriSingleResponse.isPresent()) {
+                final UriSingleResponse<ComponentVersionView> componentVersionViewUriResponse = optionalComponentVersionUriResponse.get();
+                final UriSingleResponse<VersionBomComponentView> versionBomComponentUriResponse = optionalVersionBomComponentViewUriSingleResponse.get();
 
-                    compositeComponentModel = createCompositeComponentModel(componentVersionUriResponse, versionBomComponentUriResponse);
-                }
+                compositeComponentModel = createCompositeComponentModel(componentVersionViewUriResponse, versionBomComponentUriResponse);
             } else {
                 throw new IntegrationException("ProjectVersion data was missing from notification");
             }

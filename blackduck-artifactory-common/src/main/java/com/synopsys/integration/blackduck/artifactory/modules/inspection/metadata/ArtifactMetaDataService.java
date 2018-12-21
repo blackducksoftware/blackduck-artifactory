@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
@@ -39,7 +38,7 @@ import com.synopsys.integration.blackduck.api.generated.view.NotificationView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityV2View;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.notification.CommonNotificationView;
 import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
 import com.synopsys.integration.blackduck.notification.content.detail.NotificationContentDetailFactory;
@@ -54,22 +53,24 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class ArtifactMetaDataService {
-    // TODO: Duplicate loggers
-    private final Logger logger = LoggerFactory.getLogger(ArtifactMetaDataService.class);
+    private static final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactMetaDataService.class));
 
-    private final IntLogger intLogger;
-    private final BlackDuckConnectionService blackDuckConnectionService;
+    private final BlackDuckServicesFactory blackDuckServicesFactory;
 
-    public ArtifactMetaDataService(final BlackDuckConnectionService blackDuckConnectionService) {
-        this.intLogger = new Slf4jIntLogger(logger);
-        this.blackDuckConnectionService = blackDuckConnectionService;
+    public static ArtifactMetaDataService createDefault(final BlackDuckServerConfig blackDuckServerConfig) {
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+
+        return new ArtifactMetaDataService(blackDuckServicesFactory);
+    }
+
+    public ArtifactMetaDataService(final BlackDuckServicesFactory blackDuckServicesFactory) {
+        this.blackDuckServicesFactory = blackDuckServicesFactory;
     }
 
     public List<ArtifactMetaData> getArtifactMetadataOfRepository(final String repoKey, final String projectName, final String projectVersionName) throws IntegrationException {
-        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckConnectionService.getBlackDuckServicesFactory();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
         final ProjectService projectDataService = blackDuckServicesFactory.createProjectService();
-        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, blackDuckService, blackDuckConnectionService);
+        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(logger, blackDuckService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
         final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
@@ -89,12 +90,11 @@ public class ArtifactMetaDataService {
 
     public Optional<ArtifactMetaDataFromNotifications> getArtifactMetadataFromNotifications(final String repoKey, final String projectName, final String projectVersionName, final Date startDate, final Date endDate)
         throws IntegrationException {
-        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckConnectionService.getBlackDuckServicesFactory();
         final NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
         final CommonNotificationService commonNotificationService = blackDuckServicesFactory.createCommonNotificationService(new NotificationContentDetailFactory(BlackDuckServicesFactory.createDefaultGson()), false);
         final ProjectService projectDataService = blackDuckServicesFactory.createProjectService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
-        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(intLogger, blackDuckService, blackDuckConnectionService);
+        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(logger, blackDuckService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
         final List<NotificationView> notificationViews = notificationService.getAllNotifications(startDate, endDate);
@@ -153,7 +153,7 @@ public class ArtifactMetaDataService {
                     }
                 });
             } catch (final IntegrationException e) {
-                intLogger.error(String.format("Can't populate vulnerability counts for %s: %s", componentVersionView.getMeta().getHref(), e.getMessage()));
+                logger.error(String.format("Can't populate vulnerability counts for %s: %s", componentVersionView.getMeta().getHref(), e.getMessage()));
             }
         }
     }

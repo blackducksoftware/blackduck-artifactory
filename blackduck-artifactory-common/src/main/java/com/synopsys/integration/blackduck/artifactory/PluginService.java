@@ -66,8 +66,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPolicyService;
-import com.synopsys.integration.blackduck.artifactory.modules.scan.StatusCheckService;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -85,7 +85,6 @@ public class PluginService {
     private DateTimeManager dateTimeManager;
     private ArtifactoryPropertyService artifactoryPropertyService;
     private ArtifactoryPAPIService artifactoryPAPIService;
-    private BlackDuckConnectionService blackDuckConnectionService;
     private AnalyticsService analyticsService;
     private ModuleRegistry moduleRegistry;
     private PluginConfig pluginConfig;
@@ -111,8 +110,7 @@ public class PluginService {
         dateTimeManager = new DateTimeManager(pluginConfig.getDateTimePattern());
         artifactoryPAPIService = new ArtifactoryPAPIService(repositories, searches);
         artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager);
-        blackDuckConnectionService = new BlackDuckConnectionService(blackDuckServerConfig);
-        analyticsService = new AnalyticsService(directoryConfig, blackDuckConnectionService.getBlackDuckServicesFactory());
+        analyticsService = new AnalyticsService(directoryConfig, blackDuckServerConfig);
 
         moduleRegistry = new ModuleRegistry();
         final ScanModule scanModule = createAndRegisterScanModule();
@@ -208,11 +206,9 @@ public class PluginService {
         final ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
         final RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
         final ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, repositories, dateTimeManager);
-        final StatusCheckService statusCheckService = new StatusCheckService(scanModuleConfig, blackDuckConnectionService, repositoryIdentificationService, dateTimeManager);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
-        final ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckConnectionService, artifactoryPropertyService, dateTimeManager);
-        final ScanModule scanModule = new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPropertyService, artifactoryPAPIService, statusCheckService, simpleAnalyticsCollector,
-            scanPolicyService);
+        final ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckServerConfig, artifactoryPropertyService, dateTimeManager);
+        final ScanModule scanModule = new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPropertyService, artifactoryPAPIService, simpleAnalyticsCollector, scanPolicyService);
 
         moduleRegistry.registerModule(scanModule);
         analyticsService.registerAnalyzable(scanModule);
@@ -226,10 +222,11 @@ public class PluginService {
         final PackageTypePatternManager packageTypePatternManager = PackageTypePatternManager.fromInspectionModuleConfig(inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(externalIdFactory);
-        final ArtifactMetaDataService artifactMetaDataService = new ArtifactMetaDataService(blackDuckConnectionService);
+        final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService);
-        final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager,
-            artifactoryExternalIdFactory, artifactoryPropertyService, cacheInspectorService, blackDuckConnectionService, metaDataPopulationService);
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class)));
+        final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(repositories, searches, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService,
+            cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final InspectionModule inspectionModule = new InspectionModule(inspectionModuleConfig, artifactIdentificationService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, repositories,

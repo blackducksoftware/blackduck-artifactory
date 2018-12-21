@@ -52,19 +52,16 @@ public class ScanModule implements Analyzable, Module {
     private final ArtifactScanService artifactScanService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
-    private final StatusCheckService statusCheckService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
     private final ScanPolicyService scanPolicyService;
 
     public ScanModule(final ScanModuleConfig scanModuleConfig, final RepositoryIdentificationService repositoryIdentificationService, final ArtifactScanService artifactScanService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final StatusCheckService statusCheckService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
-        final ScanPolicyService scanPolicyService) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ScanPolicyService scanPolicyService) {
         this.scanModuleConfig = scanModuleConfig;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactScanService = artifactScanService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
-        this.statusCheckService = statusCheckService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
         this.scanPolicyService = scanPolicyService;
     }

@@ -56,10 +56,13 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
+import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
+import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.blackduck.exception.BlackDuckIntegrationException;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ComponentService;
+import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
@@ -67,7 +70,7 @@ import com.synopsys.integration.rest.exception.IntegrationRestException;
 import com.synopsys.integration.util.IntegrationEscapeUtil;
 
 public class ArtifactIdentificationService {
-    private final Logger logger = LoggerFactory.getLogger(CacheInspectorService.class);
+    private final Logger logger = LoggerFactory.getLogger(ArtifactIdentificationService.class);
 
     private final Repositories repositories; // TODO: Use ArtifactoryPAPIService
     private final Searches searches;
@@ -76,19 +79,18 @@ public class ArtifactIdentificationService {
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final CacheInspectorService cacheInspectorService;
-    private final BlackDuckConnectionService blackDuckConnectionService;
+    private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final MetaDataPopulationService metaDataPopulationService;
 
     public ArtifactIdentificationService(final Repositories repositories, final Searches searches, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
-        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckConnectionService blackDuckConnectionService,
-        final MetaDataPopulationService metaDataPopulationService) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
-        this.blackDuckConnectionService = blackDuckConnectionService;
         this.packageTypePatternManager = packageTypePatternManager;
         this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
         this.repositories = repositories;
         this.searches = searches;
+        this.blackDuckServicesFactory = blackDuckServicesFactory;
         this.metaDataPopulationService = metaDataPopulationService;
     }
 
@@ -106,7 +108,7 @@ public class ArtifactIdentificationService {
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
 
                 if (repositoryStatus.isPresent() && repositoryStatus.get().equals(InspectionStatus.SUCCESS)) {
-                    final Optional<ProjectVersionWrapper> projectVersionWrapper = blackDuckConnectionService.getBlackDuckServicesFactory().createProjectService().getProjectVersion(projectName, projectVersionName);
+                    final Optional<ProjectVersionWrapper> projectVersionWrapper = blackDuckServicesFactory.createProjectService().getProjectVersion(projectName, projectVersionName);
 
                     if (projectVersionWrapper.isPresent()) {
                         final ProjectView projectView = projectVersionWrapper.get().getProjectView();
@@ -162,7 +164,8 @@ public class ArtifactIdentificationService {
         boolean success = false;
         try {
             if (artifact.getExternalId().isPresent()) {
-                blackDuckConnectionService.addComponentToProjectVersion(artifact.getExternalId().get(), projectVersionView);
+                final ProjectService projectService = blackDuckServicesFactory.createProjectService();
+                projectService.addComponentToProjectVersion(artifact.getExternalId().get(), projectVersionView);
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
                 success = true;
             } else {
@@ -238,12 +241,14 @@ public class ArtifactIdentificationService {
         bdioFile.delete();
         simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
 
-        blackDuckConnectionService.importBomFile(codeLocationName, bdioFile);
+        final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
+        final UploadTarget uploadTarget = UploadTarget.createDefault(codeLocationName, bdioFile);
+        bdioUploadService.uploadBdio(uploadTarget);
     }
 
     private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final String repoPackageType, final Set<RepoPath> repoPaths) {
-        final ComponentService componentService = blackDuckConnectionService.getBlackDuckServicesFactory().createComponentService();
-        final BlackDuckService blackDuckService = blackDuckConnectionService.getBlackDuckServicesFactory().createBlackDuckService();
+        final ComponentService componentService = blackDuckServicesFactory.createComponentService();
+        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
 
         for (final RepoPath repoPath : repoPaths) {
             final boolean isArtifactPending = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)
@@ -272,13 +277,14 @@ public class ArtifactIdentificationService {
                             final Optional<String> projectVersionViewHref = projectVersionView.getHref();
                             final Optional<String> componentVersionViewHref = componentVersionView.getHref();
 
+                            // This is bad practice but...
                             // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
                             if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
-                                final UriSingleResponse<ProjectVersionView> projectVersionViewUriSingleResponse = new UriSingleResponse<>(projectVersionViewHref.get(), ProjectVersionView.class);
-                                final UriSingleResponse<ComponentVersionView> componentVersionViewUriSingleResponse = new UriSingleResponse<>(componentVersionViewHref.get(), ComponentVersionView.class);
-                                final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriSingleResponse = blackDuckConnectionService
-                                                                                                                                .getVersionBomComponentUriResponse(projectVersionViewUriSingleResponse, componentVersionViewUriSingleResponse);
-                                final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriSingleResponse);
+                                final String apiComponentsLinkPrefix = "/api/components/";
+                                final int apiComponentsStart = componentVersionViewHref.get().indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
+                                final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentVersionViewHref.get().substring(apiComponentsStart);
+                                final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
+                                final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
                                 final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
 
                                 // Populate metadata

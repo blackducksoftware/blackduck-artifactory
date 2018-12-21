@@ -35,9 +35,9 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyStatusView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckConnectionService;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.UpdateStatus;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
@@ -50,26 +50,26 @@ import com.synopsys.integration.rest.exception.IntegrationRestException;
 import com.synopsys.integration.util.NameVersion;
 
 public class ScanPolicyService {
-    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+    private static final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ScanPolicyService.class));
 
     private final ProjectService projectService;
     private final BlackDuckService blackDuckService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final DateTimeManager dateTimeManager;
 
-    public ScanPolicyService(final ProjectService projectService, final BlackDuckService hubService, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
+    public ScanPolicyService(final ProjectService projectService, final BlackDuckService blackDuckService, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
         this.projectService = projectService;
-        this.blackDuckService = hubService;
+        this.blackDuckService = blackDuckService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.dateTimeManager = dateTimeManager;
     }
 
-    public static ScanPolicyService createDefault(final BlackDuckConnectionService blackDuckConnectionService, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
-        final BlackDuckServicesFactory hubServicesFactory = blackDuckConnectionService.getBlackDuckServicesFactory();
-        final ProjectService projectService = hubServicesFactory.createProjectService();
-        final BlackDuckService hubService = hubServicesFactory.createBlackDuckService();
+    public static ScanPolicyService createDefault(final BlackDuckServerConfig blackDuckServerConfig, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+        final ProjectService projectService = blackDuckServicesFactory.createProjectService();
+        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
 
-        return new ScanPolicyService(projectService, hubService, artifactoryPropertyService, dateTimeManager);
+        return new ScanPolicyService(projectService, blackDuckService, artifactoryPropertyService, dateTimeManager);
     }
 
     public void populatePolicyStatuses(final Set<RepoPath> repoPaths) {

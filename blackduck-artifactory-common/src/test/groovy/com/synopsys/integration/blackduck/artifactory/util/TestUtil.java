@@ -33,14 +33,14 @@ import java.util.Properties;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.synopsys.integration.blackduck.configuration.HubServerConfig;
-import com.synopsys.integration.blackduck.configuration.HubServerConfigBuilder;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
 
 public class TestUtil {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static final String DEFAULT_PROPERTIES_RESOURCE_PATH = "/blackDuckPlugin.properties";
-    public static final String BLACKDUCK_CREDENTIALS_ENV_VAR = HubServerConfigBuilder.BLACKDUCK_SERVER_CONFIG_ENVIRONMENT_VARIABLE_PREFIX + "CREDENTIALS";
+    public static final String BLACKDUCK_CREDENTIALS_ENV_VAR = BlackDuckServerConfigBuilder.BLACKDUCK_SERVER_CONFIG_ENVIRONMENT_VARIABLE_PREFIX + "CREDENTIALS";
 
     public static Properties getDefaultProperties() throws IOException {
         return getResourceAsProperties(DEFAULT_PROPERTIES_RESOURCE_PATH);
@@ -67,14 +67,14 @@ public class TestUtil {
         return TestUtil.class.getResourceAsStream(resourcePath);
     }
 
-    public static HubServerConfig getHubServerConfigFromEnvVar() {
+    public static BlackDuckServerConfig getHubServerConfigFromEnvVar() {
         final String credentials = System.getenv(BLACKDUCK_CREDENTIALS_ENV_VAR);
         final Type type = new TypeToken<Map<String, String>>() {}.getType();
         final Map<String, String> properties = GSON.fromJson(credentials, type);
 
-        final HubServerConfigBuilder hubServerConfigBuilder = new HubServerConfigBuilder();
-        hubServerConfigBuilder.setFromProperties(properties);
+        final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
+        blackDuckServerConfigBuilder.setFromProperties(properties);
 
-        return hubServerConfigBuilder.build();
+        return blackDuckServerConfigBuilder.build();
     }
 }

@@ -34,21 +34,28 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.phonehome.BlackDuckPhoneHomeHelper;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 
 public class AnalyticsService {
+
     private final DirectoryConfig directoryConfig;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
 
     private final List<AnalyticsCollector> analyticsCollectors = new ArrayList<>();
 
-    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckServicesFactory blackDuckServicesFactory) {
+    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckServerConfig blackDuckServerConfig) {
         this.directoryConfig = directoryConfig;
-        this.blackDuckServicesFactory = blackDuckServicesFactory;
+
+        final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+        this.blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
     }
 
     public void registerAnalyzable(final Analyzable analyzable) {
