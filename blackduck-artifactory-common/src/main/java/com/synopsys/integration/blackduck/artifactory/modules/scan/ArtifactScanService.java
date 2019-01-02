@@ -38,10 +38,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.Repositories;
 import org.artifactory.resource.ResourceStreamHandle;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
@@ -70,17 +70,17 @@ public class ArtifactScanService {
     private final File blackDuckDirectory;
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
-    private final Repositories repositories;
+    private final ArtifactoryPAPIService artifactoryPAPIService;
     private final DateTimeManager dateTimeManager;
 
     public ArtifactScanService(final ScanModuleConfig scanModuleConfig, final BlackDuckServerConfig blackDuckServerConfig, final File blackDuckDirectory, final RepositoryIdentificationService repositoryIdentificationService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories, final DateTimeManager dateTimeManager) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final DateTimeManager dateTimeManager) {
         this.scanModuleConfig = scanModuleConfig;
         this.blackDuckServerConfig = blackDuckServerConfig;
         this.blackDuckDirectory = blackDuckDirectory;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactoryPropertyService = artifactoryPropertyService;
-        this.repositories = repositories;
+        this.artifactoryPAPIService = artifactoryPAPIService;
         this.dateTimeManager = dateTimeManager;
     }
 
@@ -111,11 +111,10 @@ public class ArtifactScanService {
         }
     }
 
-    // TODO: Don't use repositories. Use ArtifactoryPAPIService
     private FileLayoutInfo getArtifactFromPath(final RepoPath repoPath) {
-        final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
+        final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
 
-        try (final ResourceStreamHandle resourceStream = repositories.getContent(repoPath)) {
+        try (final ResourceStreamHandle resourceStream = artifactoryPAPIService.getContent(repoPath)) {
             InputStream inputStream = null;
             FileOutputStream fileOutputStream = null;
             try {

@@ -37,7 +37,6 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.HostNameHelper;
 
-// TODO: Perhaps this can be generalized and moved into ArtifactoryPropertyService
 public class CacheInspectorService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 

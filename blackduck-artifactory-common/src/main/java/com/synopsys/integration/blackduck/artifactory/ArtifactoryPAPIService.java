@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.artifactory.repo.Repositories;
 import org.artifactory.repo.RepositoryConfiguration;
+import org.artifactory.resource.ResourceStreamHandle;
 import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
@@ -60,5 +62,13 @@ public class ArtifactoryPAPIService {
 
     public List<RepoPath> searchForArtifactsByName(final List<String> repoKeys, final String pattern) {
         return searches.artifactsByName(pattern, repoKeys.toArray(new String[0]));
+    }
+
+    public FileLayoutInfo getLayoutInfo(final RepoPath repoPath) {
+        return repositories.getLayoutInfo(repoPath);
+    }
+
+    public ResourceStreamHandle getContent(final RepoPath repoPath) {
+        return repositories.getContent(repoPath);
     }
 }
