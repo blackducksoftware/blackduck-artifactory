@@ -58,19 +58,11 @@ public class RepositoryIdentificationService {
 
     public Set<RepoPath> searchForRepoPaths() {
         final List<String> patternsToScan = scanModuleConfig.getNamePatterns();
-        final List<RepoPath> repoPaths = new ArrayList<>();
         final List<String> repoKeysToScan = scanModuleConfig.getRepos();
+        final List<RepoPath> repoPaths = new ArrayList<>();
 
         if (!repoKeysToScan.isEmpty()) {
-            for (final String pattern : patternsToScan) {
-                final List<RepoPath> foundRepoPaths = artifactoryPAPIService.searchForArtifactsByName(repoKeysToScan, pattern);
-                if (!foundRepoPaths.isEmpty()) {
-                    repoPaths.addAll(foundRepoPaths);
-                    logger.debug(String.format("Found %d artifacts matching pattern [%s]", foundRepoPaths.size(), pattern));
-                } else {
-                    logger.debug(String.format("No artifacts fund that match the pattern pattern [%s]", pattern));
-                }
-            }
+            repoPaths.addAll(artifactoryPAPIService.searchForArtifactsByPatterns(repoKeysToScan, patternsToScan));
         } else {
             logger.info(String.format("Please specify valid repos to scan or disable the %s", ScanModule.class.getSimpleName()));
         }

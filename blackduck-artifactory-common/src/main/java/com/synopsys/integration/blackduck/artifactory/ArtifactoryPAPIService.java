@@ -1,11 +1,13 @@
 package com.synopsys.integration.blackduck.artifactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.fs.ItemInfo;
+import org.artifactory.md.Properties;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.artifactory.repo.Repositories;
@@ -60,8 +62,20 @@ public class ArtifactoryPAPIService {
         return isValid;
     }
 
-    public List<RepoPath> searchForArtifactsByName(final List<String> repoKeys, final String pattern) {
-        return searches.artifactsByName(pattern, repoKeys.toArray(new String[0]));
+    public List<RepoPath> searchForArtifactsByPatterns(final List<String> repoKeys, final List<String> patterns) {
+        final List<RepoPath> repoPaths = new ArrayList<>();
+
+        for (final String pattern : patterns) {
+            final List<RepoPath> foundRepoPaths = searches.artifactsByName(pattern, repoKeys.toArray(new String[0]));
+            if (!foundRepoPaths.isEmpty()) {
+                repoPaths.addAll(foundRepoPaths);
+                logger.debug(String.format("Found %d artifacts matching pattern [%s]", foundRepoPaths.size(), pattern));
+            } else {
+                logger.debug(String.format("No artifacts fund that match the pattern pattern [%s]", pattern));
+            }
+        }
+
+        return repoPaths;
     }
 
     public FileLayoutInfo getLayoutInfo(final RepoPath repoPath) {
@@ -70,5 +84,9 @@ public class ArtifactoryPAPIService {
 
     public ResourceStreamHandle getContent(final RepoPath repoPath) {
         return repositories.getContent(repoPath);
+    }
+
+    public Properties getProperties(final RepoPath repoPath) {
+        return repositories.getProperties(repoPath);
     }
 }

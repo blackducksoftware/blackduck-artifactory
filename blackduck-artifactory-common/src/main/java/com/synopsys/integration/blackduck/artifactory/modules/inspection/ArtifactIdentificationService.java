@@ -26,6 +26,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -36,9 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
-import org.artifactory.repo.Repositories;
 import org.artifactory.repo.RepositoryConfiguration;
-import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.SimpleBdioFactory;
@@ -53,6 +52,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionVie
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
@@ -73,24 +73,22 @@ import com.synopsys.integration.util.IntegrationEscapeUtil;
 public class ArtifactIdentificationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class));
 
-    private final Repositories repositories; // TODO: Use ArtifactoryPAPIService
-    private final Searches searches;
     private final PackageTypePatternManager packageTypePatternManager;
     private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final ArtifactoryPAPIService artifactoryPAPIService;
     private final CacheInspectorService cacheInspectorService;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final MetaDataPopulationService metaDataPopulationService;
 
-    public ArtifactIdentificationService(final Repositories repositories, final Searches searches, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
+    public ArtifactIdentificationService(final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
         final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
         this.packageTypePatternManager = packageTypePatternManager;
         this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
-        this.repositories = repositories;
-        this.searches = searches;
+        this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
         this.metaDataPopulationService = metaDataPopulationService;
     }
@@ -101,10 +99,10 @@ public class ArtifactIdentificationService {
 
         try {
             final Set<RepoPath> identifiableArtifacts = getIdentifiableArtifacts(repoKey);
+            final Optional<RepositoryConfiguration> repositoryConfiguration = artifactoryPAPIService.getRepositoryConfiguration(repoKey);
 
-            if (!identifiableArtifacts.isEmpty()) {
-                final RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
-                final String packageType = repositoryConfiguration.getPackageType();
+            if (!identifiableArtifacts.isEmpty() && repositoryConfiguration.isPresent()) {
+                final String packageType = repositoryConfiguration.get().getPackageType();
                 final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
 
@@ -133,8 +131,8 @@ public class ArtifactIdentificationService {
     }
 
     public IdentifiedArtifact identifyArtifact(final RepoPath repoPath, final String packageType) {
-        final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(repoPath);
-        final org.artifactory.md.Properties properties = repositories.getProperties(repoPath);
+        final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
+        final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
         final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, properties);
         final ExternalId externalId = possibleExternalId.orElse(null);
 
@@ -201,16 +199,15 @@ public class ArtifactIdentificationService {
 
     public Set<RepoPath> getIdentifiableArtifacts(final String repoKey) {
         final Set<RepoPath> identifiableArtifacts = new HashSet<>();
+        final Optional<RepositoryConfiguration> repositoryConfiguration = artifactoryPAPIService.getRepositoryConfiguration(repoKey);
 
-        final RepositoryConfiguration repositoryConfiguration = repositories.getRepositoryConfiguration(repoKey);
-        final String packageType = repositoryConfiguration.getPackageType();
-        final Optional<List<String>> patterns = packageTypePatternManager.getPatterns(packageType);
-        if (patterns.isPresent()) {
-            final Set<RepoPath> repoPaths = patterns.get().stream()
-                                                .map(pattern -> searches.artifactsByName(pattern, repoKey))
-                                                .flatMap(List::stream)
-                                                .collect(Collectors.toSet());
-            identifiableArtifacts.addAll(repoPaths);
+        if (repositoryConfiguration.isPresent()) {
+            final String packageType = repositoryConfiguration.get().getPackageType();
+            final Optional<List<String>> patterns = packageTypePatternManager.getPatterns(packageType);
+            if (patterns.isPresent()) {
+                final List<RepoPath> repoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns.get());
+                identifiableArtifacts.addAll(repoPaths);
+            }
         }
 
         return identifiableArtifacts;
@@ -302,14 +299,6 @@ public class ArtifactIdentificationService {
                 }
             }
         }
-    }
-
-    public Long getArtifactCount(final List<String> repoKeys) {
-        return repoKeys.stream()
-                   .map(RepoPathFactory::create)
-                   .map(repositories::getArtifactsCount)
-                   .mapToLong(Long::longValue)
-                   .sum();
     }
 
     public class IdentifiedArtifact {

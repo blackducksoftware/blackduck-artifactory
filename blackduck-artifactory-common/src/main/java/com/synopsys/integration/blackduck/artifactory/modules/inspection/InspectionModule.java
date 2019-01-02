@@ -36,6 +36,7 @@ import org.artifactory.repo.Repositories;
 import org.artifactory.repo.RepositoryConfiguration;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
@@ -50,16 +51,19 @@ public class InspectionModule implements Analyzable, Module {
 
     private final InspectionModuleConfig inspectionModuleConfig;
     private final ArtifactIdentificationService artifactIdentificationService;
+    private final ArtifactoryPAPIService artifactoryPAPIService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final MetaDataUpdateService metaDataUpdateService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final Repositories repositories;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
 
-    public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final MetaDataPopulationService metaDataPopulationService,
-        final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories, final SimpleAnalyticsCollector simpleAnalyticsCollector) {
+    public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final ArtifactoryPAPIService artifactoryPAPIService,
+        final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories,
+        final SimpleAnalyticsCollector simpleAnalyticsCollector) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactIdentificationService = artifactIdentificationService;
+        this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.metaDataUpdateService = metaDataUpdateService;
         this.artifactoryPropertyService = artifactoryPropertyService;
@@ -139,7 +143,7 @@ public class InspectionModule implements Analyzable, Module {
     private void updateAnalytics() {
         final List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepos();
         simpleAnalyticsCollector.putMetadata("cache.repo.count", cacheRepositoryKeys.size());
-        simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactIdentificationService.getArtifactCount(cacheRepositoryKeys));
+        simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys));
         simpleAnalyticsCollector.putMetadata("cache.package.managers", StringUtils.join(getPackageManagers(cacheRepositoryKeys), "/"));
     }
 
