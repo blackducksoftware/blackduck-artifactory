@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
@@ -53,16 +52,19 @@ public class InspectionModule implements Analyzable, Module {
     private final MetaDataPopulationService metaDataPopulationService;
     private final MetaDataUpdateService metaDataUpdateService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final CacheInspectorService cacheInspectorService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final ArtifactoryPAPIService artifactoryPAPIService,
-        final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector) {
+        final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService,
+        final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactIdentificationService = artifactIdentificationService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.metaDataUpdateService = metaDataUpdateService;
         this.artifactoryPropertyService = artifactoryPropertyService;
+        this.cacheInspectorService = cacheInspectorService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
     }
 
@@ -115,7 +117,7 @@ public class InspectionModule implements Analyzable, Module {
                 if (identifiableArtifacts.contains(repoPath)) {
                     final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
                     artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
-                    artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
+                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
                 }
             }
             successfulInspection = true;

@@ -232,7 +232,7 @@ public class PluginService {
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final InspectionModule inspectionModule = new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService,
-            simpleAnalyticsCollector);
+            cacheInspectorService, simpleAnalyticsCollector);
 
         moduleRegistry.registerModule(inspectionModule);
         analyticsService.registerAnalyzable(inspectionModule);
