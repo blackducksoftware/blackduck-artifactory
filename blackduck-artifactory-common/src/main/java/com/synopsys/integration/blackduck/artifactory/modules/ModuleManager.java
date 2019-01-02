@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.artifactory.exception.CancelException;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
@@ -56,6 +57,7 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class ModuleManager {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
+    private final ModuleRegistry moduleRegistry;
     private final FeatureAnalyticsCollector featureAnalyticsCollector;
     private final ScanModule scanModule;
     private final InspectionModule inspectionModule;
@@ -66,8 +68,9 @@ public class ModuleManager {
     private final PolicyModuleConfig policyModuleConfig;
     private final AnalyticsModuleConfig analyticsModuleConfig;
 
-    public ModuleManager(final FeatureAnalyticsCollector featureAnalyticsCollector, final ScanModule scanModule, final InspectionModule inspectionModule, final PolicyModule policyModule, final AnalyticsModule analyticsModule,
-        final ScanModuleConfig scanModuleConfig, final InspectionModuleConfig inspectionModuleConfig, final PolicyModuleConfig policyModuleConfig, final AnalyticsModuleConfig analyticsModuleConfig) {
+    public ModuleManager(final ModuleRegistry moduleRegistry, final FeatureAnalyticsCollector featureAnalyticsCollector, final ScanModule scanModule, final InspectionModule inspectionModule, final PolicyModule policyModule,
+        final AnalyticsModule analyticsModule, final ScanModuleConfig scanModuleConfig, final InspectionModuleConfig inspectionModuleConfig, final PolicyModuleConfig policyModuleConfig, final AnalyticsModuleConfig analyticsModuleConfig) {
+        this.moduleRegistry = moduleRegistry;
         this.featureAnalyticsCollector = featureAnalyticsCollector;
         this.scanModule = scanModule;
         this.inspectionModule = inspectionModule;
@@ -79,14 +82,39 @@ public class ModuleManager {
         this.analyticsModuleConfig = analyticsModuleConfig;
     }
 
-    public static ModuleManager createFromModules(final FeatureAnalyticsCollector featureAnalyticsCollector, final ScanModule scanModule, final InspectionModule inspectionModule, final PolicyModule policyModule,
+    public static ModuleManager createFromModules(final ModuleRegistry moduleRegistry, final FeatureAnalyticsCollector featureAnalyticsCollector, final ScanModule scanModule, final InspectionModule inspectionModule,
+        final PolicyModule policyModule,
         final AnalyticsModule analyticsModule) {
         final ScanModuleConfig scanModuleConfig = scanModule.getModuleConfig();
         final InspectionModuleConfig inspectionModuleConfig = inspectionModule.getModuleConfig();
         final PolicyModuleConfig policyModuleConfig = policyModule.getModuleConfig();
         final AnalyticsModuleConfig analyticsModuleConfig = analyticsModule.getModuleConfig();
 
-        return new ModuleManager(featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule, scanModuleConfig, inspectionModuleConfig, policyModuleConfig, analyticsModuleConfig);
+        return new ModuleManager(moduleRegistry, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule, scanModuleConfig, inspectionModuleConfig, policyModuleConfig, analyticsModuleConfig);
+    }
+
+    public void setModuleState(final TriggerType triggerType, final Map<String, List<String>> params) {
+        LogUtil.start(logger, "setModuleState", triggerType);
+
+        for (final Map.Entry<String, List<String>> entry : params.entrySet()) {
+            if (entry.getValue().size() > 0) {
+                final String moduleStateRaw = entry.getValue().get(0);
+                final boolean moduleState = BooleanUtils.toBoolean(moduleStateRaw);
+                final String moduleName = entry.getKey();
+                final List<ModuleConfig> moduleConfigs = moduleRegistry.getModuleConfigsByName(moduleName);
+
+                if (moduleConfigs.isEmpty()) {
+                    logger.warn(String.format("No registered modules with the name '%s' found. Hit the checkStatusMessage endpoint to see why.", moduleName));
+                } else {
+                    moduleConfigs.forEach(moduleConfig -> {
+                        logger.warn(String.format("Setting %s's enabled state to %b", moduleConfig.getModuleName(), moduleState));
+                        moduleConfig.setEnabled(moduleState);
+                    });
+                }
+            }
+        }
+
+        LogUtil.finish(logger, "setModuleState", triggerType);
     }
 
     public void triggerScan(final TriggerType triggerType) {

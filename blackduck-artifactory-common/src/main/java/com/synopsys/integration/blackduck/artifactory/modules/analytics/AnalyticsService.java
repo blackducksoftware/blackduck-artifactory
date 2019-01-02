@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -58,9 +57,14 @@ public class AnalyticsService {
         this.blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
     }
 
-    public void registerAnalyzable(final Analyzable analyzable) {
-        Optional.ofNullable(analyzable.getAnalyticsCollectors())
-            .map(analyticsCollectors::addAll);
+    public void registerAnalyzable(final Analyzable... analyzables) {
+        for (final Analyzable analyzable : analyzables) {
+            final List<AnalyticsCollector> analyticsCollector = analyzable.getAnalyticsCollectors();
+
+            if (analyticsCollector != null) {
+                analyticsCollector.addAll(analyticsCollectors);
+            }
+        }
     }
 
     /**

@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class AnalyticsCollector {
-
     protected static Map<String, String> convertMapValueToString(final Map<String, ?> map) {
         return map.entrySet().stream()
                    .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));

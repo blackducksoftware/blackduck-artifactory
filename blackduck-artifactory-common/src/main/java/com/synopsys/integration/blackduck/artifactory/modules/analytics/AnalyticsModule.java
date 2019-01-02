@@ -23,12 +23,12 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.analytics;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
 
 public class AnalyticsModule implements Analyzable, Module {
     public final static String SUBMIT_ANALYTICS_CRON = "0 0 0 1/1 * ? *"; // Every day at 12 am
@@ -36,19 +36,20 @@ public class AnalyticsModule implements Analyzable, Module {
     private final AnalyticsModuleConfig analyticsModuleConfig;
     private final AnalyticsService analyticsService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
-    private List<ModuleConfig> moduleConfigs = new ArrayList<>();
+    private final ModuleRegistry moduleRegistry;
 
     private int submissionAttemptCounter = 0;
 
-    public AnalyticsModule(final AnalyticsModuleConfig analyticsModuleConfig, final AnalyticsService analyticsService, final SimpleAnalyticsCollector simpleAnalyticsCollector) {
+    public AnalyticsModule(final AnalyticsModuleConfig analyticsModuleConfig, final AnalyticsService analyticsService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ModuleRegistry moduleRegistry) {
         this.analyticsModuleConfig = analyticsModuleConfig;
         this.analyticsService = analyticsService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
+        this.moduleRegistry = moduleRegistry;
     }
 
     @Override
     public List<AnalyticsCollector> getAnalyticsCollectors() {
-        return Arrays.asList(simpleAnalyticsCollector);
+        return Collections.singletonList(simpleAnalyticsCollector);
     }
 
     @Override
@@ -56,16 +57,12 @@ public class AnalyticsModule implements Analyzable, Module {
         return analyticsModuleConfig;
     }
 
-    public void setModuleConfigs(final List<ModuleConfig> moduleConfigs) {
-        this.moduleConfigs = moduleConfigs;
-    }
-
     /**
      * Submits a payload to phone home with data from all the collectors ({@link FeatureAnalyticsCollector})
      * This should be used infrequently such as once a day due to quota
      */
     public Boolean submitAnalytics() {
-        moduleConfigs.forEach(this::updateModuleStatus);
+        moduleRegistry.getModuleConfigs().forEach(this::updateModuleStatus);
 
         final boolean analyticsSuccess = analyticsService.submitAnalytics();
         if (!analyticsSuccess) {

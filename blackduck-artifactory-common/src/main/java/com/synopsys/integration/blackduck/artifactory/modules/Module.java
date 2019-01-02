@@ -23,6 +23,8 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules;
 
-public interface Module {
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
+
+public interface Module extends Analyzable {
     ModuleConfig getModuleConfig();
 }

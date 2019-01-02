@@ -86,7 +86,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
      **/
     blackDuckSetModuleState() { params ->
-        pluginService.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        moduleManager.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
