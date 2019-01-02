@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.Repositories;
-import org.artifactory.search.Searches;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -43,21 +41,17 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.util.NameVersion;
 
 public class ArtifactoryPropertyService {
-    //    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-
-    private final Repositories repositories;
-    private final Searches searches;
+    private final ArtifactoryPAPIService artifactoryPAPIService;
     private final DateTimeManager dateTimeManager;
 
-    public ArtifactoryPropertyService(final Repositories repositories, final Searches searches, final DateTimeManager dateTimeManager) {
-        this.repositories = repositories;
-        this.searches = searches;
+    public ArtifactoryPropertyService(final ArtifactoryPAPIService artifactoryPAPIService, final DateTimeManager dateTimeManager) {
+        this.artifactoryPAPIService = artifactoryPAPIService;
         this.dateTimeManager = dateTimeManager;
     }
 
     public boolean hasProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
-        final boolean currentNameExists = repositories.hasProperty(repoPath, property.getName());
-        final boolean oldNameExists = StringUtils.isNotBlank(property.getOldName()) && repositories.hasProperty(repoPath, property.getOldName());
+        final boolean currentNameExists = artifactoryPAPIService.hasProperty(repoPath, property.getName());
+        final boolean oldNameExists = StringUtils.isNotBlank(property.getOldName()) && artifactoryPAPIService.hasProperty(repoPath, property.getOldName());
 
         return currentNameExists || oldNameExists;
     }
@@ -74,7 +68,7 @@ public class ArtifactoryPropertyService {
     }
 
     private Optional<String> getProperty(final RepoPath repoPath, final String propertyKey) {
-        final String propertyValue = StringUtils.stripToNull(repositories.getProperty(repoPath, propertyKey));
+        final String propertyValue = StringUtils.stripToNull(artifactoryPAPIService.getProperty(repoPath, propertyKey));
 
         return Optional.ofNullable(propertyValue);
     }
@@ -86,7 +80,7 @@ public class ArtifactoryPropertyService {
     }
 
     public void setProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final String value, final IntLogger logger) {
-        repositories.setProperty(repoPath, property.getName(), value);
+        artifactoryPAPIService.setProperty(repoPath, property.getName(), value);
         logger.debug(String.format("Set property %s to %s on %s", property.getName(), value, repoPath.toPath()));
     }
 
@@ -96,8 +90,8 @@ public class ArtifactoryPropertyService {
     }
 
     public void deleteProperty(final RepoPath repoPath, final String propertyName, final IntLogger logger) {
-        if (repositories.hasProperty(repoPath, propertyName)) {
-            repositories.deleteProperty(repoPath, propertyName);
+        if (artifactoryPAPIService.hasProperty(repoPath, propertyName)) {
+            artifactoryPAPIService.deleteProperty(repoPath, propertyName);
             logger.debug(String.format("Removed property %s from %s", propertyName, repoPath.toPath()));
         }
     }
@@ -148,7 +142,7 @@ public class ArtifactoryPropertyService {
     }
 
     public List<RepoPath> getAllItemsInRepoWithPropertiesAndValues(final SetMultimap<String, String> setMultimap, final String repoKey) {
-        return searches.itemsByProperties(setMultimap, repoKey);
+        return artifactoryPAPIService.itemsByProperties(setMultimap, repoKey);
     }
 
     public Optional<NameVersion> getProjectNameVersion(final RepoPath repoPath, final IntLogger logger) {

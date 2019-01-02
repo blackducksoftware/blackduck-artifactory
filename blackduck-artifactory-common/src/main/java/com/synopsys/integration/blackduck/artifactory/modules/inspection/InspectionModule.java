@@ -26,14 +26,12 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.Repositories;
-import org.artifactory.repo.RepositoryConfiguration;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -55,19 +53,16 @@ public class InspectionModule implements Analyzable, Module {
     private final MetaDataPopulationService metaDataPopulationService;
     private final MetaDataUpdateService metaDataUpdateService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
-    private final Repositories repositories;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final ArtifactoryPAPIService artifactoryPAPIService,
-        final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final Repositories repositories,
-        final SimpleAnalyticsCollector simpleAnalyticsCollector) {
+        final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactIdentificationService = artifactIdentificationService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.metaDataUpdateService = metaDataUpdateService;
         this.artifactoryPropertyService = artifactoryPropertyService;
-        this.repositories = repositories;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
     }
 
@@ -112,13 +107,13 @@ public class InspectionModule implements Analyzable, Module {
 
         boolean successfulInspection;
         try {
-            final String packageType = repositories.getRepositoryConfiguration(repoKey).getPackageType();
+            final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
 
-            if (inspectionModuleConfig.getRepos().contains(repoKey)) {
+            if (packageType.isPresent() && inspectionModuleConfig.getRepos().contains(repoKey)) {
                 final Set<RepoPath> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey);
 
                 if (identifiableArtifacts.contains(repoPath)) {
-                    final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
+                    final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
                     artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
                     artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
                 }
@@ -144,13 +139,12 @@ public class InspectionModule implements Analyzable, Module {
         final List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepos();
         simpleAnalyticsCollector.putMetadata("cache.repo.count", cacheRepositoryKeys.size());
         simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys));
-        simpleAnalyticsCollector.putMetadata("cache.package.managers", StringUtils.join(getPackageManagers(cacheRepositoryKeys), "/"));
-    }
 
-    private List<String> getPackageManagers(final List<String> repoKeys) {
-        return repoKeys.stream()
-                   .map(repositories::getRepositoryConfiguration)
-                   .map(RepositoryConfiguration::getPackageType)
-                   .collect(Collectors.toList());
+        final String packageManagers = cacheRepositoryKeys.stream()
+                                           .map(artifactoryPAPIService::getPackageType)
+                                           .filter(Optional::isPresent)
+                                           .map(Optional::get)
+                                           .collect(Collectors.joining("/"));
+        simpleAnalyticsCollector.putMetadata("cache.package.managers", packageManagers);
     }
 }

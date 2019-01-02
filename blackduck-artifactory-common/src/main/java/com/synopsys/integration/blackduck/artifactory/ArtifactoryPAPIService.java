@@ -16,6 +16,7 @@ import org.artifactory.resource.ResourceStreamHandle;
 import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -30,8 +31,13 @@ public class ArtifactoryPAPIService {
         this.searches = searches;
     }
 
-    public Optional<RepositoryConfiguration> getRepositoryConfiguration(final String repoKey) {
+    private Optional<RepositoryConfiguration> getRepositoryConfiguration(final String repoKey) {
         return Optional.ofNullable(repositories.getRepositoryConfiguration(repoKey));
+    }
+
+    public Optional<String> getPackageType(final String repoKey) {
+        return getRepositoryConfiguration(repoKey)
+                   .map(RepositoryConfiguration::getPackageType);
     }
 
     public Long getArtifactCount(final List<String> repoKeys) {
@@ -78,6 +84,10 @@ public class ArtifactoryPAPIService {
         return repoPaths;
     }
 
+    /*
+    Methods below provide low level access to the Artifactory PAPI. No additional verification should be performed.
+     */
+
     public FileLayoutInfo getLayoutInfo(final RepoPath repoPath) {
         return repositories.getLayoutInfo(repoPath);
     }
@@ -88,5 +98,25 @@ public class ArtifactoryPAPIService {
 
     public Properties getProperties(final RepoPath repoPath) {
         return repositories.getProperties(repoPath);
+    }
+
+    public boolean hasProperty(final RepoPath repoPath, final String propertyName) {
+        return repositories.hasProperty(repoPath, propertyName);
+    }
+
+    public String getProperty(final RepoPath repoPath, final String propertyName) {
+        return repositories.getProperty(repoPath, propertyName);
+    }
+
+    public void setProperty(final RepoPath repoPath, final String propertyName, final String value) {
+        repositories.setProperty(repoPath, propertyName, value);
+    }
+
+    public void deleteProperty(final RepoPath repoPath, final String propertyName) {
+        repositories.deleteProperty(repoPath, propertyName);
+    }
+
+    public List<RepoPath> itemsByProperties(final SetMultimap<String, String> properties, final String repoKey) {
+        return searches.itemsByProperties(properties, repoKey);
     }
 }

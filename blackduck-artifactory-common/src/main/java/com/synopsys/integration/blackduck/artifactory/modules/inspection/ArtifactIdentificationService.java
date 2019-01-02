@@ -37,7 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
-import org.artifactory.repo.RepositoryConfiguration;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.SimpleBdioFactory;
@@ -99,10 +98,9 @@ public class ArtifactIdentificationService {
 
         try {
             final Set<RepoPath> identifiableArtifacts = getIdentifiableArtifacts(repoKey);
-            final Optional<RepositoryConfiguration> repositoryConfiguration = artifactoryPAPIService.getRepositoryConfiguration(repoKey);
+            final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
 
-            if (!identifiableArtifacts.isEmpty() && repositoryConfiguration.isPresent()) {
-                final String packageType = repositoryConfiguration.get().getPackageType();
+            if (!identifiableArtifacts.isEmpty() && packageType.isPresent()) {
                 final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
 
@@ -112,10 +110,10 @@ public class ArtifactIdentificationService {
                     if (projectVersionWrapper.isPresent()) {
                         final ProjectView projectView = projectVersionWrapper.get().getProjectView();
                         final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
-                        addDeltaToBlackDuckProject(projectView, projectVersionView, packageType, identifiableArtifacts);
+                        addDeltaToBlackDuckProject(projectView, projectVersionView, packageType.get(), identifiableArtifacts);
                     }
                 } else if (!repositoryStatus.isPresent()) {
-                    createHubProjectFromRepo(projectName, projectVersionName, packageType, identifiableArtifacts);
+                    createHubProjectFromRepo(projectName, projectVersionName, packageType.get(), identifiableArtifacts);
                     cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
                 }
             } else {
@@ -199,11 +197,10 @@ public class ArtifactIdentificationService {
 
     public Set<RepoPath> getIdentifiableArtifacts(final String repoKey) {
         final Set<RepoPath> identifiableArtifacts = new HashSet<>();
-        final Optional<RepositoryConfiguration> repositoryConfiguration = artifactoryPAPIService.getRepositoryConfiguration(repoKey);
+        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
 
-        if (repositoryConfiguration.isPresent()) {
-            final String packageType = repositoryConfiguration.get().getPackageType();
-            final Optional<List<String>> patterns = packageTypePatternManager.getPatterns(packageType);
+        if (packageType.isPresent()) {
+            final Optional<List<String>> patterns = packageTypePatternManager.getPatterns(packageType.get());
             if (patterns.isPresent()) {
                 final List<RepoPath> repoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns.get());
                 identifiableArtifacts.addAll(repoPaths);

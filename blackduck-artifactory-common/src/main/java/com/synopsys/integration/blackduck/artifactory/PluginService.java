@@ -109,7 +109,7 @@ public class PluginService {
 
         dateTimeManager = new DateTimeManager(pluginConfig.getDateTimePattern());
         artifactoryPAPIService = new ArtifactoryPAPIService(repositories, searches);
-        artifactoryPropertyService = new ArtifactoryPropertyService(repositories, searches, dateTimeManager);
+        artifactoryPropertyService = new ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager);
         analyticsService = new AnalyticsService(directoryConfig, blackDuckServerConfig);
 
         moduleRegistry = new ModuleRegistry();
@@ -232,7 +232,6 @@ public class PluginService {
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final InspectionModule inspectionModule = new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService,
-            repositories,
             simpleAnalyticsCollector);
 
         moduleRegistry.registerModule(inspectionModule);
