@@ -108,17 +108,17 @@ executions {
      * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
      * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
      *
-     * Then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided BlackDuck server.
+     * Then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided Black Duck server.
      *
-     * The scanning process will add several properties to your artifacts in artifactory. Namely:
+     * The scanning process will add several properties to your artifacts in Artifactory. Namely:
      *
      * blackduck.scanTime - the last time a SUCCESS scan was completed
      * blackduck.scanResult - SUCCESS or FAILURE, depending on the result of the scan
-     * blackduck.projectName - the name of the project in BlackDuck
-     * blackduck.projectVersionName - the name of the project version in BlackDuck
-     * blackduck.uiUrl - the url for the project version created in BlackDuck
-     * blackduck.policyStatus - a short description of the policy status from BlackDuck
-     * blackduck.overallPolicyStatus - the overall policy status of artifact in BlackDuck (ex. NOT_IN_VIOLATION)
+     * blackduck.projectName - the name of the project in Black Duck
+     * blackduck.projectVersionName - the name of the project version in Black Duck
+     * blackduck.uiUrl - the url for the project version created in Black Duck
+     * blackduck.policyStatus - a short description of the policy status from Black Duck
+     * blackduck.overallPolicyStatus - the overall policy status of artifact in Black Duck (ex. NOT_IN_VIOLATION)
      * blackduck.updateStatus - the status of policy updates (ex. OUT_OF_DATE implies the policyStatus on this artifact is out of date)
      * blackduck.lastUpdate - the last time policy status was updated on this artifact
      *
@@ -132,7 +132,7 @@ executions {
     }
 
     /**
-     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
+     * This will search your Artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * It will then remove any and all blackduck properties from the artifact.
      * For example:
      *
@@ -152,7 +152,7 @@ executions {
     }
 
     /**
-     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
+     * This will search your Artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * For example:
      *
      * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
@@ -172,7 +172,7 @@ executions {
     }
 
     /**
-     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
+     * This will search your Artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * For example:
      *
      * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
@@ -192,7 +192,7 @@ executions {
     }
 
     /**
-     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
+     * This will search your Artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * The following artifact properties are deprecated and should be updated with this endpoint:
      * blackduck.hubProjectName -> blackduck.projectName
      * blackduck.hubProjectVersionName -> blackduck.projectVersionName
@@ -272,7 +272,7 @@ executions {
      * Manual execution of the Update Metadata step of inspection on a specific repository.
      * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
      *
-     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in BlackDuck
+     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in Black Duck
      * since the last time the repository was inspected.
      *
      * Metadata updated on artifacts:
