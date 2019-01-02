@@ -63,7 +63,13 @@ public class RepositoryIdentificationService {
 
         if (!repoKeysToScan.isEmpty()) {
             for (final String pattern : patternsToScan) {
-                repoPaths.addAll(artifactoryPAPIService.searchForArtifactsByName(repoKeysToScan, pattern));
+                final List<RepoPath> foundRepoPaths = artifactoryPAPIService.searchForArtifactsByName(repoKeysToScan, pattern);
+                if (!foundRepoPaths.isEmpty()) {
+                    repoPaths.addAll(foundRepoPaths);
+                    logger.debug(String.format("Found %d artifacts matching pattern [%s]", foundRepoPaths.size(), pattern));
+                } else {
+                    logger.debug(String.format("No artifacts fund that match the pattern pattern [%s]", pattern));
+                }
             }
         } else {
             logger.info(String.format("Please specify valid repos to scan or disable the %s", ScanModule.class.getSimpleName()));

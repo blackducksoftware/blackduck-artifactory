@@ -1,7 +1,7 @@
 /*
  * blackduck-artifactory
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -116,11 +116,6 @@ executions {
      * blackduck.scanResult - SUCCESS or FAILURE, depending on the result of the scan
      * blackduck.projectName - the name of the project in Black Duck
      * blackduck.projectVersionName - the name of the project version in Black Duck
-     * blackduck.uiUrl - the url for the project version created in Black Duck
-     * blackduck.policyStatus - a short description of the policy status from Black Duck
-     * blackduck.overallPolicyStatus - the overall policy status of artifact in Black Duck (ex. NOT_IN_VIOLATION)
-     * blackduck.updateStatus - the status of policy updates (ex. OUT_OF_DATE implies the policyStatus on this artifact is out of date)
-     * blackduck.lastUpdate - the last time policy status was updated on this artifact
      *
      * The same functionality is provided via the blackDuckScan cron job to enable scheduled scans to run consistently.
      *
@@ -129,6 +124,32 @@ executions {
      **/
     blackDuckScan(httpMethod: 'POST') { params ->
         moduleManager.triggerScan(TriggerType.REST_REQUEST)
+    }
+
+    /**
+     * This will search your artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
+     * For example:
+     *
+     * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
+     * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
+     *
+     * Then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided Black Duck server.
+     *
+     * The addPolicyStatus process will add several properties to your artifacts in Artifactory. Namely:
+     *
+     * blackduck.uiUrl - the url for the project version created in Black Duck
+     * blackduck.policyStatus - a short description of the policy status from Black Duck
+     * blackduck.overallPolicyStatus - the overall policy status of artifact in Black Duck (ex. NOT_IN_VIOLATION)
+     * blackduck.updateStatus - the status of policy updates (ex. OUT_OF_DATE implies the policyStatus on this artifact is out of date)
+     * blackduck.lastUpdate - the last time policy status was updated on this artifact
+     *
+     * The same functionality is provided via the blackDuckAddPolicyStatus cron job to enable scheduled policy status checks to run consistently.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckAddPolicyStatus"
+     **/
+    blackDuckAddPolicyStatus(httpMethod: 'POST') { params ->
+        moduleManager.addPolicyStatus(TriggerType.REST_REQUEST)
     }
 
     /**

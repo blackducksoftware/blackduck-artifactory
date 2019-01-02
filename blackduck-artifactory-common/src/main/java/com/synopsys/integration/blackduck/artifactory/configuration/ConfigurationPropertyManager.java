@@ -29,7 +29,6 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.BooleanUtils;
@@ -104,12 +103,10 @@ public class ConfigurationPropertyManager {
         return value;
     }
 
-    public <T> List<T> getPropertyAsList(final ConfigurationProperty configurationProperty, final Function<String, T> propertyAccessFunction) {
+    public List<String> getPropertyAsList(final ConfigurationProperty configurationProperty) {
         final String property = getProperty(configurationProperty);
         final String[] propertyValues = property.split(",");
 
-        return Arrays.stream(propertyValues)
-                   .map(propertyAccessFunction)
-                   .collect(Collectors.toList());
+        return Arrays.asList(propertyValues);
     }
 }

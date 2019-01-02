@@ -72,7 +72,7 @@ public class ScanModuleConfig extends ModuleConfig {
         final String artifactCutoffDate = configurationPropertyManager.getProperty(ScanModuleProperty.CUTOFF_DATE);
         final Boolean dryRun = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.DRY_RUN);
         final Boolean enabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.ENABLED);
-        final List<String> namePatterns = configurationPropertyManager.getPropertyAsList(ScanModuleProperty.NAME_PATTERNS, configurationPropertyManager::getProperty);
+        final List<String> namePatterns = configurationPropertyManager.getPropertyAsList(ScanModuleProperty.NAME_PATTERNS);
         final Integer memory = configurationPropertyManager.getIntegerProperty(ScanModuleProperty.MEMORY);
         final Boolean repoPathCodelocation = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.REPO_PATH_CODELOCATION);
         final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()

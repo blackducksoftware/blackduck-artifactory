@@ -62,12 +62,12 @@ public class InspectionModuleConfig extends ModuleConfig {
     public static InspectionModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
         final Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
         final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON);
-        final List<String> patternsRubygems = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS, configurationPropertyManager::getProperty);
-        final List<String> patternsMaven = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN, configurationPropertyManager::getProperty);
-        final List<String> patternsGradle = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE, configurationPropertyManager::getProperty);
-        final List<String> patternsPypi = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_PYPI, configurationPropertyManager::getProperty);
-        final List<String> patternsNuget = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NUGET, configurationPropertyManager::getProperty);
-        final List<String> patternsNpm = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NPM, configurationPropertyManager::getProperty);
+        final List<String> patternsRubygems = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS);
+        final List<String> patternsMaven = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN);
+        final List<String> patternsGradle = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE);
+        final List<String> patternsPypi = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_PYPI);
+        final List<String> patternsNuget = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NUGET);
+        final List<String> patternsNpm = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NPM);
         final String blackDuckPopulateMetadataCron = configurationPropertyManager.getProperty(InspectionModuleProperty.POPULATE_METADATA_CRON);
         final String blackDuckUpdateMetadataCron = configurationPropertyManager.getProperty(InspectionModuleProperty.UPDATE_METADATA_CRON);
         final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
