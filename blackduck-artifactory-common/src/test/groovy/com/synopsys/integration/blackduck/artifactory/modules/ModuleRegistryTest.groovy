@@ -5,14 +5,14 @@ import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModule
 import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModuleConfig
 import groovy.mock.interceptor.MockFor
 import org.junit.Assert
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class ModuleRegistryTest {
-    private static ModuleRegistry moduleRegistry
+    private ModuleRegistry moduleRegistry
 
-    @BeforeAll
-    static void init() {
+    @BeforeEach
+    void init() {
         final ModuleConfig validModuleConfig = new MockModuleConfig("Mock1", true, "test!")
         final Module validModule = new MockModule(validModuleConfig)
 

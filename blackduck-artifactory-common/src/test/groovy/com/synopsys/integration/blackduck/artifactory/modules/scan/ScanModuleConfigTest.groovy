@@ -1,0 +1,122 @@
+package com.synopsys.integration.blackduck.artifactory.modules.scan
+
+import com.synopsys.integration.blackduck.artifactory.DateTimeManager
+import com.synopsys.integration.util.BuilderStatus
+import org.junit.Assert
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+class ScanModuleConfigTest {
+    private ScanModuleConfig validScanModuleConfig
+    private ScanModuleConfig invalidScanModuleConfig
+
+    @BeforeEach
+    void init() {
+        validScanModuleConfig = new ScanModuleConfig(
+            true,
+            "0 0/1 * 1/1 * ?",
+            "binaries/path",
+            "2016-01-01T00:00:00.000",
+            false,
+            ["*.jar"],
+            5000,
+            false,
+            ["repo1", "repo2"],
+            "0 0/1 * 1/1 * ?",
+            File.createTempFile("artifactory-test", "ScanModuleConfigTest"),
+            new DateTimeManager("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        )
+
+        invalidScanModuleConfig = new ScanModuleConfig(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
+    }
+
+    @Test
+    void validate() {
+        final BuilderStatus validBuilderStatus = new BuilderStatus()
+        validScanModuleConfig.validate(validBuilderStatus)
+        Assert.assertEquals(0, validBuilderStatus.getErrorMessages().size())
+
+        final BuilderStatus invalidBuilderSatus = new BuilderStatus()
+        invalidScanModuleConfig.validate(invalidBuilderSatus)
+        Assert.assertEquals(10, invalidBuilderSatus.getErrorMessages().size())
+    }
+
+    @Test
+    void isEnabled() {
+        Assert.assertTrue(validScanModuleConfig.isEnabledUnverified())
+        Assert.assertNull(invalidScanModuleConfig.isEnabledUnverified())
+    }
+
+    @Test
+    void getAddPolicyStatusCron() {
+        Assert.assertNotNull(validScanModuleConfig.getAddPolicyStatusCron())
+        Assert.assertNull(invalidScanModuleConfig.getAddPolicyStatusCron())
+    }
+
+    @Test
+    void getBinariesDirectoryPath() {
+        Assert.assertNotNull(validScanModuleConfig.getBinariesDirectoryPath())
+        Assert.assertNull(invalidScanModuleConfig.getBinariesDirectoryPath())
+    }
+
+    @Test
+    void getArtifactCutoffDate() {
+        Assert.assertNotNull(validScanModuleConfig.getArtifactCutoffDate())
+        Assert.assertNull(invalidScanModuleConfig.getArtifactCutoffDate())
+    }
+
+    @Test
+    void getDryRun() {
+        Assert.assertNotNull(validScanModuleConfig.getDryRun())
+        Assert.assertNull(invalidScanModuleConfig.getDryRun())
+    }
+
+    @Test
+    void getNamePatterns() {
+        Assert.assertNotNull(validScanModuleConfig.getNamePatterns())
+        Assert.assertNull(invalidScanModuleConfig.getNamePatterns())
+    }
+
+    @Test
+    void getMemory() {
+        Assert.assertNotNull(validScanModuleConfig.getMemory())
+        Assert.assertNull(invalidScanModuleConfig.getMemory())
+    }
+
+    @Test
+    void getRepoPathCodelocation() {
+        Assert.assertFalse(validScanModuleConfig.getRepoPathCodelocation())
+        Assert.assertNull(invalidScanModuleConfig.getRepoPathCodelocation())
+    }
+
+    @Test
+    void getRepos() {
+        Assert.assertNotNull(validScanModuleConfig.getRepos())
+        Assert.assertNull(invalidScanModuleConfig.getRepos())
+    }
+
+    @Test
+    void getScanCron() {
+        Assert.assertNotNull(validScanModuleConfig.getScanCron())
+        Assert.assertNull(invalidScanModuleConfig.getScanCron())
+    }
+
+    @Test
+    void getCliDirectory() {
+        Assert.assertNotNull(validScanModuleConfig.getCliDirectory())
+        Assert.assertNull(invalidScanModuleConfig.getCliDirectory())
+    }
+}

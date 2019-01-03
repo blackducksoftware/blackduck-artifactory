@@ -12,12 +12,16 @@ public abstract class ConfigurationValidator {
     public abstract void validate(final BuilderStatus builderStatus);
 
     protected void validateDate(final BuilderStatus builderStatus, final ConfigurationProperty property, final String date, final DateTimeManager dateTimeManager) {
-        if (StringUtils.isNotBlank(date)) {
+        if (StringUtils.isNotBlank(date) && dateTimeManager != null) {
             try {
                 dateTimeManager.getDateFromString(date);
             } catch (final DateTimeParseException ignored) {
                 builderStatus.addErrorMessage(String.format("Property %s is set to %s which does not match the format %s", property.getKey(), date, dateTimeManager.getDateTimePattern()));
             }
+        } else if (StringUtils.isBlank(date)) {
+            builderStatus.addErrorMessage(String.format("Property %s is not set", property.getKey()));
+        } else {
+            builderStatus.addErrorMessage("DateTimeManager not set");
         }
     }
 
@@ -35,6 +39,7 @@ public abstract class ConfigurationValidator {
             builderStatus.addErrorMessage(String.format("Property %s is blank. %s", property.getKey(), errorMessage));
             return false;
         }
+
         return true;
     }
 
@@ -47,11 +52,13 @@ public abstract class ConfigurationValidator {
             builderStatus.addErrorMessage(String.format("Property %s not set. %s", property.getKey(), errorMessage));
             return false;
         }
+
         return true;
     }
 
     protected void validateList(final BuilderStatus builderStatus, final ConfigurationProperty property, final List<?> list, final String errorMessage) {
         final boolean notNull = validateNotNull(builderStatus, property, list);
+
         if (notNull && list.isEmpty()) {
             builderStatus.addErrorMessage(String.format("Property %s is empty. %s", property.getKey(), errorMessage));
         }
