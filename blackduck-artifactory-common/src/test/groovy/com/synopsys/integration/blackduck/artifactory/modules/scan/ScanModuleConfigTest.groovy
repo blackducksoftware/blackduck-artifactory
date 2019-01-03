@@ -49,9 +49,9 @@ class ScanModuleConfigTest {
         validScanModuleConfig.validate(validBuilderStatus)
         Assert.assertEquals(0, validBuilderStatus.getErrorMessages().size())
 
-        final BuilderStatus invalidBuilderSatus = new BuilderStatus()
-        invalidScanModuleConfig.validate(invalidBuilderSatus)
-        Assert.assertEquals(10, invalidBuilderSatus.getErrorMessages().size())
+        final BuilderStatus invalidBuilderStatus = new BuilderStatus()
+        invalidScanModuleConfig.validate(invalidBuilderStatus)
+        Assert.assertEquals(10, invalidBuilderStatus.getErrorMessages().size())
     }
 
     @Test
