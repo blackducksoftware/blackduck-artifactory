@@ -40,7 +40,6 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.UpdateStatus;
 import com.synopsys.integration.blackduck.codelocation.Result;
@@ -48,7 +47,7 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
-public class ScanModule implements Analyzable, Module {
+public class ScanModule implements Module {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ScanModuleConfig scanModuleConfig;

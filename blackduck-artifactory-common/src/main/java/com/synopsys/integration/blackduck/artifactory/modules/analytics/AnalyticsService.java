@@ -50,11 +50,16 @@ public class AnalyticsService {
 
     private final List<AnalyticsCollector> analyticsCollectors = new ArrayList<>();
 
-    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckServerConfig blackDuckServerConfig) {
-        this.directoryConfig = directoryConfig;
+    public static AnalyticsService createFromBlackDuckServerConfig(final DirectoryConfig directoryConfig, final BlackDuckServerConfig blackDuckServerConfig) {
+        final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(AnalyticsService.class));
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
 
-        final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-        this.blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+        return new AnalyticsService(directoryConfig, blackDuckServicesFactory);
+    }
+
+    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckServicesFactory blackDuckServicesFactory) {
+        this.directoryConfig = directoryConfig;
+        this.blackDuckServicesFactory = blackDuckServicesFactory;
     }
 
     public void registerAnalyzable(final Analyzable... analyzables) {

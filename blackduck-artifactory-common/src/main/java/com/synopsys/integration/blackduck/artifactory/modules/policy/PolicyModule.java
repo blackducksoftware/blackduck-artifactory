@@ -36,12 +36,11 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
-public class PolicyModule implements Analyzable, Module {
+public class PolicyModule implements Module {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final PolicyModuleConfig policyModuleConfig;

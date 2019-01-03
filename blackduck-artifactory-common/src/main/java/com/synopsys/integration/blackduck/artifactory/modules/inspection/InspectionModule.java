@@ -38,12 +38,11 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.SimpleAnalyticsCollector;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
-public class InspectionModule implements Analyzable, Module {
+public class InspectionModule implements Module {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final InspectionModuleConfig inspectionModuleConfig;
