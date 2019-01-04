@@ -162,9 +162,13 @@ public class ArtifactIdentificationService {
         try {
             if (artifact.getExternalId().isPresent()) {
                 final ProjectService projectService = blackDuckServicesFactory.createProjectService();
-                projectService.addComponentToProjectVersion(artifact.getExternalId().get(), projectVersionView);
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
-                success = true;
+                success = projectService.addComponentToProjectVersion(artifact.getExternalId().get(), projectVersionView).isPresent();
+
+                if (success) {
+                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+                } else {
+                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Could not find exact component match");
+                }
             } else {
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
             }
