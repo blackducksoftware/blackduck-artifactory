@@ -167,7 +167,7 @@ public class ArtifactIdentificationService {
                 if (success) {
                     cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
                 } else {
-                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Could not find exact component match");
+                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to find component match");
                 }
             } else {
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
