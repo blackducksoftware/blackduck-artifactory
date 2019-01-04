@@ -33,7 +33,6 @@ import java.util.Properties;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
 
 public class TestUtil {
@@ -67,7 +66,7 @@ public class TestUtil {
         return TestUtil.class.getResourceAsStream(resourcePath);
     }
 
-    public static BlackDuckServerConfig getHubServerConfigFromEnvVar() {
+    public static BlackDuckServerConfigBuilder getBlackDuckServerConfigBuilderFromEnvVar() {
         final String credentials = System.getenv(BLACKDUCK_CREDENTIALS_ENV_VAR);
         final Type type = new TypeToken<Map<String, String>>() {}.getType();
         final Map<String, String> properties = GSON.fromJson(credentials, type);
@@ -75,6 +74,6 @@ public class TestUtil {
         final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
         blackDuckServerConfigBuilder.setFromProperties(properties);
 
-        return blackDuckServerConfigBuilder.build();
+        return blackDuckServerConfigBuilder;
     }
 }

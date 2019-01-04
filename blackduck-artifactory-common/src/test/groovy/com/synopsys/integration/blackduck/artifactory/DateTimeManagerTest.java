@@ -29,8 +29,6 @@ import java.util.Date;
 
 import org.junit.jupiter.api.BeforeEach;
 
-import com.synopsys.integration.blackduck.artifactory.util.FastTest;
-
 class DateTimeManagerTest {
     private final String dateTimePattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
     private final String dateAsString = "2016-01-01T00:00:00.000";
@@ -43,24 +41,20 @@ class DateTimeManagerTest {
         dateTimeManager = new DateTimeManager(dateTimePattern);
     }
 
-    @FastTest
     void getDateTimePattern() {
         assertEquals(dateTimePattern, dateTimeManager.getDateTimePattern());
     }
 
-    @FastTest
     void getTimeFromString() {
         final long actualTime = dateTimeManager.getTimeFromString(dateAsString);
         assertEquals(dateAsMilliseconds, actualTime);
     }
 
-    @FastTest
     void getStringFromDate() {
         final Date providedDate = new Date(dateAsMilliseconds);
         assertEquals(dateAsString, dateTimeManager.getStringFromDate(providedDate));
     }
 
-    @FastTest
     void getDateFromString() {
         final Date actualDate = dateTimeManager.getDateFromString(dateAsString);
         final Date expectedDate = new Date(dateAsMilliseconds);

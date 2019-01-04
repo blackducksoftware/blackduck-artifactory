@@ -75,7 +75,7 @@ public class ConfigurationPropertyManager {
         return properties.getProperty(configurationProperty.getKey());
     }
 
-    public String getProperty(final String propertyKey) {
+    private String getProperty(final String propertyKey) {
         return properties.getProperty(propertyKey);
     }
 
@@ -83,7 +83,7 @@ public class ConfigurationPropertyManager {
         return getBooleanProperty(configurationProperty.getKey());
     }
 
-    public Boolean getBooleanProperty(final String propertyKey) {
+    private Boolean getBooleanProperty(final String propertyKey) {
         return BooleanUtils.toBooleanObject(getProperty(propertyKey));
     }
 
@@ -91,7 +91,7 @@ public class ConfigurationPropertyManager {
         return getIntegerProperty(configurationProperty.getKey());
     }
 
-    public Integer getIntegerProperty(final String propertyKey) {
+    private Integer getIntegerProperty(final String propertyKey) {
         Integer value = null;
 
         try {

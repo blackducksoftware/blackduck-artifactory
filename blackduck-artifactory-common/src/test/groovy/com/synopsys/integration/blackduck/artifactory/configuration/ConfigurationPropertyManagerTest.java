@@ -21,9 +21,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,13 +36,12 @@ import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
-import com.synopsys.integration.blackduck.artifactory.util.FastTest;
 import com.synopsys.integration.blackduck.artifactory.util.FileIO;
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
 
 class ConfigurationPropertyManagerTest {
+    private final ConfigurationProperty timeoutProperty = () -> "blackduck.timeout";
+    private final ConfigurationProperty scanNamePatternsProperty = () -> "blackduck.artifactory.scan.name.patterns";
     private final ConfigurationProperty repositoryKeyListProperty = () -> "blackduck.artifactory.scan.repos";
     private final ConfigurationProperty repositoryKeyCsvProperty = () -> "blackduck.artifactory.scan.repos.csv.path";
     private final ConfigurationProperty isEnabledProperty = () -> "blackduck.artifactory.scan.enabled";
@@ -54,7 +54,7 @@ class ConfigurationPropertyManagerTest {
         configurationPropertyManager = new ConfigurationPropertyManager(properties);
     }
 
-    @FastTest
+    @Test
     void getRepositoryKeysFromProperties() throws IOException {
         final List<String> repositoryKeysFromProperties = configurationPropertyManager.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty);
         assertAll("repo keys",
@@ -77,18 +77,28 @@ class ConfigurationPropertyManagerTest {
         );
     }
 
-    @FastTest
+    @Test
     void getProperties() {
         assertEquals(properties, configurationPropertyManager.getProperties());
     }
 
-    @FastTest
+    @Test
     void getProperty() {
         assertEquals("ext-release-local,libs-release", configurationPropertyManager.getProperty(repositoryKeyListProperty));
     }
 
-    @FastTest
+    @Test
     void getBooleanProperty() {
         assertTrue(configurationPropertyManager.getBooleanProperty(isEnabledProperty));
+    }
+
+    @Test
+    void getIntegerProperty() {
+        assertEquals(new Integer(120), configurationPropertyManager.getIntegerProperty(timeoutProperty));
+    }
+
+    @Test
+    void getPropertyAsList() {
+        assertArrayEquals("*.war,*.zip,*.tar.gz,*.hpi".split(","), configurationPropertyManager.getPropertyAsList(scanNamePatternsProperty).toArray());
     }
 }

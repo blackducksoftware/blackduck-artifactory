@@ -29,10 +29,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
+@Test
 @Tag("integration")
-public @interface Integration {
+public @interface IntegrationTest {
     // A meta-annotation for a test that is an integration test instead of a unit test
 }
