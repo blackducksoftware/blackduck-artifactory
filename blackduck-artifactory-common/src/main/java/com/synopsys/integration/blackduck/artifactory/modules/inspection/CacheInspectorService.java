@@ -31,8 +31,12 @@ import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.HostNameHelper;
@@ -41,9 +45,11 @@ public class CacheInspectorService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final ProjectService projectService;
 
-    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService) {
+    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
+        this.projectService = projectService;
     }
 
     public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status) {
@@ -79,5 +85,16 @@ public class CacheInspectorService {
         final Optional<String> projectVersionNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, logger);
 
         return projectVersionNameProperty.orElse(HostNameHelper.getMyHostName("UNKNOWN_HOST"));
+    }
+
+    public void updateUIUrl(final RepoPath repoPath, final String projectName, final String projectVersion) throws IntegrationException {
+        final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersion);
+
+        if (projectVersionWrapper.isPresent()) {
+            final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+            final Optional<String> projectVersionUIUrl = projectVersionView.getHref();
+
+            projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
+        }
     }
 }

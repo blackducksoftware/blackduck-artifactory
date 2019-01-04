@@ -84,6 +84,8 @@ public class MetaDataUpdateService {
                 final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
                 artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString(), logger);
                 artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
+
+                cacheInspectorService.updateUIUrl(repoKeyPath, projectName, projectVersionName);
             } catch (final IntegrationException e) {
                 logger.error(String.format("The Black Duck %s encountered a problem while updating artifact metadata from BlackDuck notifications in repository [%s]", InspectionModule.class.getSimpleName(), repoKey));
                 logger.debug(e.getMessage(), e);

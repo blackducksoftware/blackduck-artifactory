@@ -56,6 +56,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleCon
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPolicyService;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
+import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -89,7 +90,8 @@ public class ModuleFactory {
 
     public InspectionModule createInspectionModule() throws IOException {
         final InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
-        final CacheInspectorService cacheInspectorService = new CacheInspectorService(artifactoryPropertyService);
+        final ProjectService projectService = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(CacheInspectorService.class))).createProjectService();
+        final CacheInspectorService cacheInspectorService = new CacheInspectorService(artifactoryPropertyService, projectService);
         final PackageTypePatternManager packageTypePatternManager = PackageTypePatternManager.fromInspectionModuleConfig(inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(externalIdFactory);
