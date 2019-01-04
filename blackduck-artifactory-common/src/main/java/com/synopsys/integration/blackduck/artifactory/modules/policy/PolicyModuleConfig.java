@@ -42,14 +42,14 @@ public class PolicyModuleConfig extends ModuleConfig {
         return new PolicyModuleConfig(enabled, metadataBlockEnabled);
     }
 
-    public boolean isMetadataBlockEnabled() {
+    public Boolean isMetadataBlockEnabled() {
         return metadataBlockEnabled;
     }
 
     @Override
     public void validate(final BuilderStatus builderStatus) {
         // Until feature is re-enabled, don't verify the property's existence
-        // validateBoolean(builderStatus, PolicyModuleProperty.ENABLED, isEnabledUnverified());
+        validateBoolean(builderStatus, PolicyModuleProperty.ENABLED, isEnabledUnverified());
         if (metadataBlockEnabled != null) {
             // TODO: This is temporary until the feature it released or removed
             builderStatus.addErrorMessage("The metadata block feature is not available right now. Please remove from configuration");

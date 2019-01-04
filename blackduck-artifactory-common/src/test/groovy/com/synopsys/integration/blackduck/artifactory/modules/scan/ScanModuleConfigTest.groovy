@@ -79,6 +79,12 @@ class ScanModuleConfigTest {
 
     @Test
     void isEnabled() {
+        Assert.assertTrue(validScanModuleConfig.isEnabled())
+        Assert.assertFalse(invalidScanModuleConfig.isEnabled())
+    }
+
+    @Test
+    void isEnabledUnverified() {
         Assert.assertTrue(validScanModuleConfig.isEnabledUnverified())
         Assert.assertNull(invalidScanModuleConfig.isEnabledUnverified())
     }
