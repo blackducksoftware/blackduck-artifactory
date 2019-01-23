@@ -91,10 +91,12 @@ public class PolicyModule implements Module {
 
     // TODO: DISABLED: This should aways return false due to validation. Add the blackduck.artifactory.policy.metadata.block=false property to blackDuckPlugin.properties
     private boolean shouldCancelOnMetadataBlock(final RepoPath repoPath) {
-        final boolean missingMetadata = !artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, logger).isPresent();
-        final boolean shouldBlock = policyModuleConfig.isMetadataBlockEnabled();
-
-        return shouldBlock && missingMetadata;
+        return false;
+        //
+        //        final boolean missingMetadata = !artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, logger).isPresent();
+        //        final boolean shouldBlock = policyModuleConfig.isMetadataBlockEnabled();
+        //
+        //        return shouldBlock && missingMetadata;
     }
 
     private enum BlockReason {
