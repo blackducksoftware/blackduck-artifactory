@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
+import com.synopsys.integration.blackduck.configuration.ConnectionResult;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.BuilderStatus;
@@ -69,10 +70,13 @@ public class PluginConfig extends ConfigurationValidator {
 
         if (blackDuckServerConfigBuilderStatus.isValid()) {
             final BlackDuckServerConfig blackDuckServerConfig = blackDuckServerConfigBuilder.build();
-            final boolean canConnect = blackDuckServerConfig.canConnect(logger); // TODO: Improvements for this in blackduck-common:40.1.0
+            final ConnectionResult connectionResult = blackDuckServerConfig.attemptConnection(logger);
 
-            if (!canConnect) {
-                builderStatus.addErrorMessage("Failed to connect to Black Duck with provided configuration");
+            if (connectionResult.isFailure()) {
+                builderStatus.addErrorMessage("Failed to connect to Black Duck with provided configuration.");
+                if (connectionResult.getErrorMessage().isPresent()) {
+                    builderStatus.addErrorMessage(connectionResult.getErrorMessage().get());
+                }
             }
         }
     }

@@ -37,7 +37,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionVie
 import com.synopsys.integration.blackduck.api.generated.view.NotificationView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityV2View;
+import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.notification.CommonNotificationView;
 import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
@@ -142,7 +142,7 @@ public class ArtifactMetaDataService {
 
         if (vulnerabilitiesLink.isPresent()) {
             try {
-                final List<VulnerabilityV2View> componentVulnerabilities = blackDuckService.getAllResponses(vulnerabilitiesLink.get(), VulnerabilityV2View.class);
+                final List<VulnerabilityView> componentVulnerabilities = blackDuckService.getAllResponses(vulnerabilitiesLink.get(), VulnerabilityView.class);
                 componentVulnerabilities.forEach(vulnerability -> {
                     if ("HIGH".equals(vulnerability.getSeverity())) {
                         artifactMetaData.highSeverityCount++;
