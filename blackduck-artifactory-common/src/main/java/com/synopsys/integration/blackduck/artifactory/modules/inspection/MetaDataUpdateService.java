@@ -30,8 +30,6 @@ import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataFromNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
 import com.synopsys.integration.exception.IntegrationException;
@@ -43,12 +41,9 @@ public class MetaDataUpdateService {
 
     private final ArtifactMetaDataService artifactMetaDataService;
     private final MetaDataPopulationService metadataPopulationService;
-    private final ArtifactoryPropertyService artifactoryPropertyService;
     private final CacheInspectorService cacheInspectorService;
 
-    public MetaDataUpdateService(final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final ArtifactMetaDataService artifactMetaDataService,
-        final MetaDataPopulationService metadataPopulationService) {
-        this.artifactoryPropertyService = artifactoryPropertyService;
+    public MetaDataUpdateService(final CacheInspectorService cacheInspectorService, final ArtifactMetaDataService artifactMetaDataService, final MetaDataPopulationService metadataPopulationService) {
         this.cacheInspectorService = cacheInspectorService;
         this.artifactMetaDataService = artifactMetaDataService;
         this.metadataPopulationService = metadataPopulationService;
@@ -56,13 +51,11 @@ public class MetaDataUpdateService {
 
     public void updateMetadata(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final boolean hasSuccessfulInspectionStatus = cacheInspectorService.getInspectionStatus(repoKeyPath)
-                                                          .filter(InspectionStatus.SUCCESS::equals)
-                                                          .isPresent();
+        final boolean shouldTryUpdate = cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
 
-        if (hasSuccessfulInspectionStatus) {
-            final Optional<Date> lastUpdateProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, logger);
-            final Optional<Date> lastInspectionProperty = artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, logger);
+        if (shouldTryUpdate) {
+            final Optional<Date> lastUpdateProperty = cacheInspectorService.getLastUpdate(repoKeyPath);
+            final Optional<Date> lastInspectionProperty = cacheInspectorService.getLastInspection(repoKeyPath);
 
             try {
                 final Date now = new Date();
@@ -82,14 +75,14 @@ public class MetaDataUpdateService {
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
 
                 final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
-                artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString(), logger);
-                artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
+                cacheInspectorService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
+                cacheInspectorService.setLastUpdate(repoKeyPath, lastNotificationDate);
 
                 cacheInspectorService.updateUIUrl(repoKeyPath, projectName, projectVersionName);
             } catch (final IntegrationException e) {
                 logger.error(String.format("The Black Duck %s encountered a problem while updating artifact metadata from BlackDuck notifications in repository [%s]", InspectionModule.class.getSimpleName(), repoKey));
                 logger.debug(e.getMessage(), e);
-                artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString(), logger);
+                cacheInspectorService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE);
             }
         }
     }

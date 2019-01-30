@@ -24,7 +24,6 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
@@ -56,9 +55,10 @@ public class MetaDataPopulationService {
 
     public void populateMetadata(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final Optional<InspectionStatus> inspectionStatus = cacheInspectorService.getInspectionStatus(repoKeyPath);
+        final boolean isStatusPending = cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
+        final boolean isStatusFailure = cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE);
 
-        if (inspectionStatus.isPresent() && inspectionStatus.get().equals(InspectionStatus.PENDING)) {
+        if (isStatusPending || isStatusFailure) {
             logger.debug(String.format("Populating metadata on repoKey: %s", repoKey));
             try {
                 final String projectName = cacheInspectorService.getRepoProjectName(repoKey);

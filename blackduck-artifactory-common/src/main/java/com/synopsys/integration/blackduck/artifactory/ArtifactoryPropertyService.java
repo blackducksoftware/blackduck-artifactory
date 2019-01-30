@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.RepoPathFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -47,6 +48,10 @@ public class ArtifactoryPropertyService {
     public ArtifactoryPropertyService(final ArtifactoryPAPIService artifactoryPAPIService, final DateTimeManager dateTimeManager) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.dateTimeManager = dateTimeManager;
+    }
+
+    public RepoPath getRepoPathFromKey(final String repoKey) {
+        return RepoPathFactory.create(repoKey);
     }
 
     public boolean hasProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {

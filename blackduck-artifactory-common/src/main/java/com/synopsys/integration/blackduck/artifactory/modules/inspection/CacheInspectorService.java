@@ -73,6 +73,12 @@ public class CacheInspectorService {
         return inspectionStatus.map(InspectionStatus::valueOf);
     }
 
+    public boolean assertInspectionStatus(final RepoPath repoPath, final InspectionStatus inspectionStatus) {
+        return getInspectionStatus(repoPath)
+                   .filter(inspectionStatus::equals)
+                   .isPresent();
+    }
+
     public String getRepoProjectName(final String repoKey) {
         final RepoPath repoPath = RepoPathFactory.create(repoKey);
         final Optional<String> projectNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, logger);
@@ -96,5 +102,21 @@ public class CacheInspectorService {
 
             projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
         }
+    }
+
+    public Optional<Date> getLastUpdate(final RepoPath repoKeyPath) {
+        return artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, logger);
+    }
+
+    public Optional<Date> getLastInspection(final RepoPath repoKeyPath) {
+        return artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, logger);
+    }
+
+    public void setUpdateStatus(final RepoPath repoKeyPath, final UpdateStatus updateStatus) {
+        artifactoryPropertyService.setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, updateStatus.toString(), logger);
+    }
+
+    public void setLastUpdate(final RepoPath repoKeyPath, final Date lastNotificationDate) {
+        artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
     }
 }

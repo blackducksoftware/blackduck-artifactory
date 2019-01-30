@@ -100,7 +100,7 @@ public class ModuleFactory {
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class)));
         final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(artifactoryPAPIService, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService,
             cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService);
-        final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
+        final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
         return new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
