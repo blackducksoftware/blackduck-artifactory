@@ -274,7 +274,7 @@ executions {
      * Automatic execution is performed by the blackDuckPopulateMetadata CRON job below.
      *
      * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying metadata
-     * to look up vulnerability metadata in the Hub, then populates that vulnerability metadata on the artifact in Artifactory.
+     * to look up vulnerability metadata in Black Duck, then populates that vulnerability metadata on the artifact in Artifactory.
      *
      * Metadata populated:
      * blackduck.highVulnerabilities
