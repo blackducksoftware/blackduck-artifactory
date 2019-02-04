@@ -110,7 +110,10 @@ public class ArtifactIdentificationService {
                     if (projectVersionWrapper.isPresent()) {
                         final ProjectView projectView = projectVersionWrapper.get().getProjectView();
                         final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+                        logger.debug(String.format("Adding delta to Black Duck project %s", repoKey));
                         addDeltaToBlackDuckProject(projectView, projectVersionView, packageType.get(), identifiableArtifacts);
+                    } else {
+                        throw new IntegrationException(String.format("Expected project '%s' and version '%s' are missing", projectName, projectVersionName));
                     }
                 } else if (!repositoryStatus.isPresent()) {
                     createHubProjectFromRepo(projectName, projectVersionName, packageType.get(), identifiableArtifacts);
@@ -123,8 +126,9 @@ public class ArtifactIdentificationService {
             }
 
         } catch (final Exception e) {
-            logger.error(String.format("The blackDuckCacheInspector encountered an exception while identifying artifacts in repository %s", repoKey), e);
-            cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.FAILURE);
+            logger.error(String.format("The Black Duck %s encountered an exception while identifying artifacts in repository %s. %s", InspectionModule.class.getSimpleName(), repoKey, e.getMessage()));
+            logger.debug(String.format(e.getMessage(), e));
+            cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.FAILURE, e.getMessage());
         }
     }
 
@@ -250,10 +254,7 @@ public class ArtifactIdentificationService {
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
 
         for (final RepoPath repoPath : repoPaths) {
-            final boolean isArtifactPending = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, logger)
-                                                  .map(InspectionStatus::valueOf)
-                                                  .filter(InspectionStatus.PENDING::equals)
-                                                  .isPresent();
+            final boolean isArtifactPending = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);
 
             if (isArtifactPending) {
                 final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = identifyArtifact(repoPath, repoPackageType);
