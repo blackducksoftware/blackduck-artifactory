@@ -56,9 +56,8 @@ public class MetaDataPopulationService {
     public void populateMetadata(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
         final boolean isStatusPending = cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
-        final boolean isStatusFailure = cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE);
 
-        if (isStatusPending || isStatusFailure) {
+        if (isStatusPending) {
             logger.debug(String.format("Populating metadata on repoKey: %s", repoKey));
             try {
                 final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
