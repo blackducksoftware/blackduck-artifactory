@@ -25,7 +25,10 @@ shadowJar {
     // This list should be updated only when we hit a noClassDefFound or noSuchMethodException due to clashing dependencies between us and Artifactory
     relocate('org.apache.commons.lang3', 'embedded.org.apache.commons.lang3')
     relocate('org.apache.http', 'embedded.org.apache.http')
+
     relocate('com.jayway.jsonpath', 'embedded.com.jayway.jsonpath')
+    relocate('net.minidev', 'embedded.net.minidev')
+    relocate('org.ow2.asm', 'embedded.org.ow2.asm')
 
     classifier null
 }
