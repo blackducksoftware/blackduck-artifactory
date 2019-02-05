@@ -56,6 +56,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
+import com.synopsys.integration.blackduck.exception.BlackDuckApiException;
 import com.synopsys.integration.blackduck.exception.BlackDuckIntegrationException;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
@@ -177,20 +178,9 @@ public class ArtifactIdentificationService {
                 cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
             }
         } catch (final IntegrationRestException e) {
-            final int statusCode = e.getHttpStatusCode();
-            if (statusCode == 412) {
-                logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath.toPath()));
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
-                success = true;
-            } else if (statusCode == 401) {
-                logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
-                    repoPath.toPath(), statusCode));
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, String.format("Unauthorized (%s)", statusCode));
-            } else {
-                logger.warn(String.format("The Black Duck %s could not successfully inspect %s because of a %d status code", InspectionModule.class.getSimpleName(), repoPath.toPath(), statusCode));
-                logger.debug(String.format(e.getMessage(), repoPath), e);
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, String.format("Status code: %s", statusCode));
-            }
+            success = handleIntegrationRestException(repoPath, e);
+        } catch (final BlackDuckApiException e) {
+            success = handleIntegrationRestException(repoPath, e.getOriginalIntegrationRestException());
         } catch (final BlackDuckIntegrationException e) {
             logger.warn(String.format("Cannot find component match for artifact at %s", repoPath.toPath()));
             cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to find component match");
@@ -198,6 +188,27 @@ public class ArtifactIdentificationService {
             logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath.toPath()));
             logger.debug(e.getMessage(), e);
             cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
+        }
+
+        return success;
+    }
+
+    private boolean handleIntegrationRestException(final RepoPath repoPath, final IntegrationRestException e) {
+        final int statusCode = e.getHttpStatusCode();
+        boolean success = false;
+
+        if (statusCode == 412) {
+            logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath.toPath()));
+            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+            success = true;
+        } else if (statusCode == 401) {
+            logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
+                repoPath.toPath(), statusCode));
+            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, String.format("Unauthorized (%s)", statusCode));
+        } else {
+            logger.warn(String.format("The Black Duck %s could not successfully inspect %s because of a %d status code", InspectionModule.class.getSimpleName(), repoPath.toPath(), statusCode));
+            logger.debug(String.format(e.getMessage(), repoPath), e);
+            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, String.format("Status code: %s", statusCode));
         }
 
         return success;
