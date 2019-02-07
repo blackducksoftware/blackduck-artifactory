@@ -86,13 +86,12 @@ public class ScanPolicyService {
                 projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
             } else {
-                logger.debug(
-                    String.format("Properties %s and %s were not found on %s. Cannot update policy",
-                        BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(),
-                        BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName(),
-                        repoPath.getPath()
-                    )
+                final String message = String.format("Properties %s and %s were not found on %s or that project and version do not exist. Cannot update policy",
+                    BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(),
+                    BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName(),
+                    repoPath.getPath()
                 );
+                failPolicyStatusUpdate(repoPath, new IntegrationException(message));
             }
         }
 
