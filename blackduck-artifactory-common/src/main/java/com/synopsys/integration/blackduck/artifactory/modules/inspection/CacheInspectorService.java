@@ -79,14 +79,14 @@ public class CacheInspectorService {
                    .isPresent();
     }
 
-    public String getRepoProjectName(final String repoKey) {
+    public String resolveRepoProjectName(final String repoKey) {
         final RepoPath repoPath = RepoPathFactory.create(repoKey);
         final Optional<String> projectNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, logger);
 
         return projectNameProperty.orElse(repoKey);
     }
 
-    public String getRepoProjectVersionName(final String repoKey) {
+    public String resolveRepoProjectVersionName(final String repoKey) {
         final RepoPath repoPath = RepoPathFactory.create(repoKey);
         final Optional<String> projectVersionNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, logger);
 
@@ -119,4 +119,5 @@ public class CacheInspectorService {
     public void setLastUpdate(final RepoPath repoKeyPath, final Date lastNotificationDate) {
         artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
     }
+
 }

@@ -26,8 +26,6 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -53,6 +51,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
+import com.synopsys.integration.blackduck.artifactory.ArtifactorySearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
@@ -81,9 +80,11 @@ public class ArtifactIdentificationService {
     private final CacheInspectorService cacheInspectorService;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final MetaDataPopulationService metaDataPopulationService;
+    private final ArtifactorySearchService artifactorySearchService;
 
     public ArtifactIdentificationService(final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
-        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService,
+        final ArtifactorySearchService artifactorySearchService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
         this.packageTypePatternManager = packageTypePatternManager;
@@ -91,6 +92,7 @@ public class ArtifactIdentificationService {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
         this.metaDataPopulationService = metaDataPopulationService;
+        this.artifactorySearchService = artifactorySearchService;
     }
 
     public void identifyArtifacts(final String repoKey) {
@@ -98,14 +100,14 @@ public class ArtifactIdentificationService {
         final Optional<InspectionStatus> repositoryStatus = cacheInspectorService.getInspectionStatus(repoKeyPath);
 
         try {
-            final Set<RepoPath> identifiableArtifacts = getIdentifiableArtifacts(repoKey);
-            final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
+            final Set<RepoPath> identifiableArtifacts = artifactorySearchService.searchForArtifactsWithSupportedPackageType(repoKey);
 
-            if (!identifiableArtifacts.isEmpty() && packageType.isPresent()) {
-                final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
-                final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
+            if (!identifiableArtifacts.isEmpty()) {
+                final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
+                final String projectName = cacheInspectorService.resolveRepoProjectName(repoKey);
+                final String projectVersionName = cacheInspectorService.resolveRepoProjectVersionName(repoKey);
 
-                if (repositoryStatus.isPresent() && repositoryStatus.get().equals(InspectionStatus.SUCCESS)) {
+                if (repositoryStatus.filter(InspectionStatus.SUCCESS::equals).isPresent()) {
                     final Optional<ProjectVersionWrapper> projectVersionWrapper = blackDuckServicesFactory.createProjectService().getProjectVersion(projectName, projectVersionName);
 
                     if (projectVersionWrapper.isPresent()) {
@@ -117,8 +119,10 @@ public class ArtifactIdentificationService {
                         throw new IntegrationException(String.format("Expected project '%s' and version '%s' are missing", projectName, projectVersionName));
                     }
                 } else if (!repositoryStatus.isPresent()) {
-                    createHubProjectFromRepo(projectName, projectVersionName, packageType.get(), identifiableArtifacts);
+                    createBlackDuckProjectFromRepo(projectName, projectVersionName, packageType.get(), identifiableArtifacts);
                     cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
+                } else {
+                    // TODO: Handle FAILURE status
                 }
             } else {
                 logger.warn(String.format(
@@ -214,22 +218,7 @@ public class ArtifactIdentificationService {
         return success;
     }
 
-    public Set<RepoPath> getIdentifiableArtifacts(final String repoKey) {
-        final Set<RepoPath> identifiableArtifacts = new HashSet<>();
-        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
-
-        if (packageType.isPresent()) {
-            final Optional<List<String>> patterns = packageTypePatternManager.getPatterns(packageType.get());
-            if (patterns.isPresent()) {
-                final List<RepoPath> repoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns.get());
-                identifiableArtifacts.addAll(repoPaths);
-            }
-        }
-
-        return identifiableArtifacts;
-    }
-
-    private void createHubProjectFromRepo(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) throws IOException, IntegrationException {
+    private void createBlackDuckProjectFromRepo(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) throws IOException, IntegrationException {
         final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
 
         final List<IdentifiedArtifact> identifiedArtifacts = repoPaths.stream()

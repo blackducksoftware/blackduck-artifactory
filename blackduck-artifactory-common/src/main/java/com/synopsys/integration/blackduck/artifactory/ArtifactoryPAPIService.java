@@ -107,6 +107,10 @@ public class ArtifactoryPAPIService {
         return repoPaths;
     }
 
+    public List<RepoPath> searchForArtifactsByPattern(final String repoKey, final String pattern) {
+        return searches.artifactsByName(pattern, repoKey);
+    }
+
     /*
     Methods below provide low level access to the Artifactory PAPI. No additional verification should be performed.
      */

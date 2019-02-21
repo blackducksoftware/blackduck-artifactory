@@ -99,7 +99,7 @@ public class ModuleFactory {
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService);
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class)));
         final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(artifactoryPAPIService, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService,
-            cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService);
+            cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService, artifactorySearchService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 

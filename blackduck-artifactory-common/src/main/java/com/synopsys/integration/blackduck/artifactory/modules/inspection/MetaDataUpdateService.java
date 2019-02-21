@@ -71,8 +71,8 @@ public class MetaDataUpdateService {
                         repoKeyPath.toPath()));
                 }
 
-                final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
-                final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
+                final String projectName = cacheInspectorService.resolveRepoProjectName(repoKey);
+                final String projectVersionName = cacheInspectorService.resolveRepoProjectVersionName(repoKey);
 
                 final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
                 cacheInspectorService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);

@@ -26,7 +26,6 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class PackageTypePatternManager {
     private final Map<SupportedPackageType, List<String>> patternMap;
@@ -47,23 +46,8 @@ public class PackageTypePatternManager {
         this.patternMap = patternMap;
     }
 
-    public void loadPatterns(final InspectionModuleConfig inspectionModuleConfig) {
-
-    }
-
-    public Optional<List<String>> getPatterns(final String packageType) {
-        Optional<List<String>> pattern = Optional.empty();
-
-        final Optional<SupportedPackageType> possiblySupportedPackageType = SupportedPackageType.getAsSupportedPackageType(packageType);
-        if (possiblySupportedPackageType.isPresent()) {
-            pattern = getPatterns(possiblySupportedPackageType.get());
-        }
-
-        return pattern;
-    }
-
-    public Optional<List<String>> getPatterns(final SupportedPackageType packageType) {
-        return Optional.ofNullable(patternMap.get(packageType));
+    public List<String> getPatterns(final SupportedPackageType packageType) {
+        return patternMap.get(packageType);
     }
 
 }

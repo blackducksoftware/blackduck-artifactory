@@ -60,8 +60,8 @@ public class MetaDataPopulationService {
         if (isStatusPending) {
             logger.debug(String.format("Populating metadata on repoKey: %s", repoKey));
             try {
-                final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
-                final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
+                final String projectName = cacheInspectorService.resolveRepoProjectName(repoKey);
+                final String projectVersionName = cacheInspectorService.resolveRepoProjectVersionName(repoKey);
 
                 final List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataService.getArtifactMetadataOfRepository(repoKey, projectName, projectVersionName);
                 populateBlackDuckMetadataFromIdMetadata(repoKey, artifactMetaDataList);

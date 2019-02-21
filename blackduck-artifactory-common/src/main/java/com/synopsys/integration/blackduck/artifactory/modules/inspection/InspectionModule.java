@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.artifactory.fs.ItemInfo;
@@ -111,13 +110,9 @@ public class InspectionModule implements Module {
             final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
 
             if (packageType.isPresent() && inspectionModuleConfig.getRepos().contains(repoKey)) {
-                final Set<RepoPath> identifiableArtifacts = artifactIdentificationService.getIdentifiableArtifacts(repoKey);
-
-                if (identifiableArtifacts.contains(repoPath)) {
-                    final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
-                    artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
-                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
-                }
+                final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
+                artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
             }
             successfulInspection = true;
         } catch (final Exception e) {
