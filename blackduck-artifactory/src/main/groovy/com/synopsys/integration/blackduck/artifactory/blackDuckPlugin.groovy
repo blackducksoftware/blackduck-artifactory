@@ -249,6 +249,20 @@ executions {
     }
 
     /**
+     * Removes all properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect that have the property 'blackduck.inspectionStatus' set to 'FAILURE'.
+     * Additionally attempts to re-inspect the artifacts it removed properties from
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReinspectFromFailures"
+     *
+     * To delete properties with property exclusions use the following curl command (the property "blackduck.originId" will not be removed from the artifact)
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReinspectFromFailures?params=properties=blackduck.originId"
+     **/
+    blackDuckReinspectFromFailures() { params ->
+        moduleManager.reinspectFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    }
+
+    /**
      * Manual execution of the Identify Artifacts step of inspection on a specific repository.
      * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
      *

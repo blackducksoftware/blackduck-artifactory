@@ -237,6 +237,18 @@ public class ArtifactIdentificationService {
         return identifiableArtifacts;
     }
 
+    public boolean shouldInspectArtifact(final List<String> validRepoKeys, final RepoPath repoPath) {
+        if (!validRepoKeys.contains(repoPath.getRepoKey())) {
+            return false;
+        }
+
+        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoPath.getRepoKey());
+        return packageType
+                   .filter(s -> packageTypePatternManager.getPatterns(s).isPresent())
+                   .isPresent();
+
+    }
+
     private void createHubProjectFromRepo(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) throws IOException, IntegrationException {
         final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
 
@@ -325,7 +337,7 @@ public class ArtifactIdentificationService {
                     logger.warn(String.format("Artifact was not successfully added to Black Duck project [%s] version [%s]: %s", projectView.getName(), projectVersionView.getVersionName(), repoPath.toPath()));
                 }
             } else {
-                logger.debug(String.format("Artifact is not pending and therefore will not be inspected: %s", repoPath.toPath()));
+                logger.trace(String.format("Artifact is not pending and therefore will not be inspected: %s", repoPath.toPath()));
             }
         }
 

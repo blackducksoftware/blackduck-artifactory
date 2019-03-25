@@ -173,6 +173,10 @@ public class ModuleManager {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.deleteInspectionProperties(params));
     }
 
+    public void reinspectFromFailures(final TriggerType triggerType, final Map<String, List<String>> params) {
+        runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.reinspectFromFailures(params));
+    }
+
     public String getBlackDuckIdentifyArtifactsCron() {
         return inspectionModuleConfig.getIdentifyArtifactsCron();
     }

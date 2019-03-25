@@ -24,6 +24,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,8 @@ import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
@@ -71,6 +74,12 @@ public class CacheInspectorService {
         final Optional<String> inspectionStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, logger);
 
         return inspectionStatus.map(InspectionStatus::valueOf);
+    }
+
+    public List<RepoPath> getAllArtifactsInRepoWithInspectionStatus(final String repoKey, final InspectionStatus inspectionStatus) {
+        final SetMultimap<String, String> propertyMap = HashMultimap.create();
+        propertyMap.put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), inspectionStatus.name());
+        return artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(propertyMap, repoKey);
     }
 
     public boolean assertInspectionStatus(final RepoPath repoPath, final InspectionStatus inspectionStatus) {
