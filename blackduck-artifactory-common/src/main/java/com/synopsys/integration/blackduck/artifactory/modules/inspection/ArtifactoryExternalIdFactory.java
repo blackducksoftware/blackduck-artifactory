@@ -49,7 +49,37 @@ public class ArtifactoryExternalIdFactory {
         this.externalIdFactory = externalIdFactory;
     }
 
-    public Optional<ExternalId> createExternalIdFromOriginIdProperties(final RepoPath repoPath) {
+    public Optional<ExternalId> createExternalId(final String packageType, final FileLayoutInfo fileLayoutInfo, final RepoPath repoPath, final org.artifactory.md.Properties properties) {
+        Optional<ExternalId> optionalExternalId = Optional.empty();
+
+        if (containsOriginIdProperties(repoPath)) {
+            optionalExternalId = createExternalIdFromOriginIdProperties(repoPath);
+        } else {
+            try {
+                final Optional<SupportedPackageType> possiblySupportedPackageType = SupportedPackageType.getAsSupportedPackageType(packageType);
+                if (possiblySupportedPackageType.isPresent()) {
+                    final SupportedPackageType supportedPackageType = possiblySupportedPackageType.get();
+                    if (supportedPackageType.hasNameVersionProperties()) {
+                        optionalExternalId = createNameVersionExternalId(supportedPackageType, fileLayoutInfo, properties);
+                    } else {
+                        optionalExternalId = createMavenExternalId(fileLayoutInfo);
+                    }
+                } else {
+                    logger.warn(String.format("Package type (%s) not supported", packageType));
+                }
+            } catch (final Exception e) {
+                logger.error("Could not resolve the item to a dependency:", e);
+            }
+        }
+
+        return optionalExternalId;
+    }
+
+    private boolean containsOriginIdProperties(final RepoPath repoPath) {
+        return artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE) && artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID);
+    }
+
+    private Optional<ExternalId> createExternalIdFromOriginIdProperties(final RepoPath repoPath) {
         final Optional<String> forgeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, logger);
         final Optional<String> originIdProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, logger);
 
@@ -76,27 +106,6 @@ public class ArtifactoryExternalIdFactory {
             logger.debug(String.format("Unable to generate an external id from properties on artifact '%s'", repoPath.getPath()));
             return Optional.empty();
         }
-    }
-
-    public Optional<ExternalId> createExternalId(final String packageType, final FileLayoutInfo fileLayoutInfo, final org.artifactory.md.Properties properties) {
-        Optional<ExternalId> optionalExternalId = Optional.empty();
-        try {
-            final Optional<SupportedPackageType> possiblySupportedPackageType = SupportedPackageType.getAsSupportedPackageType(packageType);
-            if (possiblySupportedPackageType.isPresent()) {
-                final SupportedPackageType supportedPackageType = possiblySupportedPackageType.get();
-                if (supportedPackageType.hasNameVersionProperties()) {
-                    optionalExternalId = createNameVersionExternalId(supportedPackageType, fileLayoutInfo, properties);
-                } else {
-                    optionalExternalId = createMavenExternalId(fileLayoutInfo);
-                }
-            } else {
-                logger.warn(String.format("Package type (%s) not supported", packageType));
-            }
-        } catch (final Exception e) {
-            logger.error("Could not resolve the item to a dependency:", e);
-        }
-
-        return optionalExternalId;
     }
 
     private Optional<ExternalId> createNameVersionExternalId(final SupportedPackageType supportedPackageType, final FileLayoutInfo fileLayoutInfo, final org.artifactory.md.Properties properties) {
