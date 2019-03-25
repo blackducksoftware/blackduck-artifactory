@@ -46,7 +46,6 @@ import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
-import com.synopsys.integration.blackduck.api.generated.enumeration.ComponentVersionApprovalStatusType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
@@ -200,12 +199,6 @@ public class ArtifactIdentificationService {
 
         if (statusCode == 412) {
             logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath.toPath()));
-            try {
-                final Optional<ComponentVersionView> componentVersion = blackDuckServicesFactory.createComponentService().getComponentVersion(identifiedArtifact.getExternalId().get());
-                componentVersion.get().getApprovalStatus().name().equals(ComponentVersionApprovalStatusType.APPROVED);
-            } catch (final IntegrationException e1) {
-                e1.printStackTrace();
-            }
             cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
             success = true;
         } else if (statusCode == 401) {
