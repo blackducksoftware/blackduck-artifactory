@@ -27,19 +27,55 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
-import org.slf4j.Logger;
+import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.Forge;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class ArtifactoryExternalIdFactory {
-    private final Logger logger = LoggerFactory.getLogger(ArtifactoryExternalIdFactory.class);
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactoryExternalIdFactory.class));
+
+    private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ExternalIdFactory externalIdFactory;
 
-    public ArtifactoryExternalIdFactory(final ExternalIdFactory externalIdFactory) {
+    public ArtifactoryExternalIdFactory(final ArtifactoryPropertyService artifactoryPropertyService, final ExternalIdFactory externalIdFactory) {
+        this.artifactoryPropertyService = artifactoryPropertyService;
         this.externalIdFactory = externalIdFactory;
+    }
+
+    public Optional<ExternalId> createExternalIdFromOriginIdProperties(final RepoPath repoPath) {
+        final Optional<String> forgeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, logger);
+        final Optional<String> originIdProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, logger);
+
+        if (forgeProperty.isPresent() && originIdProperty.isPresent()) {
+            final Forge forge = Forge.getKnownForges().get(forgeProperty.get());
+            if (forge == null) {
+                logger.debug(String.format("Failed to extract forge from property %s or %s.", BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getOldName()));
+                return Optional.empty();
+            }
+
+            final String originId = originIdProperty.get();
+            final String[] originIdPieces = originId.split(forge.getKbSeparator());
+            ExternalId externalId = null;
+            if (originIdPieces.length == 2) {
+                externalId = externalIdFactory.createNameVersionExternalId(forge, originIdPieces[0], originIdPieces[1]);
+            } else if (originIdPieces.length == 3 && forge.equals(Forge.MAVEN)) {
+                externalId = externalIdFactory.createMavenExternalId(originIdPieces[0], originIdPieces[1], originIdPieces[2]);
+            } else {
+                logger.debug(String.format("Invalid forge or origin id on artifact '%s'", repoPath.getPath()));
+            }
+
+            return Optional.ofNullable(externalId);
+        } else {
+            logger.debug(String.format("Unable to generate an external id from properties on artifact '%s'", repoPath.getPath()));
+            return Optional.empty();
+        }
     }
 
     public Optional<ExternalId> createExternalId(final String packageType, final FileLayoutInfo fileLayoutInfo, final org.artifactory.md.Properties properties) {

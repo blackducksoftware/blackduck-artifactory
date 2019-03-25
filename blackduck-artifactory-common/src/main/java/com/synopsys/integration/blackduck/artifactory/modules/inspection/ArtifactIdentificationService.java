@@ -112,7 +112,7 @@ public class ArtifactIdentificationService {
                         final ProjectView projectView = projectVersionWrapper.get().getProjectView();
                         final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
                         logger.debug(String.format("Adding delta to Black Duck project %s", repoKey));
-                        addDeltaToBlackDuckProject(projectView, projectVersionView, packageType.get(), identifiableArtifacts);
+                        addDeltaToBlackDuckProject(projectView, projectVersionView, identifiableArtifacts);
                     } else {
                         throw new IntegrationException(String.format("Expected project '%s' and version '%s' are missing", projectName, projectVersionName));
                     }
@@ -260,7 +260,7 @@ public class ArtifactIdentificationService {
         bdioUploadService.uploadBdio(uploadTarget);
     }
 
-    private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final String repoPackageType, final Set<RepoPath> repoPaths) {
+    private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final Set<RepoPath> repoPaths) {
         final ComponentService componentService = blackDuckServicesFactory.createComponentService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
 
@@ -268,7 +268,13 @@ public class ArtifactIdentificationService {
             final boolean isArtifactPending = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);
 
             if (isArtifactPending) {
-                final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = identifyArtifact(repoPath, repoPackageType);
+                final Optional<ExternalId> externalIdFromOriginIdProperties = artifactoryExternalIdFactory.createExternalIdFromOriginIdProperties(repoPath);
+                if (!externalIdFromOriginIdProperties.isPresent()) {
+                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to generate external id from properties");
+                    continue;
+                }
+
+                final IdentifiedArtifact identifiedArtifact = new IdentifiedArtifact(repoPath, externalIdFromOriginIdProperties.get());
                 final boolean successfullyAdded = addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectVersionView);
                 final Optional<ExternalId> externalIdOptional = identifiedArtifact.getExternalId();
 
@@ -312,7 +318,8 @@ public class ArtifactIdentificationService {
                         logger.debug(e.getMessage(), e);
                     }
                 } else {
-                    logger.debug(String.format("Artifact was not successfully added to BlackDuck project [%s] version [%s]: %s = %s", projectView.getName(), projectVersionView.getVersionName(), repoPath.getName(), repoPath.toPath()));
+                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Artifact was not successfully added to Black Duck project");
+                    logger.debug(String.format("Artifact was not successfully added to Black Duck project [%s] version [%s]: %s", projectView.getName(), projectVersionView.getVersionName(), repoPath.toPath()));
                 }
             } else {
                 logger.debug(String.format("Artifact is not pending and therefore will not be inspected: %s", repoPath.toPath()));

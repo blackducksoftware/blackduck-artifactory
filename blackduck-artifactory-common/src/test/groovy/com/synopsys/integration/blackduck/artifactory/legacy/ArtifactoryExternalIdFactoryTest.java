@@ -95,7 +95,7 @@ public class ArtifactoryExternalIdFactoryTest {
     }
 
     private void testNameVersionExternalIdCreation(final String packageType, final Map<String, String> propertiesMap) {
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory());
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(null, new ExternalIdFactory());
         final String organization = "group";
         final String module = "component";
         final String baseRevision = "version";
@@ -123,7 +123,7 @@ public class ArtifactoryExternalIdFactoryTest {
     }
 
     private void testMavenDependencyCreation(final String packageType) {
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory());
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(null, new ExternalIdFactory());
         final String organization = "group";
         final String module = "component";
         final String baseRevision = "version";
