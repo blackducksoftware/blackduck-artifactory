@@ -46,7 +46,6 @@ import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
@@ -62,7 +61,6 @@ import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.ProjectService;
-import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
@@ -164,43 +162,53 @@ public class ArtifactIdentificationService {
         final RepoPath repoPath = identifiedArtifact.getRepoPath();
 
         boolean success = false;
-        try {
-            if (identifiedArtifact.getExternalId().isPresent()) {
+
+        if (identifiedArtifact.getExternalId().isPresent()) {
+            final ExternalId externalId = identifiedArtifact.getExternalId().get();
+            try {
                 final ProjectService projectService = blackDuckServicesFactory.createProjectService();
-                final Optional<String> componentVersionUrl = projectService.addComponentToProjectVersion(identifiedArtifact.getExternalId().get(), projectVersionView);
+                final Optional<String> componentVersionUrl = projectService.addComponentToProjectVersion(externalId, projectVersionView);
                 success = componentVersionUrl.isPresent();
                 if (success) {
                     cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
                 } else {
                     cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to find component match");
                 }
-            } else {
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
+
+            } catch (final IntegrationRestException e) {
+                success = handleIntegrationRestException(repoPath, projectVersionView, externalId, e);
+            } catch (final BlackDuckApiException e) {
+                success = handleIntegrationRestException(repoPath, projectVersionView, externalId, e.getOriginalIntegrationRestException());
+            } catch (final BlackDuckIntegrationException e) {
+                logger.warn(String.format("Cannot find component match for artifact at %s", repoPath.toPath()));
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to find component match");
+            } catch (final Exception e) {
+                logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath.toPath()));
+                logger.debug(e.getMessage(), e);
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
             }
-        } catch (final IntegrationRestException e) {
-            success = handleIntegrationRestException(repoPath, identifiedArtifact, e);
-        } catch (final BlackDuckApiException e) {
-            success = handleIntegrationRestException(repoPath, identifiedArtifact, e.getOriginalIntegrationRestException());
-        } catch (final BlackDuckIntegrationException e) {
-            logger.warn(String.format("Cannot find component match for artifact at %s", repoPath.toPath()));
-            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to find component match");
-        } catch (final Exception e) {
-            logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath.toPath()));
-            logger.debug(e.getMessage(), e);
-            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
+        } else {
+            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
         }
 
         return success;
     }
 
-    private boolean handleIntegrationRestException(final RepoPath repoPath, final IdentifiedArtifact identifiedArtifact, final IntegrationRestException e) {
+    private boolean handleIntegrationRestException(final RepoPath repoPath, final ProjectVersionView projectVersionView, final ExternalId artifactExternalId, final IntegrationRestException e) {
         final int statusCode = e.getHttpStatusCode();
         boolean success = false;
 
         if (statusCode == 412) {
             logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath.toPath()));
-            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
-            success = true;
+            try {
+                logger.debug("Will attempt to grab policy status from Black Duck directly.");
+                final ComponentViewWrapper componentViewWrapper = getComponentViewWrapper(projectVersionView, artifactExternalId);
+                metaDataPopulationService.populateBlackDuckMetadata(repoPath, componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
+                success = true;
+            } catch (final IntegrationException e1) {
+                logger.debug("Failed to populate artifact with policy info even though it already exists in the BOM", e1);
+                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to retrieve policy information");
+            }
         } else if (statusCode == 401) {
             logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
                 repoPath.toPath(), statusCode));
@@ -260,10 +268,35 @@ public class ArtifactIdentificationService {
         bdioUploadService.uploadBdio(uploadTarget);
     }
 
-    private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final String packageType, final Set<RepoPath> repoPaths) {
+    private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
         final ComponentService componentService = blackDuckServicesFactory.createComponentService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+        final Optional<ComponentVersionView> componentVersionViewOptional = componentService.getComponentVersion(externalId);
 
+        if (componentVersionViewOptional.isPresent()) {
+            final ComponentVersionView componentVersionView = componentVersionViewOptional.get();
+            final Optional<String> projectVersionViewHref = projectVersionView.getHref();
+            final Optional<String> componentVersionViewHref = componentVersionView.getHref();
+
+            // This is bad practice but...
+            // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
+            if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
+                final String apiComponentsLinkPrefix = "/api/components/";
+                final int apiComponentsStart = componentVersionViewHref.get().indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
+                final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentVersionViewHref.get().substring(apiComponentsStart);
+                final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
+                final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
+
+                return new ComponentViewWrapper(versionBomComponentView, componentVersionView);
+            } else {
+                throw new IntegrationException("projectVersionViewHref or componentVersionViewHref is not present");
+            }
+        } else {
+            throw new IntegrationException("componentVersionView is not present");
+        }
+    }
+
+    private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final String packageType, final Set<RepoPath> repoPaths) {
         for (final RepoPath repoPath : repoPaths) {
             final boolean isArtifactPending = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);
 
@@ -280,37 +313,8 @@ public class ArtifactIdentificationService {
                 if (successfullyAdded && externalIdOptional.isPresent()) {
                     final ExternalId externalId = externalIdOptional.get();
                     try {
-                        // Get componentVersionView
-                        final Optional<ComponentVersionView> componentVersionViewOptional = componentService.getComponentVersion(externalId);
-
-                        if (componentVersionViewOptional.isPresent()) {
-                            final ComponentVersionView componentVersionView = componentVersionViewOptional.get();
-                            // Get vulnerabilities
-                            final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
-                            final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityV2Views(componentVersionVulnerabilities.getVulnerabilities());
-
-                            // Get policy status
-                            final Optional<String> projectVersionViewHref = projectVersionView.getHref();
-                            final Optional<String> componentVersionViewHref = componentVersionView.getHref();
-
-                            // This is bad practice but...
-                            // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
-                            if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
-                                final String apiComponentsLinkPrefix = "/api/components/";
-                                final int apiComponentsStart = componentVersionViewHref.get().indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
-                                final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentVersionViewHref.get().substring(apiComponentsStart);
-                                final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
-                                final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
-                                final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
-
-                                // Populate metadata
-                                metaDataPopulationService.populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, policyStatus, componentVersionViewHref.get());
-                            } else {
-                                throw new IntegrationException("projectVersionViewHref or componentVersionViewHref is not present");
-                            }
-                        } else {
-                            throw new IntegrationException("componentVersionView is not present");
-                        }
+                        final ComponentViewWrapper componentViewWrapper = getComponentViewWrapper(projectVersionView, externalId);
+                        metaDataPopulationService.populateBlackDuckMetadata(repoPath, componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
                     } catch (final IntegrationException e) {
                         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to retrieve vulnerability information");
                         logger.warn(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));

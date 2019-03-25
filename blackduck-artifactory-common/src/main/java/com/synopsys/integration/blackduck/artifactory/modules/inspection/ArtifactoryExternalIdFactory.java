@@ -76,6 +76,10 @@ public class ArtifactoryExternalIdFactory {
     }
 
     private boolean containsOriginIdProperties(final RepoPath repoPath) {
+        if (repoPath == null) {
+            return false;
+        }
+
         return artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE) && artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID);
     }
 

@@ -49,6 +49,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModul
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -87,7 +88,8 @@ public class PluginService {
         final ArtifactoryPAPIService artifactoryPAPIService = new ArtifactoryPAPIService(repositories, searches);
         final ArtifactoryPropertyService artifactoryPropertyService = new ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager);
         final AnalyticsService analyticsService = AnalyticsService.createFromBlackDuckServerConfig(directoryConfig, blackDuckServerConfig);
-        final ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, dateTimeManager);
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+        final ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, dateTimeManager, blackDuckServicesFactory);
         moduleRegistry = new ModuleRegistry(analyticsService);
 
         final ScanModule scanModule = moduleFactory.createScanModule(blackDuckDirectory);
