@@ -314,12 +314,12 @@ public class ArtifactIdentificationService {
                         }
                     } catch (final IntegrationException e) {
                         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to retrieve vulnerability information");
-                        logger.info(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));
+                        logger.warn(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));
                         logger.debug(e.getMessage(), e);
                     }
                 } else {
                     cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Artifact was not successfully added to Black Duck project");
-                    logger.debug(String.format("Artifact was not successfully added to Black Duck project [%s] version [%s]: %s", projectView.getName(), projectVersionView.getVersionName(), repoPath.toPath()));
+                    logger.warn(String.format("Artifact was not successfully added to Black Duck project [%s] version [%s]: %s", projectView.getName(), projectVersionView.getVersionName(), repoPath.toPath()));
                 }
             } else {
                 logger.debug(String.format("Artifact is not pending and therefore will not be inspected: %s", repoPath.toPath()));
