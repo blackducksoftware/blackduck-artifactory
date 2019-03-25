@@ -26,6 +26,7 @@ package com.synopsys.integration.blackduck.artifactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
@@ -123,7 +124,14 @@ public class PluginService {
         final String lineSeparator = System.lineSeparator();
         final String blockSeparator = lineSeparator + StringUtils.repeat("-", 100) + lineSeparator;
 
-        final StringBuilder statusCheckMessage = new StringBuilder(blockSeparator + "Status Check" + blockSeparator);
+        final File versionFile = directoryConfig.getVersionFile();
+        String version = "Unknown";
+        try {
+            version = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        final StringBuilder statusCheckMessage = new StringBuilder(blockSeparator + String.format("Status Check: Plugin Version - %s", version) + blockSeparator);
 
         statusCheckMessage.append("General Settings:").append(lineSeparator);
         final BuilderStatus generalBuilderStatus = new BuilderStatus();
