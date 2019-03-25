@@ -388,21 +388,21 @@ jobs {
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
     afterCreate { ItemInfo item ->
-        log.info("item.getName(): ${item.getName()}")
-        log.info("item.getCreated(): ${item.getCreated()}")
-        log.info("item.getCreatedBy(): ${item.getCreatedBy()}")
-        log.info("item.getId(): ${item.getId()}")
-        log.info("item.getLastModified(): ${item.getLastModified()}")
-        log.info("item.getLastUpdated(): ${item.getLastUpdated()}")
-        log.info("item.getModifiedBy(): ${item.getModifiedBy()}")
-        log.info("item.getRelPath(): ${item.getRelPath()}")
-        log.info("item.getRepoKey(): ${item.getRepoKey()}")
-        log.info("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
+        log.debug("item.getName(): ${item.getName()}")
+        log.debug("item.getCreated(): ${item.getCreated()}")
+        log.debug("item.getCreatedBy(): ${item.getCreatedBy()}")
+        log.debug("item.getId(): ${item.getId()}")
+        log.debug("item.getLastModified(): ${item.getLastModified()}")
+        log.debug("item.getLastUpdated(): ${item.getLastUpdated()}")
+        log.debug("item.getModifiedBy(): ${item.getModifiedBy()}")
+        log.debug("item.getRelPath(): ${item.getRelPath()}")
+        log.debug("item.getRepoKey(): ${item.getRepoKey()}")
+        log.debug("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
 
         final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(item.getRepoPath())
-        log.info("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
-        log.info("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
-        log.info("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
+        log.debug("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
+        log.debug("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
+        log.debug("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
 
         moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
