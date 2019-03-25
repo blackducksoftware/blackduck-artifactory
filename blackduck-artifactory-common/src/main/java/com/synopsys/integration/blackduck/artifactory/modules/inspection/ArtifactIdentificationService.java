@@ -292,7 +292,7 @@ public class ArtifactIdentificationService {
                 throw new IntegrationException("projectVersionViewHref or componentVersionViewHref is not present");
             }
         } else {
-            throw new IntegrationException("componentVersionView is not present");
+            throw new IntegrationException(String.format("Cannot find component with given external id: %s:%s", externalId.forge, externalId.createBlackDuckOriginId()));
         }
     }
 
