@@ -86,13 +86,13 @@ public class ScanPolicyService {
                 projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
             } else {
-                logger.debug(
-                    String.format("Properties %s and %s were not found on %s. Cannot update policy",
-                        BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(),
-                        BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName(),
-                        repoPath.getPath()
-                    )
-                );
+                final Exception exception = new IntegrationException(String.format("Properties %s and %s were not found on %s. Cannot update policy",
+                    BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(),
+                    BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName(),
+                    repoPath.getPath()
+                ));
+                failPolicyStatusUpdate(repoPath, exception);
+                problemRetrievingPolicyStatus = true;
             }
         }
 
