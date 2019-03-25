@@ -16,10 +16,6 @@ plugins {
 version = '6.1.1-SNAPSHOT'
 final String parentVersion = project.version
 
-allprojects {
-    task dependencies(type: DependencyReportTask) {}
-}
-
 configure(subprojects) { project ->
     group = 'com.blackducksoftware.integration'
     version = parentVersion
