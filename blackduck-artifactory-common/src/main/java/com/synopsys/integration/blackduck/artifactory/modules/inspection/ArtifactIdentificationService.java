@@ -125,8 +125,7 @@ public class ArtifactIdentificationService {
             }
 
         } catch (final Exception e) {
-            logger.error(String.format("The Black Duck %s encountered an exception while identifying artifacts in repository %s. %s", InspectionModule.class.getSimpleName(), repoKey, e.getMessage()));
-            logger.debug(String.format(e.getMessage(), e));
+            logger.error(String.format("The Black Duck %s encountered an exception while identifying artifacts in repository '%s'. Inspection may not have completed for other artifacts", InspectionModule.class.getSimpleName(), repoKey), e);
             cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.FAILURE, e.getMessage());
         }
     }

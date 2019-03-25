@@ -77,16 +77,9 @@ public class MetaDataPopulationService {
 
                 cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             } catch (final Exception e) {
-                logger.error(String.format("The Black Duck %s encountered a problem while populating artifact metadata in repository %s", InspectionModule.class.getSimpleName(), repoKey));
-                logger.debug(e.getMessage(), e);
-                cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.FAILURE);
+                logger.error(String.format("The Black Duck %s encountered a problem while populating artifact metadata in repository '%s'", InspectionModule.class.getSimpleName(), repoKey), e);
             }
         }
-
-        // TODO: Perhaps update policy status by the pending property instead of waiting for notifications
-        //        final SetMultimap<String, String> propertyMap = new HashMultimap<>();
-        //        propertyMap.put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.PENDING.name());
-        //        artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(propertyMap, repoKey);
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView) throws IntegrationException {
