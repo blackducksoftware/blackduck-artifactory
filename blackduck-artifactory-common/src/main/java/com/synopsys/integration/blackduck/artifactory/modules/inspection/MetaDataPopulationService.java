@@ -73,6 +73,11 @@ public class MetaDataPopulationService {
                 cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.FAILURE);
             }
         }
+
+        // TODO: Perhaps update policy status by the pending property instead of waiting for notifications
+        //        final SetMultimap<String, String> propertyMap = new HashMultimap<>();
+        //        propertyMap.put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.PENDING.name());
+        //        artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(propertyMap, repoKey);
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate, final PolicySummaryStatusType policySummaryStatusType, final String componentVersionUrl) {
