@@ -102,11 +102,10 @@ public class InspectionModule implements Module {
         updateAnalytics();
     }
 
-    public boolean handleAfterCreateEvent(final ItemInfo itemInfo) {
+    public void handleAfterCreateEvent(final ItemInfo itemInfo) {
         final String repoKey = itemInfo.getRepoKey();
         final RepoPath repoPath = itemInfo.getRepoPath();
 
-        boolean successfulInspection;
         try {
             final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
 
@@ -117,18 +116,18 @@ public class InspectionModule implements Module {
                     final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
                     artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
                     cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+                } else {
+                    logger.debug(String.format("Artifact at '%s' is not existent or the repo is not configured to be inspected", repoPath.toPath()));
                 }
+            } else {
+                logger.debug(String.format("Package type for repo '%s' is not existent or the repo is not set to be inspected", repoKey));
             }
-            successfulInspection = true;
         } catch (final Exception e) {
             logger.error(String.format("Failed to inspect item added to storage: %s", repoPath.toPath()));
             logger.debug(e.getMessage(), e);
-            successfulInspection = false;
         }
 
         updateAnalytics();
-
-        return successfulInspection;
     }
 
     @Override

@@ -95,6 +95,8 @@ public class MetaDataUpdateService {
             final ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataFromNotificationsOptional.get();
             metadataPopulationService.populateBlackDuckMetadataFromIdMetadata(repoKey, artifactMetaDataFromNotifications.getArtifactMetaData());
             lastNotificationDate = artifactMetaDataFromNotifications.getLastNotificationDate();
+        } else {
+            logger.debug("No artifact metadata from notifications");
         }
 
         // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.

@@ -113,6 +113,8 @@ public class ArtifactMetaDataService {
             }
 
             artifactMetaDataFromNotifications = new ArtifactMetaDataFromNotifications(notificationDetailResults.getLatestNotificationCreatedAtDate(), new ArrayList<>(idToArtifactMetaData.values()));
+        } else {
+            logger.debug(String.format("BlackDuck project '%s' and version '%s' not found. The plugin will be unable to update the policy status of artifacts in repo '%s'", projectName, projectVersionName, repoKey));
         }
 
         return Optional.ofNullable(artifactMetaDataFromNotifications);
