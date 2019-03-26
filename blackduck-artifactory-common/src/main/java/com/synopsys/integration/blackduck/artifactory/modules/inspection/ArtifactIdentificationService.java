@@ -145,7 +145,7 @@ public class ArtifactIdentificationService {
     public void populateIdMetadataOnIdentifiedArtifact(final IdentifiedArtifact identifiedArtifact) {
         if (!identifiedArtifact.getExternalId().isPresent()) {
             logger.debug(String.format("Could not populate artifact with metadata. Missing externalId: %s", identifiedArtifact.getRepoPath()));
-            cacheInspectorService.setInspectionStatus(identifiedArtifact.getRepoPath(), InspectionStatus.FAILURE, "No external identifier found");
+            failInspection(identifiedArtifact.getRepoPath(), "No external identifier found");
             return;
         }
 
@@ -174,7 +174,7 @@ public class ArtifactIdentificationService {
                 if (success) {
                     cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
                 } else {
-                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to find component match");
+                    failInspection(repoPath, "Failed to find component match");
                 }
 
             } catch (final IntegrationRestException e) {
@@ -183,14 +183,14 @@ public class ArtifactIdentificationService {
                 success = handleIntegrationRestException(repoPath, projectVersionView, externalId, e.getOriginalIntegrationRestException());
             } catch (final BlackDuckIntegrationException e) {
                 logger.warn(String.format("Cannot find component match for artifact at %s", repoPath.toPath()));
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to find component match");
+                failInspection(repoPath, "Failed to find component match");
             } catch (final Exception e) {
                 logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath.toPath()));
                 logger.debug(e.getMessage(), e);
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
+                failInspection(repoPath, "See logs for details");
             }
         } else {
-            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "No external identifier found");
+            failInspection(repoPath, "No external identifier found");
         }
 
         return success;
@@ -209,16 +209,16 @@ public class ArtifactIdentificationService {
                 success = true;
             } catch (final IntegrationException e1) {
                 logger.debug("Failed to populate artifact with policy info even though it already exists in the BOM", e1);
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to retrieve policy information");
+                failInspection(repoPath, "Failed to retrieve policy information");
             }
         } else if (statusCode == 401) {
             logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
                 repoPath.toPath(), statusCode));
-            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, String.format("Unauthorized (%s)", statusCode));
+            failInspection(repoPath, String.format("Unauthorized (%s)", statusCode));
         } else {
             logger.warn(String.format("The Black Duck %s could not successfully inspect %s because of a %d status code", InspectionModule.class.getSimpleName(), repoPath.toPath(), statusCode));
             logger.debug(String.format(e.getMessage(), repoPath), e);
-            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, String.format("Status code: %s", statusCode));
+            failInspection(repoPath, String.format("Status code: %s", statusCode));
         }
 
         return success;
@@ -354,7 +354,7 @@ public class ArtifactIdentificationService {
         return retryCount.orElse(0);
     }
 
-    private void failInspection(final RepoPath repoPath, final String inspectionStatusMessage) {
+    public void failInspection(final RepoPath repoPath, final String inspectionStatusMessage) {
         final int retryCount = getRetryCount(repoPath) + 1;
         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, inspectionStatusMessage, retryCount);
     }

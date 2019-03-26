@@ -125,7 +125,7 @@ public class InspectionModule implements Module {
             }
         } catch (final Exception e) {
             logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
-            cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE);
+            artifactIdentificationService.failInspection(repoPath, "See logs for details");
             logger.debug(e.getMessage(), e);
         }
 
