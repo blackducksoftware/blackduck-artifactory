@@ -43,6 +43,7 @@ public enum BlackDuckArtifactoryProperty {
     UPDATE_STATUS("updateStatus"),
     SCAN_TIME("scanTime"),
     SCAN_RESULT("scanResult"),
+    INSPECTION_RETRY_COUNT("inspectionRetryCount"),
     @Deprecated
     PROJECT_VERSION_URL(null, "apiUrl");
 

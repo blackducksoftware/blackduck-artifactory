@@ -79,9 +79,11 @@ public class ArtifactIdentificationService {
     private final CacheInspectorService cacheInspectorService;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final MetaDataPopulationService metaDataPopulationService;
+    private final InspectionModuleConfig inspectionModuleConfig;
 
     public ArtifactIdentificationService(final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
-        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService,
+        final InspectionModuleConfig inspectionModuleConfig) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
         this.packageTypePatternManager = packageTypePatternManager;
@@ -89,6 +91,7 @@ public class ArtifactIdentificationService {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
         this.metaDataPopulationService = metaDataPopulationService;
+        this.inspectionModuleConfig = inspectionModuleConfig;
     }
 
     public void identifyArtifacts(final String repoKey) {
@@ -310,11 +313,12 @@ public class ArtifactIdentificationService {
     private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final String packageType, final Set<RepoPath> repoPaths) {
         for (final RepoPath repoPath : repoPaths) {
             final boolean isArtifactPending = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);
+            final boolean shouldRetry = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getRetryCount(repoPath) < inspectionModuleConfig.getRetryCount();
 
-            if (isArtifactPending) {
+            if (isArtifactPending || shouldRetry) {
                 final IdentifiedArtifact identifiedArtifact = identifyArtifact(repoPath, packageType);
                 if (!identifiedArtifact.getExternalId().isPresent()) {
-                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to generate external id from properties");
+                    failInspection(repoPath, "Failed to generate external id from properties");
                     continue;
                 }
 
@@ -327,12 +331,12 @@ public class ArtifactIdentificationService {
                         final ComponentViewWrapper componentViewWrapper = getComponentViewWrapper(projectVersionView, externalId);
                         metaDataPopulationService.populateBlackDuckMetadata(repoPath, componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
                     } catch (final IntegrationException e) {
-                        cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Failed to retrieve vulnerability information");
+                        failInspection(repoPath, "Failed to retrieve vulnerability information");
                         logger.warn(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));
                         logger.debug(e.getMessage(), e);
                     }
                 } else {
-                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, "Artifact was not successfully added to Black Duck project");
+                    failInspection(repoPath, "Artifact was not successfully added to Black Duck project");
                     logger.warn(String.format("Artifact was not successfully added to Black Duck project [%s] version [%s]: %s", projectView.getName(), projectVersionView.getVersionName(), repoPath.toPath()));
                 }
             } else {
@@ -343,6 +347,16 @@ public class ArtifactIdentificationService {
         if (repoPaths.isEmpty()) {
             logger.debug("Cannot add delta to Black Duck because supplied repoPaths is empty");
         }
+    }
+
+    private Integer getRetryCount(final RepoPath repoPath) {
+        final Optional<Integer> retryCount = artifactoryPropertyService.getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, logger);
+        return retryCount.orElse(0);
+    }
+
+    private void failInspection(final RepoPath repoPath, final String inspectionStatusMessage) {
+        final int retryCount = getRetryCount(repoPath) + 1;
+        cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.FAILURE, inspectionStatusMessage, retryCount);
     }
 
     public class IdentifiedArtifact {

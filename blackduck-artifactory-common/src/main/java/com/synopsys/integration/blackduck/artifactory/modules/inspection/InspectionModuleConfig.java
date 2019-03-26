@@ -43,9 +43,10 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final String populateMetadataCron;
     private final List<String> repos;
     private final String updateMetadataCron;
+    private final Integer retryCount;
 
     public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final List<String> patternsRubygems, final List<String> patternsMaven, final List<String> patternsGradle, final List<String> patternsPypi,
-        final List<String> patternsNuget, final List<String> patternsNpm, final String blackDuckPopulateMetadataCron, final String blackDuckUpdateMetadataCron, final List<String> repos) {
+        final List<String> patternsNuget, final List<String> patternsNpm, final String blackDuckPopulateMetadataCron, final String blackDuckUpdateMetadataCron, final List<String> repos, final int retryCount) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.identifyArtifactsCron = blackDuckIdentifyArtifactsCron;
         this.patternsRubygems = patternsRubygems;
@@ -57,6 +58,7 @@ public class InspectionModuleConfig extends ModuleConfig {
         this.populateMetadataCron = blackDuckPopulateMetadataCron;
         this.updateMetadataCron = blackDuckUpdateMetadataCron;
         this.repos = repos;
+        this.retryCount = retryCount;
     }
 
     public static InspectionModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
@@ -73,9 +75,10 @@ public class InspectionModuleConfig extends ModuleConfig {
         final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
+        final Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
         return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm, blackDuckPopulateMetadataCron, blackDuckUpdateMetadataCron,
-            repos);
+            repos, retryCount);
     }
 
     @Override
@@ -92,6 +95,7 @@ public class InspectionModuleConfig extends ModuleConfig {
         validateList(builderStatus, InspectionModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
         validateCronExpression(builderStatus, InspectionModuleProperty.UPDATE_METADATA_CRON, updateMetadataCron);
+        validateInteger(builderStatus, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
     }
 
     public String getIdentifyArtifactsCron() {
@@ -132,5 +136,9 @@ public class InspectionModuleConfig extends ModuleConfig {
 
     public List<String> getPatternsNpm() {
         return patternsNpm;
+    }
+
+    public Integer getRetryCount() {
+        return retryCount;
     }
 }
