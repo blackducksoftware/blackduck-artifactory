@@ -20,12 +20,7 @@ configure(subprojects) { project ->
     group = 'com.blackducksoftware.integration'
     version = parentVersion
 
-    apply plugin: 'com.blackducksoftware.integration.solution'
     apply plugin: 'groovy'
-
-    license {
-        header rootProject.file('LICENSE')
-    }
 
     dependencies {
         implementation 'com.blackducksoftware.integration:blackduck-common:42.3.0'
