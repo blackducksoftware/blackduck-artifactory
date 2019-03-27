@@ -21,29 +21,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+public abstract class NotificationResults<T> {
+    private final Optional<Date> latestNotificationCreatedAtDate;
+    private final Optional<String> latestNotificationCreatedAtString;
 
-public class ArtifactMetaDataFromNotifications {
-    private final Date lastNotificationDate;
-    private final List<ArtifactMetaData> artifactMetaData;
-
-    public ArtifactMetaDataFromNotifications(@Nullable final Date lastNotificationDate, final List<ArtifactMetaData> artifactMetaData) {
-        this.lastNotificationDate = lastNotificationDate;
-        this.artifactMetaData = artifactMetaData;
+    public NotificationResults(final Optional<Date> latestNotificationCreatedAtDate, final Optional<String> latestNotificationCreatedAtString) {
+        this.latestNotificationCreatedAtDate = latestNotificationCreatedAtDate;
+        this.latestNotificationCreatedAtString = latestNotificationCreatedAtString;
     }
 
-    public Optional<Date> getLastNotificationDate() {
-        return Optional.ofNullable(lastNotificationDate);
+    public abstract List<T> getResults();
+
+    public final Optional<Date> getLatestNotificationCreatedAtDate() {
+        return latestNotificationCreatedAtDate;
     }
 
-    public List<ArtifactMetaData> getArtifactMetaData() {
-        return artifactMetaData;
+    public final Optional<String> getLatestNotificationCreatedAtString() {
+        return latestNotificationCreatedAtString;
+    }
+
+    public boolean isEmpty() {
+        return getResults() == null || getResults().isEmpty();
     }
 
 }

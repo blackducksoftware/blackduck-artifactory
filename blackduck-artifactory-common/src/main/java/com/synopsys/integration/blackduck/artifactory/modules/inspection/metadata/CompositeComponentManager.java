@@ -35,9 +35,9 @@ import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionVie
 import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.notification.NotificationDetailResult;
-import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
-import com.synopsys.integration.blackduck.notification.content.detail.NotificationContentDetail;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.NotificationDetailResult;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.NotificationDetailResults;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.content.detail.NotificationContentDetail;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;

@@ -1,6 +1,6 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection
 
-import com.synopsys.integration.util.BuilderStatus
+import com.synopsys.integration.builder.BuilderStatus
 import org.junit.Assert
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

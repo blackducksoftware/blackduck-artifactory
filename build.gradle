@@ -28,7 +28,7 @@ configure(subprojects) { project ->
     }
 
     dependencies {
-        implementation 'com.blackducksoftware.integration:blackduck-common:41.2.0'
+        implementation 'com.blackducksoftware.integration:blackduck-common:42.3.0'
         implementation 'org.codehaus.groovy:groovy-all:2.4.15'
 
         testImplementation 'com.blackducksoftware.integration:integration-test-common:4.+'

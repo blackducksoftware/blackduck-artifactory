@@ -60,7 +60,7 @@ import com.synopsys.integration.blackduck.exception.BlackDuckIntegrationExceptio
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ComponentService;
-import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.ProjectBomService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
@@ -168,8 +168,9 @@ public class ArtifactIdentificationService {
         if (identifiedArtifact.getExternalId().isPresent()) {
             final ExternalId externalId = identifiedArtifact.getExternalId().get();
             try {
-                final ProjectService projectService = blackDuckServicesFactory.createProjectService();
-                final Optional<String> componentVersionUrl = projectService.addComponentToProjectVersion(externalId, projectVersionView);
+                final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
+                final Optional<String> componentVersionUrl = projectBomService.addComponentToProjectVersion(externalId, projectVersionView);
+
                 success = componentVersionUrl.isPresent();
                 if (success) {
                     cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);

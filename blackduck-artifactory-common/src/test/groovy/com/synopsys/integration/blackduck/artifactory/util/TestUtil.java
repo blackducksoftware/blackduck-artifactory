@@ -39,7 +39,7 @@ public class TestUtil {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static final String DEFAULT_PROPERTIES_RESOURCE_PATH = "/blackDuckPlugin.properties";
-    public static final String BLACKDUCK_CREDENTIALS_ENV_VAR = BlackDuckServerConfigBuilder.BLACKDUCK_SERVER_CONFIG_ENVIRONMENT_VARIABLE_PREFIX + "CREDENTIALS";
+    public static final String BLACKDUCK_CREDENTIALS_ENV_VAR = "BLACKDUCK_CREDENTIALS";
 
     public static Properties getDefaultProperties() throws IOException {
         return getResourceAsProperties(DEFAULT_PROPERTIES_RESOURCE_PATH);

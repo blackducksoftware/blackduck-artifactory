@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.util.BuilderStatus;
+import com.synopsys.integration.builder.BuilderStatus;
 
 public class InspectionModuleConfig extends ModuleConfig {
     private final String identifyArtifactsCron;

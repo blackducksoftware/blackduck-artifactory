@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsService;
+import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.util.BuilderStatus;
 
 /**
  * A list of modules that have passed verification and registers them for analytics collection

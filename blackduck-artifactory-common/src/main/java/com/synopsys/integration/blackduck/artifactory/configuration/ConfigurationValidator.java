@@ -29,7 +29,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
-import com.synopsys.integration.util.BuilderStatus;
+import com.synopsys.integration.builder.BuilderStatus;
 
 public abstract class ConfigurationValidator {
     public abstract void validate(final BuilderStatus builderStatus);

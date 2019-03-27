@@ -21,29 +21,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.content;
 
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
-import javax.annotation.Nullable;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionDescription;
 
-public class ArtifactMetaDataFromNotifications {
-    private final Date lastNotificationDate;
-    private final List<ArtifactMetaData> artifactMetaData;
+public class BomEditContent extends NotificationContent {
+    public String bomComponent;
 
-    public ArtifactMetaDataFromNotifications(@Nullable final Date lastNotificationDate, final List<ArtifactMetaData> artifactMetaData) {
-        this.lastNotificationDate = lastNotificationDate;
-        this.artifactMetaData = artifactMetaData;
+    @Override
+    public boolean providesPolicyDetails() {
+        return false;
     }
 
-    public Optional<Date> getLastNotificationDate() {
-        return Optional.ofNullable(lastNotificationDate);
+    @Override
+    public boolean providesVulnerabilityDetails() {
+        return false;
     }
 
-    public List<ArtifactMetaData> getArtifactMetaData() {
-        return artifactMetaData;
+    @Override
+    public boolean providesProjectComponentDetails() {
+        return false;
+    }
+
+    @Override
+    public boolean providesLicenseDetails() {
+        return false;
+    }
+
+    @Override
+    public List<ProjectVersionDescription> getAffectedProjectVersionDescriptions() {
+        return Collections.emptyList();
     }
 
 }
