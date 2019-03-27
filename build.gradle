@@ -5,7 +5,7 @@ buildscript {
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.58'
+        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
     }
 }
 
@@ -13,7 +13,7 @@ plugins {
     id 'groovy'
 }
 
-version = '6.2.0'
+version = '6.2.1-SNAPSHOT'
 final String parentVersion = project.version
 
 configure(subprojects) { project ->
