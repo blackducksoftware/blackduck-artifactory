@@ -35,6 +35,15 @@ versionFile << version
 
 apply from: 'generateConfig.gradle'
 
+publishing {
+   publications {
+       mavenJava(MavenPublication) {
+           def artifactName = "${buildDir}/distributions/${project.name}-${project.version}.zip"
+           artifact(artifactName)
+       }
+   }
+}
+
 task createFinalZip(type: Zip) {
     dependsOn build, generateConfig
     from("${projectDir}/src/main/resources/") {
