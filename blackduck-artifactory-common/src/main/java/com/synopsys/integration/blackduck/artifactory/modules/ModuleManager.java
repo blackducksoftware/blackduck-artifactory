@@ -104,7 +104,7 @@ public class ModuleManager {
                 final List<ModuleConfig> moduleConfigs = moduleRegistry.getModuleConfigsByName(moduleName);
 
                 if (moduleConfigs.isEmpty()) {
-                    logger.warn(String.format("No registered modules with the name '%s' found. Hit the checkStatusMessage endpoint to see why.", moduleName));
+                    logger.warn(String.format("No registered modules with the name '%s' found. Hit the blackDuckTestConfig endpoint to see why.", moduleName));
                 } else {
                     moduleConfigs.forEach(moduleConfig -> {
                         logger.warn(String.format("Setting %s's enabled state to %b", moduleConfig.getModuleName(), moduleState));
@@ -171,6 +171,10 @@ public class ModuleManager {
 
     public void deleteInspectionProperties(final TriggerType triggerType, final Map<String, List<String>> params) {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.deleteInspectionProperties(params));
+    }
+
+    public void reinspectFromFailures(final TriggerType triggerType, final Map<String, List<String>> params) {
+        runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.reinspectFromFailures(params));
     }
 
     public String getBlackDuckIdentifyArtifactsCron() {

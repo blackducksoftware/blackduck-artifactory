@@ -25,6 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.metada
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -33,18 +34,20 @@ import java.util.Optional;
 
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.api.generated.discovery.ApiDiscovery;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.NotificationView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
+import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.CommonNotificationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.CommonNotificationView;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.NotificationDetailResults;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification.content.detail.NotificationContentDetailFactory;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
-import com.synopsys.integration.blackduck.notification.CommonNotificationView;
-import com.synopsys.integration.blackduck.notification.NotificationDetailResults;
-import com.synopsys.integration.blackduck.notification.content.detail.NotificationContentDetailFactory;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
-import com.synopsys.integration.blackduck.service.CommonNotificationService;
 import com.synopsys.integration.blackduck.service.NotificationService;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
@@ -56,15 +59,18 @@ public class ArtifactMetaDataService {
     private static final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactMetaDataService.class));
 
     private final BlackDuckServicesFactory blackDuckServicesFactory;
+    private final CommonNotificationService commonNotificationService;
 
     public static ArtifactMetaDataService createDefault(final BlackDuckServerConfig blackDuckServerConfig) {
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
-
-        return new ArtifactMetaDataService(blackDuckServicesFactory);
+        final NotificationContentDetailFactory notificationContentDetailFactory = new NotificationContentDetailFactory(blackDuckServicesFactory.getGson());
+        final CommonNotificationService commonNotificationService = new CommonNotificationService(notificationContentDetailFactory, true);
+        return new ArtifactMetaDataService(blackDuckServicesFactory, commonNotificationService);
     }
 
-    public ArtifactMetaDataService(final BlackDuckServicesFactory blackDuckServicesFactory) {
+    public ArtifactMetaDataService(final BlackDuckServicesFactory blackDuckServicesFactory, final CommonNotificationService commonNotificationService) {
         this.blackDuckServicesFactory = blackDuckServicesFactory;
+        this.commonNotificationService = commonNotificationService;
     }
 
     public List<ArtifactMetaData> getArtifactMetadataOfRepository(final String repoKey, final String projectName, final String projectVersionName) throws IntegrationException {
@@ -91,31 +97,43 @@ public class ArtifactMetaDataService {
     public Optional<ArtifactMetaDataFromNotifications> getArtifactMetadataFromNotifications(final String repoKey, final String projectName, final String projectVersionName, final Date startDate, final Date endDate)
         throws IntegrationException {
         final NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
-        final CommonNotificationService commonNotificationService = blackDuckServicesFactory.createCommonNotificationService(new NotificationContentDetailFactory(BlackDuckServicesFactory.createDefaultGson()), false);
         final ProjectService projectDataService = blackDuckServicesFactory.createProjectService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
         final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(logger, blackDuckService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
-        final List<NotificationView> notificationViews = notificationService.getAllNotifications(startDate, endDate);
-        final List<CommonNotificationView> commonNotificationViews = commonNotificationService.getCommonNotifications(notificationViews);
-        final NotificationDetailResults notificationDetailResults = commonNotificationService.getNotificationDetailResults(commonNotificationViews);
+        final UserView currentUser = blackDuckService.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
+        final List<NotificationUserView> notificationUserViews = notificationService.getAllUserNotifications(currentUser, startDate, endDate);
+
         final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
 
         ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = null;
         if (projectVersionWrapper.isPresent()) {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
             final List<ProjectVersionView> projectVersionViews = Collections.singletonList(projectVersionView);
+
+            // TODO: Remove the entire notification package. That code was copied from an old version of blackduck-common
+            final List<CommonNotificationView> commonUserNotifications = commonNotificationService.getCommonUserNotifications(notificationUserViews);
+            final NotificationDetailResults notificationDetailResults = commonNotificationService.getNotificationDetailResults(commonUserNotifications);
             final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseNotifications(notificationDetailResults, projectVersionViews);
 
             for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
                 populateMetaDataMap(repoKey, idToArtifactMetaData, blackDuckService, projectVersionComponentVersionModel);
             }
 
-            artifactMetaDataFromNotifications = new ArtifactMetaDataFromNotifications(notificationDetailResults.getLatestNotificationCreatedAtDate(), new ArrayList<>(idToArtifactMetaData.values()));
+            final Optional<Date> latestNotificationCreatedAtDate = getLatestNotificationCreatedAtDate(notificationUserViews);
+            artifactMetaDataFromNotifications = new ArtifactMetaDataFromNotifications(latestNotificationCreatedAtDate.orElse(null), new ArrayList<>(idToArtifactMetaData.values()));
+        } else {
+            logger.debug(String.format("BlackDuck project '%s' and version '%s' not found. The plugin will be unable to update the policy status of artifacts in repo '%s'", projectName, projectVersionName, repoKey));
         }
 
         return Optional.ofNullable(artifactMetaDataFromNotifications);
+    }
+
+    private Optional<Date> getLatestNotificationCreatedAtDate(final List<NotificationUserView> notificationUserViews) {
+        return notificationUserViews.stream()
+                   .max(Comparator.comparing(NotificationUserView::getCreatedAt))
+                   .map(NotificationUserView::getCreatedAt);
     }
 
     private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final BlackDuckService blackDuckService, final CompositeComponentModel compositeComponentModel) {

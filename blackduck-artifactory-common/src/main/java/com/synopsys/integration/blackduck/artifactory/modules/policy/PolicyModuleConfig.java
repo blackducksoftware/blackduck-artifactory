@@ -25,7 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.util.BuilderStatus;
+import com.synopsys.integration.builder.BuilderStatus;
 
 public class PolicyModuleConfig extends ModuleConfig {
     private final Boolean metadataBlockEnabled;

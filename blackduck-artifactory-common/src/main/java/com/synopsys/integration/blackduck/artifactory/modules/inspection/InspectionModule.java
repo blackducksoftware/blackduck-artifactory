@@ -23,6 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -95,35 +96,51 @@ public class InspectionModule implements Module {
         updateAnalytics();
     }
 
+    public void reinspectFromFailures(final Map<String, List<String>> params) {
+        final List<RepoPath> repoPaths = inspectionModuleConfig.getRepos().stream()
+                                             .map(repoKey -> cacheInspectorService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
+                                             .flatMap(Collection::stream)
+                                             .collect(Collectors.toList());
+
+        repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
+        repoPaths.forEach(this::inspectArtifact);
+
+        updateAnalytics();
+    }
+
     public void updateDeprecatedProperties() {
         inspectionModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.updateAllBlackDuckPropertiesFromRepoKey(repoKey, logger));
         updateAnalytics();
     }
 
-    public boolean handleAfterCreateEvent(final ItemInfo itemInfo) {
-        final String repoKey = itemInfo.getRepoKey();
+    public void handleAfterCreateEvent(final ItemInfo itemInfo) {
         final RepoPath repoPath = itemInfo.getRepoPath();
 
-        boolean successfulInspection;
         try {
-            final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
-
-            if (packageType.isPresent() && inspectionModuleConfig.getRepos().contains(repoKey)) {
-                final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
-                artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
-                cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+            if (artifactIdentificationService.shouldInspectArtifact(inspectionModuleConfig.getRepos(), repoPath)) {
+                inspectArtifact(repoPath);
+            } else {
+                logger.debug(String.format("Artifact at '%s' is not existent or the repo is not configured to be inspected", repoPath.toPath()));
             }
-            successfulInspection = true;
         } catch (final Exception e) {
-            logger.error(String.format("Failed to inspect item added to storage: %s", repoPath.toPath()));
+            logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
+            artifactIdentificationService.failInspection(repoPath, "See logs for details");
             logger.debug(e.getMessage(), e);
-            successfulInspection = false;
         }
 
         updateAnalytics();
+    }
 
-        return successfulInspection;
+    private void inspectArtifact(final RepoPath repoPath) {
+        final String repoKey = repoPath.getRepoKey();
+        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
+        if (packageType.isPresent()) {
+            final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
+            artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
+        } else {
+            logger.debug(String.format("Package type for repo '%s' is not existent", repoKey));
+        }
     }
 
     @Override

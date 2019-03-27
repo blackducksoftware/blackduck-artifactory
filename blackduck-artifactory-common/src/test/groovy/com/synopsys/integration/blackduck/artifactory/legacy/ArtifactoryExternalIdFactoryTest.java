@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.md.Properties;
 import org.artifactory.md.PropertiesInfo;
+import org.artifactory.repo.RepoPath;
 import org.junit.Test;
 
 import com.google.common.collect.Multimap;
@@ -95,45 +96,47 @@ public class ArtifactoryExternalIdFactoryTest {
     }
 
     private void testNameVersionExternalIdCreation(final String packageType, final Map<String, String> propertiesMap) {
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory());
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(null, new ExternalIdFactory());
         final String organization = "group";
         final String module = "component";
         final String baseRevision = "version";
         final FileLayoutInfo fileLayoutInfo = createFileLayoutInfo(organization, module, baseRevision);
         final FileLayoutInfo missingFileLayoutInfo = createFileLayoutInfo(null, null, null);
+        final RepoPath repoPath = null;
 
         final Properties properties = createProperties(propertiesMap);
         final Properties missingProperties = createProperties(new HashMap<>());
 
-        Optional<ExternalId> externalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, properties);
+        Optional<ExternalId> externalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
 
         assertTrue(externalId.isPresent());
 
-        externalId = artifactoryExternalIdFactory.createExternalId(packageType, missingFileLayoutInfo, properties);
+        externalId = artifactoryExternalIdFactory.createExternalId(packageType, missingFileLayoutInfo, repoPath, properties);
 
         assertTrue(externalId.isPresent());
 
-        externalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, missingProperties);
+        externalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, missingProperties);
 
         assertTrue(externalId.isPresent());
 
-        externalId = artifactoryExternalIdFactory.createExternalId(packageType, missingFileLayoutInfo, missingProperties);
+        externalId = artifactoryExternalIdFactory.createExternalId(packageType, missingFileLayoutInfo, repoPath, missingProperties);
 
         assertFalse(externalId.isPresent());
     }
 
     private void testMavenDependencyCreation(final String packageType) {
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(new ExternalIdFactory());
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(null, new ExternalIdFactory());
         final String organization = "group";
         final String module = "component";
         final String baseRevision = "version";
         final FileLayoutInfo fileLayoutInfo = createFileLayoutInfo(organization, module, baseRevision);
         final FileLayoutInfo missingFileLayoutInfo = createFileLayoutInfo(null, null, null);
+        final RepoPath repoPath = null;
 
-        Optional<ExternalId> externalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, null);
+        Optional<ExternalId> externalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, null);
         assertTrue(externalId.isPresent());
 
-        externalId = artifactoryExternalIdFactory.createExternalId(packageType, missingFileLayoutInfo, null);
+        externalId = artifactoryExternalIdFactory.createExternalId(packageType, missingFileLayoutInfo, repoPath, null);
         assertFalse(externalId.isPresent());
     }
 

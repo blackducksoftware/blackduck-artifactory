@@ -5,7 +5,7 @@ buildscript {
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
+        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.58'
     }
 }
 
@@ -13,12 +13,8 @@ plugins {
     id 'groovy'
 }
 
-version = '6.1.0-SNAPSHOT'
+version = '6.2.0'
 final String parentVersion = project.version
-
-allprojects {
-    task dependencies(type: DependencyReportTask) {}
-}
 
 configure(subprojects) { project ->
     group = 'com.blackducksoftware.integration'
@@ -32,7 +28,7 @@ configure(subprojects) { project ->
     }
 
     dependencies {
-        implementation 'com.blackducksoftware.integration:blackduck-common:41.2.0'
+        implementation 'com.blackducksoftware.integration:blackduck-common:42.3.0'
         implementation 'org.codehaus.groovy:groovy-all:2.4.15'
 
         testImplementation 'com.blackducksoftware.integration:integration-test-common:4.+'

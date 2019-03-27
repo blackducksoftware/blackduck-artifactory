@@ -100,7 +100,7 @@ public class ArtifactoryPAPIService {
                 repoPaths.addAll(foundRepoPaths);
                 logger.debug(String.format("Found %d artifacts matching pattern [%s]", foundRepoPaths.size(), pattern));
             } else {
-                logger.debug(String.format("No artifacts fund that match the pattern pattern [%s]", pattern));
+                logger.debug(String.format("No artifacts found that match the pattern pattern [%s]", pattern));
             }
         }
 

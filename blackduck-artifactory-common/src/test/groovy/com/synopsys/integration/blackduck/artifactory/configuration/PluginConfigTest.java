@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.synopsys.integration.blackduck.artifactory.util.BlackDuckIntegrationTest;
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
-import com.synopsys.integration.util.BuilderStatus;
+import com.synopsys.integration.builder.BuilderStatus;
 
 class PluginConfigTest {
     @BlackDuckIntegrationTest

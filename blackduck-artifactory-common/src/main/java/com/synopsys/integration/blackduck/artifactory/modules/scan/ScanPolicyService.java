@@ -40,6 +40,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.UpdateS
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
+import com.synopsys.integration.blackduck.service.ProjectBomService;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.PolicyStatusDescription;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
@@ -52,12 +53,15 @@ import com.synopsys.integration.util.NameVersion;
 public class ScanPolicyService {
     private static final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ScanPolicyService.class));
 
+    private final ProjectBomService projectBomService;
     private final ProjectService projectService;
     private final BlackDuckService blackDuckService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final DateTimeManager dateTimeManager;
 
-    public ScanPolicyService(final ProjectService projectService, final BlackDuckService blackDuckService, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
+    public ScanPolicyService(final ProjectBomService projectBomService, final ProjectService projectService, final BlackDuckService blackDuckService,
+        final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
+        this.projectBomService = projectBomService;
         this.projectService = projectService;
         this.blackDuckService = blackDuckService;
         this.artifactoryPropertyService = artifactoryPropertyService;
@@ -66,10 +70,11 @@ public class ScanPolicyService {
 
     public static ScanPolicyService createDefault(final BlackDuckServerConfig blackDuckServerConfig, final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+        final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
         final ProjectService projectService = blackDuckServicesFactory.createProjectService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
 
-        return new ScanPolicyService(projectService, blackDuckService, artifactoryPropertyService, dateTimeManager);
+        return new ScanPolicyService(projectBomService, projectService, blackDuckService, artifactoryPropertyService, dateTimeManager);
     }
 
     public void populatePolicyStatuses(final Set<RepoPath> repoPaths) {
@@ -86,12 +91,13 @@ public class ScanPolicyService {
                 projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
             } else {
-                final String message = String.format("Properties %s and %s were not found on %s or that project and version do not exist. Cannot update policy",
+                final Exception exception = new IntegrationException(String.format("Properties %s and %s were not found on %s. Cannot update policy",
                     BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(),
                     BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName(),
                     repoPath.getPath()
-                );
-                failPolicyStatusUpdate(repoPath, new IntegrationException(message));
+                ));
+                failPolicyStatusUpdate(repoPath, exception);
+                problemRetrievingPolicyStatus = true;
             }
         }
 
@@ -106,7 +112,7 @@ public class ScanPolicyService {
         boolean success = false;
 
         try {
-            final Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = projectService.getPolicyStatusForVersion(projectVersionWrapper.getProjectVersionView());
+            final Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = projectBomService.getPolicyStatusForVersion(projectVersionWrapper.getProjectVersionView());
             if (!versionBomPolicyStatusViewOptional.isPresent()) {
                 throw new IntegrationException(String.format("BlackDuck failed to return a policy status. Project '%s' with version '%s' may not exist in BlackDuck", projectName, projectVersionName));
             }

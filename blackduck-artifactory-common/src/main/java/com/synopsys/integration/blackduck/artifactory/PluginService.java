@@ -26,6 +26,7 @@ package com.synopsys.integration.blackduck.artifactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
@@ -49,10 +50,11 @@ import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModul
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
+import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.util.BuilderStatus;
 
 public class PluginService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
@@ -87,7 +89,8 @@ public class PluginService {
         final ArtifactoryPAPIService artifactoryPAPIService = new ArtifactoryPAPIService(repositories, searches);
         final ArtifactoryPropertyService artifactoryPropertyService = new ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager);
         final AnalyticsService analyticsService = AnalyticsService.createFromBlackDuckServerConfig(directoryConfig, blackDuckServerConfig);
-        final ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, dateTimeManager);
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+        final ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, dateTimeManager, blackDuckServicesFactory);
         moduleRegistry = new ModuleRegistry(analyticsService);
 
         final ScanModule scanModule = moduleFactory.createScanModule(blackDuckDirectory);
@@ -121,7 +124,14 @@ public class PluginService {
         final String lineSeparator = System.lineSeparator();
         final String blockSeparator = lineSeparator + StringUtils.repeat("-", 100) + lineSeparator;
 
-        final StringBuilder statusCheckMessage = new StringBuilder(blockSeparator + "Status Check" + blockSeparator);
+        final File versionFile = directoryConfig.getVersionFile();
+        String version = "Unknown";
+        try {
+            version = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        final StringBuilder statusCheckMessage = new StringBuilder(blockSeparator + String.format("Status Check: Plugin Version - %s", version) + blockSeparator);
 
         statusCheckMessage.append("General Settings:").append(lineSeparator);
         final BuilderStatus generalBuilderStatus = new BuilderStatus();

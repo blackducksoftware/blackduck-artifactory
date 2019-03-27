@@ -1,6 +1,6 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection
 
-import com.synopsys.integration.util.BuilderStatus
+import com.synopsys.integration.builder.BuilderStatus
 import org.junit.Assert
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,6 +23,7 @@ class InspectionModuleConfigTest {
             "0 0/1 * 1/1 * ?",
             "0 0/1 * 1/1 * ?",
             ["repo1", "repo2"],
+            5,
         )
 
         invalidInspectionModuleConfig = new InspectionModuleConfig(
@@ -36,7 +37,8 @@ class InspectionModuleConfigTest {
             null,
             null,
             null,
-            null
+            null,
+            -1
         )
     }
 
@@ -48,7 +50,7 @@ class InspectionModuleConfigTest {
 
         final BuilderStatus invalidBuilderStatus = new BuilderStatus()
         invalidInspectionModuleConfig.validate(invalidBuilderStatus)
-        Assert.assertEquals(11, invalidBuilderStatus.getErrorMessages().size())
+        Assert.assertEquals(12, invalidBuilderStatus.getErrorMessages().size())
     }
 
     @Test

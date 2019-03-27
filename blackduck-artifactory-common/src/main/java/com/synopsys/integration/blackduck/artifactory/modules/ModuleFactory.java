@@ -66,14 +66,16 @@ public class ModuleFactory {
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final DateTimeManager dateTimeManager;
+    private final BlackDuckServicesFactory blackDuckServicesFactory;
 
     public ModuleFactory(final ConfigurationPropertyManager configurationPropertyManager, final BlackDuckServerConfig blackDuckServerConfig, final ArtifactoryPAPIService artifactoryPAPIService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager, final BlackDuckServicesFactory blackDuckServicesFactory) {
         this.configurationPropertyManager = configurationPropertyManager;
         this.blackDuckServerConfig = blackDuckServerConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.dateTimeManager = dateTimeManager;
+        this.blackDuckServicesFactory = blackDuckServicesFactory;
     }
 
     public ScanModule createScanModule(final File blackDuckDirectory) throws IOException, IntegrationException {
@@ -94,12 +96,12 @@ public class ModuleFactory {
         final CacheInspectorService cacheInspectorService = new CacheInspectorService(artifactoryPropertyService, projectService);
         final PackageTypePatternManager packageTypePatternManager = PackageTypePatternManager.fromInspectionModuleConfig(inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(externalIdFactory);
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPropertyService, externalIdFactory);
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
-        final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService);
+        final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class)));
         final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(artifactoryPAPIService, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService,
-            cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService, artifactorySearchService);
+            cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService, inspectionModuleConfig);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 

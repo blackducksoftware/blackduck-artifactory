@@ -21,29 +21,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.notification;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+public class CommonNotificationViewResults extends NotificationResults<CommonNotificationView> {
+    private final List<CommonNotificationView> commonNotificationViews;
 
-public class ArtifactMetaDataFromNotifications {
-    private final Date lastNotificationDate;
-    private final List<ArtifactMetaData> artifactMetaData;
-
-    public ArtifactMetaDataFromNotifications(@Nullable final Date lastNotificationDate, final List<ArtifactMetaData> artifactMetaData) {
-        this.lastNotificationDate = lastNotificationDate;
-        this.artifactMetaData = artifactMetaData;
+    public CommonNotificationViewResults(final List<CommonNotificationView> commonNotificationViews, final Optional<Date> latestNotificationCreatedAtDate, final Optional<String> latestNotificationCreatedAtString) {
+        super(latestNotificationCreatedAtDate, latestNotificationCreatedAtString);
+        this.commonNotificationViews = commonNotificationViews;
     }
 
-    public Optional<Date> getLastNotificationDate() {
-        return Optional.ofNullable(lastNotificationDate);
-    }
-
-    public List<ArtifactMetaData> getArtifactMetaData() {
-        return artifactMetaData;
+    @Override
+    public List<CommonNotificationView> getResults() {
+        return commonNotificationViews;
     }
 
 }

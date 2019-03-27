@@ -78,6 +78,11 @@ public class ArtifactoryPropertyService {
         return Optional.ofNullable(propertyValue);
     }
 
+    public Optional<Integer> getPropertyAsInteger(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
+        return getProperty(repoPath, property, logger)
+                   .map(Integer::new);
+    }
+
     public Optional<Date> getDateFromProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
         final Optional<String> dateTimeAsString = getProperty(repoPath, property, logger);
 

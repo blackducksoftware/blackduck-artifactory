@@ -29,7 +29,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
-import com.synopsys.integration.util.BuilderStatus;
+import com.synopsys.integration.builder.BuilderStatus;
 
 public abstract class ConfigurationValidator {
     public abstract void validate(final BuilderStatus builderStatus);
@@ -93,5 +93,12 @@ public abstract class ConfigurationValidator {
 
     protected void validateInteger(final BuilderStatus builderStatus, final ConfigurationProperty property, final Integer value) {
         validateNotNull(builderStatus, property, value, "Please specify a valid integer");
+    }
+
+    protected void validateInteger(final BuilderStatus builderStatus, final ConfigurationProperty property, final Integer value, final Integer min, final Integer max) {
+        validateInteger(builderStatus, property, value);
+        if (value != null && (value < min || value > max)) {
+            builderStatus.addErrorMessage(String.format("Please specify a valid integer between the range of %s and %s", min.toString(), max.toString()));
+        }
     }
 }
