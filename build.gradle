@@ -13,6 +13,15 @@ plugins {
     id 'groovy'
 }
 
+publishing {
+   publications {
+       mavenJava(MavenPublication) {
+           def artifactName = "${buildDir}/distributions/${project.name}-${project.version}.zip"
+           artifact(artifactName)
+       }
+   }
+}
+
 version = '6.2.0-SNAPSHOT'
 final String parentVersion = project.version
 
