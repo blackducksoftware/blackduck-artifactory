@@ -145,7 +145,7 @@ public class ArtifactIdentificationService {
     public void populateIdMetadataOnIdentifiedArtifact(final IdentifiedArtifact identifiedArtifact) {
         if (!identifiedArtifact.getExternalId().isPresent()) {
             logger.debug(String.format("Could not populate artifact with metadata. Missing externalId: %s", identifiedArtifact.getRepoPath()));
-            failInspection(identifiedArtifact.getRepoPath(), "No external identifier found");
+            failInspection(identifiedArtifact.getRepoPath(), "Artifactory failed to provide sufficient information to identify the artifact");
             return;
         }
 
@@ -191,7 +191,7 @@ public class ArtifactIdentificationService {
                 failInspection(repoPath, "See logs for details");
             }
         } else {
-            failInspection(repoPath, "No external identifier found");
+            failInspection(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
         }
 
         return success;
