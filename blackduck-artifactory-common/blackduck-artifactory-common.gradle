@@ -16,6 +16,12 @@ dependencies {
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
 }
 
+apply plugin: 'com.blackducksoftware.integration.simple'
+
+license {
+    header rootProject.file('LICENSE')
+}
+
 shadowJar {
     dependencies {
         exclude(dependency('org.artifactory:artifactory-papi:.*'))
