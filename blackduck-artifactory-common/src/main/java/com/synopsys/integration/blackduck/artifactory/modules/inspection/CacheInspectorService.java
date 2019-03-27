@@ -48,11 +48,28 @@ public class CacheInspectorService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final InspectionModuleConfig inspectionModuleConfig;
     private final ProjectService projectService;
 
-    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService) {
+    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService, final InspectionModuleConfig inspectionModuleConfig,
+        final ProjectService projectService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
+        this.inspectionModuleConfig = inspectionModuleConfig;
         this.projectService = projectService;
+    }
+
+    public void failInspection(final RepoPath repoPath, final String inspectionStatusMessage) {
+        final int retryCount = getFailedInspectionCount(repoPath) + 1;
+        setInspectionStatus(repoPath, InspectionStatus.FAILURE, inspectionStatusMessage, retryCount);
+    }
+
+    public Integer getFailedInspectionCount(final RepoPath repoPath) {
+        final Optional<Integer> retryCount = artifactoryPropertyService.getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, logger);
+        return retryCount.orElse(0);
+    }
+
+    public boolean shouldAttemptInspection(final RepoPath repoPath) {
+        return getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount();
     }
 
     public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status) {
@@ -73,10 +90,10 @@ public class CacheInspectorService {
             artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, logger);
         }
 
-        if (retryCount == null) {
-            artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, logger);
-        } else {
+        if (retryCount != null) {
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, retryCount.toString(), logger);
+        } else {
+            artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, logger);
         }
     }
 

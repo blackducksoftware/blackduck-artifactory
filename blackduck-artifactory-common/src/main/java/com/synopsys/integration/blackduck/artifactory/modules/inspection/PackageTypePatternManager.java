@@ -23,6 +23,8 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,8 +49,10 @@ public class PackageTypePatternManager {
         this.patternMap = patternMap;
     }
 
-    public void loadPatterns(final InspectionModuleConfig inspectionModuleConfig) {
-
+    public List<String> getPatternsForPackageType(final String packageType) {
+        return SupportedPackageType.getAsSupportedPackageType(packageType)
+                   .map(this::getPatternsForPackageType)
+                   .orElse(Collections.emptyList());
     }
 
     public Optional<List<String>> getPatterns(final String packageType) {
@@ -62,8 +66,11 @@ public class PackageTypePatternManager {
         return pattern;
     }
 
-    public Optional<List<String>> getPatterns(final SupportedPackageType packageType) {
+    private Optional<List<String>> getPatterns(final SupportedPackageType packageType) {
         return Optional.ofNullable(patternMap.get(packageType));
     }
 
+    private List<String> getPatternsForPackageType(final SupportedPackageType packageType) {
+        return Optional.ofNullable(patternMap.get(packageType)).orElse(new ArrayList<>());
+    }
 }

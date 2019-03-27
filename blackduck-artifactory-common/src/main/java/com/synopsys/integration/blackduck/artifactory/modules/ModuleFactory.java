@@ -46,6 +46,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataPopulationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.PackageTypePatternManager;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.RepoInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
@@ -54,6 +55,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.RepositoryIde
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPolicyService;
+import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
@@ -93,7 +95,7 @@ public class ModuleFactory {
     public InspectionModule createInspectionModule() throws IOException {
         final InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
         final ProjectService projectService = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(CacheInspectorService.class))).createProjectService();
-        final CacheInspectorService cacheInspectorService = new CacheInspectorService(artifactoryPropertyService, projectService);
+        final CacheInspectorService cacheInspectorService = new CacheInspectorService(artifactoryPropertyService, inspectionModuleConfig, projectService);
         final PackageTypePatternManager packageTypePatternManager = PackageTypePatternManager.fromInspectionModuleConfig(inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPropertyService, externalIdFactory);
@@ -104,9 +106,11 @@ public class ModuleFactory {
             cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService, inspectionModuleConfig);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
+        final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
+        final RepoInitializationService repoInitializationService = new RepoInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService, bdioUploadService);
 
         return new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
-            simpleAnalyticsCollector);
+            simpleAnalyticsCollector, repoInitializationService);
     }
 
     public PolicyModule createPolicyModule() {

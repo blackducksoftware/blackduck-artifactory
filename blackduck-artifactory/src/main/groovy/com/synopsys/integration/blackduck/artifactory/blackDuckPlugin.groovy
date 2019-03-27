@@ -367,6 +367,14 @@ jobs {
     }
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
+    
+    if (PluginConstants.ENABLE_NEW_FUNCTIONALITY) {
+        // TODO: Create doc / endpoint
+        // TODO: Create separate cron, or not [IARTH-250]
+        blackDuckInitialBomUpload(cron: moduleManager.getBlackDuckIdentifyArtifactsCron()) {
+            moduleManager.initializeRepositories(TriggerType.CRON_JOB)
+        }
+    }
 
     /**
      * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution

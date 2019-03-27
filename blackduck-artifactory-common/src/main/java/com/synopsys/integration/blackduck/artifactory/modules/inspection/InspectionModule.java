@@ -53,10 +53,11 @@ public class InspectionModule implements Module {
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final CacheInspectorService cacheInspectorService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
+    private final RepoInitializationService repoInitializationService;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final ArtifactoryPAPIService artifactoryPAPIService,
         final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService,
-        final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector) {
+        final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final RepoInitializationService repoInitializationService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactIdentificationService = artifactIdentificationService;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -65,12 +66,20 @@ public class InspectionModule implements Module {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
+        this.repoInitializationService = repoInitializationService;
     }
 
     @Override
     public InspectionModuleConfig getModuleConfig() {
         return inspectionModuleConfig;
     }
+
+    //////////////////////// New cron jobs ////////////////////////
+    public void initializeRepositories() {
+        inspectionModuleConfig.getRepos().forEach(repoInitializationService::initializeRepository);
+    }
+
+    //////////////////////// Old cron jobs ////////////////////////
 
     public void identifyArtifacts() {
         inspectionModuleConfig.getRepos()
@@ -89,6 +98,8 @@ public class InspectionModule implements Module {
             .forEach(metaDataUpdateService::updateMetadata);
         updateAnalytics();
     }
+
+    //////////////////////// Endpoints ////////////////////////
 
     public void deleteInspectionProperties(final Map<String, List<String>> params) {
         inspectionModuleConfig.getRepos()
@@ -125,7 +136,7 @@ public class InspectionModule implements Module {
             }
         } catch (final Exception e) {
             logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
-            artifactIdentificationService.failInspection(repoPath, "See logs for details");
+            cacheInspectorService.failInspection(repoPath, "See logs for details");
             logger.debug(e.getMessage(), e);
         }
 
@@ -136,7 +147,7 @@ public class InspectionModule implements Module {
         final String repoKey = repoPath.getRepoKey();
         final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (packageType.isPresent()) {
-            final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
+            final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.attemptArtifactIdentification(repoPath, packageType.get());
             artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
         } else {
             logger.debug(String.format("Package type for repo '%s' is not existent", repoKey));

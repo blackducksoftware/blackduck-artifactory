@@ -177,6 +177,10 @@ public class ModuleManager {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.reinspectFromFailures(params));
     }
 
+    public void initializeRepositories(final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, inspectionModule::initializeRepositories);
+    }
+
     public String getBlackDuckIdentifyArtifactsCron() {
         return inspectionModuleConfig.getIdentifyArtifactsCron();
     }

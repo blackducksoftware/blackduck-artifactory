@@ -89,6 +89,8 @@ public class ArtifactMetaDataService {
             for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
                 populateMetaDataMap(repoKey, idToArtifactMetaData, blackDuckService, projectVersionComponentVersionModel);
             }
+        } else {
+            logger.debug(String.format("Failed to find project '%s' and version '%s' on repo '%s'", projectName, projectVersionName, repoKey));
         }
 
         return new ArrayList<>(idToArtifactMetaData.values());
