@@ -112,6 +112,7 @@ public class ArtifactMetaDataService {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
             final List<ProjectVersionView> projectVersionViews = Collections.singletonList(projectVersionView);
 
+            // TODO: Remove the entire notification package. That code was copied from an old version of blackduck-common
             final List<CommonNotificationView> commonUserNotifications = commonNotificationService.getCommonUserNotifications(notificationUserViews);
             final NotificationDetailResults notificationDetailResults = commonNotificationService.getNotificationDetailResults(commonUserNotifications);
             final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseNotifications(notificationDetailResults, projectVersionViews);
