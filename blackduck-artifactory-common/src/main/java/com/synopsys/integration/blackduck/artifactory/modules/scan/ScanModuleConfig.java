@@ -98,7 +98,7 @@ public class ScanModuleConfig extends ModuleConfig {
         validateCronExpression(builderStatus, ScanModuleProperty.SCAN_CRON, scanCron);
     }
 
-    public String getAddPolicyStatusCron() {
+    public String getAddScanPolicyStatusCron() {
         return addPolicyStatusCron;
     }
 

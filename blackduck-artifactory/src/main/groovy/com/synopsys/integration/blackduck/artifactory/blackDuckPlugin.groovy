@@ -136,7 +136,7 @@ executions {
      *
      * Then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files, scan them, and publish the BOM to the provided Black Duck server.
      *
-     * The addPolicyStatus process will add several properties to your artifacts in Artifactory. Namely:
+     * The addScanPolicyStatus process will add several properties to your artifacts in Artifactory. Namely:
      *
      * blackduck.uiUrl - the url for the project version created in Black Duck
      * blackduck.policyStatus - a short description of the policy status from Black Duck
@@ -147,10 +147,10 @@ executions {
      * The same functionality is provided via the blackDuckAddPolicyStatus cron job to enable scheduled policy status checks to run consistently.
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckAddPolicyStatus"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckAddScanPolicyStatus"
      **/
-    blackDuckAddPolicyStatus(httpMethod: 'POST') { params ->
-        moduleManager.addPolicyStatus(TriggerType.REST_REQUEST)
+    blackDuckAddScanPolicyStatus(httpMethod: 'POST') { params ->
+        moduleManager.addScanPolicyStatus(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -362,12 +362,12 @@ jobs {
         moduleManager.triggerScan(TriggerType.CRON_JOB)
     }
 
-    blackDuckAddPolicyStatus(cron: moduleManager.getBlackDuckAddPolicyStatusCron()) {
-        moduleManager.addPolicyStatus(TriggerType.CRON_JOB)
+    blackDuckAddScanPolicyStatus(cron: moduleManager.getBlackDuckAddScanPolicyStatusCron()) {
+        moduleManager.addScanPolicyStatus(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
-    
+
     if (PluginConstants.ENABLE_NEW_FUNCTIONALITY) {
         // TODO: Create doc / endpoint
         // TODO: Create separate cron, or not [IARTH-250]

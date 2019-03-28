@@ -121,7 +121,7 @@ public class ModuleManager {
         runMethod(scanModuleConfig, triggerType, scanModule::triggerScan);
     }
 
-    public void addPolicyStatus(final TriggerType triggerType) {
+    public void addScanPolicyStatus(final TriggerType triggerType) {
         runMethod(scanModuleConfig, triggerType, scanModule::addPolicyStatus);
     }
 
@@ -145,8 +145,8 @@ public class ModuleManager {
         return scanModuleConfig.getScanCron();
     }
 
-    public String getBlackDuckAddPolicyStatusCron() {
-        return scanModuleConfig.getAddPolicyStatusCron();
+    public String getBlackDuckAddScanPolicyStatusCron() {
+        return scanModuleConfig.getAddScanPolicyStatusCron();
     }
 
     public void updateDeprecatedInspectionProperties(final TriggerType triggerType) {

@@ -91,8 +91,8 @@ class ScanModuleConfigTest {
 
     @Test
     void getAddPolicyStatusCron() {
-        Assert.assertNotNull(validScanModuleConfig.getAddPolicyStatusCron())
-        Assert.assertNull(invalidScanModuleConfig.getAddPolicyStatusCron())
+        Assert.assertNotNull(validScanModuleConfig.getAddScanPolicyStatusCron())
+        Assert.assertNull(invalidScanModuleConfig.getAddScanPolicyStatusCron())
     }
 
     @Test
