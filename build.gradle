@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
+        classpath 'org.apache.commons:commons-configuration2:2.2'
     }
 }
 
@@ -15,19 +16,82 @@ plugins {
 
 version = '7.0.0-SNAPSHOT'
 final String parentVersion = project.version
+final String artifactoryMinimumVersion = '5.6.2'
+
+apply plugin: 'com.blackducksoftware.integration.solution'
+
+license {
+    header rootProject.file('LICENSE')
+}
+
+dependencies {
+    compile project(":blackduck-artifactory-common")
+
+    implementation 'org.codehaus.groovy:groovy-all:2.4.15'
+    implementation 'com.blackducksoftware.integration:blackduck-common:42.3.0'
+
+    compileOnly 'org.apache.commons:commons-configuration2:2.2'
+
+    compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+
+    testCompile 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+}
+
+def versionFile = new File("${projectDir}/src/main/resources/version.txt")
+versionFile.delete()
+versionFile << version
+
+apply from: 'generateConfig.gradle'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            def artifactName = "${buildDir}/distributions/${project.name}-${project.version}.zip"
+            artifact(artifactName)
+        }
+    }
+}
+
+artifactory {
+    publish {
+        defaults { publications('mavenJava') }
+    }
+}
+
+task createFinalZip(type: Zip) {
+    dependsOn build, generateConfig
+    from("${projectDir}/src/main/resources/") {
+        include 'version.txt'
+        into 'plugins/lib'
+    }
+
+    from("${projectDir}/build/configs/") {
+        include 'blackDuckPlugin.properties'
+        into 'plugins/lib'
+    }
+
+    from("${buildDir}/libs") {
+        include '*.jar'
+        exclude '*sources.jar'
+        exclude '*javadoc.jar'
+    }
+
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
+        include 'blackDuckPlugin.groovy'
+        into 'plugins'
+    }
+
+    from(configurations.compile) {
+        include 'blackduck-artifactory-common*.jar'
+        into 'plugins/lib'
+    }
+}
 
 configure(subprojects) { project ->
     group = 'com.blackducksoftware.integration'
     version = parentVersion
 
-    apply plugin: 'groovy'
-
-    dependencies {
-        implementation 'com.blackducksoftware.integration:blackduck-common:42.3.0'
-        implementation 'org.codehaus.groovy:groovy-all:2.4.15'
-
-        testImplementation 'com.blackducksoftware.integration:integration-test-common:4.+'
-    }
+    apply plugin: 'com.blackducksoftware.integration.simple'
 }
 
 subprojects {

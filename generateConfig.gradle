@@ -32,7 +32,7 @@ task generateConfig {
         final String nowString = Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(dateTimePattern))
 
         propertiesConfiguration.setProperty(scanCutoffDateKey, nowString)
-        
+
         final FileHandler handler = new FileHandler(propertiesConfiguration)
         handler.save(new File("${projectDir}/build/configs/$pluginPropertiesFileName"))
     }

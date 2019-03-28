@@ -7,16 +7,18 @@ jar.finalizedBy shadowJar
 final String artifactoryMinimumVersion = '5.6.2'
 
 dependencies {
+    implementation 'com.blackducksoftware.integration:blackduck-common:42.3.0'
+
     compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
 
     testCompile 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion
+
+    testImplementation 'com.blackducksoftware.integration:integration-test-common:4.+'
 
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.3.1'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.3.1'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
 }
-
-apply plugin: 'com.blackducksoftware.integration.simple'
 
 license {
     header rootProject.file('LICENSE')

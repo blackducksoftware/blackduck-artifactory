@@ -1,4 +1,3 @@
-include "blackduck-artifactory"
 include "blackduck-artifactory-common"
 
 rootProject.name = 'blackduck-artifactory'
