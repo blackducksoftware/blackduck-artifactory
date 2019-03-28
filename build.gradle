@@ -13,7 +13,7 @@ plugins {
     id 'groovy'
 }
 
-version = '6.2.0-SNAPSHOT'
+version = '7.0.0-SNAPSHOT'
 final String parentVersion = project.version
 
 configure(subprojects) { project ->
