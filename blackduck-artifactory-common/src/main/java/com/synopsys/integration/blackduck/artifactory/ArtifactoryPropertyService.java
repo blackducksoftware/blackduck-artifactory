@@ -25,16 +25,13 @@ package com.synopsys.integration.blackduck.artifactory;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.RepoPathFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -50,26 +47,12 @@ public class ArtifactoryPropertyService {
         this.dateTimeManager = dateTimeManager;
     }
 
-    public RepoPath getRepoPathFromKey(final String repoKey) {
-        return RepoPathFactory.create(repoKey);
-    }
-
     public boolean hasProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
-        final boolean currentNameExists = artifactoryPAPIService.hasProperty(repoPath, property.getName());
-        final boolean oldNameExists = StringUtils.isNotBlank(property.getOldName()) && artifactoryPAPIService.hasProperty(repoPath, property.getOldName());
-
-        return currentNameExists || oldNameExists;
+        return artifactoryPAPIService.hasProperty(repoPath, property.getName());
     }
 
-    public Optional<String> getProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
-        Optional<String> propertyValue = getProperty(repoPath, property.getName());
-
-        // If the property isn't found, see if it can be found by its deprecated name
-        if (!propertyValue.isPresent()) {
-            propertyValue = getDeprecatedProperty(repoPath, property, logger);
-        }
-
-        return propertyValue;
+    public Optional<String> getProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
+        return getProperty(repoPath, property.getName());
     }
 
     private Optional<String> getProperty(final RepoPath repoPath, final String propertyKey) {
@@ -78,13 +61,13 @@ public class ArtifactoryPropertyService {
         return Optional.ofNullable(propertyValue);
     }
 
-    public Optional<Integer> getPropertyAsInteger(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
-        return getProperty(repoPath, property, logger)
+    public Optional<Integer> getPropertyAsInteger(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
+        return getProperty(repoPath, property)
                    .map(Integer::new);
     }
 
-    public Optional<Date> getDateFromProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
-        final Optional<String> dateTimeAsString = getProperty(repoPath, property, logger);
+    public Optional<Date> getDateFromProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
+        final Optional<String> dateTimeAsString = getProperty(repoPath, property);
 
         return dateTimeAsString.map(dateTimeManager::getDateFromString);
     }
@@ -133,7 +116,7 @@ public class ArtifactoryPropertyService {
                    .filter(stringListEntry -> stringListEntry.getKey().equals("properties"))
                    .map(Map.Entry::getValue)
                    .flatMap(List::stream)
-                   .anyMatch(paramValue -> paramValue.equals(blackDuckArtifactoryProperty.getName()) || paramValue.equals(blackDuckArtifactoryProperty.getOldName()));
+                   .anyMatch(paramValue -> paramValue.equals(blackDuckArtifactoryProperty.getName()));
     }
 
     public List<RepoPath> getAllItemsInRepoWithProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
@@ -155,9 +138,9 @@ public class ArtifactoryPropertyService {
         return artifactoryPAPIService.itemsByProperties(setMultimap, repoKey);
     }
 
-    public Optional<NameVersion> getProjectNameVersion(final RepoPath repoPath, final IntLogger logger) {
-        final Optional<String> projectName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, logger);
-        final Optional<String> projectVersionName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, logger);
+    public Optional<NameVersion> getProjectNameVersion(final RepoPath repoPath) {
+        final Optional<String> projectName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
+        final Optional<String> projectVersionName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
         NameVersion nameVersion = null;
 
         if (projectName.isPresent() && projectVersionName.isPresent()) {
@@ -165,55 +148,5 @@ public class ArtifactoryPropertyService {
         }
 
         return Optional.ofNullable(nameVersion);
-    }
-
-    // TODO: Remove in 7.X.X
-    public void updateAllBlackDuckPropertiesFromRepoKey(final String repoKey, final IntLogger logger) {
-        for (final BlackDuckArtifactoryProperty property : BlackDuckArtifactoryProperty.values()) {
-            if (StringUtils.isBlank(property.getOldName())) {
-                continue;
-            }
-
-            final SetMultimap<String, String> setMultimap = HashMultimap.create();
-            setMultimap.put(property.getOldName(), "*");
-            logger.debug(String.format("setMultimap for repoKey: %s", repoKey));
-            setMultimap.entries().forEach(entry -> logger.debug(String.format("%s: %s", entry.getKey(), entry.getValue())));
-
-            final Set<RepoPath> repoPathsWithProperty = new HashSet<>(getAllItemsInRepoWithPropertiesAndValues(setMultimap, repoKey));
-            repoPathsWithProperty.forEach(repoPath -> updateDeprecatedPropertyName(repoPath, property, logger));
-        }
-    }
-
-    // TODO: Remove in 7.X.X
-    private void updateDeprecatedPropertyName(final RepoPath repoPath, final BlackDuckArtifactoryProperty artifactoryProperty, final IntLogger logger) {
-        final String oldName = artifactoryProperty.getOldName();
-        final Optional<String> propertyValue = getProperty(repoPath, oldName);
-        if (!propertyValue.isPresent()) {
-            // Nothing to update
-            return;
-        }
-
-        deleteProperty(repoPath, oldName, logger);
-
-        if (StringUtils.isNotBlank(artifactoryProperty.getName())) {
-            setProperty(repoPath, artifactoryProperty, propertyValue.get(), logger);
-            logger.info(String.format("Renamed property %s to %s on %s", oldName, artifactoryProperty.getName(), repoPath.toPath()));
-        }
-    }
-
-    // TODO: Remove in 7.X.X
-    private Optional<String> getDeprecatedProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
-        final Optional<String> propertyValue = getProperty(repoPath, property.getOldName());
-
-        if (propertyValue.isPresent()) {
-            if (property.getName() == null) {
-                logger.warn(String.format("The property %s is deprecated! This should be removed from: %s", property.getOldName(), repoPath.toPath()));
-            } else {
-                logger.warn(String.format("Property %s is deprecated! Please use %s: %s", property.getOldName(), property.getName(), repoPath.toPath()));
-            }
-            logger.warn(String.format("Endpoints exists to assist in updating deprecated properties. Documentation can be found here %s", PluginConstants.PUBLIC_DOCUMENTATION_LINK));
-        }
-
-        return propertyValue;
     }
 }

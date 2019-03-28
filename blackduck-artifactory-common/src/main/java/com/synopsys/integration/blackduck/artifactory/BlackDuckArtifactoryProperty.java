@@ -23,12 +23,11 @@
  */
 package com.synopsys.integration.blackduck.artifactory;
 
-// TODO: Remove oldName in blackduck-artifactory:7.0.0
 public enum BlackDuckArtifactoryProperty {
-    BLACKDUCK_ORIGIN_ID("originId", "hubOriginId"),
-    BLACKDUCK_FORGE("forge", "hubForge"),
-    BLACKDUCK_PROJECT_NAME("projectName", "hubProjectName"),
-    BLACKDUCK_PROJECT_VERSION_NAME("projectVersionName", "hubProjectVersionName"),
+    BLACKDUCK_ORIGIN_ID("originId"),
+    BLACKDUCK_FORGE("forge"),
+    BLACKDUCK_PROJECT_NAME("projectName"),
+    BLACKDUCK_PROJECT_VERSION_NAME("projectVersionName"),
     HIGH_VULNERABILITIES("highVulnerabilities"),
     MEDIUM_VULNERABILITIES("mediumVulnerabilities"),
     LOW_VULNERABILITIES("lowVulnerabilities"),
@@ -43,36 +42,17 @@ public enum BlackDuckArtifactoryProperty {
     UPDATE_STATUS("updateStatus"),
     SCAN_TIME("scanTime"),
     SCAN_RESULT("scanResult"),
-    INSPECTION_RETRY_COUNT("inspectionRetryCount"),
-    @Deprecated
-    PROJECT_VERSION_URL(null, "apiUrl");
+    INSPECTION_RETRY_COUNT("inspectionRetryCount");
 
     public static final String PROPERTY_PREFIX = "blackduck.";
 
     private final String name;
-    private final String oldName;
 
     BlackDuckArtifactoryProperty(final String name) {
         this.name = PROPERTY_PREFIX + name;
-        this.oldName = null;
-    }
-
-    /**
-     * If the property is deprecated, user this constructor.
-     * @param name    The new name for the property. Set this to null if the property is being removed
-     * @param oldName The old name of the property. This can be used to search for the property by its old
-     *                name until the property is removed or renamed.
-     */
-    BlackDuckArtifactoryProperty(final String name, final String oldName) {
-        this.name = name == null ? null : PROPERTY_PREFIX + name;
-        this.oldName = PROPERTY_PREFIX + oldName;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getOldName() {
-        return oldName;
     }
 }

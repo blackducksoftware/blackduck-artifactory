@@ -84,13 +84,13 @@ public class ArtifactoryExternalIdFactory {
     }
 
     private Optional<ExternalId> createExternalIdFromOriginIdProperties(final RepoPath repoPath) {
-        final Optional<String> forgeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, logger);
-        final Optional<String> originIdProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, logger);
+        final Optional<String> forgeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE);
+        final Optional<String> originIdProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID);
 
         if (forgeProperty.isPresent() && originIdProperty.isPresent()) {
             final Forge forge = Forge.getKnownForges().get(forgeProperty.get());
             if (forge == null) {
-                logger.debug(String.format("Failed to extract forge from property %s or %s.", BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getOldName()));
+                logger.debug(String.format("Failed to extract forge from property %s.", BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName()));
                 return Optional.empty();
             }
 

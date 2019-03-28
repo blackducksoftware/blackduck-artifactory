@@ -119,12 +119,6 @@ public class InspectionModule implements Module {
         updateAnalytics();
     }
 
-    public void updateDeprecatedProperties() {
-        inspectionModuleConfig.getRepos()
-            .forEach(repoKey -> artifactoryPropertyService.updateAllBlackDuckPropertiesFromRepoKey(repoKey, logger));
-        updateAnalytics();
-    }
-
     public void handleAfterCreateEvent(final ItemInfo itemInfo) {
         final RepoPath repoPath = itemInfo.getRepoPath();
 

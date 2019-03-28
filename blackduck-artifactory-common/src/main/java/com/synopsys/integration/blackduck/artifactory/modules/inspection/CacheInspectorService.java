@@ -64,7 +64,7 @@ public class CacheInspectorService {
     }
 
     public Integer getFailedInspectionCount(final RepoPath repoPath) {
-        final Optional<Integer> retryCount = artifactoryPropertyService.getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, logger);
+        final Optional<Integer> retryCount = artifactoryPropertyService.getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT);
         return retryCount.orElse(0);
     }
 
@@ -98,7 +98,7 @@ public class CacheInspectorService {
     }
 
     public Optional<InspectionStatus> getInspectionStatus(final RepoPath repoPath) {
-        final Optional<String> inspectionStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, logger);
+        final Optional<String> inspectionStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS);
 
         return inspectionStatus.map(InspectionStatus::valueOf);
     }
@@ -117,14 +117,14 @@ public class CacheInspectorService {
 
     public String getRepoProjectName(final String repoKey) {
         final RepoPath repoPath = RepoPathFactory.create(repoKey);
-        final Optional<String> projectNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, logger);
+        final Optional<String> projectNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
 
         return projectNameProperty.orElse(repoKey);
     }
 
     public String getRepoProjectVersionName(final String repoKey) {
         final RepoPath repoPath = RepoPathFactory.create(repoKey);
-        final Optional<String> projectVersionNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, logger);
+        final Optional<String> projectVersionNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
 
         return projectVersionNameProperty.orElse(HostNameHelper.getMyHostName("UNKNOWN_HOST"));
     }
@@ -141,11 +141,11 @@ public class CacheInspectorService {
     }
 
     public Optional<Date> getLastUpdate(final RepoPath repoKeyPath) {
-        return artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, logger);
+        return artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE);
     }
 
     public Optional<Date> getLastInspection(final RepoPath repoKeyPath) {
-        return artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, logger);
+        return artifactoryPropertyService.getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION);
     }
 
     public void setUpdateStatus(final RepoPath repoKeyPath, final UpdateStatus updateStatus) {

@@ -82,7 +82,7 @@ public class PolicyModule implements Module {
     }
 
     private boolean shouldCancelOnPolicyViolation(final RepoPath repoPath) {
-        final Optional<String> policyStatusProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, logger);
+        final Optional<String> policyStatusProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
 
         return policyStatusProperty
                    .filter(policyStatus -> policyStatus.equalsIgnoreCase(PolicySummaryStatusType.IN_VIOLATION.name()))

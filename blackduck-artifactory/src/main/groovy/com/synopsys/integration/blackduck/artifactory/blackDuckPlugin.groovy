@@ -213,26 +213,6 @@ executions {
         moduleManager.deleteScanPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
-    /**
-     * This will search your Artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
-     * The following artifact properties are deprecated and should be updated with this endpoint:
-     * blackduck.hubProjectName -> blackduck.projectName
-     * blackduck.hubProjectVersionName -> blackduck.projectVersionName
-     *
-     * For example:
-     *
-     * blackduck.artifactory.scan.repos="my-releases,my-snapshots"
-     * blackduck.artifactory.scan.name.patterns="*.war,*.zip"
-     *
-     * then this REST call will search 'my-releases' and 'my-snapshots' for all .war (web archive) and .zip files and update all the properties that the plugin sets.
-     *
-     * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScanUpdateDeprecatedProperties"
-     **/
-    blackDuckScanUpdateDeprecatedProperties() { params ->
-        moduleManager.updateDeprecatedScanProperties(TriggerType.REST_REQUEST)
-    }
-
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
 
     /**
@@ -324,19 +304,6 @@ executions {
      **/
     blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
         moduleManager.updateMetadata(TriggerType.REST_REQUEST)
-    }
-
-    /**
-     * Rename all deprecated properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect.
-     *
-     * blackduck.hubForge -> blackduck.forge
-     * blackduck.hubOriginId -> blackduck.originId
-     *
-     * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckInspectionUpdateDeprecatedProperties"
-     **/
-    blackDuckInspectionUpdateDeprecatedProperties(httpMethod: 'POST') { params ->
-        moduleManager.updateDeprecatedInspectionProperties(TriggerType.REST_REQUEST)
     }
 
     //////////////////////////////////////////////// ANALYTICS EXECUTIONS ////////////////////////////////////////////////

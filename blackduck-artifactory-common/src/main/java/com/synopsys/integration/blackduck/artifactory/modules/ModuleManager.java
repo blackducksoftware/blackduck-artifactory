@@ -137,20 +137,12 @@ public class ModuleManager {
         runMethod(scanModuleConfig, triggerType, () -> scanModule.deleteScanPropertiesFromOutOfDate(params));
     }
 
-    public void updateDeprecatedScanProperties(final TriggerType triggerType) {
-        runMethod(scanModuleConfig, triggerType, scanModule::updateDeprecatedProperties);
-    }
-
     public String getBlackDuckScanCron() {
         return scanModuleConfig.getScanCron();
     }
 
     public String getBlackDuckAddScanPolicyStatusCron() {
         return scanModuleConfig.getAddScanPolicyStatusCron();
-    }
-
-    public void updateDeprecatedInspectionProperties(final TriggerType triggerType) {
-        runMethod(inspectionModuleConfig, triggerType, inspectionModule::updateDeprecatedProperties);
     }
 
     public void handleAfterCreateEvent(final ItemInfo itemInfo, final TriggerType triggerType) {

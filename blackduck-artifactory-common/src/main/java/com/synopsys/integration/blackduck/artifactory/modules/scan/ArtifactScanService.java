@@ -166,9 +166,9 @@ public class ArtifactScanService {
     private NameVersion determineProjectNameVersion(final RepoPath repoPath) {
         final FileLayoutInfo fileLayoutInfo = getArtifactFromPath(repoPath);
         final String fileName = repoPath.getName();
-        String project = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, logger)
+        String project = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME)
                              .orElse(fileLayoutInfo.getModule());
-        String version = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, logger)
+        String version = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME)
                              .orElse(fileLayoutInfo.getBaseRevision());
 
         final boolean missingProjectName = StringUtils.isBlank(project);
