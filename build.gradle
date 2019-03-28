@@ -58,32 +58,27 @@ artifactory {
     }
 }
 
+final String folderName = "blackduck-artifactory-$version"
 task createFinalZip(type: Zip) {
     dependsOn build, generateConfig
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
-        into 'plugins/lib'
+        into "$folderName/lib"
     }
 
     from("${projectDir}/build/configs/") {
         include 'blackDuckPlugin.properties'
-        into 'plugins/lib'
-    }
-
-    from("${buildDir}/libs") {
-        include '*.jar'
-        exclude '*sources.jar'
-        exclude '*javadoc.jar'
+        into "$folderName/lib"
     }
 
     from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
         include 'blackDuckPlugin.groovy'
-        into 'plugins'
+        into "$folderName"
     }
 
     from(configurations.compile) {
         include 'blackduck-artifactory-common*.jar'
-        into 'plugins/lib'
+        into "$folderName/lib"
     }
 }
 
