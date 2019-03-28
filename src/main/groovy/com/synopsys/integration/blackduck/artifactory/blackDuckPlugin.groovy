@@ -325,11 +325,11 @@ jobs {
     /**
      * The functionality is described above the blackDuckScan execution
      **/
-    blackDuckScan(cron: moduleManager.getBlackDuckScanCron()) {
+    blackDuckScan(cron: moduleManager.getScanCron()) {
         moduleManager.triggerScan(TriggerType.CRON_JOB)
     }
 
-    blackDuckAddScanPolicyStatus(cron: moduleManager.getBlackDuckAddScanPolicyStatusCron()) {
+    blackDuckAddScanPolicyStatus(cron: moduleManager.getScanCron()) {
         moduleManager.addScanPolicyStatus(TriggerType.CRON_JOB)
     }
 
@@ -337,8 +337,7 @@ jobs {
 
     if (PluginConstants.ENABLE_NEW_FUNCTIONALITY) {
         // TODO: Create doc / endpoint
-        // TODO: Create separate cron, or not [IARTH-250]
-        blackDuckInitialBomUpload(cron: moduleManager.getBlackDuckIdentifyArtifactsCron()) {
+        blackDuckInitialBomUpload(cron: moduleManager.getInspectionCron()) {
             moduleManager.initializeRepositories(TriggerType.CRON_JOB)
         }
     }
@@ -346,21 +345,21 @@ jobs {
     /**
      * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
      **/
-    blackDuckIdentifyArtifacts(cron: moduleManager.getBlackDuckIdentifyArtifactsCron()) {
+    blackDuckIdentifyArtifacts(cron: moduleManager.getInspectionCron()) {
         moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
     }
 
     /**
      * The functionality is described above the blackDuckManuallyPopulateMetadata execution
      **/
-    blackDuckPopulateMetadata(cron: moduleManager.getBlackDuckPopulateMetadataCron()) {
+    blackDuckPopulateMetadata(cron: moduleManager.getInspectionCron()) {
         moduleManager.populateMetadata(TriggerType.CRON_JOB)
     }
 
     /**
      * The functionality is described above the blackDuckManuallyUpdateMetadata execution
      **/
-    blackDuckUpdateMetadata(cron: moduleManager.getBlackDuckUpdateMetadataCron()) {
+    blackDuckUpdateMetadata(cron: moduleManager.getInspectionCron()) {
         moduleManager.updateMetadata(TriggerType.CRON_JOB)
     }
 

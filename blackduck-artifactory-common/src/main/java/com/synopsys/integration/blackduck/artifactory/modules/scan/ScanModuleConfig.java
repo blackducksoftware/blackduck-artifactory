@@ -35,7 +35,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.builder.BuilderStatus;
 
 public class ScanModuleConfig extends ModuleConfig {
-    private final String addPolicyStatusCron;
+    private final String cron;
     private final String binariesDirectoryPath;
     private final String artifactCutoffDate;
     private final Boolean dryRun;
@@ -43,16 +43,15 @@ public class ScanModuleConfig extends ModuleConfig {
     private final Integer memory;
     private final Boolean repoPathCodelocation;
     private final List<String> repos;
-    private final String scanCron;
 
     private final File cliDirectory;
 
     private final DateTimeManager dateTimeManager;
 
-    public ScanModuleConfig(final Boolean enabled, final String addPolicyStatusCron, final String binariesDirectoryPath, final String artifactCutoffDate, final Boolean dryRun, final List<String> namePatterns, final Integer memory,
-        final Boolean repoPathCodelocation, final List<String> repos, final String scanCron, final File cliDirectory, final DateTimeManager dateTimeManager) {
+    public ScanModuleConfig(final Boolean enabled, final String cron, final String binariesDirectoryPath, final String artifactCutoffDate, final Boolean dryRun, final List<String> namePatterns, final Integer memory,
+        final Boolean repoPathCodelocation, final List<String> repos, final File cliDirectory, final DateTimeManager dateTimeManager) {
         super(ScanModule.class.getSimpleName(), enabled);
-        this.addPolicyStatusCron = addPolicyStatusCron;
+        this.cron = cron;
         this.binariesDirectoryPath = binariesDirectoryPath;
         this.artifactCutoffDate = artifactCutoffDate;
         this.dryRun = dryRun;
@@ -60,14 +59,13 @@ public class ScanModuleConfig extends ModuleConfig {
         this.memory = memory;
         this.repoPathCodelocation = repoPathCodelocation;
         this.repos = repos;
-        this.scanCron = scanCron;
         this.cliDirectory = cliDirectory;
         this.dateTimeManager = dateTimeManager;
     }
 
     public static ScanModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService, final File cliDirectory, final DateTimeManager dateTimeManager)
         throws IOException {
-        final String addPolicyStatusCron = configurationPropertyManager.getProperty(ScanModuleProperty.ADD_POLICY_STATUS_CRON);
+        final String cron = configurationPropertyManager.getProperty(ScanModuleProperty.CRON);
         final String binariesDirectoryPath = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
         final String artifactCutoffDate = configurationPropertyManager.getProperty(ScanModuleProperty.CUTOFF_DATE);
         final Boolean dryRun = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.DRY_RUN);
@@ -78,14 +76,13 @@ public class ScanModuleConfig extends ModuleConfig {
         final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
-        final String scanCron = configurationPropertyManager.getProperty(ScanModuleProperty.SCAN_CRON);
 
-        return new ScanModuleConfig(enabled, addPolicyStatusCron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, scanCron, cliDirectory, dateTimeManager);
+        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, cliDirectory, dateTimeManager);
     }
 
     @Override
     public void validate(final BuilderStatus builderStatus) {
-        validateCronExpression(builderStatus, ScanModuleProperty.ADD_POLICY_STATUS_CRON, addPolicyStatusCron);
+        validateCronExpression(builderStatus, ScanModuleProperty.CRON, cron);
         validateNotBlank(builderStatus, ScanModuleProperty.BINARIES_DIRECTORY_PATH, binariesDirectoryPath, "Please specify a path");
         validateDate(builderStatus, ScanModuleProperty.CUTOFF_DATE, artifactCutoffDate, dateTimeManager);
         validateBoolean(builderStatus, ScanModuleProperty.DRY_RUN, dryRun);
@@ -95,11 +92,10 @@ public class ScanModuleConfig extends ModuleConfig {
         validateBoolean(builderStatus, ScanModuleProperty.REPO_PATH_CODELOCATION, repoPathCodelocation);
         validateList(builderStatus, ScanModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", ScanModuleProperty.REPOS.getKey(), ScanModuleProperty.REPOS_CSV_PATH.getKey()));
-        validateCronExpression(builderStatus, ScanModuleProperty.SCAN_CRON, scanCron);
     }
 
-    public String getAddScanPolicyStatusCron() {
-        return addPolicyStatusCron;
+    public String getCron() {
+        return cron;
     }
 
     public String getBinariesDirectoryPath() {
@@ -128,10 +124,6 @@ public class ScanModuleConfig extends ModuleConfig {
 
     public List<String> getRepos() {
         return repos;
-    }
-
-    public String getScanCron() {
-        return scanCron;
     }
 
     public File getCliDirectory() {

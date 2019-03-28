@@ -137,12 +137,8 @@ public class ModuleManager {
         runMethod(scanModuleConfig, triggerType, () -> scanModule.deleteScanPropertiesFromOutOfDate(params));
     }
 
-    public String getBlackDuckScanCron() {
-        return scanModuleConfig.getScanCron();
-    }
-
-    public String getBlackDuckAddScanPolicyStatusCron() {
-        return scanModuleConfig.getAddScanPolicyStatusCron();
+    public String getScanCron() {
+        return scanModuleConfig.getCron();
     }
 
     public void handleAfterCreateEvent(final ItemInfo itemInfo, final TriggerType triggerType) {
@@ -173,16 +169,8 @@ public class ModuleManager {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::initializeRepositories);
     }
 
-    public String getBlackDuckIdentifyArtifactsCron() {
-        return inspectionModuleConfig.getIdentifyArtifactsCron();
-    }
-
-    public String getBlackDuckPopulateMetadataCron() {
-        return inspectionModuleConfig.getPopulateMetadataCron();
-    }
-
-    public String getBlackDuckUpdateMetadataCron() {
-        return inspectionModuleConfig.getUpdateMetadataCron();
+    public String getInspectionCron() {
+        return inspectionModuleConfig.getInspectionCron();
     }
 
     public void handleBeforeDownloadEvent(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {

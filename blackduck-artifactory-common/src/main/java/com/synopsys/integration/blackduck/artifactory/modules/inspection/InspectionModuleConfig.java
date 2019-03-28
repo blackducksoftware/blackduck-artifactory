@@ -33,81 +33,65 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.builder.BuilderStatus;
 
 public class InspectionModuleConfig extends ModuleConfig {
-    private final String identifyArtifactsCron;
+    private final String inspectionCron;
     private final List<String> patternsRubygems;
     private final List<String> patternsMaven;
     private final List<String> patternsGradle;
     private final List<String> patternsPypi;
     private final List<String> patternsNuget;
     private final List<String> patternsNpm;
-    private final String populateMetadataCron;
     private final List<String> repos;
-    private final String updateMetadataCron;
     private final Integer retryCount;
 
     public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final List<String> patternsRubygems, final List<String> patternsMaven, final List<String> patternsGradle, final List<String> patternsPypi,
-        final List<String> patternsNuget, final List<String> patternsNpm, final String blackDuckPopulateMetadataCron, final String blackDuckUpdateMetadataCron, final List<String> repos, final int retryCount) {
+        final List<String> patternsNuget, final List<String> patternsNpm, final List<String> repos, final int retryCount) {
         super(InspectionModule.class.getSimpleName(), enabled);
-        this.identifyArtifactsCron = blackDuckIdentifyArtifactsCron;
+        this.inspectionCron = blackDuckIdentifyArtifactsCron;
         this.patternsRubygems = patternsRubygems;
         this.patternsMaven = patternsMaven;
         this.patternsGradle = patternsGradle;
         this.patternsPypi = patternsPypi;
         this.patternsNuget = patternsNuget;
         this.patternsNpm = patternsNpm;
-        this.populateMetadataCron = blackDuckPopulateMetadataCron;
-        this.updateMetadataCron = blackDuckUpdateMetadataCron;
         this.repos = repos;
         this.retryCount = retryCount;
     }
 
     public static InspectionModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
         final Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
-        final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON);
+        final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
         final List<String> patternsRubygems = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS);
         final List<String> patternsMaven = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN);
         final List<String> patternsGradle = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE);
         final List<String> patternsPypi = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_PYPI);
         final List<String> patternsNuget = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NUGET);
         final List<String> patternsNpm = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NPM);
-        final String blackDuckPopulateMetadataCron = configurationPropertyManager.getProperty(InspectionModuleProperty.POPULATE_METADATA_CRON);
-        final String blackDuckUpdateMetadataCron = configurationPropertyManager.getProperty(InspectionModuleProperty.UPDATE_METADATA_CRON);
         final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
         final Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm, blackDuckPopulateMetadataCron, blackDuckUpdateMetadataCron,
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
             repos, retryCount);
     }
 
     @Override
     public void validate(final BuilderStatus builderStatus) {
         validateBoolean(builderStatus, InspectionModuleProperty.ENABLED, isEnabledUnverified());
-        validateCronExpression(builderStatus, InspectionModuleProperty.IDENTIFY_ARTIFACTS_CRON, identifyArtifactsCron);
+        validateCronExpression(builderStatus, InspectionModuleProperty.CRON, inspectionCron);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_MAVEN, patternsMaven);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_GRADLE, patternsGradle);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_PYPI, patternsPypi);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_NUGET, patternsNuget);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_NPM, patternsNpm);
-        validateCronExpression(builderStatus, InspectionModuleProperty.POPULATE_METADATA_CRON, populateMetadataCron);
         validateList(builderStatus, InspectionModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
-        validateCronExpression(builderStatus, InspectionModuleProperty.UPDATE_METADATA_CRON, updateMetadataCron);
         validateInteger(builderStatus, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
     }
 
-    public String getIdentifyArtifactsCron() {
-        return identifyArtifactsCron;
-    }
-
-    public String getPopulateMetadataCron() {
-        return populateMetadataCron;
-    }
-
-    public String getUpdateMetadataCron() {
-        return updateMetadataCron;
+    public String getInspectionCron() {
+        return inspectionCron;
     }
 
     public List<String> getRepos() {

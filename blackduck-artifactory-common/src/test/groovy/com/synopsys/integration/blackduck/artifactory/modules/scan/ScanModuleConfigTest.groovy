@@ -44,8 +44,8 @@ class ScanModuleConfigTest {
             ["*.jar"],
             5000,
             false,
-            ["repo1", "repo2"],
-            "0 0/1 * 1/1 * ?",
+            ["repo1", "repo2"]
+            ,
             File.createTempFile("artifactory-test", "ScanModuleConfigTest"),
             new DateTimeManager("yyyy-MM-dd'T'HH:mm:ss.SSS")
         )
@@ -59,8 +59,8 @@ class ScanModuleConfigTest {
             null,
             null,
             null,
-            null,
-            null,
+            null
+            ,
             null,
             null
         )
@@ -91,8 +91,8 @@ class ScanModuleConfigTest {
 
     @Test
     void getAddPolicyStatusCron() {
-        Assert.assertNotNull(validScanModuleConfig.getAddScanPolicyStatusCron())
-        Assert.assertNull(invalidScanModuleConfig.getAddScanPolicyStatusCron())
+        Assert.assertNotNull(validScanModuleConfig.getCron())
+        Assert.assertNull(invalidScanModuleConfig.getCron())
     }
 
     @Test
@@ -139,8 +139,8 @@ class ScanModuleConfigTest {
 
     @Test
     void getScanCron() {
-        Assert.assertNotNull(validScanModuleConfig.getScanCron())
-        Assert.assertNull(invalidScanModuleConfig.getScanCron())
+        Assert.assertNotNull(validScanModuleConfig.getCron())
+        Assert.assertNull(invalidScanModuleConfig.getCron())
     }
 
     @Test

@@ -26,7 +26,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.scan;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
 public enum ScanModuleProperty implements ConfigurationProperty {
-    ADD_POLICY_STATUS_CRON("add.policy.status.cron"),
+    CRON("cron"),
     BINARIES_DIRECTORY_PATH("binaries.directory.path"),
     CUTOFF_DATE("cutoff.date"),
     DRY_RUN("dry.run"),
@@ -35,8 +35,7 @@ public enum ScanModuleProperty implements ConfigurationProperty {
     MEMORY("memory"),
     REPO_PATH_CODELOCATION("repo.path.codelocation"),
     REPOS("repos"),
-    REPOS_CSV_PATH("repos.csv.path"),
-    SCAN_CRON("cron");
+    REPOS_CSV_PATH("repos.csv.path");
 
     private final String key;
 
@@ -49,3 +48,4 @@ public enum ScanModuleProperty implements ConfigurationProperty {
         return key;
     }
 }
+

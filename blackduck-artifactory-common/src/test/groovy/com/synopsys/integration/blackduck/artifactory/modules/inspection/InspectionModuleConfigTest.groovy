@@ -19,9 +19,8 @@ class InspectionModuleConfigTest {
             ["*.jar"],
             ["*.whl", "*.tar.gz", "*.zip", "*.egg"],
             ["*.nupkg"],
-            ["*.tgz"],
-            "0 0/1 * 1/1 * ?",
-            "0 0/1 * 1/1 * ?",
+            ["*.tgz"]
+            ,
             ["repo1", "repo2"],
             5,
         )
@@ -34,9 +33,8 @@ class InspectionModuleConfigTest {
             null,
             null,
             null,
-            null,
-            null,
-            null,
+            null
+            ,
             null,
             -1
         )
@@ -55,20 +53,20 @@ class InspectionModuleConfigTest {
 
     @Test
     void getIdentifyArtifactsCron() {
-        Assert.assertEquals("0 0/1 * 1/1 * ?", validInspectionModuleConfig.getIdentifyArtifactsCron())
-        Assert.assertNull(invalidInspectionModuleConfig.getIdentifyArtifactsCron())
+        Assert.assertEquals("0 0/1 * 1/1 * ?", validInspectionModuleConfig.getInspectionCron())
+        Assert.assertNull(invalidInspectionModuleConfig.getInspectionCron())
     }
 
     @Test
     void getPopulateMetadataCron() {
-        Assert.assertEquals("0 0/1 * 1/1 * ?", validInspectionModuleConfig.getIdentifyArtifactsCron())
-        Assert.assertNull(invalidInspectionModuleConfig.getIdentifyArtifactsCron())
+        Assert.assertEquals("0 0/1 * 1/1 * ?", validInspectionModuleConfig.getInspectionCron())
+        Assert.assertNull(invalidInspectionModuleConfig.getInspectionCron())
     }
 
     @Test
     void getUpdateMetadataCron() {
-        Assert.assertEquals("0 0/1 * 1/1 * ?", validInspectionModuleConfig.getIdentifyArtifactsCron())
-        Assert.assertNull(invalidInspectionModuleConfig.getIdentifyArtifactsCron())
+        Assert.assertEquals("0 0/1 * 1/1 * ?", validInspectionModuleConfig.getInspectionCron())
+        Assert.assertNull(invalidInspectionModuleConfig.getInspectionCron())
     }
 
     @Test

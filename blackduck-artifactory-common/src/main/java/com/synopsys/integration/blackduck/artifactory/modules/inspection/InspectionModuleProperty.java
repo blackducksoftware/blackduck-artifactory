@@ -27,17 +27,15 @@ import com.synopsys.integration.blackduck.artifactory.configuration.Configuratio
 
 public enum InspectionModuleProperty implements ConfigurationProperty {
     ENABLED("enabled"),
-    IDENTIFY_ARTIFACTS_CRON("identify.artifacts.cron"),
+    CRON("cron"),
     PATTERNS_RUBYGEMS("patterns.rubygems"),
     PATTERNS_MAVEN("patterns.maven"),
     PATTERNS_GRADLE("patterns.gradle"),
     PATTERNS_PYPI("patterns.pypi"),
     PATTERNS_NUGET("patterns.nuget"),
     PATTERNS_NPM("patterns.npm"),
-    POPULATE_METADATA_CRON("populate.metadata.cron"),
     REPOS("repos"),
     REPOS_CSV_PATH("repos.csv.path"),
-    UPDATE_METADATA_CRON("update.metadata.cron"),
     RETRY_COUNT("retry.count");
 
     private final String key;
