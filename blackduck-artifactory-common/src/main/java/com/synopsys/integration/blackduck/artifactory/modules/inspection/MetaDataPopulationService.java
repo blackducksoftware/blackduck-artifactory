@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
@@ -40,6 +41,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaData;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.IdentifiedArtifact;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
 import com.synopsys.integration.exception.IntegrationException;
@@ -80,6 +82,18 @@ public class MetaDataPopulationService {
                 logger.error(String.format("The Black Duck %s encountered a problem while populating artifact metadata in repository '%s'", InspectionModule.class.getSimpleName(), repoKey), e);
             }
         }
+    }
+
+    public void populateExternalIdMetadata(final IdentifiedArtifact identifiedArtifact) {
+        final ExternalId externalId = identifiedArtifact.getExternalId();
+        final RepoPath repoPath = identifiedArtifact.getRepoPath();
+
+        final String blackDuckOriginId = externalId.createBlackDuckOriginId();
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId, logger);
+        final String blackduckForge = externalId.forge.getName();
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);
+
+        cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView) throws IntegrationException {

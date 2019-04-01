@@ -39,6 +39,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactIdentificationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactIdentificationService2;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactoryExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.CacheInspectorService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
@@ -107,10 +109,14 @@ public class ModuleFactory {
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
-        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService, bdioUploadService);
+
+        final ArtifactIdentificationService2 artifactIdentificationService2 = new ArtifactIdentificationService2(artifactoryPAPIService, artifactoryExternalIdFactory);
+        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService2,
+            metaDataPopulationService, bdioUploadService);
+        final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, artifactIdentificationService2, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager);
 
         return new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
-            simpleAnalyticsCollector, repositoryInitializationService);
+            simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService);
     }
 
     public PolicyModule createPolicyModule() {

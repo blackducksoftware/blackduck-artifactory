@@ -54,10 +54,12 @@ public class InspectionModule implements Module {
     private final CacheInspectorService cacheInspectorService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
     private final RepositoryInitializationService repositoryInitializationService;
+    private final ArtifactInspectionService artifactInspectionService;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final ArtifactoryPAPIService artifactoryPAPIService,
         final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService,
-        final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final RepositoryInitializationService repositoryInitializationService) {
+        final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final RepositoryInitializationService repositoryInitializationService,
+        final ArtifactInspectionService artifactInspectionService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactIdentificationService = artifactIdentificationService;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -67,6 +69,7 @@ public class InspectionModule implements Module {
         this.cacheInspectorService = cacheInspectorService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
         this.repositoryInitializationService = repositoryInitializationService;
+        this.artifactInspectionService = artifactInspectionService;
     }
 
     @Override
@@ -118,6 +121,28 @@ public class InspectionModule implements Module {
 
         updateAnalytics();
     }
+
+    //////////////////////// New Event Listeners ////////////////////////
+
+    public void newHandleAfterCreateEvent(final ItemInfo itemInfo) {
+        final RepoPath repoPath = itemInfo.getRepoPath();
+
+        if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
+            try {
+                artifactInspectionService.inspectArtifact(repoPath);
+            } catch (final Exception e) {
+                logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
+                logger.debug(e.getMessage(), e);
+                cacheInspectorService.failInspection(repoPath, "See logs for details");
+            }
+        } else {
+            logger.debug(String.format("Artifact at '%s' is not existent, the repo is not configured to be inspected, or the artifact doesn't have a matching pattern", repoPath.toPath()));
+        }
+
+        updateAnalytics();
+    }
+
+    //////////////////////// Old Event Listeners ////////////////////////
 
     public void handleAfterCreateEvent(final ItemInfo itemInfo) {
         final RepoPath repoPath = itemInfo.getRepoPath();

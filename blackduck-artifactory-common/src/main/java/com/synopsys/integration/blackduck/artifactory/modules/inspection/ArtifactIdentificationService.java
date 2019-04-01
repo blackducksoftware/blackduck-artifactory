@@ -133,13 +133,13 @@ public class ArtifactIdentificationService {
         }
     }
 
-    public IdentifiedArtifact attemptArtifactIdentification(final RepoPath repoPath, final String packageType) {
+    public ArtifactIdentificationService.IdentifiedArtifact attemptArtifactIdentification(final RepoPath repoPath, final String packageType) {
         final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
         final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
         final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
         final ExternalId externalId = possibleExternalId.orElse(null);
 
-        return new IdentifiedArtifact(repoPath, externalId);
+        return new ArtifactIdentificationService.IdentifiedArtifact(repoPath, externalId);
     }
 
     public Optional<ExternalId> populateIdMetadataOnIdentifiedArtifact(final IdentifiedArtifact identifiedArtifact) {

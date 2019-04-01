@@ -36,6 +36,7 @@ import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.LogUtil;
+import com.synopsys.integration.blackduck.artifactory.PluginConstants;
 import com.synopsys.integration.blackduck.artifactory.TriggerType;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
@@ -145,7 +146,11 @@ public class ModuleManager implements Analyzable {
     }
 
     public void handleAfterCreateEvent(final ItemInfo itemInfo, final TriggerType triggerType) {
-        runMethod(inspectionModuleConfig, triggerType, itemInfo, inspectionModule::handleAfterCreateEvent);
+        if (PluginConstants.DISABLE_OLD_FUNCTIONALITY) {
+            runMethod(inspectionModuleConfig, triggerType, itemInfo, inspectionModule::newHandleAfterCreateEvent);
+        } else {
+            runMethod(inspectionModuleConfig, triggerType, itemInfo, inspectionModule::handleAfterCreateEvent);
+        }
     }
 
     public void identifyArtifacts(final TriggerType triggerType) {

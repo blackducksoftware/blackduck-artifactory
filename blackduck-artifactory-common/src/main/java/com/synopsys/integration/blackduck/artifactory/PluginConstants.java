@@ -25,6 +25,6 @@ package com.synopsys.integration.blackduck.artifactory;
 
 public class PluginConstants {
     public static final String PUBLIC_DOCUMENTATION_LINK = "https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/32178187/Black+Duck+Artifactory+Plugin";
-    public static final boolean DISABLE_OLD_FUNCTIONALITY = false;
+    public static final boolean DISABLE_OLD_FUNCTIONALITY = true;
     public static final boolean ENABLE_NEW_FUNCTIONALITY = !DISABLE_OLD_FUNCTIONALITY; // TODO: Remove DISABLE_OLD_FUNCTIONALITY & ENABLE_NEW_FUNCTIONALITY upon reaching feature parity
 }
