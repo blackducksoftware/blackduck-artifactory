@@ -104,6 +104,7 @@ public class PluginService {
 
         final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(ModuleManager.class);
         final ModuleManager moduleManager = ModuleManager.createFromModules(moduleRegistry, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
+        analyticsService.registerAnalyzable(moduleManager);
 
         logger.info("...blackDuckPlugin initialized.");
         return moduleManager;

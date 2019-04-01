@@ -67,7 +67,7 @@ public class AnalyticsService {
             final List<AnalyticsCollector> analyticsCollector = analyzable.getAnalyticsCollectors();
 
             if (analyticsCollector != null) {
-                analyticsCollector.addAll(analyticsCollectors);
+                this.analyticsCollectors.addAll(analyticsCollector);
             }
         }
     }

@@ -23,6 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -36,8 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.LogUtil;
 import com.synopsys.integration.blackduck.artifactory.TriggerType;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
@@ -54,7 +57,7 @@ import com.synopsys.integration.log.Slf4jIntLogger;
  * made here must be reflected in the blackDuckPlugin.groovy file
  * in hub-artifactory
  */
-public class ModuleManager {
+public class ModuleManager implements Analyzable {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ModuleRegistry moduleRegistry;
@@ -240,5 +243,10 @@ public class ModuleManager {
         }
 
         return result;
+    }
+
+    @Override
+    public List<AnalyticsCollector> getAnalyticsCollectors() {
+        return Collections.singletonList(featureAnalyticsCollector);
     }
 }
