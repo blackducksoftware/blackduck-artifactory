@@ -49,10 +49,31 @@ public class CacheInspectorService {
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ProjectService projectService;
+    private final InspectionModuleConfig inspectionModuleConfig;
 
-    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService) {
+    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService,
+        final InspectionModuleConfig inspectionModuleConfig) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.projectService = projectService;
+        this.inspectionModuleConfig = inspectionModuleConfig;
+    }
+
+    public boolean shouldRetryInspection(final RepoPath repoPath) {
+        return assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getRetryCount(repoPath) < inspectionModuleConfig.getRetryCount();
+    }
+
+    private Integer getRetryCount(final RepoPath repoPath) {
+        final Optional<Integer> retryCount = artifactoryPropertyService.getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, logger);
+        return retryCount.orElse(0);
+    }
+
+    public void failInspection(final RepoPath repoPath, final String inspectionStatusMessage) {
+        final int retryCount = getRetryCount(repoPath) + 1;
+        if (retryCount > inspectionModuleConfig.getRetryCount()) {
+            logger.debug(String.format("Attempting to fail inspection more than the number of maximum attempts: %s", repoPath.getPath()));
+        } else {
+            setInspectionStatus(repoPath, InspectionStatus.FAILURE, inspectionStatusMessage, retryCount);
+        }
     }
 
     public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status) {
@@ -63,7 +84,7 @@ public class CacheInspectorService {
         setInspectionStatus(repoPath, status, inspectionStatusMessage, null);
     }
 
-    public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status, final String inspectionStatusMessage, final Integer retryCount) {
+    private void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status, final String inspectionStatusMessage, final Integer retryCount) {
         artifactoryPropertyService.setPropertyToDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, new Date(), logger);
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name(), logger);
 

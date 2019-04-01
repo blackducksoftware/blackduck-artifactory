@@ -47,10 +47,6 @@ public class PackageTypePatternManager {
         this.patternMap = patternMap;
     }
 
-    public void loadPatterns(final InspectionModuleConfig inspectionModuleConfig) {
-
-    }
-
     public Optional<List<String>> getPatterns(final String packageType) {
         Optional<List<String>> pattern = Optional.empty();
 
@@ -62,7 +58,7 @@ public class PackageTypePatternManager {
         return pattern;
     }
 
-    public Optional<List<String>> getPatterns(final SupportedPackageType packageType) {
+    private Optional<List<String>> getPatterns(final SupportedPackageType packageType) {
         return Optional.ofNullable(patternMap.get(packageType));
     }
 

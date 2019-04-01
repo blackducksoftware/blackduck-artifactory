@@ -121,11 +121,11 @@ public class InspectionModule implements Module {
             if (artifactIdentificationService.shouldInspectArtifact(inspectionModuleConfig.getRepos(), repoPath)) {
                 inspectArtifact(repoPath);
             } else {
-                logger.debug(String.format("Artifact at '%s' is not existent or the repo is not configured to be inspected", repoPath.toPath()));
+                logger.debug(String.format("Artifact at '%s' is not existent, the repo is not configured to be inspected, or the artifact doesn't have a matching pattern", repoPath.toPath()));
             }
         } catch (final Exception e) {
             logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
-            artifactIdentificationService.failInspection(repoPath, "See logs for details");
+            cacheInspectorService.failInspection(repoPath, "See logs for details");
             logger.debug(e.getMessage(), e);
         }
 
