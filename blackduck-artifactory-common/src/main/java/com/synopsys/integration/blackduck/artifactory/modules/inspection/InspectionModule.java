@@ -53,11 +53,11 @@ public class InspectionModule implements Module {
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final CacheInspectorService cacheInspectorService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
-    private final RepoInitializationService repoInitializationService;
+    private final RepositoryInitializationService repositoryInitializationService;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final ArtifactoryPAPIService artifactoryPAPIService,
         final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService,
-        final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final RepoInitializationService repoInitializationService) {
+        final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final RepositoryInitializationService repositoryInitializationService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactIdentificationService = artifactIdentificationService;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -66,7 +66,7 @@ public class InspectionModule implements Module {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
-        this.repoInitializationService = repoInitializationService;
+        this.repositoryInitializationService = repositoryInitializationService;
     }
 
     @Override
@@ -76,7 +76,7 @@ public class InspectionModule implements Module {
 
     //////////////////////// New cron jobs ////////////////////////
     public void initializeRepositories() {
-        inspectionModuleConfig.getRepos().forEach(repoInitializationService::initializeRepository);
+        inspectionModuleConfig.getRepos().forEach(repositoryInitializationService::initializeRepository);
     }
 
     //////////////////////// Old cron jobs ////////////////////////

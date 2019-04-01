@@ -53,7 +53,7 @@ import com.synopsys.integration.util.IntegrationEscapeUtil;
 /**
  * Handles the initial BOM upload for a repository
  */
-public class RepoInitializationService {
+public class RepositoryInitializationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final CacheInspectorService cacheInspectorService;
@@ -62,7 +62,7 @@ public class RepoInitializationService {
     private final ArtifactIdentificationService artifactIdentificationService;
     private final BdioUploadService bdioUploadService;
 
-    public RepoInitializationService(final CacheInspectorService cacheInspectorService, final ArtifactoryPAPIService artifactoryPAPIService,
+    public RepositoryInitializationService(final CacheInspectorService cacheInspectorService, final ArtifactoryPAPIService artifactoryPAPIService,
         final PackageTypePatternManager packageTypePatternManager, final ArtifactIdentificationService artifactIdentificationService, final BdioUploadService bdioUploadService) {
         this.cacheInspectorService = cacheInspectorService;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -79,8 +79,8 @@ public class RepoInitializationService {
             return;
         }
 
-        if (!cacheInspectorService.shouldAttemptInspection(repoKeyPath)) {
-            // Number of retry attempts succeeded
+        if (!cacheInspectorService.shouldRetryInspection(repoKeyPath)) {
+            // Number of retry attempts exceeded
             return;
         }
 
@@ -102,7 +102,7 @@ public class RepoInitializationService {
         final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
         final List<ArtifactIdentificationService.IdentifiedArtifact> identifiedArtifacts = identifiableRepoPaths.stream()
-                                                                                               .filter(cacheInspectorService::shouldAttemptInspection)
+                                                                                               .filter(cacheInspectorService::shouldRetryInspection)
                                                                                                .map(repoPath -> artifactIdentificationService.attemptArtifactIdentification(repoPath, packageType.get()))
                                                                                                .collect(Collectors.toList());
 

@@ -46,7 +46,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataPopulationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.PackageTypePatternManager;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.RepoInitializationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
@@ -107,10 +107,10 @@ public class ModuleFactory {
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
-        final RepoInitializationService repoInitializationService = new RepoInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService, bdioUploadService);
+        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService, bdioUploadService);
 
         return new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
-            simpleAnalyticsCollector, repoInitializationService);
+            simpleAnalyticsCollector, repositoryInitializationService);
     }
 
     public PolicyModule createPolicyModule() {

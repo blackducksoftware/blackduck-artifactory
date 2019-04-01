@@ -76,10 +76,6 @@ public class CacheInspectorService {
         return retryCount.orElse(0);
     }
 
-    public boolean shouldAttemptInspection(final RepoPath repoPath) {
-        return getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount();
-    }
-
     public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status) {
         setInspectionStatus(repoPath, status, null);
     }
