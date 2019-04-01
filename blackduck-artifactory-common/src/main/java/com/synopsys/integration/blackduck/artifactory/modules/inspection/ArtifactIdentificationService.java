@@ -82,11 +82,9 @@ public class ArtifactIdentificationService {
     private final CacheInspectorService cacheInspectorService;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final MetaDataPopulationService metaDataPopulationService;
-    private final InspectionModuleConfig inspectionModuleConfig;
 
     public ArtifactIdentificationService(final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
-        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService,
-        final InspectionModuleConfig inspectionModuleConfig) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.cacheInspectorService = cacheInspectorService;
         this.packageTypePatternManager = packageTypePatternManager;
@@ -94,7 +92,6 @@ public class ArtifactIdentificationService {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
         this.metaDataPopulationService = metaDataPopulationService;
-        this.inspectionModuleConfig = inspectionModuleConfig;
     }
 
     public void identifyArtifacts(final String repoKey) {
@@ -328,7 +325,7 @@ public class ArtifactIdentificationService {
     private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final String packageType, final Set<RepoPath> repoPaths) {
         for (final RepoPath repoPath : repoPaths) {
             final boolean isArtifactPending = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);
-            final boolean shouldRetry = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && cacheInspectorService.getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount();
+            final boolean shouldRetry = cacheInspectorService.shouldRetryInspection(repoPath);
 
             if (isArtifactPending || shouldRetry) {
                 final IdentifiedArtifact identifiedArtifact = attemptArtifactIdentification(repoPath, packageType);
