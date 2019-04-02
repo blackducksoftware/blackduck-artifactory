@@ -115,7 +115,7 @@ public class ArtifactIdentificationService {
                     } else {
                         throw new IntegrationException(String.format("Expected project '%s' and version '%s' are missing", projectName, projectVersionName));
                     }
-                } else if (!repositoryStatus.isPresent() && PluginConstants.DISABLE_OLD_FUNCTIONALITY) {
+                } else if (!repositoryStatus.isPresent() && !PluginConstants.DISABLE_OLD_FUNCTIONALITY) {
                     createHubProjectFromRepo(projectName, projectVersionName, packageType.get(), identifiableArtifacts);
                     cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
                 }

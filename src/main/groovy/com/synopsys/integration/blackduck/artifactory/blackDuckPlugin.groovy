@@ -335,31 +335,37 @@ jobs {
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
 
     if (PluginConstants.ENABLE_NEW_FUNCTIONALITY) {
-        // TODO: Create doc / endpoint
+        // TODO: Create docs / endpoints for new cron jobs
+
         blackDuckInitialBomUpload(cron: moduleManager.getInspectionCron()) {
             moduleManager.initializeRepositories(TriggerType.CRON_JOB)
         }
-    }
 
-    /**
-     * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
-     **/
-    blackDuckIdentifyArtifacts(cron: moduleManager.getInspectionCron()) {
-        moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
-    }
+        blackDuckBulkMetadataPopulation(cron: moduleManager.getInspectionCron()) {
+            moduleManager.populateMetadataInBulk(TriggerType.CRON_JOB)
+        }
 
-    /**
-     * The functionality is described above the blackDuckManuallyPopulateMetadata execution
-     **/
-    blackDuckPopulateMetadata(cron: moduleManager.getInspectionCron()) {
-        moduleManager.populateMetadata(TriggerType.CRON_JOB)
-    }
+    } else {
+        /**
+         * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
+         **/
+        blackDuckIdentifyArtifacts(cron: moduleManager.getInspectionCron()) {
+            moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
+        }
 
-    /**
-     * The functionality is described above the blackDuckManuallyUpdateMetadata execution
-     **/
-    blackDuckUpdateMetadata(cron: moduleManager.getInspectionCron()) {
-        moduleManager.updateMetadata(TriggerType.CRON_JOB)
+        /**
+         * The functionality is described above the blackDuckManuallyPopulateMetadata execution
+         **/
+        blackDuckPopulateMetadata(cron: moduleManager.getInspectionCron()) {
+            moduleManager.populateMetadata(TriggerType.CRON_JOB)
+        }
+
+        /**
+         * The functionality is described above the blackDuckManuallyUpdateMetadata execution
+         **/
+        blackDuckUpdateMetadata(cron: moduleManager.getInspectionCron()) {
+            moduleManager.updateMetadata(TriggerType.CRON_JOB)
+        }
     }
 
     //////////////////////////////////////////////// ANALYTICS JOBS ////////////////////////////////////////////////

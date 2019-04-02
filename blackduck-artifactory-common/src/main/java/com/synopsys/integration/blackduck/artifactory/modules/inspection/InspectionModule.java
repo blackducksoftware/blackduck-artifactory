@@ -80,6 +80,13 @@ public class InspectionModule implements Module {
     //////////////////////// New cron jobs ////////////////////////
     public void initializeRepositories() {
         inspectionModuleConfig.getRepos().forEach(repositoryInitializationService::initializeRepository);
+        updateAnalytics();
+    }
+
+    public void populateMetadataInBulk() {
+        inspectionModuleConfig.getRepos()
+            .forEach(metaDataPopulationService::populateMetadata);
+        updateAnalytics();
     }
 
     //////////////////////// Old cron jobs ////////////////////////
