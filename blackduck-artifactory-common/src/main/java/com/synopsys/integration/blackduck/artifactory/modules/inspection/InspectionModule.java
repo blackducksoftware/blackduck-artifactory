@@ -126,7 +126,7 @@ public class InspectionModule implements Module {
 
     //////////////////////// Event Listeners ////////////////////////
 
-    public void newHandleAfterCreateEvent(final ItemInfo itemInfo) {
+    public void handleAfterCreateEvent(final ItemInfo itemInfo) {
         final RepoPath repoPath = itemInfo.getRepoPath();
 
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
