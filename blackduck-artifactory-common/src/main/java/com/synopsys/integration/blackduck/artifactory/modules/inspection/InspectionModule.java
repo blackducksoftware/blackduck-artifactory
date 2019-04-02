@@ -117,12 +117,14 @@ public class InspectionModule implements Module {
                                              .collect(Collectors.toList());
 
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
-        repoPaths.forEach(this::inspectArtifact);
+        repoPaths.stream()
+            .filter(artifactInspectionService::shouldInspectArtifact)
+            .forEach(artifactInspectionService::inspectArtifact);
 
         updateAnalytics();
     }
 
-    //////////////////////// New Event Listeners ////////////////////////
+    //////////////////////// Event Listeners ////////////////////////
 
     public void newHandleAfterCreateEvent(final ItemInfo itemInfo) {
         final RepoPath repoPath = itemInfo.getRepoPath();
@@ -140,37 +142,6 @@ public class InspectionModule implements Module {
         }
 
         updateAnalytics();
-    }
-
-    //////////////////////// Old Event Listeners ////////////////////////
-
-    public void handleAfterCreateEvent(final ItemInfo itemInfo) {
-        final RepoPath repoPath = itemInfo.getRepoPath();
-
-        try {
-            if (artifactIdentificationService.shouldInspectArtifact(inspectionModuleConfig.getRepos(), repoPath)) {
-                inspectArtifact(repoPath);
-            } else {
-                logger.debug(String.format("Artifact at '%s' is not existent, the repo is not configured to be inspected, or the artifact doesn't have a matching pattern", repoPath.toPath()));
-            }
-        } catch (final Exception e) {
-            logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
-            cacheInspectorService.failInspection(repoPath, "See logs for details");
-            logger.debug(e.getMessage(), e);
-        }
-
-        updateAnalytics();
-    }
-
-    private void inspectArtifact(final RepoPath repoPath) {
-        final String repoKey = repoPath.getRepoKey();
-        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
-        if (packageType.isPresent()) {
-            final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.attemptArtifactIdentification(repoPath, packageType.get());
-            artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
-        } else {
-            logger.debug(String.format("Package type for repo '%s' is not existent", repoKey));
-        }
     }
 
     @Override
