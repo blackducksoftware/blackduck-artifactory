@@ -32,10 +32,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
-import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
@@ -240,27 +238,6 @@ public class ArtifactIdentificationService {
         }
 
         return identifiableArtifacts;
-    }
-
-    public boolean shouldInspectArtifact(final List<String> validRepoKeys, final RepoPath repoPath) {
-        if (!validRepoKeys.contains(repoPath.getRepoKey())) {
-            return false;
-        }
-
-        final ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
-        final Optional<List<String>> patterns = artifactoryPAPIService.getPackageType(repoPath.getRepoKey())
-                                                    .map(packageTypePatternManager::getPatterns)
-                                                    .filter(Optional::isPresent)
-                                                    .map(Optional::get);
-
-        if (!patterns.isPresent() || patterns.get().isEmpty() || itemInfo.isFolder()) {
-            return false;
-        }
-
-        final File artifact = new File(itemInfo.getName());
-        final WildcardFileFilter wildcardFileFilter = new WildcardFileFilter(patterns.get());
-
-        return wildcardFileFilter.accept(artifact);
     }
 
     private void createHubProjectFromRepo(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) throws IOException, IntegrationException {
