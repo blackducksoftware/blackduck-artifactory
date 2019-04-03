@@ -42,6 +42,7 @@ import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.exception.IntegrationException;
@@ -105,16 +106,16 @@ public class RepositoryInitializationService {
         final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
         final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
-        final List<ArtifactIdentificationService.IdentifiedArtifact> identifiedArtifacts = identifiableRepoPaths.stream()
-                                                                                               .filter(artifactInspectionService::shouldInspectArtifact) // TODO: This does duplicate checks
-                                                                                               .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
-                                                                                               .filter(Optional::isPresent)
-                                                                                               .map(Optional::get)
-                                                                                               .collect(Collectors.toList());
+        final List<Artifact> identifiedArtifacts = identifiableRepoPaths.stream()
+                                                       .filter(artifactInspectionService::shouldInspectArtifact) // TODO: This does duplicate checks
+                                                       .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
+                                                       .filter(Optional::isPresent)
+                                                       .map(Optional::get)
+                                                       .collect(Collectors.toList());
 
         final List<Dependency> dependencies = identifiedArtifacts.stream()
                                                   .peek(metaDataPopulationService::populateExternalIdMetadata)
-                                                  .map(ArtifactIdentificationService.IdentifiedArtifact::getExternalId)
+                                                  .map(Artifact::getExternalId)
                                                   .filter(Optional::isPresent)
                                                   .map(Optional::get)
                                                   .map(externalId -> new Dependency(externalId.name, externalId.version, externalId))

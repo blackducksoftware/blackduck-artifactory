@@ -32,7 +32,7 @@ import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.IdentifiedArtifact;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -80,7 +80,7 @@ public class ArtifactInspectionService {
         final String repoKey = repoPath.getRepoKey();
         final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (packageType.isPresent()) {
-            final Optional<IdentifiedArtifact> identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
+            final Optional<Artifact> identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
             identifiedArtifact.ifPresent(metaDataPopulationService::populateExternalIdMetadata);
         } else {
             logger.debug(String.format("Package type for repo '%s' is not existent", repoKey));

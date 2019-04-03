@@ -40,6 +40,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaData;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
 import com.synopsys.integration.exception.IntegrationException;
@@ -82,8 +83,8 @@ public class MetaDataPopulationService {
         }
     }
 
-    public Optional<ExternalId> populateExternalIdMetadata(final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact) {
-        return populateExternalIdMetadata(identifiedArtifact.getRepoPath(), identifiedArtifact.getExternalId().orElse(null));
+    public Optional<ExternalId> populateExternalIdMetadata(final Artifact artifact) {
+        return populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
     }
 
     public Optional<ExternalId> populateExternalIdMetadata(final RepoPath repoPath, final ExternalId externalId) {

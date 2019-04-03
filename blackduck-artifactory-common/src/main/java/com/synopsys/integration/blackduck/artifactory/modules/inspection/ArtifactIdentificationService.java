@@ -53,6 +53,7 @@ import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponent
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.PluginConstants;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.blackduck.exception.BlackDuckApiException;
@@ -130,22 +131,22 @@ public class ArtifactIdentificationService {
         }
     }
 
-    public ArtifactIdentificationService.IdentifiedArtifact attemptArtifactIdentification(final RepoPath repoPath, final String packageType) {
+    public Artifact attemptArtifactIdentification(final RepoPath repoPath, final String packageType) {
         final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
         final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
         final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
         final ExternalId externalId = possibleExternalId.orElse(null);
 
-        return new ArtifactIdentificationService.IdentifiedArtifact(repoPath, externalId);
+        return new Artifact(repoPath, externalId);
     }
 
-    public boolean addIdentifiedArtifactToProjectVersion(final IdentifiedArtifact identifiedArtifact, final ProjectVersionView projectVersionView) {
-        final RepoPath repoPath = identifiedArtifact.getRepoPath();
+    public boolean addIdentifiedArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) {
+        final RepoPath repoPath = artifact.getRepoPath();
 
         boolean success = false;
 
-        if (identifiedArtifact.getExternalId().isPresent()) {
-            final ExternalId externalId = identifiedArtifact.getExternalId().get();
+        if (artifact.getExternalId().isPresent()) {
+            final ExternalId externalId = artifact.getExternalId().get();
             try {
                 final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
                 final Optional<String> componentVersionUrl = projectBomService.addComponentToProjectVersion(externalId, projectVersionView);
@@ -222,14 +223,14 @@ public class ArtifactIdentificationService {
     private void createHubProjectFromRepo(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) throws IOException, IntegrationException {
         final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
 
-        final List<IdentifiedArtifact> identifiedArtifacts = repoPaths.stream()
-                                                                 .map(repoPath -> attemptArtifactIdentification(repoPath, repoPackageType))
-                                                                 .collect(Collectors.toList());
+        final List<Artifact> artifacts = repoPaths.stream()
+                                             .map(repoPath -> attemptArtifactIdentification(repoPath, repoPackageType))
+                                             .collect(Collectors.toList());
 
-        identifiedArtifacts.forEach(metaDataPopulationService::populateExternalIdMetadata);
+        artifacts.forEach(metaDataPopulationService::populateExternalIdMetadata);
 
-        final MutableDependencyGraph mutableDependencyGraph = identifiedArtifacts.stream()
-                                                                  .map(IdentifiedArtifact::getExternalId)
+        final MutableDependencyGraph mutableDependencyGraph = artifacts.stream()
+                                                                  .map(Artifact::getExternalId)
                                                                   .filter(Optional::isPresent)
                                                                   .map(Optional::get)
                                                                   .map(externalId -> new Dependency(externalId.name, externalId.version, externalId))
@@ -285,14 +286,14 @@ public class ArtifactIdentificationService {
             final boolean shouldRetry = cacheInspectorService.shouldRetryInspection(repoPath);
 
             if (isArtifactPending || shouldRetry) {
-                final IdentifiedArtifact identifiedArtifact = attemptArtifactIdentification(repoPath, packageType);
-                final boolean successfullyIdentified = metaDataPopulationService.populateExternalIdMetadata(identifiedArtifact).isPresent();
+                final Artifact artifact = attemptArtifactIdentification(repoPath, packageType);
+                final boolean successfullyIdentified = metaDataPopulationService.populateExternalIdMetadata(artifact).isPresent();
                 if (!successfullyIdentified) {
                     continue;
                 }
 
-                final boolean successfullyAdded = addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectVersionView);
-                final Optional<ExternalId> externalIdOptional = identifiedArtifact.getExternalId();
+                final boolean successfullyAdded = addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
+                final Optional<ExternalId> externalIdOptional = artifact.getExternalId();
 
                 if (successfullyAdded && externalIdOptional.isPresent()) {
                     final ExternalId externalId = externalIdOptional.get();
@@ -314,24 +315,6 @@ public class ArtifactIdentificationService {
 
         if (repoPaths.isEmpty()) {
             logger.debug("Cannot add delta to Black Duck because supplied repoPaths is empty");
-        }
-    }
-
-    public static class IdentifiedArtifact {
-        private final RepoPath repoPath;
-        private final ExternalId externalId;
-
-        public IdentifiedArtifact(final RepoPath repoPath, final ExternalId externalId) {
-            this.repoPath = repoPath;
-            this.externalId = externalId;
-        }
-
-        public RepoPath getRepoPath() {
-            return repoPath;
-        }
-
-        public Optional<ExternalId> getExternalId() {
-            return Optional.ofNullable(externalId);
         }
     }
 }
