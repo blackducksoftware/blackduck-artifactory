@@ -329,7 +329,7 @@ public class ArtifactIdentificationService {
             if (isArtifactPending || shouldRetry) {
                 final IdentifiedArtifact identifiedArtifact = identifyArtifact(repoPath, packageType);
                 if (!identifiedArtifact.getExternalId().isPresent()) {
-                    cacheInspectorService.failInspection(repoPath, "Failed to generate external id from properties");
+                    cacheInspectorService.failInspection(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
                     continue;
                 }
 
