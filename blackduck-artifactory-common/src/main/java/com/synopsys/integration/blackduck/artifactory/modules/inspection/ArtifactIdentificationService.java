@@ -48,6 +48,7 @@ import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentSearchResultView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
@@ -294,28 +295,29 @@ public class ArtifactIdentificationService {
     private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
         final ComponentService componentService = blackDuckServicesFactory.createComponentService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
-        final Optional<ComponentVersionView> componentVersionViewOptional = componentService.getComponentVersion(externalId);
+        final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getExactComponentMatch(externalId);
 
-        if (componentVersionViewOptional.isPresent()) {
-            final ComponentVersionView componentVersionView = componentVersionViewOptional.get();
-            final Optional<String> projectVersionViewHref = projectVersionView.getHref();
-            final Optional<String> componentVersionViewHref = componentVersionView.getHref();
+        if (!componentSearchResultView.isPresent()) {
+            throw new IntegrationException(String.format("No search results for component found: %s", externalId.createBlackDuckOriginId()));
+        }
 
-            // This is bad practice but...
-            // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
-            if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
-                final String apiComponentsLinkPrefix = "/api/components/";
-                final int apiComponentsStart = componentVersionViewHref.get().indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
-                final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentVersionViewHref.get().substring(apiComponentsStart);
-                final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
-                final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
+        final String componentVersionUrl = componentSearchResultView.get().getVersion();
+        final ComponentVersionView componentVersionView = blackDuckService.getResponse(new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class));
+        final Optional<String> projectVersionViewHref = projectVersionView.getHref();
+        final Optional<String> componentVersionViewHref = componentVersionView.getHref();
 
-                return new ComponentViewWrapper(versionBomComponentView, componentVersionView);
-            } else {
-                throw new IntegrationException("projectVersionViewHref or componentVersionViewHref is not present");
-            }
+        // This is bad practice but...
+        // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
+        if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
+            final String apiComponentsLinkPrefix = "/api/components/";
+            final int apiComponentsStart = componentVersionViewHref.get().indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
+            final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentVersionViewHref.get().substring(apiComponentsStart);
+            final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
+            final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
+
+            return new ComponentViewWrapper(versionBomComponentView, componentVersionView);
         } else {
-            throw new IntegrationException(String.format("Cannot find component with given external id: %s:%s", externalId.forge, externalId.createBlackDuckOriginId()));
+            throw new IntegrationException("projectVersionViewHref or componentVersionViewHref is not present");
         }
     }
 
