@@ -85,7 +85,7 @@ public class CacheInspectorService {
     }
 
     private void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status, final String inspectionStatusMessage, final Integer retryCount) {
-        artifactoryPropertyService.setPropertyToDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, new Date(), logger);
+        artifactoryPropertyService.setPropertyFromDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, new Date(), logger);
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name(), logger);
 
         if (StringUtils.isNotBlank(inspectionStatusMessage)) {
@@ -157,6 +157,6 @@ public class CacheInspectorService {
     }
 
     public void setLastUpdate(final RepoPath repoKeyPath, final Date lastNotificationDate) {
-        artifactoryPropertyService.setPropertyToDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
+        artifactoryPropertyService.setPropertyFromDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
     }
 }

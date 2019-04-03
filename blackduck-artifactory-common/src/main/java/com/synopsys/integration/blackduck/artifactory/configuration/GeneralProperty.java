@@ -33,7 +33,8 @@ public enum GeneralProperty implements ConfigurationProperty {
     PROXY_USERNAME("proxy.username"),
     PROXY_PASSWORD("proxy.password"),
     TRUST_CERT("trust.cert"),
-    DATE_TIME_PATTERN("date.time.pattern");
+    DATE_TIME_PATTERN("date.time.pattern"),
+    DATE_TIME_ZONE("date.time.zone");
 
     private final String key;
 

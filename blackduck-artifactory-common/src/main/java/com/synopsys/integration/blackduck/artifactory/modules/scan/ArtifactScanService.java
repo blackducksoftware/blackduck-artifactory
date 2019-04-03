@@ -96,8 +96,7 @@ public class ArtifactScanService {
 
         for (final RepoPath repoPath : shouldScanRepoPaths) {
             try {
-                final String timeString = dateTimeManager.getStringFromDate(new Date());
-                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME, timeString, logger);
+                artifactoryPropertyService.setPropertyFromDate(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME, new Date(), logger);
                 final NameVersion projectNameVersion = determineProjectNameVersion(repoPath);
                 final ScanBatchOutput scanBatchOutput = scanArtifact(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion());
                 writeScanProperties(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion(), scanBatchOutput);

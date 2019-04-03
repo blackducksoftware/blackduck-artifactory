@@ -47,7 +47,7 @@ class ScanModuleConfigTest {
             ["repo1", "repo2"]
             ,
             File.createTempFile("artifactory-test", "ScanModuleConfigTest"),
-            new DateTimeManager("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            new DateTimeManager("yyyy-MM-dd'T'HH:mm:ss.SSS", dateTimeZone)
         )
 
         invalidScanModuleConfig = new ScanModuleConfig(

@@ -37,18 +37,21 @@ public class PluginConfig extends ConfigurationValidator {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final String dateTimePattern;
+    private final String dateTimeZone;
     private final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder;
 
     public static PluginConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
         final String dateTimePattern = configurationPropertyManager.getProperty(GeneralProperty.DATE_TIME_PATTERN);
+        final String dateTimeZone = configurationPropertyManager.getProperty(GeneralProperty.DATE_TIME_ZONE);
         final BlackDuckServerConfigBuilder BlackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
         BlackDuckServerConfigBuilder.setFromProperties(configurationPropertyManager.getProperties());
 
-        return new PluginConfig(dateTimePattern, BlackDuckServerConfigBuilder);
+        return new PluginConfig(dateTimePattern, dateTimeZone, BlackDuckServerConfigBuilder);
     }
 
-    public PluginConfig(final String dateTimePattern, final BlackDuckServerConfigBuilder BlackDuckServerConfigBuilder) {
+    public PluginConfig(final String dateTimePattern, final String dateTimeZone, final BlackDuckServerConfigBuilder BlackDuckServerConfigBuilder) {
         this.dateTimePattern = dateTimePattern;
+        this.dateTimeZone = dateTimeZone;
         this.blackDuckServerConfigBuilder = BlackDuckServerConfigBuilder;
     }
 
@@ -82,6 +85,10 @@ public class PluginConfig extends ConfigurationValidator {
 
     public String getDateTimePattern() {
         return dateTimePattern;
+    }
+
+    public String getDateTimeZone() {
+        return dateTimeZone;
     }
 
     public BlackDuckServerConfigBuilder getBlackDuckServerConfigBuilder() {

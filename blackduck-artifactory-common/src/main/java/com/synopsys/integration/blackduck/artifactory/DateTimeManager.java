@@ -22,16 +22,23 @@
  */
 package com.synopsys.integration.blackduck.artifactory;
 
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Optional;
+import java.util.TimeZone;
+
+import org.apache.commons.lang.StringUtils;
 
 public class DateTimeManager {
     private final String dateTimePattern;
+    private final String dateTimeZone;
 
-    public DateTimeManager(final String dateTimePattern) {
+    public DateTimeManager(final String dateTimePattern, final String dateTimeZone) {
         this.dateTimePattern = dateTimePattern;
+        this.dateTimeZone = dateTimeZone;
     }
 
     public String getDateTimePattern() {
@@ -43,8 +50,23 @@ public class DateTimeManager {
     }
 
     public String getStringFromDate(final Date date) {
-        final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC);
-        return date.toInstant().atZone(ZoneOffset.UTC).format(dateTimeFormatter);
+        return getStringFromDate(date, ZoneOffset.UTC);
+    }
+
+    public Optional<String> geStringFromDateWithTimeZone(final Date date) {
+        if (StringUtils.isBlank(dateTimeZone)) {
+            return Optional.empty();
+        }
+
+        final TimeZone timeZone = TimeZone.getTimeZone(dateTimeZone);
+        final ZoneId zoneId = timeZone.toZoneId();
+
+        return Optional.of(getStringFromDate(date, zoneId));
+    }
+
+    private String getStringFromDate(final Date date, final ZoneId zoneId) {
+        final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(zoneId);
+        return date.toInstant().atZone(zoneId).format(dateTimeFormatter);
     }
 
     public Date getDateFromString(final String dateTimeString) {

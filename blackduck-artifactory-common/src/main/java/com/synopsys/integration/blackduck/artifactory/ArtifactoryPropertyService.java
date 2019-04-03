@@ -72,16 +72,23 @@ public class ArtifactoryPropertyService {
     }
 
     public void setProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final String value, final IntLogger logger) {
-        artifactoryPAPIService.setProperty(repoPath, property.getName(), value);
-        logger.debug(String.format("Set property %s to %s on %s", property.getName(), value, repoPath.toPath()));
+        setProperty(repoPath, property.getName(), value, logger);
     }
 
-    public void setPropertyToDate(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final Date date, final IntLogger logger) {
+    private void setProperty(final RepoPath repoPath, final String property, final String value, final IntLogger logger) {
+        artifactoryPAPIService.setProperty(repoPath, property, value);
+        logger.debug(String.format("Set property %s to %s on %s", property, value, repoPath.toPath()));
+    }
+
+    public void setPropertyFromDate(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final Date date, final IntLogger logger) {
         final String dateTimeAsString = dateTimeManager.getStringFromDate(date);
         setProperty(repoPath, property, dateTimeAsString, logger);
+
+        final Optional<String> dateTimeAsStringConverted = dateTimeManager.geStringFromDateWithTimeZone(date);
+        dateTimeAsStringConverted.ifPresent(converted -> setProperty(repoPath, property.getTimeName(), converted, logger));
     }
 
-    public void deleteProperty(final RepoPath repoPath, final String propertyName, final IntLogger logger) {
+    private void deleteProperty(final RepoPath repoPath, final String propertyName, final IntLogger logger) {
         if (artifactoryPAPIService.hasProperty(repoPath, propertyName)) {
             artifactoryPAPIService.deleteProperty(repoPath, propertyName);
             logger.debug(String.format("Removed property %s from %s", propertyName, repoPath.toPath()));
@@ -90,6 +97,7 @@ public class ArtifactoryPropertyService {
 
     public void deleteProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
         deleteProperty(repoPath, property.getName(), logger);
+        deleteProperty(repoPath, property.getTimeName(), logger);
     }
 
     public void deleteAllBlackDuckPropertiesFromRepo(final String repoKey, final Map<String, List<String>> params, final IntLogger logger) {
@@ -103,7 +111,6 @@ public class ArtifactoryPropertyService {
 
     public void deleteAllBlackDuckPropertiesFromRepoPath(final RepoPath repoPath, final Map<String, List<String>> params, final IntLogger logger) {
         final List<BlackDuckArtifactoryProperty> properties = Arrays.stream(BlackDuckArtifactoryProperty.values())
-                                                                  .filter(property -> property.getName() != null)
                                                                   .filter(property -> !isPropertyInParams(property, params))
                                                                   .collect(Collectors.toList());
 

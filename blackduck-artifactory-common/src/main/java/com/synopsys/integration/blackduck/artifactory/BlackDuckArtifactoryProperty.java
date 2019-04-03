@@ -54,4 +54,8 @@ public enum BlackDuckArtifactoryProperty {
     public String getName() {
         return name;
     }
+
+    public String getTimeName() {
+        return name + ".converted";
+    }
 }
