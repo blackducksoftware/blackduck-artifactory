@@ -151,10 +151,6 @@ public class ModuleManager implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::identifyArtifacts);
     }
 
-    public void populateMetadata(final TriggerType triggerType) {
-        runMethod(inspectionModuleConfig, triggerType, inspectionModule::populateMetadata);
-    }
-
     public void updateMetadata(final TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::updateMetadata);
     }

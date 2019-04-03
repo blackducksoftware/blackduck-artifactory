@@ -265,7 +265,7 @@ executions {
 
     /**
      * Manual execution of the Populate Metadata step of inspection on a specific repository.
-     * Automatic execution is performed by the blackDuckPopulateMetadata CRON job below.
+     * Automatic execution is performed by the blackDuckBulkMetadataPopulation CRON job below.
      *
      * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying metadata
      * to look up vulnerability metadata in Black Duck, then populates that vulnerability metadata on the artifact in Artifactory.
@@ -280,7 +280,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
      **/
     blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
-        moduleManager.populateMetadata(TriggerType.REST_REQUEST)
+        moduleManager.populateMetadataInBulk(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -334,38 +334,31 @@ jobs {
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
 
-    if (PluginConstants.ENABLE_NEW_FUNCTIONALITY) {
-        // TODO: Create docs / endpoints for new cron jobs
+    // TODO: Create docs / endpoints for new cron jobs
 
-        blackDuckInitialBomUpload(cron: moduleManager.getInspectionCron()) {
-            moduleManager.initializeRepositories(TriggerType.CRON_JOB)
-        }
+    blackDuckInitialBomUpload(cron: moduleManager.getInspectionCron()) {
+        moduleManager.initializeRepositories(TriggerType.CRON_JOB)
+    }
 
-        blackDuckBulkMetadataPopulation(cron: moduleManager.getInspectionCron()) {
-            moduleManager.populateMetadataInBulk(TriggerType.CRON_JOB)
-        }
+    /**
+     * The functionality is described above the blackDuckBulkMetadataPopulation execution
+     **/
+    blackDuckBulkMetadataPopulation(cron: moduleManager.getInspectionCron()) {
+        moduleManager.populateMetadataInBulk(TriggerType.CRON_JOB)
+    }
 
-    } else {
-        /**
-         * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
-         **/
-        blackDuckIdentifyArtifacts(cron: moduleManager.getInspectionCron()) {
-            moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
-        }
+    /**
+     * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
+     **/
+    blackDuckIdentifyArtifacts(cron: moduleManager.getInspectionCron()) {
+        moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
+    }
 
-        /**
-         * The functionality is described above the blackDuckManuallyPopulateMetadata execution
-         **/
-        blackDuckPopulateMetadata(cron: moduleManager.getInspectionCron()) {
-            moduleManager.populateMetadata(TriggerType.CRON_JOB)
-        }
-
-        /**
-         * The functionality is described above the blackDuckManuallyUpdateMetadata execution
-         **/
-        blackDuckUpdateMetadata(cron: moduleManager.getInspectionCron()) {
-            moduleManager.updateMetadata(TriggerType.CRON_JOB)
-        }
+    /**
+     * The functionality is described above the blackDuckManuallyUpdateMetadata execution
+     **/
+    blackDuckUpdateMetadata(cron: moduleManager.getInspectionCron()) {
+        moduleManager.updateMetadata(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// ANALYTICS JOBS ////////////////////////////////////////////////

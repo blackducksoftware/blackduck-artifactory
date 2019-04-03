@@ -96,12 +96,6 @@ public class InspectionModule implements Module {
         updateAnalytics();
     }
 
-    public void populateMetadata() {
-        inspectionModuleConfig.getRepos()
-            .forEach(metaDataPopulationService::populateMetadata);
-        updateAnalytics();
-    }
-
     public void updateMetadata() {
         inspectionModuleConfig.getRepos()
             .forEach(metaDataUpdateService::updateMetadata);
