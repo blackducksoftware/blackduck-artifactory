@@ -52,7 +52,6 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.PluginConstants;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
@@ -138,26 +137,6 @@ public class ArtifactIdentificationService {
         final ExternalId externalId = possibleExternalId.orElse(null);
 
         return new ArtifactIdentificationService.IdentifiedArtifact(repoPath, externalId);
-    }
-
-    public Optional<ExternalId> populateIdMetadataOnIdentifiedArtifact(final IdentifiedArtifact identifiedArtifact) {
-        if (!identifiedArtifact.getExternalId().isPresent()) {
-            logger.debug(String.format("Could not populate artifact with metadata. Missing externalId: %s", identifiedArtifact.getRepoPath()));
-            cacheInspectorService.failInspection(identifiedArtifact.getRepoPath(), "Artifactory failed to provide sufficient information to identify the artifact");
-            return Optional.empty();
-        }
-
-        final ExternalId externalId = identifiedArtifact.getExternalId().get();
-        final RepoPath repoPath = identifiedArtifact.getRepoPath();
-
-        final String blackDuckOriginId = externalId.createBlackDuckOriginId();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId, logger);
-        final String blackduckForge = externalId.forge.getName();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);
-
-        cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
-
-        return Optional.of(externalId);
     }
 
     public boolean addIdentifiedArtifactToProjectVersion(final IdentifiedArtifact identifiedArtifact, final ProjectVersionView projectVersionView) {
@@ -247,7 +226,7 @@ public class ArtifactIdentificationService {
                                                                  .map(repoPath -> attemptArtifactIdentification(repoPath, repoPackageType))
                                                                  .collect(Collectors.toList());
 
-        identifiedArtifacts.forEach(this::populateIdMetadataOnIdentifiedArtifact);
+        identifiedArtifacts.forEach(metaDataPopulationService::populateExternalIdMetadata);
 
         final MutableDependencyGraph mutableDependencyGraph = identifiedArtifacts.stream()
                                                                   .map(IdentifiedArtifact::getExternalId)
@@ -307,11 +286,10 @@ public class ArtifactIdentificationService {
 
             if (isArtifactPending || shouldRetry) {
                 final IdentifiedArtifact identifiedArtifact = attemptArtifactIdentification(repoPath, packageType);
-                if (!identifiedArtifact.getExternalId().isPresent()) {
-                    cacheInspectorService.failInspection(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
+                final boolean successfullyIdentified = metaDataPopulationService.populateExternalIdMetadata(identifiedArtifact).isPresent();
+                if (!successfullyIdentified) {
                     continue;
                 }
-                populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
 
                 final boolean successfullyAdded = addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectVersionView);
                 final Optional<ExternalId> externalIdOptional = identifiedArtifact.getExternalId();
@@ -339,7 +317,7 @@ public class ArtifactIdentificationService {
         }
     }
 
-    public class IdentifiedArtifact {
+    public static class IdentifiedArtifact {
         private final RepoPath repoPath;
         private final ExternalId externalId;
 

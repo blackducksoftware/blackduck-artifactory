@@ -42,7 +42,6 @@ import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.IdentifiedArtifact;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.exception.IntegrationException;
@@ -62,16 +61,18 @@ public class RepositoryInitializationService {
     private final ArtifactIdentificationService2 artifactIdentificationService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final BdioUploadService bdioUploadService;
+    private final ArtifactInspectionService artifactInspectionService;
 
     public RepositoryInitializationService(final CacheInspectorService cacheInspectorService, final ArtifactoryPAPIService artifactoryPAPIService,
         final PackageTypePatternManager packageTypePatternManager, final ArtifactIdentificationService2 artifactIdentificationService,
-        final MetaDataPopulationService metaDataPopulationService, final BdioUploadService bdioUploadService) {
+        final MetaDataPopulationService metaDataPopulationService, final BdioUploadService bdioUploadService, final ArtifactInspectionService artifactInspectionService) {
         this.cacheInspectorService = cacheInspectorService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.packageTypePatternManager = packageTypePatternManager;
         this.artifactIdentificationService = artifactIdentificationService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.bdioUploadService = bdioUploadService;
+        this.artifactInspectionService = artifactInspectionService;
     }
 
     public void initializeRepository(final String repoKey) {
@@ -104,16 +105,19 @@ public class RepositoryInitializationService {
         final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
         final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
-        final List<IdentifiedArtifact> identifiedArtifacts = identifiableRepoPaths.stream()
-                                                                 .filter(cacheInspectorService::shouldRetryInspection)
-                                                                 .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
-                                                                 .filter(Optional::isPresent)
-                                                                 .map(Optional::get)
-                                                                 .collect(Collectors.toList());
+        final List<ArtifactIdentificationService.IdentifiedArtifact> identifiedArtifacts = identifiableRepoPaths.stream()
+                                                                                               .filter(artifactInspectionService::shouldInspectArtifact) // TODO: This does duplicate checks
+                                                                                               .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
+                                                                                               .filter(Optional::isPresent)
+                                                                                               .map(Optional::get)
+                                                                                               .collect(Collectors.toList());
 
         final List<Dependency> dependencies = identifiedArtifacts.stream()
                                                   .peek(metaDataPopulationService::populateExternalIdMetadata)
-                                                  .map(identifiedArtifact -> new Dependency(identifiedArtifact.getExternalId().name, identifiedArtifact.getExternalId().version, identifiedArtifact.getExternalId()))
+                                                  .map(ArtifactIdentificationService.IdentifiedArtifact::getExternalId)
+                                                  .filter(Optional::isPresent)
+                                                  .map(Optional::get)
+                                                  .map(externalId -> new Dependency(externalId.name, externalId.version, externalId))
                                                   .collect(Collectors.toList());
 
         final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();

@@ -29,7 +29,6 @@ import org.artifactory.repo.RepoPath;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.IdentifiedArtifact;
 
 public class ArtifactIdentificationService2 {
     private final ArtifactoryPAPIService artifactoryPAPIService;
@@ -40,11 +39,11 @@ public class ArtifactIdentificationService2 {
         this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
     }
 
-    public Optional<IdentifiedArtifact> identifyArtifact(final RepoPath repoPath, final String packageType) {
+    public Optional<ArtifactIdentificationService.IdentifiedArtifact> identifyArtifact(final RepoPath repoPath, final String packageType) {
         final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
         final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
         final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
 
-        return possibleExternalId.map(externalId -> new IdentifiedArtifact(repoPath, externalId));
+        return possibleExternalId.map(externalId -> new ArtifactIdentificationService.IdentifiedArtifact(repoPath, externalId));
     }
 }

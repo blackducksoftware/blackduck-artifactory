@@ -110,9 +110,9 @@ public class ModuleFactory {
         final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
 
         final ArtifactIdentificationService2 artifactIdentificationService2 = new ArtifactIdentificationService2(artifactoryPAPIService, artifactoryExternalIdFactory);
-        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService2,
-            metaDataPopulationService, bdioUploadService);
         final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, artifactIdentificationService2, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager);
+        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService2,
+            metaDataPopulationService, bdioUploadService, artifactInspectionService);
 
         return new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
             simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService);
