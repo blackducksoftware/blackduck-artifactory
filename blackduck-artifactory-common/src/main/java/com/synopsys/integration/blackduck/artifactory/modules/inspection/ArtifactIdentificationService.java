@@ -131,7 +131,7 @@ public class ArtifactIdentificationService {
         }
     }
 
-    public Artifact attemptArtifactIdentification(final RepoPath repoPath, final String packageType) {
+    public Artifact identifyArtifact(final RepoPath repoPath, final String packageType) {
         final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
         final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
         final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
@@ -224,7 +224,7 @@ public class ArtifactIdentificationService {
         final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
 
         final List<Artifact> artifacts = repoPaths.stream()
-                                             .map(repoPath -> attemptArtifactIdentification(repoPath, repoPackageType))
+                                             .map(repoPath -> identifyArtifact(repoPath, repoPackageType))
                                              .collect(Collectors.toList());
 
         artifacts.forEach(metaDataPopulationService::populateExternalIdMetadata);
@@ -286,7 +286,7 @@ public class ArtifactIdentificationService {
             final boolean shouldRetry = cacheInspectorService.shouldRetryInspection(repoPath);
 
             if (isArtifactPending || shouldRetry) {
-                final Artifact artifact = attemptArtifactIdentification(repoPath, packageType);
+                final Artifact artifact = identifyArtifact(repoPath, packageType);
                 final boolean successfullyIdentified = metaDataPopulationService.populateExternalIdMetadata(artifact).isPresent();
                 if (!successfullyIdentified) {
                     continue;

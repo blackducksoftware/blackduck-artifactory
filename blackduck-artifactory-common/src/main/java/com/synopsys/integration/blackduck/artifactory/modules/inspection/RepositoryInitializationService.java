@@ -59,13 +59,13 @@ public class RepositoryInitializationService {
     private final CacheInspectorService cacheInspectorService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final PackageTypePatternManager packageTypePatternManager;
-    private final ArtifactIdentificationService2 artifactIdentificationService;
+    private final ArtifactIdentificationService artifactIdentificationService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final BdioUploadService bdioUploadService;
     private final ArtifactInspectionService artifactInspectionService;
 
     public RepositoryInitializationService(final CacheInspectorService cacheInspectorService, final ArtifactoryPAPIService artifactoryPAPIService,
-        final PackageTypePatternManager packageTypePatternManager, final ArtifactIdentificationService2 artifactIdentificationService,
+        final PackageTypePatternManager packageTypePatternManager, final ArtifactIdentificationService artifactIdentificationService,
         final MetaDataPopulationService metaDataPopulationService, final BdioUploadService bdioUploadService, final ArtifactInspectionService artifactInspectionService) {
         this.cacheInspectorService = cacheInspectorService;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -106,14 +106,12 @@ public class RepositoryInitializationService {
         final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
         final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
-        final List<Artifact> identifiedArtifacts = identifiableRepoPaths.stream()
-                                                       .filter(artifactInspectionService::shouldInspectArtifact) // TODO: This does duplicate checks
-                                                       .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
-                                                       .filter(Optional::isPresent)
-                                                       .map(Optional::get)
-                                                       .collect(Collectors.toList());
+        final List<Artifact> artifacts = identifiableRepoPaths.stream()
+                                             .filter(artifactInspectionService::shouldInspectArtifact) // TODO: This does duplicate checks
+                                             .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
+                                             .collect(Collectors.toList());
 
-        final List<Dependency> dependencies = identifiedArtifacts.stream()
+        final List<Dependency> dependencies = artifacts.stream()
                                                   .peek(metaDataPopulationService::populateExternalIdMetadata)
                                                   .map(Artifact::getExternalId)
                                                   .filter(Optional::isPresent)

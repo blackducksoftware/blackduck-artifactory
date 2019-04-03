@@ -40,12 +40,12 @@ public class ArtifactInspectionService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPAPIService artifactoryPAPIService;
-    private final ArtifactIdentificationService2 artifactIdentificationService;
+    private final ArtifactIdentificationService artifactIdentificationService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final InspectionModuleConfig inspectionModuleConfig;
     private final PackageTypePatternManager packageTypePatternManager;
 
-    public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactIdentificationService2 artifactIdentificationService,
+    public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactIdentificationService artifactIdentificationService,
         final MetaDataPopulationService metaDataPopulationService, final InspectionModuleConfig inspectionModuleConfig,
         final PackageTypePatternManager packageTypePatternManager) {
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -80,8 +80,8 @@ public class ArtifactInspectionService {
         final String repoKey = repoPath.getRepoKey();
         final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (packageType.isPresent()) {
-            final Optional<Artifact> identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
-            identifiedArtifact.ifPresent(metaDataPopulationService::populateExternalIdMetadata);
+            final Artifact artifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
+            metaDataPopulationService.populateExternalIdMetadata(artifact);
         } else {
             logger.debug(String.format("Package type for repo '%s' is not existent", repoKey));
         }
