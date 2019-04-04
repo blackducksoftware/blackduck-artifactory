@@ -374,21 +374,26 @@ jobs {
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
     afterCreate { ItemInfo item ->
-        log.debug("item.getName(): ${item.getName()}")
-        log.debug("item.getCreated(): ${item.getCreated()}")
-        log.debug("item.getCreatedBy(): ${item.getCreatedBy()}")
-        log.debug("item.getId(): ${item.getId()}")
-        log.debug("item.getLastModified(): ${item.getLastModified()}")
-        log.debug("item.getLastUpdated(): ${item.getLastUpdated()}")
-        log.debug("item.getModifiedBy(): ${item.getModifiedBy()}")
-        log.debug("item.getRelPath(): ${item.getRelPath()}")
-        log.debug("item.getRepoKey(): ${item.getRepoKey()}")
-        log.debug("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
+        try {
+            // TODO: Remove this upon resolution of customer case
+            log.debug("item.getName(): ${item.getName()}")
+            log.debug("item.getCreated(): ${item.getCreated()}")
+            log.debug("item.getCreatedBy(): ${item.getCreatedBy()}")
+            log.debug("item.getId(): ${item.getId()}")
+            log.debug("item.getLastModified(): ${item.getLastModified()}")
+            log.debug("item.getLastUpdated(): ${item.getLastUpdated()}")
+            log.debug("item.getModifiedBy(): ${item.getModifiedBy()}")
+            log.debug("item.getRelPath(): ${item.getRelPath()}")
+            log.debug("item.getRepoKey(): ${item.getRepoKey()}")
+            log.debug("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
 
-        final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(item.getRepoPath())
-        log.debug("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
-        log.debug("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
-        log.debug("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
+            final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(item.getRepoPath())
+            log.debug("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
+            log.debug("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
+            log.debug("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
+        } catch (final Exception ignore) {
+            // This logging is just for testing.
+        }
 
         moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
