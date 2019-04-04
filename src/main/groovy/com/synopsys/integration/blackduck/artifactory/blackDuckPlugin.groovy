@@ -341,7 +341,7 @@ jobs {
     }
 
     /**
-     * The functionality is described above the blackDuckBulkMetadataPopulation execution
+     * The functionality is described above the blackDuckManuallyPopulateMetadata execution
      **/
     blackDuckBulkMetadataPopulation(cron: moduleManager.getInspectionCron()) {
         moduleManager.populateMetadataInBulk(TriggerType.CRON_JOB)
