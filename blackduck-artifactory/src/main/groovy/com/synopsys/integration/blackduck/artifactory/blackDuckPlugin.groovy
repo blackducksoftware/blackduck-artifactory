@@ -26,7 +26,6 @@ import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryCon
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule
 import groovy.transform.Field
-import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
 import org.artifactory.repo.RepoPath
 import org.artifactory.request.Request
@@ -401,22 +400,6 @@ jobs {
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
     afterCreate { ItemInfo item ->
-        log.debug("item.getName(): ${item.getName()}")
-        log.debug("item.getCreated(): ${item.getCreated()}")
-        log.debug("item.getCreatedBy(): ${item.getCreatedBy()}")
-        log.debug("item.getId(): ${item.getId()}")
-        log.debug("item.getLastModified(): ${item.getLastModified()}")
-        log.debug("item.getLastUpdated(): ${item.getLastUpdated()}")
-        log.debug("item.getModifiedBy(): ${item.getModifiedBy()}")
-        log.debug("item.getRelPath(): ${item.getRelPath()}")
-        log.debug("item.getRepoKey(): ${item.getRepoKey()}")
-        log.debug("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
-
-        final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(item.getRepoPath())
-        log.debug("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
-        log.debug("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
-        log.debug("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
-
         moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
 }
