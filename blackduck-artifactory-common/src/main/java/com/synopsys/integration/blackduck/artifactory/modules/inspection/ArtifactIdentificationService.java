@@ -22,27 +22,17 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.bdio.SimpleBdioFactory;
-import com.synopsys.integration.bdio.graph.MutableDependencyGraph;
-import com.synopsys.integration.bdio.model.Forge;
-import com.synopsys.integration.bdio.model.SimpleBdioDocument;
-import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentSearchResultView;
@@ -52,10 +42,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
-import com.synopsys.integration.blackduck.artifactory.PluginConstants;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
-import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
-import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.blackduck.exception.BlackDuckApiException;
 import com.synopsys.integration.blackduck.exception.BlackDuckIntegrationException;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
@@ -67,7 +54,6 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.rest.exception.IntegrationRestException;
-import com.synopsys.integration.util.IntegrationEscapeUtil;
 
 public class ArtifactIdentificationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class));
@@ -115,9 +101,6 @@ public class ArtifactIdentificationService {
                     } else {
                         throw new IntegrationException(String.format("Expected project '%s' and version '%s' are missing", projectName, projectVersionName));
                     }
-                } else if (!repositoryStatus.isPresent() && !PluginConstants.DISABLE_OLD_FUNCTIONALITY) {
-                    createHubProjectFromRepo(projectName, projectVersionName, packageType.get(), identifiableArtifacts);
-                    cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
                 }
             } else {
                 logger.warn(String.format(
@@ -218,37 +201,6 @@ public class ArtifactIdentificationService {
         }
 
         return identifiableArtifacts;
-    }
-
-    private void createHubProjectFromRepo(final String projectName, final String projectVersionName, final String repoPackageType, final Set<RepoPath> repoPaths) throws IOException, IntegrationException {
-        final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
-
-        final List<Artifact> artifacts = repoPaths.stream()
-                                             .map(repoPath -> identifyArtifact(repoPath, repoPackageType))
-                                             .collect(Collectors.toList());
-
-        artifacts.forEach(metaDataPopulationService::populateExternalIdMetadata);
-
-        final MutableDependencyGraph mutableDependencyGraph = artifacts.stream()
-                                                                  .map(Artifact::getExternalId)
-                                                                  .filter(Optional::isPresent)
-                                                                  .map(Optional::get)
-                                                                  .map(externalId -> new Dependency(externalId.name, externalId.version, externalId))
-                                                                  .collect(simpleBdioFactory::createMutableDependencyGraph, MutableDependencyGraph::addChildToRoot, MutableDependencyGraph::addGraphAsChildrenToRoot);
-
-        final Forge artifactoryForge = new Forge("/", "/", "artifactory");
-        final ExternalId projectExternalId = simpleBdioFactory.createNameVersionExternalId(artifactoryForge, projectName, projectVersionName);
-        final String codeLocationName = StringUtils.join(Arrays.asList(projectName, projectVersionName, repoPackageType), "/");
-        final SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, projectName, projectVersionName, projectExternalId, mutableDependencyGraph);
-
-        final IntegrationEscapeUtil integrationEscapeUtil = new IntegrationEscapeUtil();
-        final File bdioFile = new File(String.format("/tmp/%s", integrationEscapeUtil.escapeForUri(codeLocationName)));
-        bdioFile.delete();
-        simpleBdioFactory.writeSimpleBdioDocumentToFile(bdioFile, simpleBdioDocument);
-
-        final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
-        final UploadTarget uploadTarget = UploadTarget.createDefault(codeLocationName, bdioFile);
-        bdioUploadService.uploadBdio(uploadTarget);
     }
 
     private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
