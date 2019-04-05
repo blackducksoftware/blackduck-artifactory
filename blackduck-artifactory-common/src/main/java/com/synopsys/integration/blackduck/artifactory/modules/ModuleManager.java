@@ -147,8 +147,8 @@ public class ModuleManager implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, itemInfo, inspectionModule::handleAfterCreateEvent);
     }
 
-    public void identifyArtifacts(final TriggerType triggerType) {
-        runMethod(inspectionModuleConfig, triggerType, inspectionModule::identifyArtifacts);
+    public void inspectDelta(final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, inspectionModule::inspectDelta);
     }
 
     public void updateMetadata(final TriggerType triggerType) {

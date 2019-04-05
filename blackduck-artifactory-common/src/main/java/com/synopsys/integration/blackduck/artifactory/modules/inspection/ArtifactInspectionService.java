@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
@@ -54,10 +55,12 @@ public class ArtifactInspectionService {
     private final PackageTypePatternManager packageTypePatternManager;
     private final CacheInspectorService cacheInspectorService;
     private final ProjectService projectService;
+    private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
 
     public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactIdentificationService artifactIdentificationService,
         final MetaDataPopulationService metaDataPopulationService, final InspectionModuleConfig inspectionModuleConfig,
-        final PackageTypePatternManager packageTypePatternManager, final CacheInspectorService cacheInspectorService, final ProjectService projectService) {
+        final PackageTypePatternManager packageTypePatternManager, final CacheInspectorService cacheInspectorService, final ProjectService projectService,
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactIdentificationService = artifactIdentificationService;
         this.metaDataPopulationService = metaDataPopulationService;
@@ -65,6 +68,7 @@ public class ArtifactInspectionService {
         this.packageTypePatternManager = packageTypePatternManager;
         this.cacheInspectorService = cacheInspectorService;
         this.projectService = projectService;
+        this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
     }
 
     public boolean shouldInspectArtifact(final RepoPath repoPath) {
@@ -88,19 +92,28 @@ public class ArtifactInspectionService {
         return wildcardFileFilter.accept(artifact);
     }
 
-    public void inspectArtifact(final RepoPath repoPath) {
+    public void identifyAndMarkArtifact(final RepoPath repoPath) {
         final String repoKey = repoPath.getRepoKey();
         final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (packageType.isPresent()) {
-            inspectArtifact(repoPath, packageType.get());
+            identifyAndMarkArtifact(repoPath, packageType.get());
         } else {
             logger.warn(String.format("The repository '%s' has no package type. Inspection cannot be performed on artifact: %s", repoKey, repoPath.getPath()));
         }
     }
 
-    private void inspectArtifact(final RepoPath repoPath, final String packageType) {
-        final Artifact artifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
+    private void identifyAndMarkArtifact(final RepoPath repoPath, final String packageType) {
+        final Artifact artifact = identifyArtifact(repoPath, packageType);
         metaDataPopulationService.populateExternalIdMetadata(artifact);
+    }
+
+    private Artifact identifyArtifact(final RepoPath repoPath, final String packageType) {
+        final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
+        final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
+        final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
+        final ExternalId externalId = possibleExternalId.orElse(null);
+
+        return new Artifact(repoPath, externalId);
     }
 
     public void inspectDelta(final String repoKey) {
@@ -145,7 +158,7 @@ public class ArtifactInspectionService {
 
         final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns).stream()
                                              .filter(this::isArtifactPendingOrShouldRetry)
-                                             .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
+                                             .map(repoPath -> identifyArtifact(repoPath, packageType.get()))
                                              .collect(Collectors.toList());
 
         for (final Artifact artifact : artifacts) {

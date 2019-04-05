@@ -83,22 +83,19 @@ public class InspectionModule implements Module {
     }
 
     public void populateMetadataInBulk() {
-        inspectionModuleConfig.getRepos()
-            .forEach(metaDataPopulationService::populateMetadata);
+        inspectionModuleConfig.getRepos().forEach(metaDataPopulationService::populateMetadata);
         updateAnalytics();
     }
 
     //////////////////////// Old cron jobs ////////////////////////
 
-    public void identifyArtifacts() {
-        inspectionModuleConfig.getRepos()
-            .forEach(artifactIdentificationService::identifyArtifacts);
+    public void inspectDelta() {
+        inspectionModuleConfig.getRepos().forEach(artifactInspectionService::inspectDelta);
         updateAnalytics();
     }
 
     public void updateMetadata() {
-        inspectionModuleConfig.getRepos()
-            .forEach(metaDataUpdateService::updateMetadata);
+        inspectionModuleConfig.getRepos().forEach(metaDataUpdateService::updateMetadata);
         updateAnalytics();
     }
 
@@ -119,7 +116,7 @@ public class InspectionModule implements Module {
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
         repoPaths.stream()
             .filter(artifactInspectionService::shouldInspectArtifact)
-            .forEach(artifactInspectionService::inspectArtifact);
+            .forEach(artifactInspectionService::identifyAndMarkArtifact);
 
         updateAnalytics();
     }
@@ -131,7 +128,7 @@ public class InspectionModule implements Module {
 
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
             try {
-                artifactInspectionService.inspectArtifact(repoPath);
+                artifactInspectionService.identifyAndMarkArtifact(repoPath);
             } catch (final Exception e) {
                 logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
                 logger.debug(e.getMessage(), e);

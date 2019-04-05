@@ -260,7 +260,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyIdentifyArtifacts"
      **/
     blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
-        moduleManager.identifyArtifacts(TriggerType.REST_REQUEST)
+        moduleManager.inspectDelta(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -350,8 +350,8 @@ jobs {
     /**
      * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
      **/
-    blackDuckIdentifyArtifacts(cron: moduleManager.getInspectionCron()) {
-        moduleManager.identifyArtifacts(TriggerType.CRON_JOB)
+    blackDuckInspectDelta(cron: moduleManager.getInspectionCron()) {
+        moduleManager.inspectDelta(TriggerType.CRON_JOB)
     }
 
     /**
