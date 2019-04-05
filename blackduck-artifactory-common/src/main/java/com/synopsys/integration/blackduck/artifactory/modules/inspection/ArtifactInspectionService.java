@@ -23,16 +23,24 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
+import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -44,15 +52,19 @@ public class ArtifactInspectionService {
     private final MetaDataPopulationService metaDataPopulationService;
     private final InspectionModuleConfig inspectionModuleConfig;
     private final PackageTypePatternManager packageTypePatternManager;
+    private final CacheInspectorService cacheInspectorService;
+    private final ProjectService projectService;
 
     public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactIdentificationService artifactIdentificationService,
         final MetaDataPopulationService metaDataPopulationService, final InspectionModuleConfig inspectionModuleConfig,
-        final PackageTypePatternManager packageTypePatternManager) {
+        final PackageTypePatternManager packageTypePatternManager, final CacheInspectorService cacheInspectorService, final ProjectService projectService) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactIdentificationService = artifactIdentificationService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.packageTypePatternManager = packageTypePatternManager;
+        this.cacheInspectorService = cacheInspectorService;
+        this.projectService = projectService;
     }
 
     public boolean shouldInspectArtifact(final RepoPath repoPath) {
@@ -80,10 +92,80 @@ public class ArtifactInspectionService {
         final String repoKey = repoPath.getRepoKey();
         final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (packageType.isPresent()) {
-            final Artifact artifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
-            metaDataPopulationService.populateExternalIdMetadata(artifact);
+            inspectArtifact(repoPath, packageType.get());
         } else {
-            logger.debug(String.format("Package type for repo '%s' is not existent", repoKey));
+            logger.warn(String.format("The repository '%s' has no package type. Inspection cannot be performed on artifact: %s", repoKey, repoPath.getPath()));
         }
+    }
+
+    private void inspectArtifact(final RepoPath repoPath, final String packageType) {
+        final Artifact artifact = artifactIdentificationService.identifyArtifact(repoPath, packageType);
+        metaDataPopulationService.populateExternalIdMetadata(artifact);
+    }
+
+    public void inspectDelta(final String repoKey) {
+        final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
+        if (!cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS)) {
+            // Only inspect a delta if the repository has been successfully initialized
+            return;
+        }
+
+        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
+        if (!packageType.isPresent()) {
+            final String message = String.format("The repository '%s' has no package type. Inspection cannot be performed.", repoKey);
+            logger.error(message);
+            cacheInspectorService.failInspection(repoKeyPath, message);
+            return;
+        }
+
+        final List<String> patterns = packageTypePatternManager.getPatternsForPackageType(packageType.get());
+        if (patterns.isEmpty()) {
+            // If we don't verify that patterns is not empty, artifactory will grab every artifact in the repo.
+            logger.warn(String.format("The repository '%s' has a package type of '%s' which either isn't supported or has no patterns configured for it.", repoKey, packageType.get()));
+            cacheInspectorService.failInspection(repoKeyPath, "Repo has an unsupported package type or not patterns configured for it.");
+            return;
+        }
+
+        final ProjectVersionView projectVersionView;
+        try {
+            final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
+            final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
+            final Optional<ProjectVersionWrapper> projectVersionWrapperOptional = projectService.getProjectVersion(projectName, projectVersionName);
+
+            if (projectVersionWrapperOptional.isPresent()) {
+                projectVersionView = projectVersionWrapperOptional.get().getProjectVersionView();
+            } else {
+                throw new IntegrationException(String.format("Project '%s' and version '%s' could not be found.", projectName, projectVersionName));
+            }
+        } catch (final IntegrationException e) {
+            logger.error("An error occurred when attempting to get the project version from Black Duck.", e);
+            cacheInspectorService.failInspection(repoKeyPath, e.getMessage());
+            return;
+        }
+
+        final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns).stream()
+                                             .filter(this::isArtifactPendingOrShouldRetry)
+                                             .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
+                                             .collect(Collectors.toList());
+
+        for (final Artifact artifact : artifacts) {
+            final Optional<ExternalId> externalId = metaDataPopulationService.populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
+            if (!externalId.isPresent()) {
+                // Inspection already failed in metadataPopulationService::populateExternalIdMetadata
+                return;
+            }
+
+            try {
+                final ComponentViewWrapper componentViewWrapper = artifactIdentificationService.addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
+                metaDataPopulationService.populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
+            } catch (final IntegrationException e) {
+                cacheInspectorService.failInspection(artifact.getRepoPath(), e.getMessage());
+            }
+        }
+
+    }
+
+    private boolean isArtifactPendingOrShouldRetry(final RepoPath repoPath) {
+        return cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.PENDING) || cacheInspectorService.shouldRetryInspection(repoPath);
     }
 }

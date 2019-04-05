@@ -20,25 +20,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.exception;
 
-import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import org.artifactory.repo.RepoPath;
 
-public class ComponentViewWrapper {
-    private final VersionBomComponentView versionBomComponentView;
-    private final ComponentVersionView componentVersionView;
+import com.synopsys.integration.exception.IntegrationException;
 
-    public ComponentViewWrapper(final VersionBomComponentView versionBomComponentView, final ComponentVersionView componentVersionView) {
-        this.versionBomComponentView = versionBomComponentView;
-        this.componentVersionView = componentVersionView;
+public class FailedInspectionException extends IntegrationException {
+    private final RepoPath repoPath;
+
+    public FailedInspectionException(final RepoPath repoPath, final String message) {
+        super(message);
+        this.repoPath = repoPath;
     }
 
-    public VersionBomComponentView getVersionBomComponentView() {
-        return versionBomComponentView;
-    }
-
-    public ComponentVersionView getComponentVersionView() {
-        return componentVersionView;
+    public RepoPath getRepoPath() {
+        return repoPath;
     }
 }

@@ -38,10 +38,9 @@ import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentSearchResultView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.exception.BlackDuckApiException;
 import com.synopsys.integration.blackduck.exception.BlackDuckIntegrationException;
@@ -61,15 +60,13 @@ public class ArtifactIdentificationService {
     private final PackageTypePatternManager packageTypePatternManager;
     private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
 
-    private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final CacheInspectorService cacheInspectorService;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final MetaDataPopulationService metaDataPopulationService;
 
     public ArtifactIdentificationService(final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager, final ArtifactoryExternalIdFactory artifactoryExternalIdFactory,
-        final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
-        this.artifactoryPropertyService = artifactoryPropertyService;
+        final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
         this.cacheInspectorService = cacheInspectorService;
         this.packageTypePatternManager = packageTypePatternManager;
         this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
@@ -80,7 +77,6 @@ public class ArtifactIdentificationService {
 
     public void identifyArtifacts(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final Optional<InspectionStatus> repositoryStatus = cacheInspectorService.getInspectionStatus(repoKeyPath);
 
         try {
             final Set<RepoPath> identifiableArtifacts = getIdentifiableArtifacts(repoKey);
@@ -90,14 +86,13 @@ public class ArtifactIdentificationService {
                 final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
                 final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
 
-                if (repositoryStatus.isPresent() && repositoryStatus.get().equals(InspectionStatus.SUCCESS)) {
+                if (cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS)) {
                     final Optional<ProjectVersionWrapper> projectVersionWrapper = blackDuckServicesFactory.createProjectService().getProjectVersion(projectName, projectVersionName);
 
                     if (projectVersionWrapper.isPresent()) {
-                        final ProjectView projectView = projectVersionWrapper.get().getProjectView();
                         final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
                         logger.debug(String.format("Adding delta to Black Duck project %s", repoKey));
-                        addDeltaToBlackDuckProject(projectView, projectVersionView, packageType.get(), identifiableArtifacts);
+                        addDeltaToBlackDuckProject(projectVersionView, packageType.get(), identifiableArtifacts);
                     } else {
                         throw new IntegrationException(String.format("Expected project '%s' and version '%s' are missing", projectName, projectVersionName));
                     }
@@ -123,10 +118,9 @@ public class ArtifactIdentificationService {
         return new Artifact(repoPath, externalId);
     }
 
-    public boolean addIdentifiedArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) {
+    public ComponentViewWrapper addIdentifiedArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) throws FailedInspectionException {
         final RepoPath repoPath = artifact.getRepoPath();
-
-        boolean success = false;
+        ComponentViewWrapper componentViewWrapper;
 
         if (artifact.getExternalId().isPresent()) {
             final ExternalId externalId = artifact.getExternalId().get();
@@ -134,58 +128,57 @@ public class ArtifactIdentificationService {
                 final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
                 final Optional<String> componentVersionUrl = projectBomService.addComponentToProjectVersion(externalId, projectVersionView);
 
-                success = componentVersionUrl.isPresent();
-                if (success) {
-                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+                if (componentVersionUrl.isPresent()) {
+                    componentViewWrapper = getComponentViewWrapper(projectVersionView, externalId);
+                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING); // TODO: Add an AWAITING_POLICY status.
                 } else {
-                    cacheInspectorService.failInspection(repoPath, "Failed to find component match");
+                    throw new FailedInspectionException(repoPath, "Failed to find component match");
                 }
 
             } catch (final IntegrationRestException e) {
-                success = handleIntegrationRestException(repoPath, projectVersionView, externalId, e);
+                componentViewWrapper = handleIntegrationRestException(repoPath, projectVersionView, externalId, e);
             } catch (final BlackDuckApiException e) {
-                success = handleIntegrationRestException(repoPath, projectVersionView, externalId, e.getOriginalIntegrationRestException());
+                componentViewWrapper = handleIntegrationRestException(repoPath, projectVersionView, externalId, e.getOriginalIntegrationRestException());
             } catch (final BlackDuckIntegrationException e) {
                 logger.warn(String.format("Cannot find component match for artifact at %s", repoPath.toPath()));
-                cacheInspectorService.failInspection(repoPath, "Failed to find component match");
+                throw new FailedInspectionException(repoPath, "Failed to find component match");
             } catch (final Exception e) {
                 logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath.toPath()));
                 logger.debug(e.getMessage(), e);
-                cacheInspectorService.failInspection(repoPath, "See logs for details");
+                throw new FailedInspectionException(repoPath, "See logs for details");
             }
         } else {
-            cacheInspectorService.failInspection(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
+            throw new FailedInspectionException(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
         }
 
-        return success;
+        return componentViewWrapper;
     }
 
-    private boolean handleIntegrationRestException(final RepoPath repoPath, final ProjectVersionView projectVersionView, final ExternalId artifactExternalId, final IntegrationRestException e) {
+    private ComponentViewWrapper handleIntegrationRestException(final RepoPath repoPath, final ProjectVersionView projectVersionView, final ExternalId artifactExternalId, final IntegrationRestException e) throws FailedInspectionException {
         final int statusCode = e.getHttpStatusCode();
-        boolean success = false;
+        final ComponentViewWrapper componentViewWrapper;
 
         if (statusCode == 412) {
             logger.info(String.format("Unable to add manual BOM component because it already exists: %s", repoPath.toPath()));
             try {
                 logger.debug("Will attempt to grab policy status from Black Duck directly.");
-                final ComponentViewWrapper componentViewWrapper = getComponentViewWrapper(projectVersionView, artifactExternalId);
+                componentViewWrapper = getComponentViewWrapper(projectVersionView, artifactExternalId);
                 metaDataPopulationService.populateBlackDuckMetadata(repoPath, componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
-                success = true;
             } catch (final IntegrationException e1) {
                 logger.debug("Failed to populate artifact with policy info even though it already exists in the BOM", e1);
-                cacheInspectorService.failInspection(repoPath, "Failed to retrieve policy information");
+                throw new FailedInspectionException(repoPath, "Failed to retrieve policy information");
             }
         } else if (statusCode == 401) {
             logger.warn(String.format("The Black Duck %s could not successfully inspect %s because plugin is unauthorized (%d). Ensure the plugin is configured with the correct credentials", InspectionModule.class.getSimpleName(),
                 repoPath.toPath(), statusCode));
-            cacheInspectorService.failInspection(repoPath, String.format("Unauthorized (%s)", statusCode));
+            throw new FailedInspectionException(repoPath, String.format("Unauthorized (%s)", statusCode));
         } else {
             logger.warn(String.format("The Black Duck %s could not successfully inspect %s because of a %d status code", InspectionModule.class.getSimpleName(), repoPath.toPath(), statusCode));
             logger.debug(String.format(e.getMessage(), repoPath), e);
-            cacheInspectorService.failInspection(repoPath, String.format("Status code: %s", statusCode));
+            throw new FailedInspectionException(repoPath, String.format("Status code: %s", statusCode));
         }
 
-        return success;
+        return componentViewWrapper;
     }
 
     public Set<RepoPath> getIdentifiableArtifacts(final String repoKey) {
@@ -203,7 +196,7 @@ public class ArtifactIdentificationService {
         return identifiableArtifacts;
     }
 
-    private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
+    public ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
         final ComponentService componentService = blackDuckServicesFactory.createComponentService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
         final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getExactComponentMatch(externalId);
@@ -232,7 +225,7 @@ public class ArtifactIdentificationService {
         }
     }
 
-    private void addDeltaToBlackDuckProject(final ProjectView projectView, final ProjectVersionView projectVersionView, final String packageType, final Set<RepoPath> repoPaths) {
+    private void addDeltaToBlackDuckProject(final ProjectVersionView projectVersionView, final String packageType, final Set<RepoPath> repoPaths) {
         for (final RepoPath repoPath : repoPaths) {
             final boolean isArtifactPending = cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);
             final boolean shouldRetry = cacheInspectorService.shouldRetryInspection(repoPath);
@@ -244,21 +237,13 @@ public class ArtifactIdentificationService {
                     continue;
                 }
 
-                final boolean successfullyAdded = addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
-                final Optional<ExternalId> externalIdOptional = artifact.getExternalId();
-
-                if (successfullyAdded && externalIdOptional.isPresent()) {
-                    final ExternalId externalId = externalIdOptional.get();
-                    try {
-                        final ComponentViewWrapper componentViewWrapper = getComponentViewWrapper(projectVersionView, externalId);
-                        metaDataPopulationService.populateBlackDuckMetadata(repoPath, componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
-                    } catch (final IntegrationException e) {
-                        cacheInspectorService.failInspection(repoPath, "Failed to retrieve vulnerability information");
-                        logger.warn(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));
-                        logger.debug(e.getMessage(), e);
-                    }
-                } else {
-                    logger.warn(String.format("Artifact was not successfully added to Black Duck project [%s] version [%s]: %s", projectView.getName(), projectVersionView.getVersionName(), repoPath.toPath()));
+                try {
+                    final ComponentViewWrapper componentViewWrapper = addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
+                    metaDataPopulationService.populateBlackDuckMetadata(repoPath, componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
+                } catch (final IntegrationException e) {
+                    cacheInspectorService.failInspection(repoPath, "Failed to retrieve vulnerability information");
+                    logger.warn(String.format("Failed to retrieve vulnerability information for artifact: %s", repoPath.toPath()));
+                    logger.debug(e.getMessage(), e);
                 }
             } else {
                 logger.trace(String.format("Artifact is not pending and therefore will not be inspected: %s", repoPath.toPath()));

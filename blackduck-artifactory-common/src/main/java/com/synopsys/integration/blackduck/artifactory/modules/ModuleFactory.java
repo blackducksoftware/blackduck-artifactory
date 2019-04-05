@@ -102,13 +102,14 @@ public class ModuleFactory {
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class)));
-        final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(artifactoryPAPIService, packageTypePatternManager, artifactoryExternalIdFactory, artifactoryPropertyService,
+        final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(artifactoryPAPIService, packageTypePatternManager, artifactoryExternalIdFactory,
             cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
 
-        final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, artifactIdentificationService, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager);
+        final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, artifactIdentificationService, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager,
+            cacheInspectorService, projectService);
         final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService,
             metaDataPopulationService, bdioUploadService, artifactInspectionService);
 

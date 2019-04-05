@@ -90,6 +90,7 @@ public class ArtifactoryPAPIService {
         return isValid;
     }
 
+    // TODO: Only accept one repo at a time
     public List<RepoPath> searchForArtifactsByPatterns(final List<String> repoKeys, final List<String> patterns) {
         final List<RepoPath> repoPaths = new ArrayList<>();
 
