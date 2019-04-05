@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
+
 public class PackageTypePatternManager {
     private final Map<SupportedPackageType, List<String>> patternMap;
 

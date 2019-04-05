@@ -20,31 +20,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 
-public enum InspectionModuleProperty implements ConfigurationProperty {
-    ENABLED("enabled"),
-    CRON("cron"),
-    PATTERNS_RUBYGEMS("patterns.rubygems"),
-    PATTERNS_MAVEN("patterns.maven"),
-    PATTERNS_GRADLE("patterns.gradle"),
-    PATTERNS_PYPI("patterns.pypi"),
-    PATTERNS_NUGET("patterns.nuget"),
-    PATTERNS_NPM("patterns.npm"),
-    REPOS("repos"),
-    REPOS_CSV_PATH("repos.csv.path"),
-    RETRY_COUNT("retry.count");
+public class ComponentViewWrapper {
+    private final VersionBomComponentView versionBomComponentView;
+    private final ComponentVersionView componentVersionView;
 
-    private final String key;
-
-    InspectionModuleProperty(final String key) {
-        this.key = "blackduck.artifactory.inspect." + key;
+    public ComponentViewWrapper(final VersionBomComponentView versionBomComponentView, final ComponentVersionView componentVersionView) {
+        this.versionBomComponentView = versionBomComponentView;
+        this.componentVersionView = componentVersionView;
     }
 
-    @Override
-    public String getKey() {
-        return key;
+    public VersionBomComponentView getVersionBomComponentView() {
+        return versionBomComponentView;
+    }
+
+    public ComponentVersionView getComponentVersionView() {
+        return componentVersionView;
     }
 }

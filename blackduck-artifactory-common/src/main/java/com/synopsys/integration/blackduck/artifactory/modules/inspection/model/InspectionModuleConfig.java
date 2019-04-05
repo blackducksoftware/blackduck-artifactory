@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.builder.BuilderStatus;
 
 public class InspectionModuleConfig extends ModuleConfig {

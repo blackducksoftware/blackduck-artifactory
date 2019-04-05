@@ -20,9 +20,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
-public enum UpdateStatus {
-    OUT_OF_DATE,
-    UP_TO_DATE
+public enum InspectionStatus {
+    SUCCESS,
+    FAILURE,
+    PENDING
 }

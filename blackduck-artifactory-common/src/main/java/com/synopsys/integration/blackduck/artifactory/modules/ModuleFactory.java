@@ -42,12 +42,12 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Artifac
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.CacheInspectorService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataPopulationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.PackageTypePatternManager;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ArtifactScanService;
