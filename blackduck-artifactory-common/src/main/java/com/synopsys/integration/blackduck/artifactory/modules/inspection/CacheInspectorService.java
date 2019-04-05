@@ -37,6 +37,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.service.ProjectService;
@@ -63,6 +64,10 @@ public class CacheInspectorService {
 
     public boolean shouldRetryInspection(final RepoPath repoPath) {
         return assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount();
+    }
+
+    public void failInspection(final FailedInspectionException failedInspectionException) {
+        failInspection(failedInspectionException.getRepoPath(), failedInspectionException.getMessage());
     }
 
     public void failInspection(final RepoPath repoPath, final String inspectionStatusMessage) {

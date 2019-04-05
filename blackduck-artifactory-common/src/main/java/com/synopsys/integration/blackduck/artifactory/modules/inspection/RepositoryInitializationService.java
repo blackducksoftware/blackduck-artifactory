@@ -42,6 +42,7 @@ import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
@@ -74,6 +75,15 @@ public class RepositoryInitializationService {
 
     public void initializeRepository(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
+        try {
+            initializeRepository(repoKeyPath);
+        } catch (final FailedInspectionException e) {
+            cacheInspectorService.failInspection(e);
+        }
+    }
+
+    private void initializeRepository(final RepoPath repoKeyPath) throws FailedInspectionException {
+        final String repoKey = repoKeyPath.getRepoKey();
         if (cacheInspectorService.getInspectionStatus(repoKeyPath).isPresent() && !cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
             // If an inspection status is present, we don't need to do a BOM upload unless it is a failure. In which case we will see if we should retry
             logger.debug(String.format("Not performing repo initialization on '%s' because it has already been initialized.", repoKey));
@@ -88,15 +98,14 @@ public class RepositoryInitializationService {
         final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (!packageType.isPresent()) {
             logger.warn("Skipping initialization of configured repo '%s' because it is a package type was not found. Please remove this repo from your configuration or ensure a package type is specified");
-            cacheInspectorService.failInspection(repoKeyPath, "Repository package type not found.");
-            return;
+            throw new FailedInspectionException(repoKeyPath, "Repository package type not found.");
         }
 
         final List<String> fileNamePatterns = packageTypePatternManager.getPatternsForPackageType(packageType.get());
         if (fileNamePatterns.isEmpty()) {
             final String message = String.format("No file name patterns configured for discovered package type '%s'.", packageType.get());
             logger.warn(message);
-            cacheInspectorService.failInspection(repoKeyPath, message);
+            throw new FailedInspectionException(repoKeyPath, message);
         }
 
         final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
@@ -133,7 +142,7 @@ public class RepositoryInitializationService {
             cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, "Waiting for policy and vulnerability information");
         } catch (final IOException | IntegrationException e) {
             logger.error("An error occurred when attempting to upload bdio file", e);
-            cacheInspectorService.failInspection(repoKeyPath, "Failed to upload BOM");
+            throw new FailedInspectionException(repoKeyPath, "Failed to upload BOM");
         }
     }
 }

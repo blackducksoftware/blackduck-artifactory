@@ -38,6 +38,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionVie
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaData;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
@@ -85,15 +86,14 @@ public class MetaDataPopulationService {
         }
     }
 
-    public Optional<ExternalId> populateExternalIdMetadata(final Artifact artifact) {
-        return populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
+    public void populateExternalIdMetadata(final Artifact artifact) throws FailedInspectionException {
+        populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
     }
 
-    public Optional<ExternalId> populateExternalIdMetadata(final RepoPath repoPath, final ExternalId externalId) {
+    public void populateExternalIdMetadata(final RepoPath repoPath, final ExternalId externalId) throws FailedInspectionException {
         if (externalId == null) {
             logger.debug(String.format("Could not populate artifact with metadata. Missing externalId: %s", repoPath));
-            cacheInspectorService.failInspection(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
-            return Optional.empty();
+            throw new FailedInspectionException(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
         }
 
         final String blackDuckOriginId = externalId.createBlackDuckOriginId();
@@ -102,8 +102,6 @@ public class MetaDataPopulationService {
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);
 
         cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
-
-        return Optional.of(externalId);
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView) throws IntegrationException {
