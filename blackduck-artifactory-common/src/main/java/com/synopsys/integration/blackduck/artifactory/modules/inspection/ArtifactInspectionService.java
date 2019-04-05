@@ -102,12 +102,13 @@ public class ArtifactInspectionService {
         }
     }
 
-    private void identifyAndMarkArtifact(final RepoPath repoPath, final String packageType) {
+    public Artifact identifyAndMarkArtifact(final RepoPath repoPath, final String packageType) {
         final Artifact artifact = identifyArtifact(repoPath, packageType);
         metaDataPopulationService.populateExternalIdMetadata(artifact);
+        return artifact;
     }
 
-    public Artifact identifyArtifact(final RepoPath repoPath, final String packageType) {
+    private Artifact identifyArtifact(final RepoPath repoPath, final String packageType) {
         final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
         final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
         final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);

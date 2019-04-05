@@ -110,8 +110,8 @@ public class ModuleFactory {
 
         final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager,
             cacheInspectorService, projectService, artifactoryExternalIdFactory);
-        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, blackDuckBOMService,
-            metaDataPopulationService, bdioUploadService, artifactInspectionService);
+        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager,
+            bdioUploadService, artifactInspectionService);
 
         return new InspectionModule(inspectionModuleConfig, blackDuckBOMService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
             simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService);
