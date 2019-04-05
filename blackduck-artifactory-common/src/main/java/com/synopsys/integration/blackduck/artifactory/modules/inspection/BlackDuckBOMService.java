@@ -46,14 +46,14 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.rest.exception.IntegrationRestException;
 
-public class ArtifactIdentificationService {
-    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class));
+public class BlackDuckBOMService {
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(BlackDuckBOMService.class));
 
     private final CacheInspectorService cacheInspectorService;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final MetaDataPopulationService metaDataPopulationService;
 
-    public ArtifactIdentificationService(final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
+    public BlackDuckBOMService(final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
         this.cacheInspectorService = cacheInspectorService;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
         this.metaDataPopulationService = metaDataPopulationService;

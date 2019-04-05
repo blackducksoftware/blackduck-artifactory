@@ -37,9 +37,9 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.SimpleAnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactIdentificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactoryExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.CacheInspectorService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
@@ -101,19 +101,19 @@ public class ModuleFactory {
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPropertyService, externalIdFactory);
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
-        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactIdentificationService.class)));
-        final ArtifactIdentificationService artifactIdentificationService = new ArtifactIdentificationService(
+        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(BlackDuckBOMService.class)));
+        final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(
             cacheInspectorService, blackDuckServicesFactory, metaDataPopulationService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(cacheInspectorService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
 
-        final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, artifactIdentificationService, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager,
+        final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager,
             cacheInspectorService, projectService, artifactoryExternalIdFactory);
-        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, artifactIdentificationService,
+        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(cacheInspectorService, artifactoryPAPIService, packageTypePatternManager, blackDuckBOMService,
             metaDataPopulationService, bdioUploadService, artifactInspectionService);
 
-        return new InspectionModule(inspectionModuleConfig, artifactIdentificationService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
+        return new InspectionModule(inspectionModuleConfig, blackDuckBOMService, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, cacheInspectorService,
             simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService);
     }
 

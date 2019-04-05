@@ -45,7 +45,7 @@ public class InspectionModule implements Module {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final InspectionModuleConfig inspectionModuleConfig;
-    private final ArtifactIdentificationService artifactIdentificationService;
+    private final BlackDuckBOMService blackDuckBOMService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final MetaDataUpdateService metaDataUpdateService;
@@ -55,12 +55,12 @@ public class InspectionModule implements Module {
     private final RepositoryInitializationService repositoryInitializationService;
     private final ArtifactInspectionService artifactInspectionService;
 
-    public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactIdentificationService artifactIdentificationService, final ArtifactoryPAPIService artifactoryPAPIService,
+    public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final BlackDuckBOMService blackDuckBOMService, final ArtifactoryPAPIService artifactoryPAPIService,
         final MetaDataPopulationService metaDataPopulationService, final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService,
         final CacheInspectorService cacheInspectorService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final RepositoryInitializationService repositoryInitializationService,
         final ArtifactInspectionService artifactInspectionService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
-        this.artifactIdentificationService = artifactIdentificationService;
+        this.blackDuckBOMService = blackDuckBOMService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.metaDataUpdateService = metaDataUpdateService;

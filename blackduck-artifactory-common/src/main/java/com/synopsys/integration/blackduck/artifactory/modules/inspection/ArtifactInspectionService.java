@@ -49,7 +49,7 @@ public class ArtifactInspectionService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPAPIService artifactoryPAPIService;
-    private final ArtifactIdentificationService artifactIdentificationService;
+    private final BlackDuckBOMService blackDuckBOMService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final InspectionModuleConfig inspectionModuleConfig;
     private final PackageTypePatternManager packageTypePatternManager;
@@ -57,12 +57,12 @@ public class ArtifactInspectionService {
     private final ProjectService projectService;
     private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
 
-    public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactIdentificationService artifactIdentificationService,
+    public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService,
         final MetaDataPopulationService metaDataPopulationService, final InspectionModuleConfig inspectionModuleConfig,
         final PackageTypePatternManager packageTypePatternManager, final CacheInspectorService cacheInspectorService, final ProjectService projectService,
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
-        this.artifactIdentificationService = artifactIdentificationService;
+        this.blackDuckBOMService = blackDuckBOMService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.packageTypePatternManager = packageTypePatternManager;
@@ -107,7 +107,7 @@ public class ArtifactInspectionService {
         metaDataPopulationService.populateExternalIdMetadata(artifact);
     }
 
-    private Artifact identifyArtifact(final RepoPath repoPath, final String packageType) {
+    public Artifact identifyArtifact(final RepoPath repoPath, final String packageType) {
         final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
         final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
         final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
@@ -169,7 +169,7 @@ public class ArtifactInspectionService {
             }
 
             try {
-                final ComponentViewWrapper componentViewWrapper = artifactIdentificationService.addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
+                final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
                 metaDataPopulationService.populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
             } catch (final IntegrationException e) {
                 cacheInspectorService.failInspection(artifact.getRepoPath(), e.getMessage());

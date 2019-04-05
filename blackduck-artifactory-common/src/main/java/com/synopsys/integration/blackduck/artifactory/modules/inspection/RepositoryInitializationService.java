@@ -59,18 +59,18 @@ public class RepositoryInitializationService {
     private final CacheInspectorService cacheInspectorService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final PackageTypePatternManager packageTypePatternManager;
-    private final ArtifactIdentificationService artifactIdentificationService;
+    private final BlackDuckBOMService blackDuckBOMService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final BdioUploadService bdioUploadService;
     private final ArtifactInspectionService artifactInspectionService;
 
     public RepositoryInitializationService(final CacheInspectorService cacheInspectorService, final ArtifactoryPAPIService artifactoryPAPIService,
-        final PackageTypePatternManager packageTypePatternManager, final ArtifactIdentificationService artifactIdentificationService,
+        final PackageTypePatternManager packageTypePatternManager, final BlackDuckBOMService blackDuckBOMService,
         final MetaDataPopulationService metaDataPopulationService, final BdioUploadService bdioUploadService, final ArtifactInspectionService artifactInspectionService) {
         this.cacheInspectorService = cacheInspectorService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.packageTypePatternManager = packageTypePatternManager;
-        this.artifactIdentificationService = artifactIdentificationService;
+        this.blackDuckBOMService = blackDuckBOMService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.bdioUploadService = bdioUploadService;
         this.artifactInspectionService = artifactInspectionService;
@@ -108,7 +108,7 @@ public class RepositoryInitializationService {
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
         final List<Artifact> artifacts = identifiableRepoPaths.stream()
                                              .filter(artifactInspectionService::shouldInspectArtifact) // TODO: This does duplicate checks
-                                             .map(repoPath -> artifactIdentificationService.identifyArtifact(repoPath, packageType.get()))
+                                             .map(repoPath -> artifactInspectionService.identifyArtifact(repoPath, packageType.get()))
                                              .collect(Collectors.toList());
 
         final List<Dependency> dependencies = artifacts.stream()
