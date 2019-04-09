@@ -332,7 +332,10 @@ public class ArtifactIdentificationService {
                     cacheInspectorService.failInspection(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
                     continue;
                 }
-                populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
+
+                if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) && !artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID)) {
+                    populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
+                }
 
                 final boolean successfullyAdded = addIdentifiedArtifactToProjectVersion(identifiedArtifact, projectVersionView);
                 final Optional<ExternalId> externalIdOptional = identifiedArtifact.getExternalId();
