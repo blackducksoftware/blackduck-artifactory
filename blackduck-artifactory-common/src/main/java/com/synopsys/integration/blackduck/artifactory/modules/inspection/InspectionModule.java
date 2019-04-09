@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -101,6 +102,11 @@ public class InspectionModule implements Module {
                                              .map(repoKey -> cacheInspectorService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
                                              .flatMap(Collection::stream)
                                              .collect(Collectors.toList());
+
+        inspectionModuleConfig.getRepos().stream()
+            .map(RepoPathFactory::create)
+            .filter(repoPath -> cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE))
+            .forEach(repoPath -> cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS));
 
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
         repoPaths.forEach(this::inspectArtifact);
