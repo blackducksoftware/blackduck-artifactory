@@ -103,13 +103,13 @@ public class InspectionModule implements Module {
                                              .flatMap(Collection::stream)
                                              .collect(Collectors.toList());
 
+        repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
+        repoPaths.forEach(this::inspectArtifact);
+
         inspectionModuleConfig.getRepos().stream()
             .map(RepoPathFactory::create)
             .filter(repoPath -> cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE))
             .forEach(repoPath -> cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS));
-
-        repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
-        repoPaths.forEach(this::inspectArtifact);
 
         updateAnalytics();
     }
