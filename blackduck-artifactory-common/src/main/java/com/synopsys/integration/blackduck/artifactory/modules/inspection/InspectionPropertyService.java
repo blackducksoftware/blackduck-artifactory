@@ -49,14 +49,14 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.HostNameHelper;
 
-public class InspectionProperyService {
+public class InspectionPropertyService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ProjectService projectService;
     private final InspectionModuleConfig inspectionModuleConfig;
 
-    public InspectionProperyService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService,
+    public InspectionPropertyService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService,
         final InspectionModuleConfig inspectionModuleConfig) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.projectService = projectService;

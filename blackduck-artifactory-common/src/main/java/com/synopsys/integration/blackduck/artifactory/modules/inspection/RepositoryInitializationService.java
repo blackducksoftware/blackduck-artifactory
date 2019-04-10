@@ -58,15 +58,15 @@ import com.synopsys.integration.util.IntegrationEscapeUtil;
 public class RepositoryInitializationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
-    private final InspectionProperyService inspectionProperyService;
+    private final InspectionPropertyService inspectionPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final PackageTypePatternManager packageTypePatternManager;
     private final BdioUploadService bdioUploadService;
     private final ArtifactInspectionService artifactInspectionService;
 
-    public RepositoryInitializationService(final InspectionProperyService inspectionProperyService, final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager,
+    public RepositoryInitializationService(final InspectionPropertyService inspectionPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager,
         final BdioUploadService bdioUploadService, final ArtifactInspectionService artifactInspectionService) {
-        this.inspectionProperyService = inspectionProperyService;
+        this.inspectionPropertyService = inspectionPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.packageTypePatternManager = packageTypePatternManager;
         this.bdioUploadService = bdioUploadService;
@@ -78,19 +78,19 @@ public class RepositoryInitializationService {
         try {
             initializeRepository(repoKeyPath);
         } catch (final FailedInspectionException e) {
-            inspectionProperyService.failInspection(e);
+            inspectionPropertyService.failInspection(e);
         }
     }
 
     private void initializeRepository(final RepoPath repoKeyPath) throws FailedInspectionException {
         final String repoKey = repoKeyPath.getRepoKey();
-        if (inspectionProperyService.getInspectionStatus(repoKeyPath).isPresent() && !inspectionProperyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
+        if (inspectionPropertyService.getInspectionStatus(repoKeyPath).isPresent() && !inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
             // If an inspection status is present, we don't need to do a BOM upload unless it is a failure. In which case we will see if we should retry
             logger.debug(String.format("Not performing repo initialization on '%s' because it has already been initialized.", repoKey));
             return;
         }
 
-        if (!inspectionProperyService.shouldRetryInspection(repoKeyPath)) {
+        if (!inspectionPropertyService.shouldRetryInspection(repoKeyPath)) {
             // Number of retry attempts exceeded
             return;
         }
@@ -108,8 +108,8 @@ public class RepositoryInitializationService {
             throw new FailedInspectionException(repoKeyPath, message);
         }
 
-        final String projectName = inspectionProperyService.getRepoProjectName(repoKey);
-        final String projectVersionName = inspectionProperyService.getRepoProjectVersionName(repoKey);
+        final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
+        final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
         final List<Dependency> dependencies = identifiableRepoPaths.stream()
                                                   .map(repoPath -> artifactInspectionService.identifyAndMarkArtifact(repoPath, packageType.get()))
@@ -139,7 +139,7 @@ public class RepositoryInitializationService {
             bdioUploadService.uploadBdio(uploadTarget);
 
             // The PENDING state is resolved by the MetaDataPopulationService
-            inspectionProperyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, "Waiting for policy and vulnerability information");
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, "Waiting for policy and vulnerability information");
         } catch (final IOException | IntegrationException e) {
             logger.error("An error occurred when attempting to upload bdio file", e);
             throw new FailedInspectionException(repoKeyPath, "Failed to upload BOM");

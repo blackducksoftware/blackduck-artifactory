@@ -41,7 +41,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Artifac
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactoryExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionProperyService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataPopulationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.PackageTypePatternManager;
@@ -97,28 +97,28 @@ public class ModuleFactory {
 
     public InspectionModule createInspectionModule() throws IOException {
         final InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
-        final ProjectService projectService = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(InspectionProperyService.class))).createProjectService();
-        final InspectionProperyService inspectionProperyService = new InspectionProperyService(artifactoryPropertyService, projectService, inspectionModuleConfig);
+        final ProjectService projectService = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(InspectionPropertyService.class))).createProjectService();
+        final InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPropertyService, projectService, inspectionModuleConfig);
         final PackageTypePatternManager packageTypePatternManager = PackageTypePatternManager.fromInspectionModuleConfig(inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPropertyService, externalIdFactory);
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
-        final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(inspectionProperyService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
+        final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(inspectionPropertyService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(BlackDuckBOMService.class)));
         final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
         final ComponentService componentService = blackDuckServicesFactory.createComponentService();
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
         final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService, metaDataPopulationService);
-        final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionProperyService, artifactMetaDataService, metaDataPopulationService);
+        final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactMetaDataService, metaDataPopulationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
 
         final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, metaDataPopulationService, inspectionModuleConfig, packageTypePatternManager,
-            inspectionProperyService, projectService, artifactoryExternalIdFactory);
-        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionProperyService, artifactoryPAPIService, packageTypePatternManager,
+            inspectionPropertyService, projectService, artifactoryExternalIdFactory);
+        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, packageTypePatternManager,
             bdioUploadService, artifactInspectionService);
 
-        return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, inspectionProperyService,
+        return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
             simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService);
     }
 

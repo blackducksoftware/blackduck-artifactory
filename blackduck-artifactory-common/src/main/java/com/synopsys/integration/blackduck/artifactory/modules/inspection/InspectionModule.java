@@ -52,20 +52,20 @@ public class InspectionModule implements Module {
     private final MetaDataPopulationService metaDataPopulationService;
     private final MetaDataUpdateService metaDataUpdateService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
-    private final InspectionProperyService inspectionProperyService;
+    private final InspectionPropertyService inspectionPropertyService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
     private final RepositoryInitializationService repositoryInitializationService;
     private final ArtifactInspectionService artifactInspectionService;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactoryPAPIService artifactoryPAPIService, final MetaDataPopulationService metaDataPopulationService,
-        final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final InspectionProperyService inspectionProperyService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
+        final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
         final RepositoryInitializationService repositoryInitializationService, final ArtifactInspectionService artifactInspectionService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.metaDataUpdateService = metaDataUpdateService;
         this.artifactoryPropertyService = artifactoryPropertyService;
-        this.inspectionProperyService = inspectionProperyService;
+        this.inspectionPropertyService = inspectionPropertyService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
         this.repositoryInitializationService = repositoryInitializationService;
         this.artifactInspectionService = artifactInspectionService;
@@ -109,7 +109,7 @@ public class InspectionModule implements Module {
 
     public void reinspectFromFailures(final Map<String, List<String>> params) {
         final List<RepoPath> repoPaths = inspectionModuleConfig.getRepos().stream()
-                                             .map(repoKey -> inspectionProperyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
+                                             .map(repoKey -> inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
                                              .flatMap(Collection::stream)
                                              .collect(Collectors.toList());
 
@@ -120,8 +120,8 @@ public class InspectionModule implements Module {
 
         inspectionModuleConfig.getRepos().stream()
             .map(RepoPathFactory::create)
-            .filter(repoPath -> inspectionProperyService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE))
-            .forEach(repoPath -> inspectionProperyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS));
+            .filter(repoPath -> inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE))
+            .forEach(repoPath -> inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS));
 
         updateAnalytics();
     }
@@ -148,7 +148,7 @@ public class InspectionModule implements Module {
             } catch (final Exception e) {
                 logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
                 logger.debug(e.getMessage(), e);
-                inspectionProperyService.failInspection(repoPath, e.getMessage());
+                inspectionPropertyService.failInspection(repoPath, e.getMessage());
             }
         } else {
             logger.debug(String.format("Artifact at '%s' is not existent, the repo is not configured to be inspected, or the artifact doesn't have a matching pattern", repoPath.toPath()));

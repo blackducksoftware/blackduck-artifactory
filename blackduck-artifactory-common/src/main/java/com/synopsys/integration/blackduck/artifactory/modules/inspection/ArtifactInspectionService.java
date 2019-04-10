@@ -57,20 +57,20 @@ public class ArtifactInspectionService {
     private final MetaDataPopulationService metaDataPopulationService;
     private final InspectionModuleConfig inspectionModuleConfig;
     private final PackageTypePatternManager packageTypePatternManager;
-    private final InspectionProperyService inspectionProperyService;
+    private final InspectionPropertyService inspectionPropertyService;
     private final ProjectService projectService;
     private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
 
     public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService,
         final MetaDataPopulationService metaDataPopulationService, final InspectionModuleConfig inspectionModuleConfig,
-        final PackageTypePatternManager packageTypePatternManager, final InspectionProperyService inspectionProperyService, final ProjectService projectService,
+        final PackageTypePatternManager packageTypePatternManager, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService,
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.packageTypePatternManager = packageTypePatternManager;
-        this.inspectionProperyService = inspectionProperyService;
+        this.inspectionPropertyService = inspectionPropertyService;
         this.projectService = projectService;
         this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
     }
@@ -111,7 +111,7 @@ public class ArtifactInspectionService {
         try {
             metaDataPopulationService.populateExternalIdMetadata(artifact);
         } catch (final FailedInspectionException e) {
-            inspectionProperyService.failInspection(e);
+            inspectionPropertyService.failInspection(e);
         }
         return artifact;
     }
@@ -131,14 +131,14 @@ public class ArtifactInspectionService {
             inspectDelta(repoKeyPath);
         } catch (final IntegrationException e) {
             logger.error(String.format("An error occurred when inspecting '%s'.", repoKey));
-            inspectionProperyService.failInspection(repoKeyPath, e.getMessage());
+            inspectionPropertyService.failInspection(repoKeyPath, e.getMessage());
         }
     }
 
     private void inspectDelta(final RepoPath repoKeyPath) throws FailedInspectionException {
         final String repoKey = repoKeyPath.getRepoKey();
 
-        if (!inspectionProperyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS)) {
+        if (!inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS)) {
             // Only inspect a delta if the repository has been successfully initialized.
             return;
         }
@@ -159,8 +159,8 @@ public class ArtifactInspectionService {
 
         final ProjectVersionView projectVersionView;
         try {
-            final String projectName = inspectionProperyService.getRepoProjectName(repoKey);
-            final String projectVersionName = inspectionProperyService.getRepoProjectVersionName(repoKey);
+            final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
+            final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
             final Optional<ProjectVersionWrapper> projectVersionWrapperOptional = projectService.getProjectVersion(projectName, projectVersionName);
 
             if (projectVersionWrapperOptional.isPresent()) {
@@ -180,19 +180,19 @@ public class ArtifactInspectionService {
 
         for (final Artifact artifact : artifacts) {
             try {
-                if (!inspectionProperyService.hasExternalIdProperties(artifact.getRepoPath())) {
+                if (!inspectionPropertyService.hasExternalIdProperties(artifact.getRepoPath())) {
                     // We don't want to try this step if it already succeeded because it will reset the retry count.
                     metaDataPopulationService.populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
                 }
                 final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersionView);
                 metaDataPopulationService.populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
             } catch (final IntegrationException e) {
-                inspectionProperyService.failInspection(artifact.getRepoPath(), e.getMessage());
+                inspectionPropertyService.failInspection(artifact.getRepoPath(), e.getMessage());
             }
         }
     }
 
     private boolean isArtifactPendingOrShouldRetry(final RepoPath repoPath) {
-        return inspectionProperyService.assertInspectionStatus(repoPath, InspectionStatus.PENDING) || inspectionProperyService.shouldRetryInspection(repoPath);
+        return inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.PENDING) || inspectionPropertyService.shouldRetryInspection(repoPath);
     }
 }
