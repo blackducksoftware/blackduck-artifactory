@@ -61,9 +61,8 @@ public class ArtifactInspectionService {
     private final ProjectService projectService;
     private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
 
-    public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService,
-        final MetaDataPopulationService metaDataPopulationService, final InspectionModuleConfig inspectionModuleConfig,
-        final PackageTypePatternManager packageTypePatternManager, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService,
+    public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService, final MetaDataPopulationService metaDataPopulationService,
+        final InspectionModuleConfig inspectionModuleConfig, final PackageTypePatternManager packageTypePatternManager, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService,
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;

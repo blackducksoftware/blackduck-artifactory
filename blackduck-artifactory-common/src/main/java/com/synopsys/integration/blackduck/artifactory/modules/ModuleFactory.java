@@ -101,7 +101,7 @@ public class ModuleFactory {
         final InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPropertyService, projectService, inspectionModuleConfig);
         final PackageTypePatternManager packageTypePatternManager = PackageTypePatternManager.fromInspectionModuleConfig(inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPropertyService, externalIdFactory);
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(inspectionPropertyService, externalIdFactory);
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(inspectionPropertyService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(BlackDuckBOMService.class)));

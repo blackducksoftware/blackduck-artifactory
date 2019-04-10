@@ -39,6 +39,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ExternalIdProperties;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyVulnerabilityAggregate;
@@ -72,6 +73,12 @@ public class InspectionPropertyService {
 
     public boolean hasExternalIdProperties(final RepoPath repoPath) {
         return artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) && artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE);
+    }
+
+    public ExternalIdProperties getExternalIdProperties(final RepoPath repoPath) {
+        final Optional<String> forgeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE);
+        final Optional<String> originIdProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID);
+        return new ExternalIdProperties(forgeProperty.orElse(null), originIdProperty.orElse(null));
     }
 
     public void setExternalIdProperties(final RepoPath repoPath, final ExternalId externalId) {
