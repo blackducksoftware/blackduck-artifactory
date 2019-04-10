@@ -333,7 +333,7 @@ public class ArtifactIdentificationService {
                     continue;
                 }
 
-                if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) && !artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID)) {
+                if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) || !artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE)) {
                     populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
                 }
 
