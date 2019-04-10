@@ -61,7 +61,7 @@ public class BlackDuckBOMService {
         this.metaDataPopulationService = metaDataPopulationService;
     }
 
-    public ComponentViewWrapper addIdentifiedArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) throws FailedInspectionException {
+    public ComponentViewWrapper addArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) throws FailedInspectionException {
         final RepoPath repoPath = artifact.getRepoPath();
         ComponentViewWrapper componentViewWrapper;
 

@@ -139,7 +139,7 @@ public class ArtifactInspectionService {
         final String repoKey = repoKeyPath.getRepoKey();
 
         if (!cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS)) {
-            // Only inspect a delta if the repository has been successfully initialized
+            // Only inspect a delta if the repository has been successfully initialized.
             return;
         }
 
@@ -181,9 +181,10 @@ public class ArtifactInspectionService {
         for (final Artifact artifact : artifacts) {
             try {
                 if (!cacheInspectorService.hasExternalIdProperties(artifact.getRepoPath())) {
+                    // We don't want to try this step if it already succeeded because it will reset the retry count.
                     metaDataPopulationService.populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
                 }
-                final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
+                final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersionView);
                 metaDataPopulationService.populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
             } catch (final IntegrationException e) {
                 cacheInspectorService.failInspection(artifact.getRepoPath(), e.getMessage());
