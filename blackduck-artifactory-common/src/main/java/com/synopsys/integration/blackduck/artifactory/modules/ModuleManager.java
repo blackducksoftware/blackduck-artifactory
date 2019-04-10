@@ -25,6 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -157,6 +158,10 @@ public class ModuleManager {
         runMethod(inspectionModuleConfig, triggerType, itemInfo, inspectionModule::handleAfterCreateEvent);
     }
 
+    public void handleAfterCopyEvent(final RepoPath targetRepoPath, final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterCopyEvent);
+    }
+
     public void identifyArtifacts(final TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::identifyArtifacts);
     }
@@ -205,6 +210,13 @@ public class ModuleManager {
     private <T> void runMethod(final ModuleConfig moduleConfig, final TriggerType triggerType, final T consumable, final Consumer<T> consumer) {
         if (startMethodRun(moduleConfig, triggerType)) {
             consumer.accept(consumable);
+            finishMethodRun(moduleConfig, triggerType, triggerType);
+        }
+    }
+
+    private <T, U> void runMethod(final ModuleConfig moduleConfig, final TriggerType triggerType, final T consumable1, final U consumable2, final BiConsumer<T, U> consumer) {
+        if (startMethodRun(moduleConfig, triggerType)) {
+            consumer.accept(consumable1, consumable2);
             finishMethodRun(moduleConfig, triggerType, triggerType);
         }
     }

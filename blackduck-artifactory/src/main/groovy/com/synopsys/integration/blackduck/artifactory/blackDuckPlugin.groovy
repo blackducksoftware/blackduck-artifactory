@@ -400,29 +400,50 @@ jobs {
 
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
+    /**
+     * Handle after create events.
+     *
+     * Closure parameters:
+     * item (org.artifactory.fs.ItemInfo) - the original item being created.
+     */
     afterCreate { ItemInfo item ->
-        try {
-            // TODO: Remove this upon resolution of customer case
-            log.debug("item.getName(): ${item.getName()}")
-            log.debug("item.getCreated(): ${item.getCreated()}")
-            log.debug("item.getCreatedBy(): ${item.getCreatedBy()}")
-            log.debug("item.getId(): ${item.getId()}")
-            log.debug("item.getLastModified(): ${item.getLastModified()}")
-            log.debug("item.getLastUpdated(): ${item.getLastUpdated()}")
-            log.debug("item.getModifiedBy(): ${item.getModifiedBy()}")
-            log.debug("item.getRelPath(): ${item.getRelPath()}")
-            log.debug("item.getRepoKey(): ${item.getRepoKey()}")
-            log.debug("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
-
-            final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(item.getRepoPath())
-            log.debug("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
-            log.debug("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
-            log.debug("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
-        } catch (final Exception ignore) {
-            // This logging is just for testing.
-        }
-
+        debugLog(item)
         moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
+    }
+
+    /**
+     * Handle after copy events.
+     *
+     * Closure parameters:
+     * item (org.artifactory.fs.ItemInfo) - the source item copied.
+     * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the copy.
+     */
+    afterCopy { ItemInfo item, RepoPath targetRepoPath, properties ->
+        debugLog(item)
+        moduleManager.handleAfterCopyEvent(targetRepoPath, TriggerType.STORAGE_AFTER_COPY)
+    }
+}
+
+private void debugLog(final ItemInfo item) {
+    try {
+        // TODO: Remove this upon resolution of customer case
+        log.debug("item.getName(): ${item.getName()}")
+        log.debug("item.getCreated(): ${item.getCreated()}")
+        log.debug("item.getCreatedBy(): ${item.getCreatedBy()}")
+        log.debug("item.getId(): ${item.getId()}")
+        log.debug("item.getLastModified(): ${item.getLastModified()}")
+        log.debug("item.getLastUpdated(): ${item.getLastUpdated()}")
+        log.debug("item.getModifiedBy(): ${item.getModifiedBy()}")
+        log.debug("item.getRelPath(): ${item.getRelPath()}")
+        log.debug("item.getRepoKey(): ${item.getRepoKey()}")
+        log.debug("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
+
+        final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(item.getRepoPath())
+        log.debug("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
+        log.debug("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
+        log.debug("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
+    } catch (final Exception ignore) {
+        // This logging is just for testing.
     }
 }
 

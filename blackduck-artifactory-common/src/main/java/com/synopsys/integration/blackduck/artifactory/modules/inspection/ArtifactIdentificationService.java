@@ -120,6 +120,8 @@ public class ArtifactIdentificationService {
                 } else if (!repositoryStatus.isPresent()) {
                     createHubProjectFromRepo(projectName, projectVersionName, packageType.get(), identifiableArtifacts);
                     cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
+                } else {
+                    logger.warn(String.format("Not inspection repo because a critical error occurred: %s", repoKeyPath.toPath()));
                 }
             } else {
                 logger.warn(String.format(

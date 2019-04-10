@@ -122,7 +122,14 @@ public class InspectionModule implements Module {
 
     public void handleAfterCreateEvent(final ItemInfo itemInfo) {
         final RepoPath repoPath = itemInfo.getRepoPath();
+        handleStorageEvent(repoPath);
+    }
 
+    public void handleAfterCopyEvent(final RepoPath targetRepoPath) {
+        handleStorageEvent(targetRepoPath);
+    }
+
+    private void handleStorageEvent(final RepoPath repoPath) {
         try {
             if (artifactIdentificationService.shouldInspectArtifact(inspectionModuleConfig.getRepos(), repoPath)) {
                 inspectArtifact(repoPath);
