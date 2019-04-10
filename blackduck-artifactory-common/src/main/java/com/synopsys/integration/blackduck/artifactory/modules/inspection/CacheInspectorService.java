@@ -62,6 +62,10 @@ public class CacheInspectorService {
         this.inspectionModuleConfig = inspectionModuleConfig;
     }
 
+    public boolean hasExternalIdProperties(final RepoPath repoPath) {
+        return artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) && artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE);
+    }
+
     public boolean shouldRetryInspection(final RepoPath repoPath) {
         return assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount();
     }

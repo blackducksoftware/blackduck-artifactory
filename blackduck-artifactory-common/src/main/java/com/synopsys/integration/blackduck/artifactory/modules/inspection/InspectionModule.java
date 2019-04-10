@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -117,6 +118,11 @@ public class InspectionModule implements Module {
             .filter(artifactInspectionService::shouldInspectArtifact)
             .forEach(artifactInspectionService::identifyAndMarkArtifact);
 
+        inspectionModuleConfig.getRepos().stream()
+            .map(RepoPathFactory::create)
+            .filter(repoPath -> cacheInspectorService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE))
+            .forEach(repoPath -> cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS));
+
         updateAnalytics();
     }
 
@@ -124,7 +130,14 @@ public class InspectionModule implements Module {
 
     public void handleAfterCreateEvent(final ItemInfo itemInfo) {
         final RepoPath repoPath = itemInfo.getRepoPath();
+        handleStorageEvent(repoPath);
+    }
 
+    public void handleAfterCopyEvent(final RepoPath targetRepoPath) {
+        handleStorageEvent(targetRepoPath);
+    }
+
+    private void handleStorageEvent(final RepoPath repoPath) {
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
             try {
                 artifactInspectionService.identifyAndMarkArtifact(repoPath);

@@ -180,7 +180,9 @@ public class ArtifactInspectionService {
 
         for (final Artifact artifact : artifacts) {
             try {
-                metaDataPopulationService.populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
+                if (!cacheInspectorService.hasExternalIdProperties(artifact.getRepoPath())) {
+                    metaDataPopulationService.populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
+                }
                 final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addIdentifiedArtifactToProjectVersion(artifact, projectVersionView);
                 metaDataPopulationService.populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
             } catch (final IntegrationException e) {

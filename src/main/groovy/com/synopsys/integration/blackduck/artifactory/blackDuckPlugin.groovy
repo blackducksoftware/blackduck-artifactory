@@ -26,7 +26,6 @@ import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryCon
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule
 import groovy.transform.Field
-import org.artifactory.fs.FileLayoutInfo
 import org.artifactory.fs.ItemInfo
 import org.artifactory.repo.RepoPath
 import org.artifactory.request.Request
@@ -373,29 +372,25 @@ jobs {
 
 //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
+    /**
+     * Handle after create events.
+     *
+     * Closure parameters:
+     * item (org.artifactory.fs.ItemInfo) - the original item being created.
+     */
     afterCreate { ItemInfo item ->
-        try {
-            // TODO: Remove this upon resolution of customer case
-            log.debug("item.getName(): ${item.getName()}")
-            log.debug("item.getCreated(): ${item.getCreated()}")
-            log.debug("item.getCreatedBy(): ${item.getCreatedBy()}")
-            log.debug("item.getId(): ${item.getId()}")
-            log.debug("item.getLastModified(): ${item.getLastModified()}")
-            log.debug("item.getLastUpdated(): ${item.getLastUpdated()}")
-            log.debug("item.getModifiedBy(): ${item.getModifiedBy()}")
-            log.debug("item.getRelPath(): ${item.getRelPath()}")
-            log.debug("item.getRepoKey(): ${item.getRepoKey()}")
-            log.debug("item.getRepoPath().toPath(): ${item.getRepoPath().toPath()}")
+        moduleManager.handleAfterCopyEvent(item, TriggerType.STORAGE_AFTER_CREATE)
+    }
 
-            final FileLayoutInfo fileLayoutInfo = repositories.getLayoutInfo(item.getRepoPath())
-            log.debug("fileLayoutInfo.getOrganization(): ${fileLayoutInfo.getOrganization()}")
-            log.debug("fileLayoutInfo.getModule(): ${fileLayoutInfo.getModule()}")
-            log.debug("fileLayoutInfo.getBaseRevision(): ${fileLayoutInfo.getBaseRevision()}")
-        } catch (final Exception ignore) {
-            // This logging is just for testing.
-        }
-
-        moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
+    /**
+     * Handle after copy events.
+     *
+     * Closure parameters:
+     * item (org.artifactory.fs.ItemInfo) - the source item copied.
+     * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the copy.
+     */
+    afterCopy { item, targetRepoPath, properties ->
+        moduleManager.handleAfterCopyEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
 }
 
