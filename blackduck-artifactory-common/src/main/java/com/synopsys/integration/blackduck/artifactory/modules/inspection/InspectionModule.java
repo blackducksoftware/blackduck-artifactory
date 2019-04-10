@@ -137,6 +137,10 @@ public class InspectionModule implements Module {
         handleStorageEvent(targetRepoPath);
     }
 
+    public void handleAfterMoveEvent(final RepoPath targetRepoPath) {
+        handleStorageEvent(targetRepoPath);
+    }
+
     private void handleStorageEvent(final RepoPath repoPath) {
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
             try {

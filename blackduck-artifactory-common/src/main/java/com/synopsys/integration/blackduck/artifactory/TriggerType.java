@@ -27,7 +27,9 @@ public enum TriggerType {
     CRON_JOB("cron job"),
     REST_REQUEST("REST request"),
     STARTUP("startup"),
-    STORAGE_AFTER_CREATE("storage afterCreate");
+    STORAGE_AFTER_CREATE("storage afterCreate"),
+    STORAGE_AFTER_COPY("storage afterCopy"),
+    STORAGE_AFTER_MOVE("storage afterMove");
 
     private final String logName;
 

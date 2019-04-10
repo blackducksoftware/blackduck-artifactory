@@ -151,6 +151,10 @@ public class ModuleManager implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterCopyEvent);
     }
 
+    public void handleAfterMoveEvent(final RepoPath targetRepoPath, final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterMoveEvent);
+    }
+
     public void inspectDelta(final TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::inspectDelta);
     }
