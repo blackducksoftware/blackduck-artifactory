@@ -42,21 +42,21 @@ public class MetaDataUpdateService {
 
     private final ArtifactMetaDataService artifactMetaDataService;
     private final MetaDataPopulationService metadataPopulationService;
-    private final CacheInspectorService cacheInspectorService;
+    private final InspectionProperyService inspectionProperyService;
 
-    public MetaDataUpdateService(final CacheInspectorService cacheInspectorService, final ArtifactMetaDataService artifactMetaDataService, final MetaDataPopulationService metadataPopulationService) {
-        this.cacheInspectorService = cacheInspectorService;
+    public MetaDataUpdateService(final InspectionProperyService inspectionProperyService, final ArtifactMetaDataService artifactMetaDataService, final MetaDataPopulationService metadataPopulationService) {
+        this.inspectionProperyService = inspectionProperyService;
         this.artifactMetaDataService = artifactMetaDataService;
         this.metadataPopulationService = metadataPopulationService;
     }
 
     public void updateMetadata(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final boolean shouldTryUpdate = cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+        final boolean shouldTryUpdate = inspectionProperyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
 
         if (shouldTryUpdate) {
-            final Optional<Date> lastUpdateProperty = cacheInspectorService.getLastUpdate(repoKeyPath);
-            final Optional<Date> lastInspectionProperty = cacheInspectorService.getLastInspection(repoKeyPath);
+            final Optional<Date> lastUpdateProperty = inspectionProperyService.getLastUpdate(repoKeyPath);
+            final Optional<Date> lastInspectionProperty = inspectionProperyService.getLastInspection(repoKeyPath);
 
             try {
                 final Date now = new Date();
@@ -72,18 +72,18 @@ public class MetaDataUpdateService {
                         repoKeyPath.toPath()));
                 }
 
-                final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
-                final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
+                final String projectName = inspectionProperyService.getRepoProjectName(repoKey);
+                final String projectVersionName = inspectionProperyService.getRepoProjectVersionName(repoKey);
 
                 final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
-                cacheInspectorService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-                cacheInspectorService.setLastUpdate(repoKeyPath, lastNotificationDate);
+                inspectionProperyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
+                inspectionProperyService.setLastUpdate(repoKeyPath, lastNotificationDate);
 
-                cacheInspectorService.updateUIUrl(repoKeyPath, projectName, projectVersionName);
+                inspectionProperyService.updateUIUrl(repoKeyPath, projectName, projectVersionName);
             } catch (final IntegrationException e) {
                 logger.error(String.format("The Black Duck %s encountered a problem while updating artifact metadata from BlackDuck notifications in repository [%s]", InspectionModule.class.getSimpleName(), repoKey));
                 logger.debug(e.getMessage(), e);
-                cacheInspectorService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE);
+                inspectionProperyService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE);
             }
         }
     }

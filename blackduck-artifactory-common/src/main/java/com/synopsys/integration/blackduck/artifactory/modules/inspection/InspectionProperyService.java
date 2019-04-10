@@ -49,15 +49,14 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.HostNameHelper;
 
-// TODO: Rename. This is really a wrapper around ArtifactoryPropertyService.
-public class CacheInspectorService {
+public class InspectionProperyService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ProjectService projectService;
     private final InspectionModuleConfig inspectionModuleConfig;
 
-    public CacheInspectorService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService,
+    public InspectionProperyService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService,
         final InspectionModuleConfig inspectionModuleConfig) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.projectService = projectService;

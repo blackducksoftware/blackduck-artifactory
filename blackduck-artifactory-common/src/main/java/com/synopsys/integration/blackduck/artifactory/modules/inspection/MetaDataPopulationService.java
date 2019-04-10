@@ -51,30 +51,30 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class MetaDataPopulationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(MetaDataPopulationService.class));
 
-    private final CacheInspectorService cacheInspectorService;
+    private final InspectionProperyService inspectionProperyService;
     private final ArtifactMetaDataService artifactMetaDataService;
     private final ComponentService componentService;
 
-    public MetaDataPopulationService(final CacheInspectorService cacheInspectorService, final ArtifactMetaDataService artifactMetaDataService, final ComponentService componentService) {
+    public MetaDataPopulationService(final InspectionProperyService inspectionProperyService, final ArtifactMetaDataService artifactMetaDataService, final ComponentService componentService) {
         this.artifactMetaDataService = artifactMetaDataService;
-        this.cacheInspectorService = cacheInspectorService;
+        this.inspectionProperyService = inspectionProperyService;
         this.componentService = componentService;
     }
 
     public void populateMetadata(final String repoKey) {
         final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final boolean isStatusPending = cacheInspectorService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
+        final boolean isStatusPending = inspectionProperyService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
 
         if (isStatusPending) {
             logger.debug(String.format("Populating metadata in bulk on repoKey: %s", repoKey));
             try {
-                final String projectName = cacheInspectorService.getRepoProjectName(repoKey);
-                final String projectVersionName = cacheInspectorService.getRepoProjectVersionName(repoKey);
+                final String projectName = inspectionProperyService.getRepoProjectName(repoKey);
+                final String projectVersionName = inspectionProperyService.getRepoProjectVersionName(repoKey);
 
                 final List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataService.getArtifactMetadataOfRepository(repoKey, projectName, projectVersionName);
                 populateBlackDuckMetadataFromIdMetadata(repoKey, artifactMetaDataList);
 
-                cacheInspectorService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+                inspectionProperyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             } catch (final Exception e) {
                 logger.error(String.format("The Black Duck %s encountered a problem while populating artifact metadata in repository '%s'", InspectionModule.class.getSimpleName(), repoKey), e);
             }
@@ -91,7 +91,7 @@ public class MetaDataPopulationService {
             throw new FailedInspectionException(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
         }
 
-        cacheInspectorService.setExternalIdProperties(repoPath, externalId);
+        inspectionProperyService.setExternalIdProperties(repoPath, externalId);
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView) throws IntegrationException {
@@ -104,7 +104,7 @@ public class MetaDataPopulationService {
     public void populateBlackDuckMetadataFromIdMetadata(final String repoKey, final List<ArtifactMetaData> artifactMetaDataList) {
         for (final ArtifactMetaData artifactMetaData : artifactMetaDataList) {
             if (StringUtils.isNoneBlank(artifactMetaData.originId, artifactMetaData.forge)) {
-                final List<RepoPath> artifactsWithOriginId = cacheInspectorService.getArtifactsWithExternalIdProperties(repoKey, artifactMetaData.forge, artifactMetaData.originId);
+                final List<RepoPath> artifactsWithOriginId = inspectionProperyService.getArtifactsWithExternalIdProperties(repoKey, artifactMetaData.forge, artifactMetaData.originId);
                 for (final RepoPath repoPath : artifactsWithOriginId) {
                     final VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(artifactMetaData.highSeverityCount, artifactMetaData.mediumSeverityCount, artifactMetaData.lowSeverityCount);
                     populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, artifactMetaData.policyStatus, artifactMetaData.componentVersionLink);
@@ -119,7 +119,7 @@ public class MetaDataPopulationService {
         final String lowVulnerabilities = Integer.toString(vulnerabilityAggregate.getLowSeverityCount());
         final String policySummary = policySummaryStatusType.toString();
         final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(highVulnerabilities, mediumVulnerabilities, lowVulnerabilities, policySummary, componentVersionUrl);
-        cacheInspectorService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
+        inspectionProperyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
     }
 
 }
