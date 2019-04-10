@@ -36,11 +36,9 @@ import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponent
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.exception.BlackDuckApiException;
 import com.synopsys.integration.blackduck.exception.BlackDuckIntegrationException;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
-import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.ProjectBomService;
 import com.synopsys.integration.exception.IntegrationException;
@@ -51,13 +49,15 @@ import com.synopsys.integration.rest.exception.IntegrationRestException;
 public class BlackDuckBOMService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(BlackDuckBOMService.class));
 
-    private final CacheInspectorService cacheInspectorService;
-    private final BlackDuckServicesFactory blackDuckServicesFactory;
+    private final ProjectBomService projectBomService;
+    private final ComponentService componentService;
+    private final BlackDuckService blackDuckService;
     private final MetaDataPopulationService metaDataPopulationService;
 
-    public BlackDuckBOMService(final CacheInspectorService cacheInspectorService, final BlackDuckServicesFactory blackDuckServicesFactory, final MetaDataPopulationService metaDataPopulationService) {
-        this.cacheInspectorService = cacheInspectorService;
-        this.blackDuckServicesFactory = blackDuckServicesFactory;
+    public BlackDuckBOMService(final ProjectBomService projectBomService, final ComponentService componentService, final BlackDuckService blackDuckService, final MetaDataPopulationService metaDataPopulationService) {
+        this.projectBomService = projectBomService;
+        this.componentService = componentService;
+        this.blackDuckService = blackDuckService;
         this.metaDataPopulationService = metaDataPopulationService;
     }
 
@@ -68,12 +68,10 @@ public class BlackDuckBOMService {
         if (artifact.getExternalId().isPresent()) {
             final ExternalId externalId = artifact.getExternalId().get();
             try {
-                final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
                 final Optional<String> componentVersionUrl = projectBomService.addComponentToProjectVersion(externalId, projectVersionView);
 
                 if (componentVersionUrl.isPresent()) {
                     componentViewWrapper = getComponentViewWrapper(projectVersionView, externalId);
-                    cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING); // TODO: Don't set inspection status here.
                 } else {
                     throw new FailedInspectionException(repoPath, "Failed to find component match");
                 }
@@ -125,8 +123,6 @@ public class BlackDuckBOMService {
     }
 
     private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
-        final ComponentService componentService = blackDuckServicesFactory.createComponentService();
-        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
         final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getExactComponentMatch(externalId);
 
         if (!componentSearchResultView.isPresent()) {
