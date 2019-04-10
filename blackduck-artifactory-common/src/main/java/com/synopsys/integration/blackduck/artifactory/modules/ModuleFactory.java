@@ -103,7 +103,7 @@ public class ModuleFactory {
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPropertyService, externalIdFactory);
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
-        final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(artifactoryPropertyService, cacheInspectorService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
+        final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(cacheInspectorService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(BlackDuckBOMService.class)));
         final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
         final ComponentService componentService = blackDuckServicesFactory.createComponentService();

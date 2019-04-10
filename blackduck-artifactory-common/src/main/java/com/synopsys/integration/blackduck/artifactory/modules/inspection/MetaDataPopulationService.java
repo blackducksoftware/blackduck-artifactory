@@ -23,26 +23,24 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
 import java.util.List;
-import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaData;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
@@ -53,14 +51,11 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class MetaDataPopulationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(MetaDataPopulationService.class));
 
-    private final ArtifactoryPropertyService artifactoryPropertyService;
     private final CacheInspectorService cacheInspectorService;
     private final ArtifactMetaDataService artifactMetaDataService;
     private final ComponentService componentService;
 
-    public MetaDataPopulationService(final ArtifactoryPropertyService artifactoryPropertyService, final CacheInspectorService cacheInspectorService, final ArtifactMetaDataService artifactMetaDataService,
-        final ComponentService componentService) {
-        this.artifactoryPropertyService = artifactoryPropertyService;
+    public MetaDataPopulationService(final CacheInspectorService cacheInspectorService, final ArtifactMetaDataService artifactMetaDataService, final ComponentService componentService) {
         this.artifactMetaDataService = artifactMetaDataService;
         this.cacheInspectorService = cacheInspectorService;
         this.componentService = componentService;
@@ -90,18 +85,13 @@ public class MetaDataPopulationService {
         populateExternalIdMetadata(artifact.getRepoPath(), artifact.getExternalId().orElse(null));
     }
 
-    public void populateExternalIdMetadata(final RepoPath repoPath, final ExternalId externalId) throws FailedInspectionException {
+    public void populateExternalIdMetadata(final RepoPath repoPath, @Nullable final ExternalId externalId) throws FailedInspectionException {
         if (externalId == null) {
             logger.debug(String.format("Could not populate artifact with metadata. Missing externalId: %s", repoPath));
             throw new FailedInspectionException(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
         }
 
-        final String blackDuckOriginId = externalId.createBlackDuckOriginId();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId, logger);
-        final String blackduckForge = externalId.forge.getName();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);
-
-        cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.PENDING);
+        cacheInspectorService.setExternalIdProperties(repoPath, externalId);
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView) throws IntegrationException {
@@ -111,28 +101,25 @@ public class MetaDataPopulationService {
         populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, policyStatus, componentVersionView.getHref().orElse(null));
     }
 
-    private void populateBlackDuckMetadata(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate, final PolicySummaryStatusType policySummaryStatusType, final String componentVersionUrl) {
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getHighSeverityCount()), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getMediumSeverityCount()), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, Integer.toString(vulnerabilityAggregate.getLowSeverityCount()), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policySummaryStatusType.toString(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, Optional.of(componentVersionUrl).orElse("Unavailable"), logger);
-        cacheInspectorService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
-    }
-
     public void populateBlackDuckMetadataFromIdMetadata(final String repoKey, final List<ArtifactMetaData> artifactMetaDataList) {
         for (final ArtifactMetaData artifactMetaData : artifactMetaDataList) {
             if (StringUtils.isNoneBlank(artifactMetaData.originId, artifactMetaData.forge)) {
-                final SetMultimap<String, String> setMultimap = HashMultimap.create();
-                setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName(), artifactMetaData.originId);
-                setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), artifactMetaData.forge);
-                final List<RepoPath> artifactsWithOriginId = artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(setMultimap, repoKey);
+                final List<RepoPath> artifactsWithOriginId = cacheInspectorService.getArtifactsWithExternalIdProperties(repoKey, artifactMetaData.forge, artifactMetaData.originId);
                 for (final RepoPath repoPath : artifactsWithOriginId) {
                     final VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(artifactMetaData.highSeverityCount, artifactMetaData.mediumSeverityCount, artifactMetaData.lowSeverityCount);
                     populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, artifactMetaData.policyStatus, artifactMetaData.componentVersionLink);
                 }
             }
         }
+    }
+
+    private void populateBlackDuckMetadata(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate, final PolicySummaryStatusType policySummaryStatusType, final String componentVersionUrl) {
+        final String highVulnerabilities = Integer.toString(vulnerabilityAggregate.getHighSeverityCount());
+        final String mediumVulnerabilities = Integer.toString(vulnerabilityAggregate.getMediumSeverityCount());
+        final String lowVulnerabilities = Integer.toString(vulnerabilityAggregate.getLowSeverityCount());
+        final String policySummary = policySummaryStatusType.toString();
+        final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(highVulnerabilities, mediumVulnerabilities, lowVulnerabilities, policySummary, componentVersionUrl);
+        cacheInspectorService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
     }
 
 }

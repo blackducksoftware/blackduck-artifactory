@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
@@ -40,6 +41,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
@@ -62,12 +64,36 @@ public class CacheInspectorService {
         this.inspectionModuleConfig = inspectionModuleConfig;
     }
 
+    public List<RepoPath> getArtifactsWithExternalIdProperties(final String repoKey, final String forge, final String originId) {
+        final SetMultimap<String, String> setMultimap = HashMultimap.create();
+        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), forge);
+        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName(), originId);
+        return artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(setMultimap, repoKey);
+    }
+
     public boolean hasExternalIdProperties(final RepoPath repoPath) {
         return artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) && artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE);
     }
 
+    public void setExternalIdProperties(final RepoPath repoPath, final ExternalId externalId) {
+        final String blackDuckOriginId = externalId.createBlackDuckOriginId();
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId, logger);
+        final String blackduckForge = externalId.forge.getName();
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);
+        setInspectionStatus(repoPath, InspectionStatus.PENDING);
+    }
+
     public boolean shouldRetryInspection(final RepoPath repoPath) {
         return assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount();
+    }
+
+    public void setPolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, policyVulnerabilityAggregate.getComponentVersionUrl().orElse("Unavailable"), logger);
+        setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
     }
 
     public void failInspection(final FailedInspectionException failedInspectionException) {
