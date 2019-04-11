@@ -84,14 +84,13 @@ public class RepositoryInitializationService {
 
     private void initializeRepository(final RepoPath repoKeyPath) throws FailedInspectionException {
         final String repoKey = repoKeyPath.getRepoKey();
-        if (inspectionPropertyService.getInspectionStatus(repoKeyPath).isPresent() && !inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
-            // If an inspection status is present, we don't need to do a BOM upload unless it is a failure. In which case we will see if we should retry
+        final Optional<InspectionStatus> repoInspectionStatus = inspectionPropertyService.getInspectionStatus(repoKeyPath);
+        if (repoInspectionStatus.isPresent() && !inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
+            // If an inspection status is present, we don't need to do a BOM upload unless it is a failure. In which case we will see if we should retry.
             logger.debug(String.format("Not performing repo initialization on '%s' because it has already been initialized.", repoKey));
             return;
-        }
-
-        if (!inspectionPropertyService.shouldRetryInspection(repoKeyPath)) {
-            // Number of retry attempts exceeded
+        } else if (repoInspectionStatus.isPresent() && !inspectionPropertyService.shouldRetryInspection(repoKeyPath)) {
+            // Number of retry attempts exceeded.
             return;
         }
 
