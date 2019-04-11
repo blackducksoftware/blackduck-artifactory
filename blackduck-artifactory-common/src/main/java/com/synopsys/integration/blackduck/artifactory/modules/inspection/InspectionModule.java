@@ -24,6 +24,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -145,6 +146,7 @@ public class InspectionModule implements Module {
     private void handleStorageEvent(final RepoPath repoPath) {
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
             try {
+                artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, new HashMap<>(), logger);
                 artifactInspectionService.identifyAndMarkArtifact(repoPath);
             } catch (final Exception e) {
                 logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
