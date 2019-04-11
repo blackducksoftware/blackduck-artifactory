@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.artifactory.exception.CancelException;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
@@ -155,6 +156,17 @@ public class InspectionModule implements Module {
         }
 
         updateAnalytics();
+    }
+
+    public void handleBeforeDownloadEvent(final RepoPath repoPath) throws CancelException {
+        final Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
+        final boolean shouldCancelDownload = inspectionModuleConfig.isMetadataBlockEnabled()
+                                                 && (!inspectionStatus.isPresent() || inspectionStatus.get().equals(InspectionStatus.PENDING))
+                                                 && artifactInspectionService.shouldInspectArtifact(repoPath);
+
+        if (shouldCancelDownload) {
+            throw new CancelException(String.format("The Black Duck %s has prevented the download of %s because it lacks blackduck metadata", InspectionModule.class.getSimpleName(), repoPath.toPath()), 403);
+        }
     }
 
     @Override

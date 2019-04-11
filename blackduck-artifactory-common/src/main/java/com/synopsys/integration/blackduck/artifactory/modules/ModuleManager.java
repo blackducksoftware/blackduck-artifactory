@@ -183,7 +183,11 @@ public class ModuleManager implements Analyzable {
         return inspectionModuleConfig.getInspectionCron();
     }
 
-    public void handleBeforeDownloadEvent(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {
+    public void handleBeforeDownloadEventInspection(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {
+        runMethod(inspectionModuleConfig, triggerType, repoPath, inspectionModule::handleBeforeDownloadEvent);
+    }
+
+    public void handleBeforeDownloadEventPolicy(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {
         runMethod(policyModuleConfig, triggerType, repoPath, policyModule::handleBeforeDownloadEvent);
     }
 

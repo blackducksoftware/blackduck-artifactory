@@ -27,6 +27,7 @@ import com.synopsys.integration.blackduck.artifactory.configuration.Configuratio
 public enum InspectionModuleProperty implements ConfigurationProperty {
     ENABLED("enabled"),
     CRON("cron"),
+    METADATA_BLOCK("metadata.block"),
     PATTERNS_RUBYGEMS("patterns.rubygems"),
     PATTERNS_MAVEN("patterns.maven"),
     PATTERNS_GRADLE("patterns.gradle"),

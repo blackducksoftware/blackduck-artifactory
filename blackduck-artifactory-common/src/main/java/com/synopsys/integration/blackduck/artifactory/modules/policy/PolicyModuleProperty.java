@@ -25,8 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.policy;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
 public enum PolicyModuleProperty implements ConfigurationProperty {
-    ENABLED("enabled"),
-    METADATA_BLOCK("metadata.block");
+    ENABLED("enabled");
 
     private final String key;
 

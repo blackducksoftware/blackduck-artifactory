@@ -34,6 +34,7 @@ import com.synopsys.integration.builder.BuilderStatus;
 
 public class InspectionModuleConfig extends ModuleConfig {
     private final String inspectionCron;
+    private final Boolean metadataBlockEnabled;
     private final List<String> patternsRubygems;
     private final List<String> patternsMaven;
     private final List<String> patternsGradle;
@@ -43,10 +44,12 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final List<String> repos;
     private final Integer retryCount;
 
-    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final List<String> patternsRubygems, final List<String> patternsMaven, final List<String> patternsGradle, final List<String> patternsPypi,
+    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final Boolean metadataBlockEnabled, final List<String> patternsRubygems, final List<String> patternsMaven,
+        final List<String> patternsGradle, final List<String> patternsPypi,
         final List<String> patternsNuget, final List<String> patternsNpm, final List<String> repos, final int retryCount) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.inspectionCron = blackDuckIdentifyArtifactsCron;
+        this.metadataBlockEnabled = metadataBlockEnabled;
         this.patternsRubygems = patternsRubygems;
         this.patternsMaven = patternsMaven;
         this.patternsGradle = patternsGradle;
@@ -60,6 +63,7 @@ public class InspectionModuleConfig extends ModuleConfig {
     public static InspectionModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
         final Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
         final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
+        final Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
         final List<String> patternsRubygems = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS);
         final List<String> patternsMaven = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN);
         final List<String> patternsGradle = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE);
@@ -71,7 +75,7 @@ public class InspectionModuleConfig extends ModuleConfig {
                                        .collect(Collectors.toList());
         final Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, metadataBlockEnabled, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
             repos, retryCount);
     }
 
@@ -79,6 +83,7 @@ public class InspectionModuleConfig extends ModuleConfig {
     public void validate(final BuilderStatus builderStatus) {
         validateBoolean(builderStatus, InspectionModuleProperty.ENABLED, isEnabledUnverified());
         validateCronExpression(builderStatus, InspectionModuleProperty.CRON, inspectionCron);
+        validateBoolean(builderStatus, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_MAVEN, patternsMaven);
         validateNotNull(builderStatus, InspectionModuleProperty.PATTERNS_GRADLE, patternsGradle);
@@ -92,6 +97,10 @@ public class InspectionModuleConfig extends ModuleConfig {
 
     public String getInspectionCron() {
         return inspectionCron;
+    }
+
+    public Boolean isMetadataBlockEnabled() {
+        return metadataBlockEnabled;
     }
 
     public List<String> getRepos() {

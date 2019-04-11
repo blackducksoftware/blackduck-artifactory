@@ -14,7 +14,7 @@ class InspectionModuleConfigTest {
     void init() {
         validInspectionModuleConfig = new InspectionModuleConfig(
             true,
-            "0 0/1 * 1/1 * ?",
+            "0 0/1 * 1/1 * ?", metadataBlockEnabled,
             ["*.gem"],
             ["*.jar"],
             ["*.jar"],
@@ -28,7 +28,7 @@ class InspectionModuleConfigTest {
 
         invalidInspectionModuleConfig = new InspectionModuleConfig(
             null,
-            null,
+            null, metadataBlockEnabled,
             null,
             null,
             null,

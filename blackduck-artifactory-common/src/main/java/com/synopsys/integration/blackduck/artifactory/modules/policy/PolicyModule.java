@@ -22,13 +22,12 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.artifactory.exception.CancelException;
 import org.artifactory.repo.RepoPath;
-import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
@@ -36,12 +35,8 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProper
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class PolicyModule implements Module {
-    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-
     private final PolicyModuleConfig policyModuleConfig;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final FeatureAnalyticsCollector featureAnalyticsCollector;
@@ -58,9 +53,6 @@ public class PolicyModule implements Module {
         if (shouldCancelOnPolicyViolation(repoPath)) {
             reason = "because it violates a policy in your Black Duck Hub.";
             blockReason = BlockReason.IN_VIOLATION;
-        } else if (shouldCancelOnMetadataBlock(repoPath)) {
-            reason = "because it lacks BlackDuck metadata";
-            blockReason = BlockReason.METADATA_BLOCK;
         }
 
         featureAnalyticsCollector.logFeatureHit("handleBeforeDownloadEvent", blockReason.toString());
@@ -72,7 +64,7 @@ public class PolicyModule implements Module {
 
     @Override
     public List<AnalyticsCollector> getAnalyticsCollectors() {
-        return Arrays.asList(featureAnalyticsCollector);
+        return Collections.singletonList(featureAnalyticsCollector);
     }
 
     @Override
@@ -88,19 +80,8 @@ public class PolicyModule implements Module {
                    .isPresent();
     }
 
-    // TODO: DISABLED: This should aways return false due to validation. Add the blackduck.artifactory.policy.metadata.block=false property to blackDuckPlugin.properties
-    private boolean shouldCancelOnMetadataBlock(final RepoPath repoPath) {
-        return false;
-        //
-        //        final boolean missingMetadata = !artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, logger).isPresent();
-        //        final boolean shouldBlock = policyModuleConfig.isMetadataBlockEnabled();
-        //
-        //        return shouldBlock && missingMetadata;
-    }
-
     private enum BlockReason {
         IN_VIOLATION,
-        METADATA_BLOCK,
         NO_BLOCK
     }
 }

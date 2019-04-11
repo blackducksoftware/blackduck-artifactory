@@ -408,7 +408,8 @@ storage {
 //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 download {
     beforeDownload { Request request, RepoPath repoPath ->
-        moduleManager.handleBeforeDownloadEvent(TriggerType.BEFORE_DOWNLOAD, repoPath)
+        moduleManager.handleBeforeDownloadEventPolicy(TriggerType.BEFORE_DOWNLOAD, repoPath)
+        moduleManager.handleBeforeDownloadEventInspection(TriggerType.BEFORE_DOWNLOAD, repoPath)
     }
 }
 
