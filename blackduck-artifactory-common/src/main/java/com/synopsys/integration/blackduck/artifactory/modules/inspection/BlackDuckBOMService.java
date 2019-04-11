@@ -83,6 +83,9 @@ public class BlackDuckBOMService {
             } catch (final BlackDuckIntegrationException e) {
                 logger.warn(String.format("Cannot find component match for artifact at %s", repoPath.toPath()));
                 throw new FailedInspectionException(repoPath, "Failed to find component match");
+            } catch (final FailedInspectionException e) {
+                // If we don't catch and throw, the inspectionStatus message will be too vague.
+                throw e;
             } catch (final Exception e) {
                 logger.warn(String.format("The Black Duck %s could not successfully inspect %s:", InspectionModule.class.getSimpleName(), repoPath.toPath()));
                 logger.debug(e.getMessage(), e);
