@@ -25,6 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -153,6 +154,7 @@ public class InspectionModule implements Module {
         final String repoKey = repoPath.getRepoKey();
         final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (packageType.isPresent()) {
+            artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, new HashMap<>(), logger);
             final ArtifactIdentificationService.IdentifiedArtifact identifiedArtifact = artifactIdentificationService.identifyArtifact(repoPath, packageType.get());
             artifactIdentificationService.populateIdMetadataOnIdentifiedArtifact(identifiedArtifact);
         } else {
