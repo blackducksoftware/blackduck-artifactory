@@ -162,6 +162,10 @@ public class ModuleManager {
         runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterCopyEvent);
     }
 
+    public void handleAfterMoveEvent(final RepoPath targetRepoPath, final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterMoveEvent);
+    }
+
     public void identifyArtifacts(final TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::identifyArtifacts);
     }

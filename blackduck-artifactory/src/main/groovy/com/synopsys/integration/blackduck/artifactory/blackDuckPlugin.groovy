@@ -422,6 +422,18 @@ storage {
         debugLog(item)
         moduleManager.handleAfterCopyEvent(targetRepoPath, TriggerType.STORAGE_AFTER_COPY)
     }
+
+    /**
+     * Handle after move events.
+     *
+     * Closure parameters:
+     * item (org.artifactory.fs.ItemInfo) - the source item moved.
+     * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the move.
+     */
+    afterMove { ItemInfo item, RepoPath targetRepoPath, properties ->
+        debugLog(item)
+        moduleManager.handleAfterMoveEvent(targetRepoPath, TriggerType.STORAGE_AFTER_MOVE)
+    }
 }
 
 private void debugLog(final ItemInfo item) {
