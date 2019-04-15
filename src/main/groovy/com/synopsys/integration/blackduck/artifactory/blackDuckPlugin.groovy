@@ -244,7 +244,7 @@ executions {
      * Manual execution of the Identify Artifacts step of inspection on a specific repository.
      * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
      *
-     * Identifies artifacts in the repository and populates identifying metadata on them for use by the Populate Metadata and Update Metadata
+     * Identifies artifacts in the repository and populates identifying notifications on them for use by the Populate Metadata and Update Metadata
      * steps.
      *
      * Metadata populated on artifacts:
@@ -266,8 +266,8 @@ executions {
      * Manual execution of the Populate Metadata step of inspection on a specific repository.
      * Automatic execution is performed by the blackDuckBulkMetadataPopulation CRON job below.
      *
-     * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying metadata
-     * to look up vulnerability metadata in Black Duck, then populates that vulnerability metadata on the artifact in Artifactory.
+     * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying notifications
+     * to look up vulnerability notifications in Black Duck, then populates that vulnerability notifications on the artifact in Artifactory.
      *
      * Metadata populated:
      * blackduck.highVulnerabilities
@@ -286,7 +286,7 @@ executions {
      * Manual execution of the Update Metadata step of inspection on a specific repository.
      * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
      *
-     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that metadata in Black Duck
+     * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that notifications in Black Duck
      * since the last time the repository was inspected.
      *
      * Metadata updated on artifacts:

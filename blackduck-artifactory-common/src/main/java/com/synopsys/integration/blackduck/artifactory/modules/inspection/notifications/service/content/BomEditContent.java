@@ -20,12 +20,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service.content;
 
+import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionDescription;
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
+public class BomEditContent extends NotificationContent {
+    public String bomComponent;
+
+    @Override
+    public boolean providesPolicyDetails() {
+        return false;
+    }
+
+    @Override
+    public boolean providesVulnerabilityDetails() {
+        return false;
+    }
+
+    @Override
+    public boolean providesProjectComponentDetails() {
+        return false;
+    }
+
+    @Override
+    public boolean providesLicenseDetails() {
+        return false;
+    }
+
+    @Override
+    public List<ProjectVersionDescription> getAffectedProjectVersionDescriptions() {
+        return Collections.emptyList();
+    }
+
 }

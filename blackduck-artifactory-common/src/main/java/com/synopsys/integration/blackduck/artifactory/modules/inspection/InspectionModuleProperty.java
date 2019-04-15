@@ -20,12 +20,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
-import java.util.List;
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+public enum InspectionModuleProperty implements ConfigurationProperty {
+    ENABLED("enabled"),
+    CRON("cron"),
+    METADATA_BLOCK("notifications.block"),
+    PATTERNS_RUBYGEMS("patterns.rubygems"),
+    PATTERNS_MAVEN("patterns.maven"),
+    PATTERNS_GRADLE("patterns.gradle"),
+    PATTERNS_PYPI("patterns.pypi"),
+    PATTERNS_NUGET("patterns.nuget"),
+    PATTERNS_NPM("patterns.npm"),
+    REPOS("repos"),
+    REPOS_CSV_PATH("repos.csv.path"),
+    RETRY_COUNT("retry.count");
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
+    private final String key;
+
+    InspectionModuleProperty(final String key) {
+        this.key = "blackduck.artifactory.inspect." + key;
+    }
+
+    @Override
+    public String getKey() {
+        return key;
+    }
 }

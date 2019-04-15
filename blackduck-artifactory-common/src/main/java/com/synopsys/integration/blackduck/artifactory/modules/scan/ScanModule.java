@@ -39,8 +39,11 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.SimpleAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ArtifactScanService;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.service.RepositoryIdentificationService;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ScanPolicyService;
 import com.synopsys.integration.blackduck.codelocation.Result;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;

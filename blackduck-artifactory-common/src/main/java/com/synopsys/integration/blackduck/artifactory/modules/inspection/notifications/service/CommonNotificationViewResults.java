@@ -20,12 +20,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+public class CommonNotificationViewResults extends NotificationResults<CommonNotificationView> {
+    private final List<CommonNotificationView> commonNotificationViews;
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
+    public CommonNotificationViewResults(final List<CommonNotificationView> commonNotificationViews, final Optional<Date> latestNotificationCreatedAtDate, final Optional<String> latestNotificationCreatedAtString) {
+        super(latestNotificationCreatedAtDate, latestNotificationCreatedAtString);
+        this.commonNotificationViews = commonNotificationViews;
+    }
+
+    @Override
+    public List<CommonNotificationView> getResults() {
+        return commonNotificationViews;
+    }
+
 }

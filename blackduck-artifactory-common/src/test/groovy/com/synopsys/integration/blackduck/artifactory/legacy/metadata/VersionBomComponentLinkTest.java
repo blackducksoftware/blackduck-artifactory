@@ -29,7 +29,7 @@ import org.junit.Test;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.metadata.CompositeComponentManager;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.CompositeComponentManager;
 
 public class VersionBomComponentLinkTest {
     @Test

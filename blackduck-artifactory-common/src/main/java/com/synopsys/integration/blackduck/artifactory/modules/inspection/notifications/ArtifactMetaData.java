@@ -20,12 +20,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
 
-import java.util.List;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.util.Stringable;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+public class ArtifactMetaData extends Stringable {
+    public String repoKey;
+    public String componentVersionLink;
+    public int highSeverityCount;
+    public int mediumSeverityCount;
+    public int lowSeverityCount;
+    public PolicySummaryStatusType policyStatus;
+    public String forge;
+    public String originId;
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
 }

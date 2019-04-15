@@ -20,12 +20,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service.content;
 
-import java.util.List;
+import com.synopsys.integration.blackduck.api.core.BlackDuckComponent;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+public class PolicyInfo extends BlackDuckComponent {
+    public String policyName;
+    public String policy;
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
 }

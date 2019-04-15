@@ -33,8 +33,8 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummar
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 
 public class PolicyModule implements Module {
     private final PolicyModuleConfig policyModuleConfig;

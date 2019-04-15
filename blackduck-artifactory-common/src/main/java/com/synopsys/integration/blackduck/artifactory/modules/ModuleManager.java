@@ -36,13 +36,13 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.LogUtil;
 import com.synopsys.integration.blackduck.artifactory.TriggerType;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzable;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.FeatureAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;

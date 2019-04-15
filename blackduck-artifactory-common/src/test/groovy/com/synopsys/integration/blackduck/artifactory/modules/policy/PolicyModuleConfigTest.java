@@ -20,11 +20,11 @@ class PolicyModuleConfigTest {
     void validate() {
         final BuilderStatus validBuilderStatus = new BuilderStatus();
         validPolicyModuleConfig.validate(validBuilderStatus);
-        Assert.assertEquals(1, validBuilderStatus.getErrorMessages().size()); // TODO: This set expected value to zero when the metadata block feature is re-enabled or removed
+        Assert.assertEquals(1, validBuilderStatus.getErrorMessages().size()); // TODO: This set expected value to zero when the notifications block feature is re-enabled or removed
 
         final BuilderStatus invalidBuilderStatus = new BuilderStatus();
         invalidPolicyModuleConfig.validate(invalidBuilderStatus);
-        Assert.assertEquals(1, invalidBuilderStatus.getErrorMessages().size()); // TODO: This set expected value to two when the metadata block feature is re-enabled or removed
+        Assert.assertEquals(1, invalidBuilderStatus.getErrorMessages().size()); // TODO: This set expected value to two when the notifications block feature is re-enabled or removed
     }
 
     @Test

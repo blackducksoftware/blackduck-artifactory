@@ -23,7 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsService
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService
 import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModule
 import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModuleConfig
 import groovy.mock.interceptor.MockFor

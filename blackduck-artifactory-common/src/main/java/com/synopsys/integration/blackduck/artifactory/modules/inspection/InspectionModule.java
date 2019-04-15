@@ -39,10 +39,14 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.SimpleAnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataPopulationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -167,7 +171,7 @@ public class InspectionModule implements Module {
                                                  && artifactInspectionService.shouldInspectArtifact(repoPath);
 
         if (shouldCancelDownload) {
-            throw new CancelException(String.format("The Black Duck %s has prevented the download of %s because it lacks blackduck metadata", InspectionModule.class.getSimpleName(), repoPath.toPath()), 403);
+            throw new CancelException(String.format("The Black Duck %s has prevented the download of %s because it lacks blackduck notifications", InspectionModule.class.getSimpleName(), repoPath.toPath()), 403);
         }
     }
 

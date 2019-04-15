@@ -20,12 +20,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+import javax.annotation.Nullable;
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
+public class ArtifactMetaDataFromNotifications {
+    private final Date lastNotificationDate;
+    private final List<ArtifactMetaData> artifactMetaData;
+
+    public ArtifactMetaDataFromNotifications(@Nullable final Date lastNotificationDate, final List<ArtifactMetaData> artifactMetaData) {
+        this.lastNotificationDate = lastNotificationDate;
+        this.artifactMetaData = artifactMetaData;
+    }
+
+    public Optional<Date> getLastNotificationDate() {
+        return Optional.ofNullable(lastNotificationDate);
+    }
+
+    public List<ArtifactMetaData> getArtifactMetaData() {
+        return artifactMetaData;
+    }
+
 }

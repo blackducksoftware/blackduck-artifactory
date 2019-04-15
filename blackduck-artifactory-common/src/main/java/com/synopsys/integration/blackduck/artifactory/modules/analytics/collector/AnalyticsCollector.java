@@ -20,12 +20,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.analytics.collector;
 
-import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+public abstract class AnalyticsCollector {
+    protected static Map<String, String> convertMapValueToString(final Map<String, ?> map) {
+        return map.entrySet().stream()
+                   .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toString()));
+    }
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
+    public abstract Map<String, String> getMetadataMap();
+
+    public abstract void clear();
 }

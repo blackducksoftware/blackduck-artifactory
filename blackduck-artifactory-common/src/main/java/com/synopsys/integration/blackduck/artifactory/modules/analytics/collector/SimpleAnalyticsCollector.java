@@ -20,12 +20,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.analytics;
+package com.synopsys.integration.blackduck.artifactory.modules.analytics.collector;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+public class SimpleAnalyticsCollector extends AnalyticsCollector {
+    private final Map<String, String> metadataMap = new HashMap<>();
 
-public interface Analyzable {
-    List<AnalyticsCollector> getAnalyticsCollectors();
+    public Object putMetadata(final String key, final Object value) {
+        return metadataMap.put(key, value.toString());
+    }
+
+    @Override
+    public Map<String, String> getMetadataMap() {
+        return metadataMap;
+    }
+
+    @Override
+    public void clear() {
+        metadataMap.clear();
+    }
 }
