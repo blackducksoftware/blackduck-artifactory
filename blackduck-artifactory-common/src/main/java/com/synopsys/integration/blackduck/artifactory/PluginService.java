@@ -25,7 +25,6 @@ package com.synopsys.integration.blackduck.artifactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
@@ -37,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.configuration.PluginConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
@@ -48,23 +46,23 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty;
+import com.synopsys.integration.blackduck.artifactory.status.StatusCheckService;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
-import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class PluginService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+
     private final DirectoryConfig directoryConfig;
     private final Repositories repositories;
     private final Searches searches;
 
     private ConfigurationPropertyManager configurationPropertyManager;
     private File blackDuckDirectory;
-    private ModuleRegistry moduleRegistry;
-    private PluginConfig pluginConfig;
+    private StatusCheckService statusCheckService;
 
     public PluginService(final DirectoryConfig directoryConfig, final Repositories repositories, final Searches searches) {
         this.directoryConfig = directoryConfig;
@@ -79,7 +77,7 @@ public class PluginService {
         final Properties unprocessedProperties = loadPropertiesFromFile(propertiesFile);
         configurationPropertyManager = new ConfigurationPropertyManager(unprocessedProperties);
 
-        pluginConfig = PluginConfig.createFromProperties(configurationPropertyManager);
+        final PluginConfig pluginConfig = PluginConfig.createFromProperties(configurationPropertyManager);
         final BlackDuckServerConfig blackDuckServerConfig = pluginConfig.getBlackDuckServerConfigBuilder().build();
 
         this.blackDuckDirectory = setUpBlackDuckDirectory();
@@ -90,7 +88,7 @@ public class PluginService {
         final AnalyticsService analyticsService = AnalyticsService.createFromBlackDuckServerConfig(directoryConfig, blackDuckServerConfig);
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
         final ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, dateTimeManager, blackDuckServicesFactory);
-        moduleRegistry = new ModuleRegistry(analyticsService);
+        final ModuleRegistry moduleRegistry = new ModuleRegistry(analyticsService);
 
         final ScanModule scanModule = moduleFactory.createScanModule(blackDuckDirectory);
         final InspectionModule inspectionModule = moduleFactory.createInspectionModule();
@@ -99,6 +97,7 @@ public class PluginService {
 
         moduleRegistry.registerModules(scanModule, inspectionModule, policyModule, analyticsModule);
 
+        statusCheckService = new StatusCheckService(moduleRegistry, pluginConfig, directoryConfig.getVersionFile());
         logStatusCheckMessage(TriggerType.STARTUP);
 
         final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(ModuleManager.class);
@@ -120,50 +119,10 @@ public class PluginService {
 
     public String logStatusCheckMessage(final TriggerType triggerType) {
         LogUtil.start(logger, "logStatusCheckMessage", triggerType);
-
-        final String lineSeparator = System.lineSeparator();
-        final String blockSeparator = lineSeparator + StringUtils.repeat("-", 100) + lineSeparator;
-
-        final File versionFile = directoryConfig.getVersionFile();
-        String version = "Unknown";
-        try {
-            version = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-        final StringBuilder statusCheckMessage = new StringBuilder(blockSeparator + String.format("Status Check: Plugin Version - %s", version) + blockSeparator);
-
-        statusCheckMessage.append("General Settings:").append(lineSeparator);
-        final BuilderStatus generalBuilderStatus = new BuilderStatus();
-        pluginConfig.validate(generalBuilderStatus);
-        if (generalBuilderStatus.isValid()) {
-            statusCheckMessage.append("General properties validated").append(lineSeparator);
-            statusCheckMessage.append("Connection to BlackDuck successful");
-        } else {
-            statusCheckMessage.append(generalBuilderStatus.getFullErrorMessage(lineSeparator));
-        }
-        statusCheckMessage.append(blockSeparator);
-
-        for (final ModuleConfig moduleConfig : moduleRegistry.getAllModuleConfigs()) {
-            statusCheckMessage.append(String.format("Module Name: %s", moduleConfig.getModuleName())).append(lineSeparator);
-            statusCheckMessage.append(String.format("Enabled: %b", moduleConfig.isEnabled())).append(lineSeparator);
-            final BuilderStatus builderStatus = new BuilderStatus();
-            moduleConfig.validate(builderStatus);
-
-            if (builderStatus.isValid()) {
-                statusCheckMessage.append(String.format("%s has passed validation", moduleConfig.getModuleName()));
-            } else {
-                statusCheckMessage.append(builderStatus.getFullErrorMessage(lineSeparator));
-            }
-
-            statusCheckMessage.append(blockSeparator);
-        }
-
-        final String finalMessage = statusCheckMessage.toString();
-        logger.info(finalMessage);
+        final String statusCheckMessage = statusCheckService.logStatusCheckMessage();
         LogUtil.finish(logger, "logStatusCheckMessage", triggerType);
 
-        return finalMessage;
+        return statusCheckMessage;
     }
 
     private File setUpBlackDuckDirectory() throws IOException, IntegrationException {
