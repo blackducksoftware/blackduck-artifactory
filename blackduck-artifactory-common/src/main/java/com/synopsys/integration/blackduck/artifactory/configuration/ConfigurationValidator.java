@@ -30,9 +30,9 @@ import org.apache.commons.lang3.StringUtils;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 
 public abstract class ConfigurationValidator {
-    public abstract void validate(final ConfigValidationReport configValidationReport);
+    public abstract void validate(final PropertyGroupReport propertyGroupReport);
 
-    protected void validateDate(final ConfigValidationReport statusReport, final ConfigurationProperty property, final String date, final DateTimeManager dateTimeManager) {
+    protected void validateDate(final PropertyGroupReport statusReport, final ConfigurationProperty property, final String date, final DateTimeManager dateTimeManager) {
         if (StringUtils.isNotBlank(date) && dateTimeManager != null) {
             try {
                 dateTimeManager.getDateFromString(date);
@@ -47,53 +47,53 @@ public abstract class ConfigurationValidator {
     }
 
     // TODO: Perhaps ensure that the cron expression is valid within artifactory
-    protected void validateCronExpression(final ConfigValidationReport statusReport, final ConfigurationProperty property, final String cronExpression) {
+    protected void validateCronExpression(final PropertyGroupReport statusReport, final ConfigurationProperty property, final String cronExpression) {
         validateNotBlank(statusReport, property, cronExpression, "Please set it to a valid quartz cron expression.");
     }
 
-    protected boolean validateNotBlank(final ConfigValidationReport statusReport, final ConfigurationProperty property, final String value) {
+    protected boolean validateNotBlank(final PropertyGroupReport statusReport, final ConfigurationProperty property, final String value) {
         return validateNotBlank(statusReport, property, value, "This property is required to be set.");
     }
 
-    protected boolean validateNotBlank(final ConfigValidationReport statusReport, final ConfigurationProperty property, final String value, final String errorMessage) {
+    protected boolean validateNotBlank(final PropertyGroupReport statusReport, final ConfigurationProperty property, final String value, final String errorMessage) {
         return validateNotNull(statusReport, property, StringUtils.stripToNull(value), errorMessage);
     }
 
-    protected boolean validateNotNull(final ConfigValidationReport statusReport, final ConfigurationProperty property, final Object value) {
+    protected boolean validateNotNull(final PropertyGroupReport statusReport, final ConfigurationProperty property, final Object value) {
         return validateNotNull(statusReport, property, value, "This property is required to be set.");
     }
 
-    private boolean validateNotNull(final ConfigValidationReport statusReport, final ConfigurationProperty property, final Object value, final String errorMessage) {
+    private boolean validateNotNull(final PropertyGroupReport statusReport, final ConfigurationProperty property, final Object value, final String errorMessage) {
         if (value == null) {
             final String message = String.format("Property %s not set. %s", property.getKey(), errorMessage);
-            final PropertyValidationReport propertyValidationReport = new PropertyValidationReport(property, message);
-            statusReport.addPropertyValidationReport(propertyValidationReport);
+            final PropertyValidationResult propertyValidationResult = new PropertyValidationResult(property, message);
+            statusReport.addPropertyValidationReport(propertyValidationResult);
             return false;
         } else {
-            statusReport.addPropertyValidationReport(new PropertyValidationReport(property));
+            statusReport.addPropertyValidationReport(new PropertyValidationResult(property));
         }
 
         return true;
     }
 
-    protected void validateList(final ConfigValidationReport statusReport, final ConfigurationProperty property, final List<?> list, final String errorMessage) {
+    protected void validateList(final PropertyGroupReport statusReport, final ConfigurationProperty property, final List<?> list, final String errorMessage) {
         final boolean notNull = validateNotNull(statusReport, property, list);
 
         if (notNull && list.isEmpty()) {
-            final PropertyValidationReport propertyValidationReport = new PropertyValidationReport(property, String.format("Property %s is empty. %s", property.getKey(), errorMessage));
-            statusReport.addPropertyValidationReport(propertyValidationReport);
+            final PropertyValidationResult propertyValidationResult = new PropertyValidationResult(property, String.format("Property %s is empty. %s", property.getKey(), errorMessage));
+            statusReport.addPropertyValidationReport(propertyValidationResult);
         }
     }
 
-    protected void validateBoolean(final ConfigValidationReport statusReport, final ConfigurationProperty property, final Boolean value) {
+    protected void validateBoolean(final PropertyGroupReport statusReport, final ConfigurationProperty property, final Boolean value) {
         validateNotNull(statusReport, property, value, "Please set to either 'true' or 'false'.");
     }
 
-    protected void validateInteger(final ConfigValidationReport statusReport, final ConfigurationProperty property, final Integer value) {
+    protected void validateInteger(final PropertyGroupReport statusReport, final ConfigurationProperty property, final Integer value) {
         validateNotNull(statusReport, property, value, "Please specify a valid integer.");
     }
 
-    protected void validateInteger(final ConfigValidationReport statusReport, final ConfigurationProperty property, final Integer value, final Integer min, final Integer max) {
+    protected void validateInteger(final PropertyGroupReport statusReport, final ConfigurationProperty property, final Integer value, final Integer min, final Integer max) {
         validateInteger(statusReport, property, value);
         if (value != null && (value < min || value > max)) {
             statusReport.addErrorMessage(property, String.format("Please specify a valid integer between the range of %s and %s.", min.toString(), max.toString()));

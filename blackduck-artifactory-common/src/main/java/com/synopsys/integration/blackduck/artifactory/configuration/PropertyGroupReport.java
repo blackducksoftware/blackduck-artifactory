@@ -6,33 +6,33 @@ import java.util.Optional;
 
 import com.synopsys.integration.builder.BuilderStatus;
 
-public class ConfigValidationReport {
-    private final List<PropertyValidationReport> propertyReports = new ArrayList<>();
+public class PropertyGroupReport {
+    private final List<PropertyValidationResult> propertyReports = new ArrayList<>();
 
     private final BuilderStatus builderStatus;
 
-    public ConfigValidationReport(final BuilderStatus builderStatus) {
+    public PropertyGroupReport(final BuilderStatus builderStatus) {
         this.builderStatus = builderStatus;
     }
 
-    public void addPropertyValidationReport(final PropertyValidationReport propertyValidationReport) {
-        propertyReports.add(propertyValidationReport);
+    public void addPropertyValidationReport(final PropertyValidationResult propertyValidationResult) {
+        propertyReports.add(propertyValidationResult);
     }
 
     public void addErrorMessage(final ConfigurationProperty configurationProperty, final String errorMessage) {
-        final PropertyValidationReport propertyValidationReport = new PropertyValidationReport(configurationProperty, errorMessage);
-        addPropertyValidationReport(propertyValidationReport);
+        final PropertyValidationResult propertyValidationResult = new PropertyValidationResult(configurationProperty, errorMessage);
+        addPropertyValidationReport(propertyValidationResult);
     }
 
     public boolean hasError() {
         final boolean propertyReportErrorExists = propertyReports.stream()
-                                                      .map(PropertyValidationReport::getErrorMessage)
+                                                      .map(PropertyValidationResult::getErrorMessage)
                                                       .anyMatch(Optional::isPresent);
 
         return propertyReportErrorExists || !builderStatus.isValid();
     }
 
-    public List<PropertyValidationReport> getPropertyReports() {
+    public List<PropertyValidationResult> getPropertyReports() {
         return propertyReports;
     }
 

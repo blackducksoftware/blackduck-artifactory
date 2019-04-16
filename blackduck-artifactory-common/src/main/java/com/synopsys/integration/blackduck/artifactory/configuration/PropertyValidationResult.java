@@ -4,15 +4,15 @@ import java.util.Optional;
 
 import org.apache.commons.lang.StringUtils;
 
-public class PropertyValidationReport {
+public class PropertyValidationResult {
     private final ConfigurationProperty configurationProperty;
     private final String errorMessage;
 
-    public PropertyValidationReport(final ConfigurationProperty configurationProperty) {
+    public PropertyValidationResult(final ConfigurationProperty configurationProperty) {
         this(configurationProperty, null);
     }
 
-    public PropertyValidationReport(final ConfigurationProperty configurationProperty, final String errorMessage) {
+    public PropertyValidationResult(final ConfigurationProperty configurationProperty, final String errorMessage) {
         this.configurationProperty = configurationProperty;
         this.errorMessage = StringUtils.stripToNull(errorMessage);
     }

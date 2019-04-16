@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigValidationReport;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.configuration.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class ScanModuleConfig extends ModuleConfig {
@@ -80,16 +80,16 @@ public class ScanModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(final ConfigValidationReport configValidationReport) {
-        validateCronExpression(configValidationReport, ScanModuleProperty.CRON, cron);
-        validateNotBlank(configValidationReport, ScanModuleProperty.BINARIES_DIRECTORY_PATH, binariesDirectoryPath, "Please specify a path");
-        validateDate(configValidationReport, ScanModuleProperty.CUTOFF_DATE, artifactCutoffDate, dateTimeManager);
-        validateBoolean(configValidationReport, ScanModuleProperty.DRY_RUN, dryRun);
-        validateBoolean(configValidationReport, ScanModuleProperty.ENABLED, isEnabledUnverified());
-        validateInteger(configValidationReport, ScanModuleProperty.MEMORY, memory);
-        validateList(configValidationReport, ScanModuleProperty.NAME_PATTERNS, namePatterns, "Please provide name patterns to match against");
-        validateBoolean(configValidationReport, ScanModuleProperty.REPO_PATH_CODELOCATION, repoPathCodelocation);
-        validateList(configValidationReport, ScanModuleProperty.REPOS, repos,
+    public void validate(final PropertyGroupReport propertyGroupReport) {
+        validateCronExpression(propertyGroupReport, ScanModuleProperty.CRON, cron);
+        validateNotBlank(propertyGroupReport, ScanModuleProperty.BINARIES_DIRECTORY_PATH, binariesDirectoryPath, "Please specify a path");
+        validateDate(propertyGroupReport, ScanModuleProperty.CUTOFF_DATE, artifactCutoffDate, dateTimeManager);
+        validateBoolean(propertyGroupReport, ScanModuleProperty.DRY_RUN, dryRun);
+        validateBoolean(propertyGroupReport, ScanModuleProperty.ENABLED, isEnabledUnverified());
+        validateInteger(propertyGroupReport, ScanModuleProperty.MEMORY, memory);
+        validateList(propertyGroupReport, ScanModuleProperty.NAME_PATTERNS, namePatterns, "Please provide name patterns to match against");
+        validateBoolean(propertyGroupReport, ScanModuleProperty.REPO_PATH_CODELOCATION, repoPathCodelocation);
+        validateList(propertyGroupReport, ScanModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", ScanModuleProperty.REPOS.getKey(), ScanModuleProperty.REPOS_CSV_PATH.getKey()));
     }
 

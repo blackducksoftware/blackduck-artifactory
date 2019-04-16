@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigValidationReport;
+import com.synopsys.integration.blackduck.artifactory.configuration.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService;
 import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.log.IntLogger;
@@ -52,8 +52,8 @@ public class ModuleRegistry {
     private void registerModule(final Module module) {
         final ModuleConfig moduleConfig = module.getModuleConfig();
         final BuilderStatus builderStatus = new BuilderStatus();
-        final ConfigValidationReport configValidationReport = new ConfigValidationReport(builderStatus);
-        moduleConfig.validate(configValidationReport);
+        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(builderStatus);
+        moduleConfig.validate(propertyGroupReport);
 
         allModules.add(module);
         if (builderStatus.isValid()) {

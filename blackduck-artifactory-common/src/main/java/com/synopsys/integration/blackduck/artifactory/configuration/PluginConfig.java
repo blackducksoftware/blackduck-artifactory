@@ -62,21 +62,21 @@ public class PluginConfig extends ConfigurationValidator {
     }
 
     @Override
-    public void validate(final ConfigValidationReport configValidationReport) {
-        final boolean dateTimePatternExists = validateNotBlank(configValidationReport, GeneralProperty.DATE_TIME_PATTERN, dateTimePattern);
+    public void validate(final PropertyGroupReport propertyGroupReport) {
+        final boolean dateTimePatternExists = validateNotBlank(propertyGroupReport, GeneralProperty.DATE_TIME_PATTERN, dateTimePattern);
 
         if (dateTimePatternExists) {
             try {
                 DateTimeFormatter.ofPattern(dateTimePattern);
             } catch (final IllegalArgumentException e) {
-                configValidationReport.addErrorMessage(GeneralProperty.DATE_TIME_PATTERN, "Invalid format. See logs for details");
+                propertyGroupReport.addErrorMessage(GeneralProperty.DATE_TIME_PATTERN, "Invalid format. See logs for details");
             }
         }
 
-        validateNotBlank(configValidationReport, GeneralProperty.URL, blackDuckUrl);
+        validateNotBlank(propertyGroupReport, GeneralProperty.URL, blackDuckUrl);
 
-        validateInteger(configValidationReport, GeneralProperty.TIMEOUT, timeout);
-        validateBoolean(configValidationReport, GeneralProperty.TRUST_CERT, trustCert);
+        validateInteger(propertyGroupReport, GeneralProperty.TIMEOUT, timeout);
+        validateBoolean(propertyGroupReport, GeneralProperty.TRUST_CERT, trustCert);
 
         final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = getBlackDuckServerConfigBuilder();
         final BuilderStatus blackDuckServerConfigBuilderStatus = blackDuckServerConfigBuilder.validateAndGetBuilderStatus();
@@ -93,7 +93,7 @@ public class PluginConfig extends ConfigurationValidator {
             }
         }
 
-        configValidationReport.getBuilderStatus().addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
+        propertyGroupReport.getBuilderStatus().addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
     }
 
     public String getDateTimePattern() {

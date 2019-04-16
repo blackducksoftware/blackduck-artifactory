@@ -33,10 +33,10 @@ import org.artifactory.repo.Repositories;
 import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigValidationService;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.configuration.PluginConfig;
-import com.synopsys.integration.blackduck.artifactory.configuration.StatusCheckService;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
@@ -62,7 +62,7 @@ public class PluginService {
 
     private ConfigurationPropertyManager configurationPropertyManager;
     private File blackDuckDirectory;
-    private StatusCheckService statusCheckService;
+    private ConfigValidationService configValidationService;
 
     public PluginService(final DirectoryConfig directoryConfig, final Repositories repositories, final Searches searches) {
         this.directoryConfig = directoryConfig;
@@ -97,7 +97,7 @@ public class PluginService {
 
         moduleRegistry.registerModules(scanModule, inspectionModule, policyModule, analyticsModule);
 
-        statusCheckService = new StatusCheckService(moduleRegistry, pluginConfig, directoryConfig.getVersionFile());
+        configValidationService = new ConfigValidationService(moduleRegistry, pluginConfig, directoryConfig.getVersionFile());
         logStatusCheckMessage(TriggerType.STARTUP);
 
         final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(ModuleManager.class);
@@ -119,7 +119,7 @@ public class PluginService {
 
     public String logStatusCheckMessage(final TriggerType triggerType) {
         LogUtil.start(logger, "generateStatusCheckMessage", triggerType);
-        final String statusCheckMessage = statusCheckService.generateStatusCheckMessage();
+        final String statusCheckMessage = configValidationService.generateStatusCheckMessage();
         logger.info(statusCheckMessage);
         LogUtil.finish(logger, "generateStatusCheckMessage", triggerType);
 

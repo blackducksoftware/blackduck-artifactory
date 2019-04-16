@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigValidationReport;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.configuration.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class InspectionModuleConfig extends ModuleConfig {
@@ -79,19 +79,19 @@ public class InspectionModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(final ConfigValidationReport configValidationReport) {
-        validateBoolean(configValidationReport, InspectionModuleProperty.ENABLED, isEnabledUnverified());
-        validateCronExpression(configValidationReport, InspectionModuleProperty.CRON, inspectionCron);
-        validateBoolean(configValidationReport, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
-        validateNotNull(configValidationReport, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
-        validateNotNull(configValidationReport, InspectionModuleProperty.PATTERNS_MAVEN, patternsMaven);
-        validateNotNull(configValidationReport, InspectionModuleProperty.PATTERNS_GRADLE, patternsGradle);
-        validateNotNull(configValidationReport, InspectionModuleProperty.PATTERNS_PYPI, patternsPypi);
-        validateNotNull(configValidationReport, InspectionModuleProperty.PATTERNS_NUGET, patternsNuget);
-        validateNotNull(configValidationReport, InspectionModuleProperty.PATTERNS_NPM, patternsNpm);
-        validateList(configValidationReport, InspectionModuleProperty.REPOS, repos,
+    public void validate(final PropertyGroupReport propertyGroupReport) {
+        validateBoolean(propertyGroupReport, InspectionModuleProperty.ENABLED, isEnabledUnverified());
+        validateCronExpression(propertyGroupReport, InspectionModuleProperty.CRON, inspectionCron);
+        validateBoolean(propertyGroupReport, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
+        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
+        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_MAVEN, patternsMaven);
+        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_GRADLE, patternsGradle);
+        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_PYPI, patternsPypi);
+        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_NUGET, patternsNuget);
+        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_NPM, patternsNpm);
+        validateList(propertyGroupReport, InspectionModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
-        validateInteger(configValidationReport, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
+        validateInteger(propertyGroupReport, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
     }
 
     public String getInspectionCron() {

@@ -22,8 +22,8 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.analytics;
 
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigValidationReport;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.configuration.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class AnalyticsModuleConfig extends ModuleConfig {
@@ -38,7 +38,7 @@ public class AnalyticsModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(final ConfigValidationReport configValidationReport) {
-        validateBoolean(configValidationReport, AnalyticsModuleProperty.ENABLED, isEnabledUnverified());
+    public void validate(final PropertyGroupReport propertyGroupReport) {
+        validateBoolean(propertyGroupReport, AnalyticsModuleProperty.ENABLED, isEnabledUnverified());
     }
 }

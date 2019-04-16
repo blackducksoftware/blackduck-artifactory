@@ -13,7 +13,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
 import com.synopsys.integration.builder.BuilderStatus;
 
-public class StatusCheckService {
+public class ConfigValidationService {
     private final int LINE_CHARACTER_LIMIT = 100;
     private final String LINE_SEPARATOR = System.lineSeparator();
     private final String BLOCK_SEPARATOR = LINE_SEPARATOR + StringUtils.repeat("-", LINE_CHARACTER_LIMIT) + LINE_SEPARATOR;
@@ -22,7 +22,7 @@ public class StatusCheckService {
     private final PluginConfig pluginConfig;
     private final File versionFile;
 
-    public StatusCheckService(final ModuleRegistry moduleRegistry, final PluginConfig pluginConfig, final File versionFile) {
+    public ConfigValidationService(final ModuleRegistry moduleRegistry, final PluginConfig pluginConfig, final File versionFile) {
         this.moduleRegistry = moduleRegistry;
         this.pluginConfig = pluginConfig;
         this.versionFile = versionFile;
@@ -33,12 +33,12 @@ public class StatusCheckService {
         final StringBuilder statusCheckMessage = new StringBuilder(BLOCK_SEPARATOR + String.format("Status Check: Plugin Version - %s", pluginVersion) + BLOCK_SEPARATOR);
 
         final BuilderStatus generalBuilderStatus = new BuilderStatus();
-        final ConfigValidationReport configValidationReport = new ConfigValidationReport(generalBuilderStatus);
-        pluginConfig.validate(configValidationReport);
+        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(generalBuilderStatus);
+        pluginConfig.validate(propertyGroupReport);
 
-        final String configErrorMessage = configValidationReport.hasError() ? "CONFIGURATION ERROR" : "";
+        final String configErrorMessage = propertyGroupReport.hasError() ? "CONFIGURATION ERROR" : "";
         statusCheckMessage.append(String.format("General Settings: %s", configErrorMessage)).append(LINE_SEPARATOR);
-        appendPropertyReport(configValidationReport, statusCheckMessage);
+        appendPropertyReport(propertyGroupReport, statusCheckMessage);
         statusCheckMessage.append(BLOCK_SEPARATOR);
 
         for (final ModuleConfig moduleConfig : moduleRegistry.getAllModuleConfigs()) {
@@ -51,20 +51,20 @@ public class StatusCheckService {
 
     private void appendConfigStatusReport(final StringBuilder statusCheckMessage, final ModuleConfig moduleConfig) {
         final BuilderStatus builderStatus = new BuilderStatus();
-        final ConfigValidationReport configValidationReport = new ConfigValidationReport(builderStatus);
-        moduleConfig.validate(configValidationReport);
+        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(builderStatus);
+        moduleConfig.validate(propertyGroupReport);
 
         final String moduleName = moduleConfig.getModuleName();
         final String state = moduleConfig.isEnabled() ? "Enabled" : "Disabled";
-        final String configErrorMessage = configValidationReport.hasError() ? "CONFIGURATION ERROR" : "";
+        final String configErrorMessage = propertyGroupReport.hasError() ? "CONFIGURATION ERROR" : "";
         final String moduleLine = String.format("%s [%s] %s", moduleName, state, configErrorMessage);
         statusCheckMessage.append(moduleLine).append(LINE_SEPARATOR);
 
-        appendPropertyReport(configValidationReport, statusCheckMessage);
+        appendPropertyReport(propertyGroupReport, statusCheckMessage);
     }
 
-    private void appendPropertyReport(final ConfigValidationReport configValidationReport, final StringBuilder statusCheckMessage) {
-        for (final PropertyValidationReport propertyReport : configValidationReport.getPropertyReports()) {
+    private void appendPropertyReport(final PropertyGroupReport propertyGroupReport, final StringBuilder statusCheckMessage) {
+        for (final PropertyValidationResult propertyReport : propertyGroupReport.getPropertyReports()) {
             final Optional<String> errorMessage = propertyReport.getErrorMessage();
 
             final String mark = errorMessage.isPresent() ? "X" : "✔";
@@ -74,8 +74,8 @@ public class StatusCheckService {
             statusCheckMessage.append(wrapLine(reportLine)).append(LINE_SEPARATOR);
         }
 
-        if (!configValidationReport.getBuilderStatus().isValid()) {
-            final String otherMessages = wrapLine("Other Messages: " + configValidationReport.getBuilderStatus().getFullErrorMessage());
+        if (!propertyGroupReport.getBuilderStatus().isValid()) {
+            final String otherMessages = wrapLine("Other Messages: " + propertyGroupReport.getBuilderStatus().getFullErrorMessage());
             statusCheckMessage.append(otherMessages).append(LINE_SEPARATOR);
         }
     }
