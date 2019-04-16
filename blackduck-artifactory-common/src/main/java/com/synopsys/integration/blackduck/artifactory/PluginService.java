@@ -118,9 +118,10 @@ public class PluginService {
     }
 
     public String logStatusCheckMessage(final TriggerType triggerType) {
-        LogUtil.start(logger, "logStatusCheckMessage", triggerType);
-        final String statusCheckMessage = statusCheckService.logStatusCheckMessage();
-        LogUtil.finish(logger, "logStatusCheckMessage", triggerType);
+        LogUtil.start(logger, "generateStatusCheckMessage", triggerType);
+        final String statusCheckMessage = statusCheckService.generateStatusCheckMessage();
+        logger.info(statusCheckMessage);
+        LogUtil.finish(logger, "generateStatusCheckMessage", triggerType);
 
         return statusCheckMessage;
     }

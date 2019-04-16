@@ -32,7 +32,7 @@ public class StatusCheckService {
         this.versionFile = versionFile;
     }
 
-    public String logStatusCheckMessage() {
+    public String generateStatusCheckMessage() {
         final String pluginVersion = getPluginVersion();
         final StringBuilder statusCheckMessage = new StringBuilder(BLOCK_SEPARATOR + String.format("Status Check: Plugin Version - %s", pluginVersion) + BLOCK_SEPARATOR);
 
@@ -50,10 +50,7 @@ public class StatusCheckService {
             statusCheckMessage.append(BLOCK_SEPARATOR);
         }
 
-        final String finalMessage = statusCheckMessage.toString();
-        logger.info(finalMessage);
-
-        return finalMessage;
+        return statusCheckMessage.toString();
     }
 
     private void appendConfigStatusReport(final StringBuilder statusCheckMessage, final ModuleConfig moduleConfig) {
