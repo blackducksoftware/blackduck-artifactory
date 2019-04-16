@@ -24,11 +24,12 @@ package com.synopsys.integration.blackduck.artifactory.modules;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.blackduck.artifactory.configuration.PropertyGroupReport;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService;
 import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.log.IntLogger;
@@ -39,7 +40,6 @@ import com.synopsys.integration.log.Slf4jIntLogger;
  */
 public class ModuleRegistry {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-
     private final List<Module> registeredModules = new ArrayList<>();
     private final List<Module> allModules = new ArrayList<>();
 
@@ -52,7 +52,7 @@ public class ModuleRegistry {
     private void registerModule(final Module module) {
         final ModuleConfig moduleConfig = module.getModuleConfig();
         final BuilderStatus builderStatus = new BuilderStatus();
-        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(builderStatus);
+        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), builderStatus);
         moduleConfig.validate(propertyGroupReport);
 
         allModules.add(module);
@@ -95,4 +95,15 @@ public class ModuleRegistry {
                    .filter(moduleConfig -> moduleConfig.getModuleName().equalsIgnoreCase(moduleName))
                    .collect(Collectors.toList());
     }
+
+    public Optional<ModuleConfig> getFirstModuleConfigByName(final String moduleName) {
+        return getModuleConfigsByName(moduleName).stream().findAny();
+    }
+
+    public void setAllModulesEnabledState(final boolean isModuleEnabled) {
+        allModules.stream()
+            .map(Module::getModuleConfig)
+            .forEach(moduleConfig -> moduleConfig.setEnabled(isModuleEnabled));
+    }
+
 }

@@ -1,8 +1,10 @@
-package com.synopsys.integration.blackduck.artifactory.configuration;
+package com.synopsys.integration.blackduck.artifactory.configuration.model;
 
 import java.util.Optional;
 
 import org.apache.commons.lang.StringUtils;
+
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
 public class PropertyValidationResult {
     private final ConfigurationProperty configurationProperty;

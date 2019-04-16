@@ -26,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Set;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
 import com.synopsys.integration.blackduck.configuration.ConnectionResult;

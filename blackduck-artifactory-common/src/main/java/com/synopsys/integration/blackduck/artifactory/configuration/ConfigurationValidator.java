@@ -28,6 +28,8 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyValidationResult;
 
 public abstract class ConfigurationValidator {
     public abstract void validate(final PropertyGroupReport propertyGroupReport);

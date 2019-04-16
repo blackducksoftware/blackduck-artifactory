@@ -23,7 +23,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules.analytics;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
-import com.synopsys.integration.blackduck.artifactory.configuration.PropertyGroupReport;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class AnalyticsModuleConfig extends ModuleConfig {

@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
-import com.synopsys.integration.blackduck.artifactory.configuration.PropertyGroupReport;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class ScanModuleConfig extends ModuleConfig {

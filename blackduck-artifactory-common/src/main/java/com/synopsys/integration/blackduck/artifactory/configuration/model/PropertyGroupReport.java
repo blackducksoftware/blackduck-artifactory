@@ -1,17 +1,20 @@
-package com.synopsys.integration.blackduck.artifactory.configuration;
+package com.synopsys.integration.blackduck.artifactory.configuration.model;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 import com.synopsys.integration.builder.BuilderStatus;
 
 public class PropertyGroupReport {
     private final List<PropertyValidationResult> propertyReports = new ArrayList<>();
 
+    private final String propertyGroupName;
     private final BuilderStatus builderStatus;
 
-    public PropertyGroupReport(final BuilderStatus builderStatus) {
+    public PropertyGroupReport(final String propertyGroupName, final BuilderStatus builderStatus) {
+        this.propertyGroupName = propertyGroupName;
         this.builderStatus = builderStatus;
     }
 
@@ -38,5 +41,9 @@ public class PropertyGroupReport {
 
     public BuilderStatus getBuilderStatus() {
         return builderStatus;
+    }
+
+    public String getPropertyGroupName() {
+        return propertyGroupName;
     }
 }

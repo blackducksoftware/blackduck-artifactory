@@ -3,12 +3,17 @@ package com.synopsys.integration.blackduck.artifactory.configuration;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.WordUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.model.ConfigValidationReport;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyValidationResult;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
 import com.synopsys.integration.builder.BuilderStatus;
@@ -28,42 +33,53 @@ public class ConfigValidationService {
         this.versionFile = versionFile;
     }
 
-    public String generateStatusCheckMessage() {
+    public ConfigValidationReport validateConfig() {
+        final BuilderStatus generalBuilderStatus = new BuilderStatus();
+        final PropertyGroupReport generalPropertyReport = new PropertyGroupReport("General Settings", generalBuilderStatus);
+        pluginConfig.validate(generalPropertyReport);
+
+        final List<PropertyGroupReport> propertyGroupReports = new ArrayList<>();
+        for (final ModuleConfig moduleConfig : moduleRegistry.getAllModuleConfigs()) {
+            final BuilderStatus propertyGroupBuilderStatus = new BuilderStatus();
+            final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), propertyGroupBuilderStatus);
+            moduleConfig.validate(propertyGroupReport);
+            propertyGroupReports.add(propertyGroupReport);
+        }
+
+        return new ConfigValidationReport(generalPropertyReport, propertyGroupReports);
+    }
+
+    public String generateStatusCheckMessage(final ConfigValidationReport configValidationReport) {
         final String pluginVersion = getPluginVersion();
         final StringBuilder statusCheckMessage = new StringBuilder(BLOCK_SEPARATOR + String.format("Status Check: Plugin Version - %s", pluginVersion) + BLOCK_SEPARATOR);
 
-        final BuilderStatus generalBuilderStatus = new BuilderStatus();
-        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(generalBuilderStatus);
-        pluginConfig.validate(propertyGroupReport);
-
-        final String configErrorMessage = propertyGroupReport.hasError() ? "CONFIGURATION ERROR" : "";
+        final PropertyGroupReport generalPropertyReport = configValidationReport.getGeneralPropertyReport();
+        final String configErrorMessage = generalPropertyReport.hasError() ? "CONFIGURATION ERROR" : "";
         statusCheckMessage.append(String.format("General Settings: %s", configErrorMessage)).append(LINE_SEPARATOR);
-        appendPropertyReport(propertyGroupReport, statusCheckMessage);
+        appendPropertyGroupReport(statusCheckMessage, generalPropertyReport);
         statusCheckMessage.append(BLOCK_SEPARATOR);
 
-        for (final ModuleConfig moduleConfig : moduleRegistry.getAllModuleConfigs()) {
-            appendConfigStatusReport(statusCheckMessage, moduleConfig);
+        for (final PropertyGroupReport modulePropertyReport : configValidationReport.getModulePropertyReports()) {
+            final Optional<ModuleConfig> moduleConfigsByName = moduleRegistry.getFirstModuleConfigByName(modulePropertyReport.getPropertyGroupName());
+            final boolean enabled = moduleConfigsByName.isPresent() && moduleConfigsByName.get().isEnabled();
+            appendPropertyReportForModule(statusCheckMessage, modulePropertyReport, enabled);
             statusCheckMessage.append(BLOCK_SEPARATOR);
         }
 
         return statusCheckMessage.toString();
     }
 
-    private void appendConfigStatusReport(final StringBuilder statusCheckMessage, final ModuleConfig moduleConfig) {
-        final BuilderStatus builderStatus = new BuilderStatus();
-        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(builderStatus);
-        moduleConfig.validate(propertyGroupReport);
-
-        final String moduleName = moduleConfig.getModuleName();
-        final String state = moduleConfig.isEnabled() ? "Enabled" : "Disabled";
+    private void appendPropertyReportForModule(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport, final boolean enabled) {
+        final String moduleName = propertyGroupReport.getPropertyGroupName();
+        final String state = enabled ? "Enabled" : "Disabled";
         final String configErrorMessage = propertyGroupReport.hasError() ? "CONFIGURATION ERROR" : "";
         final String moduleLine = String.format("%s [%s] %s", moduleName, state, configErrorMessage);
         statusCheckMessage.append(moduleLine).append(LINE_SEPARATOR);
 
-        appendPropertyReport(propertyGroupReport, statusCheckMessage);
+        appendPropertyGroupReport(statusCheckMessage, propertyGroupReport);
     }
 
-    private void appendPropertyReport(final PropertyGroupReport propertyGroupReport, final StringBuilder statusCheckMessage) {
+    private void appendPropertyGroupReport(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport) {
         for (final PropertyValidationResult propertyReport : propertyGroupReport.getPropertyReports()) {
             final Optional<String> errorMessage = propertyReport.getErrorMessage();
 
