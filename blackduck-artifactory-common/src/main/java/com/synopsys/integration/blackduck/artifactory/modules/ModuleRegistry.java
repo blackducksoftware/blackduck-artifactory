@@ -101,9 +101,7 @@ public class ModuleRegistry {
     }
 
     public void setAllModulesEnabledState(final boolean isModuleEnabled) {
-        allModules.stream()
-            .map(Module::getModuleConfig)
-            .forEach(moduleConfig -> moduleConfig.setEnabled(isModuleEnabled));
+        getAllModuleConfigs().forEach(moduleConfig -> moduleConfig.setEnabled(isModuleEnabled));
     }
 
 }
