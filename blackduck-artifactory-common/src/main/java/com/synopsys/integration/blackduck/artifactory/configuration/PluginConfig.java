@@ -23,64 +23,77 @@
 package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import java.time.format.DateTimeFormatter;
-
-import org.slf4j.LoggerFactory;
+import java.util.Map;
+import java.util.Set;
 
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
 import com.synopsys.integration.blackduck.configuration.ConnectionResult;
 import com.synopsys.integration.builder.BuilderStatus;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.Slf4jIntLogger;
+import com.synopsys.integration.log.SilentIntLogger;
 
 public class PluginConfig extends ConfigurationValidator {
-    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-
     private final String dateTimePattern;
     private final String dateTimeZone;
-    private final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder;
+    private final String blackDuckUrl;
+    private final Integer timeout;
+    private final Boolean trustCert;
+    private final Set<Map.Entry<String, String>> properties;
 
     public static PluginConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
         final String dateTimePattern = configurationPropertyManager.getProperty(GeneralProperty.DATE_TIME_PATTERN);
         final String dateTimeZone = configurationPropertyManager.getProperty(GeneralProperty.DATE_TIME_ZONE);
-        final BlackDuckServerConfigBuilder BlackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
-        BlackDuckServerConfigBuilder.setFromProperties(configurationPropertyManager.getProperties());
 
-        return new PluginConfig(dateTimePattern, dateTimeZone, BlackDuckServerConfigBuilder);
+        final String url = configurationPropertyManager.getProperty(GeneralProperty.URL);
+        final Integer timeout = configurationPropertyManager.getIntegerProperty(GeneralProperty.TIMEOUT);
+        final Boolean trustCert = configurationPropertyManager.getBooleanProperty(GeneralProperty.TRUST_CERT);
+        final Set<Map.Entry<String, String>> properties = configurationPropertyManager.getProperties();
+
+        return new PluginConfig(dateTimePattern, dateTimeZone, url, timeout, trustCert, properties);
     }
 
-    public PluginConfig(final String dateTimePattern, final String dateTimeZone, final BlackDuckServerConfigBuilder BlackDuckServerConfigBuilder) {
+    public PluginConfig(final String dateTimePattern, final String dateTimeZone, final String blackDuckUrl, final Integer timeout, final Boolean trustCert, final Set<Map.Entry<String, String>> properties) {
         this.dateTimePattern = dateTimePattern;
         this.dateTimeZone = dateTimeZone;
-        this.blackDuckServerConfigBuilder = BlackDuckServerConfigBuilder;
+        this.blackDuckUrl = blackDuckUrl;
+        this.timeout = timeout;
+        this.trustCert = trustCert;
+        this.properties = properties;
     }
 
     @Override
-    public void validate(final BuilderStatus builderStatus) {
-        final boolean dateTimePatternExists = validateNotBlank(builderStatus, GeneralProperty.DATE_TIME_PATTERN, dateTimePattern);
+    public void validate(final ConfigValidationReport configValidationReport) {
+        final boolean dateTimePatternExists = validateNotBlank(configValidationReport, GeneralProperty.DATE_TIME_PATTERN, dateTimePattern);
 
         if (dateTimePatternExists) {
             try {
                 DateTimeFormatter.ofPattern(dateTimePattern);
-            } catch (final IllegalArgumentException ignore) {
-                builderStatus.addErrorMessage(String.format("Property %s has an invalid format", GeneralProperty.DATE_TIME_PATTERN.getKey()));
+            } catch (final IllegalArgumentException e) {
+                configValidationReport.addErrorMessage(GeneralProperty.DATE_TIME_PATTERN, "Invalid format. See logs for details");
             }
         }
 
+        validateNotBlank(configValidationReport, GeneralProperty.URL, blackDuckUrl);
+
+        validateInteger(configValidationReport, GeneralProperty.TIMEOUT, timeout);
+        validateBoolean(configValidationReport, GeneralProperty.TRUST_CERT, trustCert);
+
+        final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = getBlackDuckServerConfigBuilder();
         final BuilderStatus blackDuckServerConfigBuilderStatus = blackDuckServerConfigBuilder.validateAndGetBuilderStatus();
-        builderStatus.addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
 
         if (blackDuckServerConfigBuilderStatus.isValid()) {
             final BlackDuckServerConfig blackDuckServerConfig = blackDuckServerConfigBuilder.build();
-            final ConnectionResult connectionResult = blackDuckServerConfig.attemptConnection(logger);
+            final ConnectionResult connectionResult = blackDuckServerConfig.attemptConnection(new SilentIntLogger());
 
             if (connectionResult.isFailure()) {
-                builderStatus.addErrorMessage("Failed to connect to Black Duck with provided configuration.");
+                blackDuckServerConfigBuilderStatus.addErrorMessage("Failed to connect to Black Duck.");
                 if (connectionResult.getFailureMessage().isPresent()) {
-                    builderStatus.addErrorMessage(connectionResult.getFailureMessage().get());
+                    blackDuckServerConfigBuilderStatus.addErrorMessage(connectionResult.getFailureMessage().get());
                 }
             }
         }
+
+        configValidationReport.getBuilderStatus().addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
     }
 
     public String getDateTimePattern() {
@@ -92,6 +105,8 @@ public class PluginConfig extends ConfigurationValidator {
     }
 
     public BlackDuckServerConfigBuilder getBlackDuckServerConfigBuilder() {
+        final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
+        blackDuckServerConfigBuilder.setProperties(properties);
         return blackDuckServerConfigBuilder;
     }
 }

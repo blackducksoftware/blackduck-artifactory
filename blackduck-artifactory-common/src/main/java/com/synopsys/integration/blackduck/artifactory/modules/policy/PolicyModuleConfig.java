@@ -22,9 +22,9 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigValidationReport;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.builder.BuilderStatus;
 
 public class PolicyModuleConfig extends ModuleConfig {
     public PolicyModuleConfig(final Boolean enabled) {
@@ -38,7 +38,7 @@ public class PolicyModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(final BuilderStatus builderStatus) {
-        validateBoolean(builderStatus, PolicyModuleProperty.ENABLED, isEnabledUnverified());
+    public void validate(final ConfigValidationReport configValidationReport) {
+        validateBoolean(configValidationReport, PolicyModuleProperty.ENABLED, isEnabledUnverified());
     }
 }

@@ -27,7 +27,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.BooleanUtils;
@@ -66,8 +68,10 @@ public class ConfigurationPropertyManager {
         return repositoryKeys;
     }
 
-    public Properties getProperties() {
-        return properties;
+    public Set<Map.Entry<String, String>> getProperties() {
+        return properties.stringPropertyNames().stream()
+                   .collect(Collectors.toMap(name -> name, properties::getProperty))
+                   .entrySet();
     }
 
     public String getProperty(final ConfigurationProperty configurationProperty) {

@@ -65,7 +65,7 @@ executions {
     /**
      * This will enabled or disable a particular module within the plugin and then reinitialize the plugin.
      * This endpoint requires parameters to be set. Each module has an enabled state of 'true' or 'false'
-     * The names for the modules available are:
+     * The names for the propertyReports available are:
      *      ScanModule
      *      InspectionModule
      *      PolicyModule
@@ -81,7 +81,7 @@ executions {
      * This can be triggered with the following curl command for enabling the InspectionModule:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=InspectionModule=true"
      *
-     * This can be triggered with the following curl command for disabling multiple modules (ScanModule and the PolicyModule):
+     * This can be triggered with the following curl command for disabling multiple propertyReports (ScanModule and the PolicyModule):
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
      **/
     blackDuckSetModuleState() { params ->
@@ -136,7 +136,7 @@ executions {
      *
      * The addScanPolicyStatus process will add several properties to your artifacts in Artifactory. Namely:
      *
-     * blackduck.uiUrl - the url for the project version created in Black Duck
+     * blackduck.uiUrl - the blackDuckUrl for the project version created in Black Duck
      * blackduck.policyStatus - a short description of the policy status from Black Duck
      * blackduck.overallPolicyStatus - the overall policy status of artifact in Black Duck (ex. NOT_IN_VIOLATION)
      * blackduck.updateStatus - the status of policy updates (ex. OUT_OF_DATE implies the policyStatus on this artifact is out of date)

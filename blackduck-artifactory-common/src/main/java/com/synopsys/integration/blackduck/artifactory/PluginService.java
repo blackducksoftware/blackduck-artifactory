@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.configuration.PluginConfig;
+import com.synopsys.integration.blackduck.artifactory.configuration.StatusCheckService;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
@@ -46,7 +47,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty;
-import com.synopsys.integration.blackduck.artifactory.status.StatusCheckService;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.exception.IntegrationException;
