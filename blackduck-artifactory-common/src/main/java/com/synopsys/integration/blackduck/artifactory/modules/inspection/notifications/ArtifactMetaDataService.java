@@ -40,6 +40,8 @@ import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.ArtifactMetaData;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.ArtifactMetaDataFromNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service.CommonNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service.CommonNotificationView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service.NotificationDetailResults;

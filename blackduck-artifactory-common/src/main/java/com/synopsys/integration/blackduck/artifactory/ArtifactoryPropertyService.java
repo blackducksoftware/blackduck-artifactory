@@ -140,8 +140,8 @@ public class ArtifactoryPropertyService {
                    .collect(Collectors.toList());
     }
 
-    public List<RepoPath> getAllItemsInRepoWithPropertiesAndValues(final SetMultimap<String, String> setMultimap, final String repoKey) {
-        return artifactoryPAPIService.itemsByProperties(setMultimap, repoKey);
+    public List<RepoPath> getAllItemsInRepoWithPropertiesAndValues(final SetMultimap<String, String> setMultimap, final String... repoKeys) {
+        return artifactoryPAPIService.itemsByProperties(setMultimap, repoKeys);
     }
 
     public Optional<NameVersion> getProjectNameVersion(final RepoPath repoPath) {
