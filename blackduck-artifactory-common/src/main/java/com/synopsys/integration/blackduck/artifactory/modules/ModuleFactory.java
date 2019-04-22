@@ -42,7 +42,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRetrievalService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
@@ -115,8 +115,8 @@ public class ModuleFactory {
         final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService, metaDataPopulationService);
         final NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
         final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPropertyService);
-        final NotificationProcessor notificationProcessor = new NotificationProcessor(blackDuckService);
-        final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessor, blackDuckService, notificationService, artifactSearchService,
+        final NotificationRetrievalService notificationRetrievalService = new NotificationRetrievalService(blackDuckService);
+        final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationRetrievalService, blackDuckService, notificationService, artifactSearchService,
             inspectionPropertyService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactMetaDataService, metaDataPopulationService, artifactNotificationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();

@@ -58,15 +58,16 @@ import com.synopsys.integration.util.NameVersion;
 public class ArtifactNotificationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
-    private final NotificationProcessor notificationProcessor;
+    private final NotificationRetrievalService notificationRetrievalService;
     private final BlackDuckService blackDuckService;
     private final NotificationService notificationService;
     private final ArtifactSearchService artifactSearchService;
     private final InspectionPropertyService inspectionPropertyService;
 
-    public ArtifactNotificationService(final NotificationProcessor notificationProcessor, final BlackDuckService blackDuckService, final NotificationService notificationService, final ArtifactSearchService artifactSearchService,
+    public ArtifactNotificationService(final NotificationRetrievalService notificationRetrievalService, final BlackDuckService blackDuckService, final NotificationService notificationService,
+        final ArtifactSearchService artifactSearchService,
         final InspectionPropertyService inspectionPropertyService) {
-        this.notificationProcessor = notificationProcessor;
+        this.notificationRetrievalService = notificationRetrievalService;
         this.blackDuckService = blackDuckService;
         this.notificationService = notificationService;
         this.artifactSearchService = artifactSearchService;
@@ -77,8 +78,8 @@ public class ArtifactNotificationService {
         final UserView currentUser = blackDuckService.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
         final List<NotificationUserView> notificationUserViews = notificationService.getAllUserNotifications(currentUser, startDate, endDate);
         final Map<String, PolicyVulnerabilityAggregate.Builder> artifactMetadataAggregateMap = new HashMap<>();
-        final List<VulnerabilityNotification> vulnerabilityNotifications = notificationProcessor.getVulnerabilityNotifications(notificationUserViews);
-        final List<PolicyStatusNotification> policyStatusNotifications = notificationProcessor.getPolicyStatusNotifications(notificationUserViews);
+        final List<VulnerabilityNotification> vulnerabilityNotifications = notificationRetrievalService.getVulnerabilityNotifications(notificationUserViews);
+        final List<PolicyStatusNotification> policyStatusNotifications = notificationRetrievalService.getPolicyStatusNotifications(notificationUserViews);
 
         processVulnerabilityNotifications(repoKeys, vulnerabilityNotifications, artifactMetadataAggregateMap);
         processPolicyStatusNotifications(repoKeys, policyStatusNotifications, artifactMetadataAggregateMap);
