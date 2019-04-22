@@ -137,9 +137,9 @@ executions {
      * The addScanPolicyStatus process will add several properties to your artifacts in Artifactory. Namely:
      *
      * blackduck.uiUrl - the blackDuckUrl for the project version created in Black Duck
-     * blackduck.policyStatus - a short description of the policy status from Black Duck
+     * blackduck.policyStatusView - a short description of the policy status from Black Duck
      * blackduck.overallPolicyStatus - the overall policy status of artifact in Black Duck (ex. NOT_IN_VIOLATION)
-     * blackduck.updateStatus - the status of policy updates (ex. OUT_OF_DATE implies the policyStatus on this artifact is out of date)
+     * blackduck.updateStatus - the status of policy updates (ex. OUT_OF_DATE implies the policyStatusView on this artifact is out of date)
      * blackduck.lastUpdate - the last time policy status was updated on this artifact
      *
      * The same functionality is provided via the blackDuckAddPolicyStatus cron job to enable scheduled policy status checks to run consistently.
@@ -273,7 +273,7 @@ executions {
      * blackduck.highVulnerabilities
      * blackduck.mediumVulnerabilities
      * blackduck.lowVulnerabilities
-     * blackduck.policyStatus
+     * blackduck.policyStatusView
      *
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"

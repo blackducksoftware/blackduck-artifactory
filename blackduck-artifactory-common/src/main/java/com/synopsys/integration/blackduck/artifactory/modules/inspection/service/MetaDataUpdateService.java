@@ -81,10 +81,11 @@ public class MetaDataUpdateService {
                 final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
                 final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
 
-                final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
-                artifactNotificationService.updateMetadataFromNotifications(Collections.singletonList(repoKey), dateToCheck, now);
+                // final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
+                final Optional<Date> lastNotificationDate = artifactNotificationService.updateMetadataFromNotifications(Collections.singletonList(repoKey), dateToCheck, now);
                 inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-                inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate);
+                // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
+                inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(dateToCheck));
 
                 inspectionPropertyService.updateUIUrl(repoKeyPath, projectName, projectVersionName);
             } catch (final IntegrationException e) {
