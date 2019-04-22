@@ -116,7 +116,7 @@ public class ModuleFactory {
         final NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
         final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPropertyService);
         final NotificationProcessor notificationProcessor = new NotificationProcessor(blackDuckService);
-        final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessor, blackDuckService, notificationService, artifactSearchService, artifactoryPropertyService,
+        final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessor, blackDuckService, notificationService, artifactSearchService,
             inspectionPropertyService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactMetaDataService, metaDataPopulationService, artifactNotificationService);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();

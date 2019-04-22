@@ -1,3 +1,25 @@
+/**
+ * blackduck-artifactory-common
+ *
+ * Copyright (c) 2019 Synopsys, Inc.
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
 
 import java.util.ArrayList;
@@ -19,7 +41,6 @@ import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.AffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.BlackDuckNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyStatusNotification;
@@ -41,16 +62,14 @@ public class ArtifactNotificationService {
     private final BlackDuckService blackDuckService;
     private final NotificationService notificationService;
     private final ArtifactSearchService artifactSearchService;
-    private final ArtifactoryPropertyService artifactoryPropertyService;
     private final InspectionPropertyService inspectionPropertyService;
 
     public ArtifactNotificationService(final NotificationProcessor notificationProcessor, final BlackDuckService blackDuckService, final NotificationService notificationService, final ArtifactSearchService artifactSearchService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService) {
+        final InspectionPropertyService inspectionPropertyService) {
         this.notificationProcessor = notificationProcessor;
         this.blackDuckService = blackDuckService;
         this.notificationService = notificationService;
         this.artifactSearchService = artifactSearchService;
-        this.artifactoryPropertyService = artifactoryPropertyService;
         this.inspectionPropertyService = inspectionPropertyService;
     }
 
@@ -68,15 +87,8 @@ public class ArtifactNotificationService {
             final RepoPath repoPath = RepoPathFactory.create(entry.getKey());
             final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = entry.getValue().build();
 
-            inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate); // TODO: Use this instead of below once all data is gathered.
-            //            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES2, policyVulnerabilityAggregate.getHighVulnerabilities(), logger);
-            //            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES2, policyVulnerabilityAggregate.getMediumVulnerabilities(), logger);
-            //            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES2, policyVulnerabilityAggregate.getLowVulnerabilities(), logger);
-            //            policyVulnerabilityAggregate.getComponentVersionUrl().ifPresent(componentVersionUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL2, componentVersionUrl, logger));
+            inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
         }
-
-        //        final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = PolicyVulnerabilityAggregate.fromVulnerabilityAggregate(vulnerabilityAggregate, null, null); // TODO
-        //        inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
 
         return getLatestNotificationCreatedAtDate(notificationUserViews);
     }
