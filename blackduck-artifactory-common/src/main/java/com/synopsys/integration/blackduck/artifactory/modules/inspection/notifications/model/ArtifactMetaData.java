@@ -20,12 +20,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service.content;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model;
 
-import com.synopsys.integration.blackduck.api.core.BlackDuckComponent;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.util.Stringable;
 
-public class PolicyInfo extends BlackDuckComponent {
-    public String policyName;
-    public String policy;
+public class ArtifactMetaData extends Stringable {
+    public String repoKey;
+    public String componentVersionLink;
+    public int highSeverityCount;
+    public int mediumSeverityCount;
+    public int lowSeverityCount;
+    public PolicySummaryStatusType policyStatus;
+    public String forge;
+    public String originId;
 
 }

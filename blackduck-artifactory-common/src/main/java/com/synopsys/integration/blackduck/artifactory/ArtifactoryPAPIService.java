@@ -139,7 +139,7 @@ public class ArtifactoryPAPIService {
         repositories.deleteProperty(repoPath, propertyName);
     }
 
-    public List<RepoPath> itemsByProperties(final SetMultimap<String, String> properties, final String repoKey) {
-        return searches.itemsByProperties(properties, repoKey);
+    public List<RepoPath> itemsByProperties(final SetMultimap<String, String> properties, final String... repoKeys) {
+        return searches.itemsByProperties(properties, repoKeys);
     }
 }

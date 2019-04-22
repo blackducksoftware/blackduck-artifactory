@@ -22,6 +22,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.service;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 
@@ -32,8 +33,8 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataFromNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -44,11 +45,14 @@ public class MetaDataUpdateService {
     private final ArtifactMetaDataService artifactMetaDataService;
     private final MetaDataPopulationService metadataPopulationService;
     private final InspectionPropertyService inspectionPropertyService;
+    private final ArtifactNotificationService artifactNotificationService;
 
-    public MetaDataUpdateService(final InspectionPropertyService inspectionPropertyService, final ArtifactMetaDataService artifactMetaDataService, final MetaDataPopulationService metadataPopulationService) {
+    public MetaDataUpdateService(final InspectionPropertyService inspectionPropertyService, final ArtifactMetaDataService artifactMetaDataService, final MetaDataPopulationService metadataPopulationService,
+        final ArtifactNotificationService artifactNotificationService) {
         this.inspectionPropertyService = inspectionPropertyService;
         this.artifactMetaDataService = artifactMetaDataService;
         this.metadataPopulationService = metadataPopulationService;
+        this.artifactNotificationService = artifactNotificationService;
     }
 
     public void updateMetadata(final String repoKey) {
@@ -76,9 +80,10 @@ public class MetaDataUpdateService {
                 final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
                 final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
 
-                final Date lastNotificationDate = updateFromHubProjectNotifications(repoKey, projectName, projectVersionName, dateToCheck, now);
+                final Optional<Date> lastNotificationDate = artifactNotificationService.updateMetadataFromNotifications(Collections.singletonList(repoKey), dateToCheck, now);
                 inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-                inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate);
+                // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
+                inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(dateToCheck));
 
                 inspectionPropertyService.updateUIUrl(repoKeyPath, projectName, projectVersionName);
             } catch (final IntegrationException e) {
@@ -87,22 +92,6 @@ public class MetaDataUpdateService {
                 inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE);
             }
         }
-    }
-
-    private Date updateFromHubProjectNotifications(final String repoKey, final String projectName, final String projectVersionName, final Date startDate, final Date endDate) throws IntegrationException {
-        final Optional<ArtifactMetaDataFromNotifications> artifactMetaDataFromNotificationsOptional = artifactMetaDataService.getArtifactMetadataFromNotifications(repoKey, projectName, projectVersionName, startDate, endDate);
-
-        Optional<Date> lastNotificationDate = Optional.empty();
-        if (artifactMetaDataFromNotificationsOptional.isPresent()) {
-            final ArtifactMetaDataFromNotifications artifactMetaDataFromNotifications = artifactMetaDataFromNotificationsOptional.get();
-            metadataPopulationService.populateBlackDuckMetadataFromIdMetadata(repoKey, artifactMetaDataFromNotifications.getArtifactMetaData());
-            lastNotificationDate = artifactMetaDataFromNotifications.getLastNotificationDate();
-        } else {
-            logger.debug("No artifact notifications from notifications");
-        }
-
-        // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
-        return lastNotificationDate.orElse(startDate);
     }
 
 }

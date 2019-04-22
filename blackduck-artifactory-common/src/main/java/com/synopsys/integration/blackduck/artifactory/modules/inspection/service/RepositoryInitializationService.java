@@ -110,6 +110,8 @@ public class RepositoryInitializationService {
 
         final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
         final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+        inspectionPropertyService.setRepoProjectNameProperties(repoKey, projectName, projectVersionName);
+
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
         final List<Dependency> dependencies = identifiableRepoPaths.stream()
                                                   .map(repoPath -> artifactInspectionService.identifyAndMarkArtifact(repoPath, packageType.get()))

@@ -39,10 +39,10 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyVulnerabilityAggregate;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.VulnerabilityAggregate;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaData;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.ArtifactMetaData;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
 import com.synopsys.integration.exception.IntegrationException;
@@ -98,7 +98,7 @@ public class MetaDataPopulationService {
     public void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView) throws IntegrationException {
         final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
         final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
-        final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityV2Views(componentVersionVulnerabilities.getVulnerabilities());
+        final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
         populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, policyStatus, componentVersionView.getHref().orElse(null));
     }
 

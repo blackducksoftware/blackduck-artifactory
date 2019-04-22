@@ -20,26 +20,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service.content;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model;
 
 import java.util.List;
 
-import com.synopsys.integration.blackduck.api.core.BlackDuckComponent;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.PolicyStatusView;
+import com.synopsys.integration.util.NameVersion;
 
-public class ComponentVersionStatus extends BlackDuckComponent {
-    public String componentName;
-    public String componentVersionName;
-    public String bomComponentVersionPolicyStatus;
-    public String componentIssueLink;
-    public List<String> policies;
-    public String bomComponent;
+public class PolicyStatusNotification extends BlackDuckNotification {
+    private final PolicyStatusView policyStatusView;
 
-    // If version is specified, componentVersion will be populated
-    // otherwise it will be null
-    public String componentVersion;
+    public PolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final ComponentVersionView componentVersionView, final PolicyStatusView policyStatusView) {
+        super(affectedProjectVersions, componentVersionView);
+        this.policyStatusView = policyStatusView;
+    }
 
-    // If version is not specified, component will be populated
-    // otherwise it will be null
-    public String component;
-
+    public PolicyStatusView getPolicyStatusView() {
+        return policyStatusView;
+    }
 }

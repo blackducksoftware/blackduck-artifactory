@@ -42,7 +42,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ExternalIdProperties;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyVulnerabilityAggregate;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
@@ -94,12 +94,18 @@ public class InspectionPropertyService {
     }
 
     public void setPolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, policyVulnerabilityAggregate.getComponentVersionUrl().orElse("Unavailable"), logger);
+        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities());
+        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities());
+        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities());
+        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType());
+        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, policyVulnerabilityAggregate.getComponentVersionUrl().orElse("Unavailable"));
         setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
+    }
+
+    private void setPolicyAndVulnerabilityProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final String value) {
+        if (StringUtils.isNotBlank(value)) {
+            artifactoryPropertyService.setProperty(repoPath, property, value, logger);
+        }
     }
 
     public void failInspection(final FailedInspectionException failedInspectionException) {
@@ -175,6 +181,12 @@ public class InspectionPropertyService {
         final Optional<String> projectVersionNameProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
 
         return projectVersionNameProperty.orElse(HostNameHelper.getMyHostName("UNKNOWN_HOST"));
+    }
+
+    public void setRepoProjectNameProperties(final String repoKey, final String projectName, final String projectVersionName) {
+        final RepoPath repoPath = RepoPathFactory.create(repoKey);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectName, logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionName, logger);
     }
 
     public void updateUIUrl(final RepoPath repoPath, final String projectName, final String projectVersion) throws IntegrationException {

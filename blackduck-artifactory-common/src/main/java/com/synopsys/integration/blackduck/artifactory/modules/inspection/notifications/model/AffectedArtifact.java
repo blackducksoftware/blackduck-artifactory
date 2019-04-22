@@ -20,23 +20,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.service;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import org.artifactory.repo.RepoPath;
 
-public class CommonNotificationViewResults extends NotificationResults<CommonNotificationView> {
-    private final List<CommonNotificationView> commonNotificationViews;
+public class AffectedArtifact<T extends BlackDuckNotification> {
+    private final RepoPath repoPath;
+    private final T blackDuckNotification;
 
-    public CommonNotificationViewResults(final List<CommonNotificationView> commonNotificationViews, final Optional<Date> latestNotificationCreatedAtDate, final Optional<String> latestNotificationCreatedAtString) {
-        super(latestNotificationCreatedAtDate, latestNotificationCreatedAtString);
-        this.commonNotificationViews = commonNotificationViews;
+    public AffectedArtifact(final RepoPath repoPath, final T blackDuckNotification) {
+        this.repoPath = repoPath;
+        this.blackDuckNotification = blackDuckNotification;
     }
 
-    @Override
-    public List<CommonNotificationView> getResults() {
-        return commonNotificationViews;
+    public RepoPath getRepoPath() {
+        return repoPath;
     }
 
+    public T getBlackDuckNotification() {
+        return blackDuckNotification;
+    }
 }
