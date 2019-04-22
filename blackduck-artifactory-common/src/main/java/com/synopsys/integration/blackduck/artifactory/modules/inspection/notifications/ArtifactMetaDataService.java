@@ -27,10 +27,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
@@ -61,7 +64,6 @@ public class ArtifactMetaDataService {
     public List<ArtifactMetaData> getArtifactMetadataOfRepository(final String repoKey, final String projectName, final String projectVersionName) throws IntegrationException {
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
         final ProjectService projectDataService = blackDuckServicesFactory.createProjectService();
-        final CompositeComponentManager compositeComponentManager = new CompositeComponentManager(logger, blackDuckService);
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
         final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
@@ -69,7 +71,9 @@ public class ArtifactMetaDataService {
         if (projectVersionWrapper.isPresent()) {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
             final List<VersionBomComponentView> versionBomComponentViews = blackDuckService.getAllResponses(projectVersionView, ProjectVersionView.COMPONENTS_LINK_RESPONSE);
-            final List<CompositeComponentModel> projectVersionComponentVersionModels = compositeComponentManager.parseBom(versionBomComponentViews);
+            final List<CompositeComponentModel> projectVersionComponentVersionModels = versionBomComponentViews.stream()
+                                                                                           .map(this::generateCompositeComponentModel)
+                                                                                           .collect(Collectors.toList());
 
             for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
                 populateMetaDataMap(repoKey, idToArtifactMetaData, blackDuckService, projectVersionComponentVersionModel);
@@ -79,6 +83,21 @@ public class ArtifactMetaDataService {
         }
 
         return new ArrayList<>(idToArtifactMetaData.values());
+    }
+
+    private CompositeComponentModel generateCompositeComponentModel(final VersionBomComponentView versionBomComponentView) {
+        CompositeComponentModel compositeComponentModel = new CompositeComponentModel();
+        final UriSingleResponse<ComponentVersionView> componentVersionViewUriResponse = new UriSingleResponse<>(versionBomComponentView.getComponentVersion(), ComponentVersionView.class);
+        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+        try {
+            final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUriResponse);
+            final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
+            compositeComponentModel = new CompositeComponentModel(versionBomComponentView, componentVersionView, originViews);
+        } catch (final IntegrationException e) {
+            logger.error(String.format("Could not create the CompositeComponentModel: %s", e.getMessage()), e);
+        }
+
+        return compositeComponentModel;
     }
 
     private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final BlackDuckService blackDuckService, final CompositeComponentModel compositeComponentModel) {
