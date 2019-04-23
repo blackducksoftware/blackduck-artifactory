@@ -202,6 +202,7 @@ public class ArtifactScanService {
 
         logger.info(String.format("%s was successfully scanned by the BlackDuck CLI.", repoPath.getName()));
 
+        artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT_MESSAGE, logger);
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectName, logger);
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectNameVersion, logger);
     }
