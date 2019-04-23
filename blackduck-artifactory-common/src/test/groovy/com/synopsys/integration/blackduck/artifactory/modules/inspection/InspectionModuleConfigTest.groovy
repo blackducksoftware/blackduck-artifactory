@@ -15,7 +15,7 @@ class InspectionModuleConfigTest {
         validInspectionModuleConfig = new InspectionModuleConfig(
             true,
             "0 0/1 * 1/1 * ?",
-            true,
+            true, patternsBower,
             ["*.tar.gz,*.tgz,*.zip"],
             ["*.gem"],
             ["*.jar"],
@@ -31,7 +31,7 @@ class InspectionModuleConfigTest {
         invalidInspectionModuleConfig = new InspectionModuleConfig(
             null,
             null,
-            true,
+            true, patternsBower,
             null,
             null,
             null,

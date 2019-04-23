@@ -36,7 +36,8 @@ public enum SupportedPackageType {
     PYPI("pypi", Forge.PYPI, "pypi.name", "pypi.version"),
     NUGET("nuget", Forge.NUGET, "nuget.id", "nuget.version"),
     NPM("npm", Forge.NPM, "npm.name", "npm.version"),
-    CRAN("cran", Forge.CRAN, "cran.name", "cran.version");
+    CRAN("cran", Forge.CRAN, "cran.name", "cran.version"),
+    BOWER("bower", Forge.NPM, "bower.name", "bower.version");
 
     private final String artifactoryName;
     private final Forge forge;
