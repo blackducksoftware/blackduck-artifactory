@@ -34,6 +34,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 public class InspectionModuleConfig extends ModuleConfig {
     private final String inspectionCron;
     private final Boolean metadataBlockEnabled;
+    private final List<String> patternsCran;
     private final List<String> patternsRubygems;
     private final List<String> patternsMaven;
     private final List<String> patternsGradle;
@@ -43,12 +44,12 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final List<String> repos;
     private final Integer retryCount;
 
-    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final Boolean metadataBlockEnabled, final List<String> patternsRubygems, final List<String> patternsMaven,
-        final List<String> patternsGradle, final List<String> patternsPypi,
-        final List<String> patternsNuget, final List<String> patternsNpm, final List<String> repos, final int retryCount) {
+    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final Boolean metadataBlockEnabled, final List<String> patternsCran, final List<String> patternsRubygems,
+        final List<String> patternsMaven, final List<String> patternsGradle, final List<String> patternsPypi, final List<String> patternsNuget, final List<String> patternsNpm, final List<String> repos, final int retryCount) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.inspectionCron = blackDuckIdentifyArtifactsCron;
         this.metadataBlockEnabled = metadataBlockEnabled;
+        this.patternsCran = patternsCran;
         this.patternsRubygems = patternsRubygems;
         this.patternsMaven = patternsMaven;
         this.patternsGradle = patternsGradle;
@@ -63,6 +64,7 @@ public class InspectionModuleConfig extends ModuleConfig {
         final Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
         final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
         final Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
+        final List<String> patternsCran = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_CRAN);
         final List<String> patternsRubygems = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS);
         final List<String> patternsMaven = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN);
         final List<String> patternsGradle = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE);
@@ -74,7 +76,7 @@ public class InspectionModuleConfig extends ModuleConfig {
                                        .collect(Collectors.toList());
         final Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, metadataBlockEnabled, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, metadataBlockEnabled, patternsCran, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
             repos, retryCount);
     }
 
@@ -83,6 +85,7 @@ public class InspectionModuleConfig extends ModuleConfig {
         validateBoolean(propertyGroupReport, InspectionModuleProperty.ENABLED, isEnabledUnverified());
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.CRON, inspectionCron);
         validateBoolean(propertyGroupReport, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
+        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_CRAN, patternsCran);
         validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
         validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_MAVEN, patternsMaven);
         validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_GRADLE, patternsGradle);
@@ -104,6 +107,10 @@ public class InspectionModuleConfig extends ModuleConfig {
 
     public List<String> getRepos() {
         return repos;
+    }
+
+    public List<String> getPatternsCran() {
+        return patternsCran;
     }
 
     public List<String> getPatternsRubygems() {

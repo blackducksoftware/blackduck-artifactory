@@ -28,6 +28,7 @@ public enum InspectionModuleProperty implements ConfigurationProperty {
     ENABLED("enabled"),
     CRON("cron"),
     METADATA_BLOCK("metadata.block"),
+    PATTERNS_CRAN("patterns.cran"),
     PATTERNS_RUBYGEMS("patterns.rubygems"),
     PATTERNS_MAVEN("patterns.maven"),
     PATTERNS_GRADLE("patterns.gradle"),
