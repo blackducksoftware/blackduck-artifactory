@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.codelocation.Result;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatch;
@@ -71,17 +70,15 @@ public class ArtifactScanService {
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
-    private final DateTimeManager dateTimeManager;
 
     public ArtifactScanService(final ScanModuleConfig scanModuleConfig, final BlackDuckServerConfig blackDuckServerConfig, final File blackDuckDirectory, final RepositoryIdentificationService repositoryIdentificationService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final DateTimeManager dateTimeManager) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService) {
         this.scanModuleConfig = scanModuleConfig;
         this.blackDuckServerConfig = blackDuckServerConfig;
         this.blackDuckDirectory = blackDuckDirectory;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
-        this.dateTimeManager = dateTimeManager;
     }
 
     public void scanArtifactPaths(final Set<RepoPath> repoPaths) {
@@ -104,6 +101,7 @@ public class ArtifactScanService {
             } catch (final Exception e) {
                 logger.error(String.format("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully on %s", repoPath.getName()), e);
                 artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT, Result.FAILURE.toString(), logger);
+                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT_MESSAGE, e.getMessage(), logger);
             } finally {
                 deletePathArtifact(repoPath.getName());
             }
