@@ -143,7 +143,7 @@ public class ModuleManager implements Analyzable {
         return scanModuleConfig.getCron();
     }
 
-    public void handleAfterCopyEvent(final ItemInfo itemInfo, final TriggerType triggerType) {
+    public void handleAfterCreateEvent(final ItemInfo itemInfo, final TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, itemInfo, inspectionModule::handleAfterCreateEvent);
     }
 

@@ -379,7 +379,7 @@ storage {
      * item (org.artifactory.fs.ItemInfo) - the original item being created.
      */
     afterCreate { ItemInfo item ->
-        moduleManager.handleAfterCopyEvent(item, TriggerType.STORAGE_AFTER_CREATE)
+        moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
 
     /**
