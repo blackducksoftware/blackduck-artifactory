@@ -37,7 +37,7 @@ public class PackageTypePatternManager {
 
     public static PackageTypePatternManager fromInspectionModuleConfig(final InspectionModuleConfig inspectionModuleConfig) {
         final Map<SupportedPackageType, List<String>> patternMap = new HashMap<>();
-        patternMap.put(SupportedPackageType.BOWER, inspectionModuleConfig.getPatternsCran());
+        patternMap.put(SupportedPackageType.BOWER, inspectionModuleConfig.getPatternsBower());
         patternMap.put(SupportedPackageType.CRAN, inspectionModuleConfig.getPatternsCran());
         patternMap.put(SupportedPackageType.GEMS, inspectionModuleConfig.getPatternsRubygems());
         patternMap.put(SupportedPackageType.MAVEN, inspectionModuleConfig.getPatternsMaven());
