@@ -27,6 +27,7 @@ import com.synopsys.integration.blackduck.artifactory.configuration.Configuratio
 public enum InspectionModuleProperty implements ConfigurationProperty {
     ENABLED("enabled"),
     CRON("cron"),
+    REINSPECT_CRON("reinspect.cron"),
     METADATA_BLOCK("metadata.block"),
     PATTERNS_BOWER("patterns.bower"),
     PATTERNS_CRAN("patterns.cran"),

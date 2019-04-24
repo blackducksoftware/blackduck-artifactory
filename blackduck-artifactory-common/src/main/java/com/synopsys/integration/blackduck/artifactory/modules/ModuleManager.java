@@ -167,6 +167,10 @@ public class ModuleManager implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.deleteInspectionProperties(params));
     }
 
+    public void reinspectFromFailures(final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, (Runnable) inspectionModule::reinspectFromFailures);
+    }
+
     public void reinspectFromFailures(final TriggerType triggerType, final Map<String, List<String>> params) {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.reinspectFromFailures(params));
     }
@@ -181,6 +185,10 @@ public class ModuleManager implements Analyzable {
 
     public String getInspectionCron() {
         return inspectionModuleConfig.getInspectionCron();
+    }
+
+    public String getReinspectCron() {
+        return inspectionModuleConfig.getReinspectCron();
     }
 
     public void handleBeforeDownloadEventInspection(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {

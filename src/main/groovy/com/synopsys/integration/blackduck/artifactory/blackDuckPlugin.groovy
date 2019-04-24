@@ -234,7 +234,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReinspectFromFailures"
      *
      * To delete properties with property exclusions use the following curl command (the property "blackduck.originId" will not be removed from the artifact)
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReinspectFromFailures?params=properties=blackduck.originId"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReinspectFromFailures?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckReinspectFromFailures() { params ->
         moduleManager.reinspectFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
@@ -358,6 +358,13 @@ jobs {
      **/
     blackDuckUpdateMetadata(cron: moduleManager.getInspectionCron()) {
         moduleManager.updateMetadata(TriggerType.CRON_JOB)
+    }
+
+    /**
+     * The functionality is described above the blackDuckReinspectFromFailures execution
+     */
+    blackDuckReinspectFromFailures(cron: moduleManager.getReinspectCron()) {
+        moduleManager.reinspectFromFailures(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// ANALYTICS JOBS ////////////////////////////////////////////////

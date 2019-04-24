@@ -86,12 +86,9 @@ public class RepositoryInitializationService {
     private void initializeRepository(final RepoPath repoKeyPath) throws FailedInspectionException {
         final String repoKey = repoKeyPath.getRepoKey();
         final Optional<InspectionStatus> repoInspectionStatus = inspectionPropertyService.getInspectionStatus(repoKeyPath);
-        if (repoInspectionStatus.isPresent() && !inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
-            // If an inspection status is present, we don't need to do a BOM upload unless it is a failure. In which case we will see if we should retry.
+        if (repoInspectionStatus.isPresent()) {
+            // If an inspection status is present, we don't need to do a BOM upload. A failure will be cleared automatically or by a user.
             logger.debug(String.format("Not performing repo initialization on '%s' because it has already been initialized.", repoKey));
-            return;
-        } else if (repoInspectionStatus.isPresent() && !inspectionPropertyService.shouldRetryInspection(repoKeyPath)) {
-            // Number of retry attempts exceeded.
             return;
         }
 
@@ -144,7 +141,7 @@ public class RepositoryInitializationService {
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, "Waiting for policy and vulnerability information");
         } catch (final IOException | IntegrationException e) {
             logger.error("An error occurred when attempting to upload bdio file", e);
-            throw new FailedInspectionException(repoKeyPath, "Failed to upload BOM");
+            throw new FailedInspectionException(repoKeyPath, String.format("Failed to upload BOM: %s", e.getMessage()));
         }
     }
 }

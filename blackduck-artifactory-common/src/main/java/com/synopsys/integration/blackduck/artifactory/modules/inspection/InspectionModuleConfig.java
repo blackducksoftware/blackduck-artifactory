@@ -33,6 +33,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class InspectionModuleConfig extends ModuleConfig {
     private final String inspectionCron;
+    private final String reinspectCron;
     private final Boolean metadataBlockEnabled;
     private final List<String> patternsBower;
     private final List<String> patternsCran;
@@ -45,11 +46,13 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final List<String> repos;
     private final Integer retryCount;
 
-    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final Boolean metadataBlockEnabled, final List<String> patternsBower, final List<String> patternsCran,
+    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final String reinspectCron, final Boolean metadataBlockEnabled, final List<String> patternsBower,
+        final List<String> patternsCran,
         final List<String> patternsRubygems, final List<String> patternsMaven, final List<String> patternsGradle, final List<String> patternsPypi, final List<String> patternsNuget, final List<String> patternsNpm, final List<String> repos,
         final int retryCount) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.inspectionCron = blackDuckIdentifyArtifactsCron;
+        this.reinspectCron = reinspectCron;
         this.metadataBlockEnabled = metadataBlockEnabled;
         this.patternsBower = patternsBower;
         this.patternsCran = patternsCran;
@@ -66,6 +69,7 @@ public class InspectionModuleConfig extends ModuleConfig {
     public static InspectionModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
         final Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
         final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
+        final String reinspectCron = configurationPropertyManager.getProperty(InspectionModuleProperty.REINSPECT_CRON);
         final Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
         final List<String> patternsBower = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_BOWER);
         final List<String> patternsCran = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_CRAN);
@@ -80,7 +84,7 @@ public class InspectionModuleConfig extends ModuleConfig {
                                        .collect(Collectors.toList());
         final Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, metadataBlockEnabled, patternsBower, patternsCran, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, patternsBower, patternsCran, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
             repos, retryCount);
     }
 
@@ -88,6 +92,7 @@ public class InspectionModuleConfig extends ModuleConfig {
     public void validate(final PropertyGroupReport propertyGroupReport) {
         validateBoolean(propertyGroupReport, InspectionModuleProperty.ENABLED, isEnabledUnverified());
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.CRON, inspectionCron);
+        validateCronExpression(propertyGroupReport, InspectionModuleProperty.REINSPECT_CRON, reinspectCron);
         validateBoolean(propertyGroupReport, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
         validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_CRAN, patternsCran);
         validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
@@ -103,6 +108,10 @@ public class InspectionModuleConfig extends ModuleConfig {
 
     public String getInspectionCron() {
         return inspectionCron;
+    }
+
+    public String getReinspectCron() {
+        return reinspectCron;
     }
 
     public Boolean isMetadataBlockEnabled() {

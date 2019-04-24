@@ -22,6 +22,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,11 +34,11 @@ import java.util.stream.Collectors;
 import org.artifactory.exception.CancelException;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
@@ -93,6 +94,12 @@ public class InspectionModule implements Module {
         updateAnalytics();
     }
 
+    public void reinspectFromFailures() {
+        final Map<String, List<String>> params = new HashMap<>();
+        params.put("properties", Arrays.asList(BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(), BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName()));
+        reinspectFromFailures(params);
+    }
+
     //////////////////////// Old cron jobs ////////////////////////
 
     public void inspectDelta() {
@@ -123,11 +130,6 @@ public class InspectionModule implements Module {
         repoPaths.stream()
             .filter(artifactInspectionService::shouldInspectArtifact)
             .forEach(artifactInspectionService::identifyAndMarkArtifact);
-
-        inspectionModuleConfig.getRepos().stream()
-            .map(RepoPathFactory::create)
-            .filter(repoPath -> inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.FAILURE))
-            .forEach(repoPath -> inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS));
 
         updateAnalytics();
     }

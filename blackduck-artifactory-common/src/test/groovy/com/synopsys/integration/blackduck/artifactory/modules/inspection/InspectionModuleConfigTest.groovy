@@ -14,7 +14,7 @@ class InspectionModuleConfigTest {
     void init() {
         validInspectionModuleConfig = new InspectionModuleConfig(
             true,
-            "0 0/1 * 1/1 * ?",
+            "0 0/1 * 1/1 * ?", blackDuckReinspectCron,
             true, patternsBower,
             ["*.tar.gz,*.tgz,*.zip"],
             ["*.gem"],
@@ -30,7 +30,7 @@ class InspectionModuleConfigTest {
 
         invalidInspectionModuleConfig = new InspectionModuleConfig(
             null,
-            null,
+            null, blackDuckReinspectCron,
             true, patternsBower,
             null,
             null,
