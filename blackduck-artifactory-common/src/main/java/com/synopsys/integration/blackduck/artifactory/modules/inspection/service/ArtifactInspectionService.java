@@ -171,7 +171,7 @@ public class ArtifactInspectionService {
             }
         } catch (final IntegrationException e) {
             logger.error("An error occurred when attempting to get the project version from Black Duck.", e);
-            throw new FailedInspectionException(repoKeyPath, e.getMessage());
+            throw new FailedInspectionException(repoKeyPath, String.format("Failed to get project version from Black Duck: %s", e.getMessage()));
         }
 
         final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns).stream()
@@ -188,7 +188,7 @@ public class ArtifactInspectionService {
                 final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersionView);
                 metaDataPopulationService.populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
             } catch (final IntegrationException e) {
-                inspectionPropertyService.failInspection(artifact.getRepoPath(), e.getMessage());
+                inspectionPropertyService.failInspection(artifact.getRepoPath(), String.format("Failed to find component: %s", e.getMessage()));
             }
         }
     }
