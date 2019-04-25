@@ -38,6 +38,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.ArtifactMetaData;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
@@ -79,7 +80,7 @@ public class ArtifactMetaDataService {
                                                                                            .collect(Collectors.toList());
 
             for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
-                populateMetaDataMap(repoKey, idToArtifactMetaData, projectVersionComponentVersionModel);
+                populateMetaDataMap(idToArtifactMetaData, projectVersionComponentVersionModel);
             }
         } else {
             logger.debug(String.format("Failed to find project '%s' and version '%s' on repo '%s'", projectName, projectVersionName, repoKey));
@@ -103,7 +104,7 @@ public class ArtifactMetaDataService {
         return compositeComponentModel;
     }
 
-    private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final CompositeComponentModel compositeComponentModel) {
+    private void populateMetaDataMap(final Map<String, ArtifactMetaData> idToArtifactMetaData, final CompositeComponentModel compositeComponentModel) {
         final ComponentVersionView componentVersionView = compositeComponentModel.componentVersionView;
         final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
 
@@ -120,16 +121,16 @@ public class ArtifactMetaDataService {
         for (final OriginView originView : compositeComponentModel.originViews) {
             final String forge = originView.getOriginName();
             final String originId = originView.getOriginId();
-            if (!idToArtifactMetaData.containsKey(key(forge, originId))) {
-                final ArtifactMetaData artifactMetaData = new ArtifactMetaData();
-                artifactMetaData.repoKey = repoKey;
-                artifactMetaData.forge = forge;
-                artifactMetaData.originId = originId;
-                artifactMetaData.componentVersionLink = componentVersionView.getMeta().getHref();
-                artifactMetaData.policyStatus = compositeComponentModel.versionBomComponentView.getPolicyStatus();
-                artifactMetaData.vulnerabilityAggregate = vulnerabilityAggregate;
+            final String key = key(forge, originId);
+            if (!idToArtifactMetaData.containsKey(key)) {
+                final PolicyVulnerabilityAggregate.Builder builder = new PolicyVulnerabilityAggregate.Builder();
+                builder.setVulnerabilityAggregate(vulnerabilityAggregate);
+                builder.setComponentVersionUrl(componentVersionView.getMeta().getHref());
+                builder.setPolicySummaryStatusType(compositeComponentModel.versionBomComponentView.getPolicyStatus());
+                final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = builder.build();
 
-                idToArtifactMetaData.put(key(forge, originId), artifactMetaData);
+                final ArtifactMetaData artifactMetaData = new ArtifactMetaData(forge, originId, policyVulnerabilityAggregate);
+                idToArtifactMetaData.put(key, artifactMetaData);
             }
         }
     }

@@ -111,10 +111,7 @@ public class ArtifactNotificationService {
             final VulnerabilityAggregate vulnerabilityAggregate = vulnerabilityNotification.getVulnerabilityAggregate();
             final Optional<String> href = affectedArtifact.getBlackDuckNotification().getComponentVersionView().getHref();
             final PolicyVulnerabilityAggregate.Builder builder = getPolicyVulnerabilityAggregateBuilder(affectedArtifact, artifactMetadataAggregateMap);
-
-            builder.setHighVulnerabilities(vulnerabilityAggregate.getHighSeverityCount());
-            builder.setMediumVulnerabilities(vulnerabilityAggregate.getMediumSeverityCount());
-            builder.setLowVulnerabilities(vulnerabilityAggregate.getLowSeverityCount());
+            builder.setVulnerabilityAggregate(vulnerabilityAggregate);
             builder.setComponentVersionUrl(href.orElse(null));
         }
     }
@@ -129,7 +126,7 @@ public class ArtifactNotificationService {
             final PolicyStatusNotification policyStatusNotification = affectedArtifact.getBlackDuckNotification();
             final PolicyVulnerabilityAggregate.Builder builder = getPolicyVulnerabilityAggregateBuilder(affectedArtifact, artifactMetadataAggregateMap);
 
-            builder.setPolicySummaryStatusType(policyStatusNotification.getPolicyStatusView().getApprovalStatus().name());
+            builder.setPolicySummaryStatusType(policyStatusNotification.getPolicyStatusView().getApprovalStatus());
             builder.setComponentVersionUrl(policyStatusNotification.getComponentVersionView().getHref().orElse(null));
         }
     }

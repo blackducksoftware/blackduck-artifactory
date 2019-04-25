@@ -22,15 +22,28 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model;
 
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.util.Stringable;
 
 public class ArtifactMetaData extends Stringable {
-    public String repoKey;
-    public String componentVersionLink;
-    public VulnerabilityAggregate vulnerabilityAggregate;
-    public PolicySummaryStatusType policyStatus;
-    public String forge;
-    public String originId;
+    private final String forge;
+    private final String originId;
+    private final PolicyVulnerabilityAggregate policyVulnerabilityAggregate;
 
+    public ArtifactMetaData(final String forge, final String originId, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
+        this.forge = forge;
+        this.originId = originId;
+        this.policyVulnerabilityAggregate = policyVulnerabilityAggregate;
+    }
+
+    public String getForge() {
+        return forge;
+    }
+
+    public String getOriginId() {
+        return originId;
+    }
+
+    public PolicyVulnerabilityAggregate getPolicyVulnerabilityAggregate() {
+        return policyVulnerabilityAggregate;
+    }
 }

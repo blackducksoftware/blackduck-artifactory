@@ -96,40 +96,28 @@ public class MetaDataPopulationService {
     }
 
     public void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView) throws IntegrationException {
-        final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
+        final PolicySummaryStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
         final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
         final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
-        populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, policyStatus, componentVersionView.getHref().orElse(null));
+        final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(vulnerabilityAggregate, policySummaryStatusType, componentVersionView.getHref().orElse(null));
+        populateBlackDuckMetadata(repoPath, policyVulnerabilityAggregate);
     }
 
-    public void populateBlackDuckMetadataFromIdMetadata(final String repoKey, final List<ArtifactMetaData> artifactMetaDataList) {
+    private void populateBlackDuckMetadataFromIdMetadata(final String repoKey, final List<ArtifactMetaData> artifactMetaDataList) {
         for (final ArtifactMetaData artifactMetaData : artifactMetaDataList) {
-            if (StringUtils.isNoneBlank(artifactMetaData.originId, artifactMetaData.forge)) {
-                final List<RepoPath> artifactsWithOriginId = inspectionPropertyService.getArtifactsWithExternalIdProperties(repoKey, artifactMetaData.forge, artifactMetaData.originId);
+            final String forge = artifactMetaData.getForge();
+            final String originId = artifactMetaData.getOriginId();
+
+            if (StringUtils.isNoneBlank(forge, originId)) {
+                final List<RepoPath> artifactsWithOriginId = inspectionPropertyService.getArtifactsWithExternalIdProperties(repoKey, forge, originId);
                 for (final RepoPath repoPath : artifactsWithOriginId) {
-                    populateBlackDuckMetadata(repoPath, artifactMetaData.vulnerabilityAggregate, artifactMetaData.policyStatus, artifactMetaData.componentVersionLink);
+                    populateBlackDuckMetadata(repoPath, artifactMetaData.getPolicyVulnerabilityAggregate());
                 }
             }
         }
     }
 
-    private void populateBlackDuckMetadata(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate, final PolicySummaryStatusType policySummaryStatusType, final String componentVersionUrl) {
-        final String highVulnerabilities;
-        final String mediumVulnerabilities;
-        final String lowVulnerabilities;
-        if (vulnerabilityAggregate != null) {
-            highVulnerabilities = Integer.toString(vulnerabilityAggregate.getHighSeverityCount());
-            mediumVulnerabilities = Integer.toString(vulnerabilityAggregate.getMediumSeverityCount());
-            lowVulnerabilities = Integer.toString(vulnerabilityAggregate.getLowSeverityCount());
-        } else {
-            final String unknownVulnerabilitiesMessage = "An error occured retrivieng vulnerabilities for this component";
-            highVulnerabilities = unknownVulnerabilitiesMessage;
-            mediumVulnerabilities = unknownVulnerabilitiesMessage;
-            lowVulnerabilities = unknownVulnerabilitiesMessage;
-        }
-
-        final String policySummary = policySummaryStatusType.toString();
-        final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(highVulnerabilities, mediumVulnerabilities, lowVulnerabilities, policySummary, componentVersionUrl);
+    private void populateBlackDuckMetadata(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
         inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
         inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
     }

@@ -94,18 +94,12 @@ public class InspectionPropertyService {
     }
 
     public void setPolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
-        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities());
-        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities());
-        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities());
-        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType());
-        setPolicyAndVulnerabilityProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, policyVulnerabilityAggregate.getComponentVersionUrl().orElse("Unavailable"));
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType(), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, policyVulnerabilityAggregate.getComponentVersionUrl(), logger);
         setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
-    }
-
-    private void setPolicyAndVulnerabilityProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final String value) {
-        if (StringUtils.isNotBlank(value)) {
-            artifactoryPropertyService.setProperty(repoPath, property, value, logger);
-        }
     }
 
     public void failInspection(final FailedInspectionException failedInspectionException) {
