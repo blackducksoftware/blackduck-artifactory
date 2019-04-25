@@ -48,7 +48,7 @@ public class PluginConfig extends ConfigurationValidator {
         final String url = configurationPropertyManager.getProperty(GeneralProperty.URL);
         final Integer timeout = configurationPropertyManager.getIntegerProperty(GeneralProperty.TIMEOUT);
         final Boolean trustCert = configurationPropertyManager.getBooleanProperty(GeneralProperty.TRUST_CERT);
-        final Set<Map.Entry<String, String>> properties = configurationPropertyManager.getProperties();
+        final Set<Map.Entry<String, String>> properties = configurationPropertyManager.getPropertyEntries();
 
         return new PluginConfig(dateTimePattern, dateTimeZone, url, timeout, trustCert, properties);
     }

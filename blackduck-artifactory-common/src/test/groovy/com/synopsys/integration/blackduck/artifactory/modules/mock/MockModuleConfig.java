@@ -25,21 +25,24 @@ package com.synopsys.integration.blackduck.artifactory.modules.mock;
 
 import org.junit.platform.commons.util.StringUtils;
 
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
+import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.builder.BuilderStatus;
 
 public class MockModuleConfig extends ModuleConfig {
+    private final ConfigurationProperty configurationProperty;
     private final String testField;
 
-    public MockModuleConfig(final String moduleName, final Boolean enabled, final String testField) {
+    public MockModuleConfig(final String moduleName, final Boolean enabled, final ConfigurationProperty configurationProperty, final String testField) {
         super(moduleName, enabled);
+        this.configurationProperty = configurationProperty;
         this.testField = testField;
     }
 
     @Override
-    public void validate(final BuilderStatus builderStatus) {
+    public void validate(final PropertyGroupReport propertyGroupReport) {
         if (StringUtils.isBlank(testField)) {
-            builderStatus.addErrorMessage("testField is blank");
+            propertyGroupReport.addErrorMessage(configurationProperty, "testField is blank");
         }
     }
 }

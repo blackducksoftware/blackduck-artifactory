@@ -68,7 +68,11 @@ public class ConfigurationPropertyManager {
         return repositoryKeys;
     }
 
-    public Set<Map.Entry<String, String>> getProperties() {
+    public Properties getProperties() {
+        return properties;
+    }
+
+    public Set<Map.Entry<String, String>> getPropertyEntries() {
         return properties.stringPropertyNames().stream()
                    .collect(Collectors.toMap(name -> name, properties::getProperty))
                    .entrySet();

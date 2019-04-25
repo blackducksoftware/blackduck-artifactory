@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Date;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class DateTimeManagerTest {
     private final String dateTimePattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
@@ -38,23 +39,27 @@ class DateTimeManagerTest {
 
     @BeforeEach
     void setUp() {
-        dateTimeManager = new DateTimeManager(dateTimePattern);
+        dateTimeManager = new DateTimeManager(dateTimePattern, "ETC");
     }
 
+    @Test
     void getDateTimePattern() {
         assertEquals(dateTimePattern, dateTimeManager.getDateTimePattern());
     }
 
+    @Test
     void getTimeFromString() {
         final long actualTime = dateTimeManager.getTimeFromString(dateAsString);
         assertEquals(dateAsMilliseconds, actualTime);
     }
 
+    @Test
     void getStringFromDate() {
         final Date providedDate = new Date(dateAsMilliseconds);
         assertEquals(dateAsString, dateTimeManager.getStringFromDate(providedDate));
     }
 
+    @Test
     void getDateFromString() {
         final Date actualDate = dateTimeManager.getDateFromString(dateAsString);
         final Date expectedDate = new Date(dateAsMilliseconds);

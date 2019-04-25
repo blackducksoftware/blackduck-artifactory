@@ -26,7 +26,7 @@ package com.synopsys.integration.blackduck.artifactory.legacy;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.synopsys.integration.blackduck.artifactory.util.TestUtil;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;

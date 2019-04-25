@@ -23,6 +23,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules
 
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService
 import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModule
 import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModuleConfig
@@ -36,13 +37,13 @@ class ModuleRegistryTest {
 
     @BeforeEach
     void init() {
-        final ModuleConfig validModuleConfig = new MockModuleConfig("Mock1", true, "test!")
+        final ModuleConfig validModuleConfig = new MockModuleConfig("Mock1", true, new MockConfigProperty("test1"), "test!")
         final Module validModule = new MockModule(validModuleConfig)
 
-        final ModuleConfig validModuleConfig2 = new MockModuleConfig("Mock2", true, "test2!")
+        final ModuleConfig validModuleConfig2 = new MockModuleConfig("Mock2", true, new MockConfigProperty("test2"), "test2!")
         final Module validModule2 = new MockModule(validModuleConfig2)
 
-        final ModuleConfig invalidModuleConfig = new MockModuleConfig("Mock3", true, null)
+        final ModuleConfig invalidModuleConfig = new MockModuleConfig("Mock3", true, new MockConfigProperty("test3"), null)
         final Module invalidModule = new MockModule(invalidModuleConfig)
 
         final def analyticsServiceMock = new MockFor(AnalyticsService)
@@ -76,6 +77,19 @@ class ModuleRegistryTest {
         Assert.assertEquals(1, moduleRegistry.getModuleConfigsByName("Mock2").size())
         Assert.assertEquals(0, moduleRegistry.getModuleConfigsByName("Mock3").size())
         Assert.assertEquals(0, moduleRegistry.getModuleConfigsByName("Doesn't exist").size())
+    }
+
+    private class MockConfigProperty implements ConfigurationProperty {
+        private final String key
+
+        public MockConfigProperty(final String key) {
+            this.key = key;
+        }
+
+        @Override
+        String getKey() {
+            return key
+        }
     }
 
 }

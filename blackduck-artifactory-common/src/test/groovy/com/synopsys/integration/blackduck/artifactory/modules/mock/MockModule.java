@@ -27,7 +27,7 @@ import java.util.List;
 
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 
 public class MockModule implements Module {
     private final ModuleConfig moduleConfig;

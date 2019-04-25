@@ -23,8 +23,10 @@
  */
 package com.synopsys.integration.blackduck.artifactory.legacy;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,14 +41,15 @@ import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.md.Properties;
 import org.artifactory.md.PropertiesInfo;
 import org.artifactory.repo.RepoPath;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.ArtifactoryExternalIdFactory;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.SupportedPackageType;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.util.ArtifactoryExternalIdFactory;
 
 public class ArtifactoryExternalIdFactoryTest {
     @Test
@@ -96,13 +99,15 @@ public class ArtifactoryExternalIdFactoryTest {
     }
 
     private void testNameVersionExternalIdCreation(final String packageType, final Map<String, String> propertiesMap) {
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(null, new ExternalIdFactory());
+        final RepoPath repoPath = new MockRepoPath();
+        final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
+        when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(inspectionPropertyService, new ExternalIdFactory());
         final String organization = "group";
         final String module = "component";
         final String baseRevision = "version";
         final FileLayoutInfo fileLayoutInfo = createFileLayoutInfo(organization, module, baseRevision);
         final FileLayoutInfo missingFileLayoutInfo = createFileLayoutInfo(null, null, null);
-        final RepoPath repoPath = null;
 
         final Properties properties = createProperties(propertiesMap);
         final Properties missingProperties = createProperties(new HashMap<>());
@@ -125,13 +130,15 @@ public class ArtifactoryExternalIdFactoryTest {
     }
 
     private void testMavenDependencyCreation(final String packageType) {
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(null, new ExternalIdFactory());
+        final RepoPath repoPath = new MockRepoPath();
+        final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
+        when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(inspectionPropertyService, new ExternalIdFactory());
         final String organization = "group";
         final String module = "component";
         final String baseRevision = "version";
         final FileLayoutInfo fileLayoutInfo = createFileLayoutInfo(organization, module, baseRevision);
         final FileLayoutInfo missingFileLayoutInfo = createFileLayoutInfo(null, null, null);
-        final RepoPath repoPath = null;
 
         Optional<ExternalId> externalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, null);
         assertTrue(externalId.isPresent());
@@ -314,6 +321,59 @@ public class ArtifactoryExternalIdFactoryTest {
                 return false;
             }
         };
+    }
+
+    protected class MockRepoPath implements RepoPath {
+        private final static String key = "test";
+        private final static String name = "name.java";
+        private final static String path = "repo/path/" + name;
+
+        @Nonnull
+        @Override
+        public String getRepoKey() {
+            return key;
+        }
+
+        @Override
+        public String getPath() {
+            return path;
+        }
+
+        @Override
+        public String getId() {
+            return key + ":" + path;
+        }
+
+        @Override
+        public String toPath() {
+            return key + "/" + path;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Nullable
+        @Override
+        public RepoPath getParent() {
+            return null;
+        }
+
+        @Override
+        public boolean isRoot() {
+            return false;
+        }
+
+        @Override
+        public boolean isFile() {
+            return false;
+        }
+
+        @Override
+        public boolean isFolder() {
+            return false;
+        }
     }
 }
 

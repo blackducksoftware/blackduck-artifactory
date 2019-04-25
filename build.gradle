@@ -85,8 +85,6 @@ task createFinalZip(type: Zip) {
 configure(subprojects) { project ->
     group = 'com.blackducksoftware.integration'
     version = parentVersion
-
-    apply plugin: 'com.blackducksoftware.integration.simple'
 }
 
 subprojects {
