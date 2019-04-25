@@ -121,6 +121,7 @@ public class MetaDataPopulationService {
         final String policySummary = policySummaryStatusType.toString();
         final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(highVulnerabilities, mediumVulnerabilities, lowVulnerabilities, policySummary, componentVersionUrl);
         inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
+        inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
     }
 
 }
