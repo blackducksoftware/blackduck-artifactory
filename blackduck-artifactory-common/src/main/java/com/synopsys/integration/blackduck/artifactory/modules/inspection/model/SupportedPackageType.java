@@ -28,34 +28,38 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.bdio.model.Forge;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty;
 
 public enum SupportedPackageType {
-    GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version"),
-    MAVEN("maven", Forge.MAVEN),
-    GRADLE("gradle", Forge.MAVEN),
-    PYPI("pypi", Forge.PYPI, "pypi.name", "pypi.version"),
-    NUGET("nuget", Forge.NUGET, "nuget.id", "nuget.version"),
-    NPM("npm", Forge.NPM, "npm.name", "npm.version"),
-    CRAN("cran", Forge.CRAN, "cran.name", "cran.version"),
-    BOWER("bower", Forge.NPM, "bower.name", "bower.version");
+    GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version", InspectionModuleProperty.PATTERNS_RUBYGEMS),
+    MAVEN("maven", Forge.MAVEN, InspectionModuleProperty.PATTERNS_MAVEN),
+    GRADLE("gradle", Forge.MAVEN, InspectionModuleProperty.PATTERNS_GRADLE),
+    PYPI("pypi", Forge.PYPI, "pypi.name", "pypi.version", InspectionModuleProperty.PATTERNS_PYPI),
+    NUGET("nuget", Forge.NUGET, "nuget.id", "nuget.version", InspectionModuleProperty.PATTERNS_NUGET),
+    NPM("npm", Forge.NPM, "npm.name", "npm.version", InspectionModuleProperty.PATTERNS_NPM),
+    CRAN("cran", Forge.CRAN, "cran.name", "cran.version", InspectionModuleProperty.PATTERNS_CRAN),
+    BOWER("bower", Forge.NPM, "bower.name", "bower.version", InspectionModuleProperty.PATTERNS_BOWER);
 
     private final String artifactoryName;
     private final Forge forge;
     private final String artifactoryNameProperty;
     private final String artifactoryVersionProperty;
+    private final InspectionModuleProperty patternProperty;
 
-    SupportedPackageType(final String artifactoryName, final Forge forge, final String artifactoryNameProperty, final String artifactoryVersionProperty) {
+    SupportedPackageType(final String artifactoryName, final Forge forge, final String artifactoryNameProperty, final String artifactoryVersionProperty, final InspectionModuleProperty patternProperty) {
         this.artifactoryName = artifactoryName;
         this.forge = forge;
         this.artifactoryNameProperty = artifactoryNameProperty;
         this.artifactoryVersionProperty = artifactoryVersionProperty;
+        this.patternProperty = patternProperty;
     }
 
-    SupportedPackageType(final String artifactoryName, final Forge forge) {
+    SupportedPackageType(final String artifactoryName, final Forge forge, final InspectionModuleProperty patternProperty) {
         this.artifactoryName = artifactoryName;
         this.forge = forge;
         this.artifactoryNameProperty = null;
         this.artifactoryVersionProperty = null;
+        this.patternProperty = patternProperty;
     }
 
     public static Optional<SupportedPackageType> getAsSupportedPackageType(final String packageType) {
@@ -70,6 +74,10 @@ public enum SupportedPackageType {
 
     public Forge getForge() {
         return forge;
+    }
+
+    public InspectionModuleProperty getPatternProperty() {
+        return patternProperty;
     }
 
     public String getArtifactoryNameProperty() {

@@ -44,7 +44,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.A
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.util.ArtifactoryExternalIdFactory;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.util.PackageTypePatternManager;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
@@ -58,19 +57,17 @@ public class ArtifactInspectionService {
     private final BlackDuckBOMService blackDuckBOMService;
     private final MetaDataPopulationService metaDataPopulationService;
     private final InspectionModuleConfig inspectionModuleConfig;
-    private final PackageTypePatternManager packageTypePatternManager;
     private final InspectionPropertyService inspectionPropertyService;
     private final ProjectService projectService;
     private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
 
     public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService, final MetaDataPopulationService metaDataPopulationService,
-        final InspectionModuleConfig inspectionModuleConfig, final PackageTypePatternManager packageTypePatternManager, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService,
+        final InspectionModuleConfig inspectionModuleConfig, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService,
         final ArtifactoryExternalIdFactory artifactoryExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.inspectionModuleConfig = inspectionModuleConfig;
-        this.packageTypePatternManager = packageTypePatternManager;
         this.inspectionPropertyService = inspectionPropertyService;
         this.projectService = projectService;
         this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
@@ -83,9 +80,7 @@ public class ArtifactInspectionService {
 
         final ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
         final Optional<List<String>> patterns = artifactoryPAPIService.getPackageType(repoPath.getRepoKey())
-                                                    .map(packageTypePatternManager::getPatterns)
-                                                    .filter(Optional::isPresent)
-                                                    .map(Optional::get);
+                                                    .map(inspectionModuleConfig::getPatternsForPackageType);
 
         if (!patterns.isPresent() || patterns.get().isEmpty() || itemInfo.isFolder()) {
             return false;
@@ -151,7 +146,7 @@ public class ArtifactInspectionService {
             throw new FailedInspectionException(repoKeyPath, message);
         }
 
-        final List<String> patterns = packageTypePatternManager.getPatternsForPackageType(packageType.get());
+        final List<String> patterns = inspectionModuleConfig.getPatternsForPackageType(packageType.get());
         if (patterns.isEmpty()) {
             // If we don't verify that patterns is not empty, artifactory will grab every artifact in the repo.
             logger.warn(String.format("The repository '%s' has a package type of '%s' which either isn't supported or has no patterns configured for it.", repoKey, packageType.get()));

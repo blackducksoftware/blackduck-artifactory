@@ -23,45 +23,34 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 
 public class InspectionModuleConfig extends ModuleConfig {
     private final String inspectionCron;
     private final String reinspectCron;
     private final Boolean metadataBlockEnabled;
-    private final List<String> patternsBower;
-    private final List<String> patternsCran;
-    private final List<String> patternsRubygems;
-    private final List<String> patternsMaven;
-    private final List<String> patternsGradle;
-    private final List<String> patternsPypi;
-    private final List<String> patternsNuget;
-    private final List<String> patternsNpm;
+    private final Map<SupportedPackageType, List<String>> patternMap;
     private final List<String> repos;
     private final Integer retryCount;
 
-    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final String reinspectCron, final Boolean metadataBlockEnabled, final List<String> patternsBower,
-        final List<String> patternsCran,
-        final List<String> patternsRubygems, final List<String> patternsMaven, final List<String> patternsGradle, final List<String> patternsPypi, final List<String> patternsNuget, final List<String> patternsNpm, final List<String> repos,
-        final int retryCount) {
+    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final String reinspectCron, final Boolean metadataBlockEnabled, final Map<SupportedPackageType, List<String>> patternMap,
+        final List<String> repos, final int retryCount) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.inspectionCron = blackDuckIdentifyArtifactsCron;
         this.reinspectCron = reinspectCron;
         this.metadataBlockEnabled = metadataBlockEnabled;
-        this.patternsBower = patternsBower;
-        this.patternsCran = patternsCran;
-        this.patternsRubygems = patternsRubygems;
-        this.patternsMaven = patternsMaven;
-        this.patternsGradle = patternsGradle;
-        this.patternsPypi = patternsPypi;
-        this.patternsNuget = patternsNuget;
-        this.patternsNpm = patternsNpm;
+        this.patternMap = patternMap;
         this.repos = repos;
         this.retryCount = retryCount;
     }
@@ -71,21 +60,16 @@ public class InspectionModuleConfig extends ModuleConfig {
         final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
         final String reinspectCron = configurationPropertyManager.getProperty(InspectionModuleProperty.REINSPECT_CRON);
         final Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
-        final List<String> patternsBower = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_BOWER);
-        final List<String> patternsCran = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_CRAN);
-        final List<String> patternsRubygems = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_RUBYGEMS);
-        final List<String> patternsMaven = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_MAVEN);
-        final List<String> patternsGradle = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_GRADLE);
-        final List<String> patternsPypi = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_PYPI);
-        final List<String> patternsNuget = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NUGET);
-        final List<String> patternsNpm = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.PATTERNS_NPM);
+
+        final Map<SupportedPackageType, List<String>> patternMap = Arrays.stream(SupportedPackageType.values())
+                                                                       .collect(Collectors.toMap(Function.identity(), supportedPackageType -> configurationPropertyManager.getPropertyAsList(supportedPackageType.getPatternProperty())));
+
         final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
         final Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, patternsBower, patternsCran, patternsRubygems, patternsMaven, patternsGradle, patternsPypi, patternsNuget, patternsNpm,
-            repos, retryCount);
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, patternMap, repos, retryCount);
     }
 
     @Override
@@ -94,13 +78,8 @@ public class InspectionModuleConfig extends ModuleConfig {
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.CRON, inspectionCron);
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.REINSPECT_CRON, reinspectCron);
         validateBoolean(propertyGroupReport, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
-        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_CRAN, patternsCran);
-        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_RUBYGEMS, patternsRubygems);
-        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_MAVEN, patternsMaven);
-        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_GRADLE, patternsGradle);
-        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_PYPI, patternsPypi);
-        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_NUGET, patternsNuget);
-        validateNotNull(propertyGroupReport, InspectionModuleProperty.PATTERNS_NPM, patternsNpm);
+        Arrays.stream(SupportedPackageType.values())
+            .forEach(packageType -> validateList(propertyGroupReport, packageType.getPatternProperty(), getPatternsForPackageType(packageType)));
         validateList(propertyGroupReport, InspectionModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
         validateInteger(propertyGroupReport, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
@@ -122,39 +101,17 @@ public class InspectionModuleConfig extends ModuleConfig {
         return repos;
     }
 
-    public List<String> getPatternsBower() {
-        return patternsBower;
-    }
-
-    public List<String> getPatternsCran() {
-        return patternsCran;
-    }
-
-    public List<String> getPatternsRubygems() {
-        return patternsRubygems;
-    }
-
-    public List<String> getPatternsMaven() {
-        return patternsMaven;
-    }
-
-    public List<String> getPatternsGradle() {
-        return patternsGradle;
-    }
-
-    public List<String> getPatternsPypi() {
-        return patternsPypi;
-    }
-
-    public List<String> getPatternsNuget() {
-        return patternsNuget;
-    }
-
-    public List<String> getPatternsNpm() {
-        return patternsNpm;
-    }
-
     public Integer getRetryCount() {
         return retryCount;
+    }
+
+    public List<String> getPatternsForPackageType(final String packageType) {
+        return SupportedPackageType.getAsSupportedPackageType(packageType)
+                   .map(patternMap::get)
+                   .orElse(Collections.emptyList());
+    }
+
+    private List<String> getPatternsForPackageType(final SupportedPackageType packageType) {
+        return patternMap.get(packageType);
     }
 }

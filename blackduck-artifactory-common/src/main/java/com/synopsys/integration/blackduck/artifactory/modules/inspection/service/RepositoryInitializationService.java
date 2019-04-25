@@ -42,10 +42,10 @@ import com.synopsys.integration.bdio.model.SimpleBdioDocument;
 import com.synopsys.integration.bdio.model.dependency.Dependency;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.util.PackageTypePatternManager;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.exception.IntegrationException;
@@ -61,15 +61,15 @@ public class RepositoryInitializationService {
 
     private final InspectionPropertyService inspectionPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
-    private final PackageTypePatternManager packageTypePatternManager;
+    private final InspectionModuleConfig inspectionModuleConfig;
     private final BdioUploadService bdioUploadService;
     private final ArtifactInspectionService artifactInspectionService;
 
-    public RepositoryInitializationService(final InspectionPropertyService inspectionPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final PackageTypePatternManager packageTypePatternManager,
+    public RepositoryInitializationService(final InspectionPropertyService inspectionPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final InspectionModuleConfig inspectionModuleConfig,
         final BdioUploadService bdioUploadService, final ArtifactInspectionService artifactInspectionService) {
         this.inspectionPropertyService = inspectionPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
-        this.packageTypePatternManager = packageTypePatternManager;
+        this.inspectionModuleConfig = inspectionModuleConfig;
         this.bdioUploadService = bdioUploadService;
         this.artifactInspectionService = artifactInspectionService;
     }
@@ -98,7 +98,7 @@ public class RepositoryInitializationService {
             throw new FailedInspectionException(repoKeyPath, "Repository package type not found.");
         }
 
-        final List<String> fileNamePatterns = packageTypePatternManager.getPatternsForPackageType(packageType.get());
+        final List<String> fileNamePatterns = inspectionModuleConfig.getPatternsForPackageType(packageType.get());
         if (fileNamePatterns.isEmpty()) {
             final String message = String.format("No file name patterns configured for discovered package type '%s'.", packageType.get());
             logger.warn(message);
