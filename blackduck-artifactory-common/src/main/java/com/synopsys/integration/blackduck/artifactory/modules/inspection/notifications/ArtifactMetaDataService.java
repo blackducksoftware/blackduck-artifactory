@@ -78,7 +78,7 @@ public class ArtifactMetaDataService {
                                                                                            .collect(Collectors.toList());
 
             for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
-                populateMetaDataMap(repoKey, idToArtifactMetaData, blackDuckService, projectVersionComponentVersionModel);
+                populateMetaDataMap(repoKey, idToArtifactMetaData, projectVersionComponentVersionModel);
             }
         } else {
             logger.debug(String.format("Failed to find project '%s' and version '%s' on repo '%s'", projectName, projectVersionName, repoKey));
@@ -102,7 +102,7 @@ public class ArtifactMetaDataService {
         return compositeComponentModel;
     }
 
-    private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final BlackDuckService blackDuckService, final CompositeComponentModel compositeComponentModel) {
+    private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final CompositeComponentModel compositeComponentModel) {
         compositeComponentModel.originViews.forEach(originView -> {
             final String forge = originView.getOriginName();
             final String originId = originView.getOriginId();
@@ -114,14 +114,14 @@ public class ArtifactMetaDataService {
                 artifactMetaData.componentVersionLink = compositeComponentModel.componentVersionView.getMeta().getHref();
                 artifactMetaData.policyStatus = compositeComponentModel.versionBomComponentView.getPolicyStatus();
 
-                populateVulnerabilityCounts(artifactMetaData, compositeComponentModel.componentVersionView, blackDuckService);
+                populateVulnerabilityCounts(artifactMetaData, compositeComponentModel.componentVersionView);
 
                 idToArtifactMetaData.put(key(forge, originId), artifactMetaData);
             }
         });
     }
 
-    private void populateVulnerabilityCounts(final ArtifactMetaData artifactMetaData, final ComponentVersionView componentVersionView, final BlackDuckService blackDuckService) {
+    private void populateVulnerabilityCounts(final ArtifactMetaData artifactMetaData, final ComponentVersionView componentVersionView) {
         final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
 
         if (vulnerabilitiesLink.isPresent()) {
