@@ -107,17 +107,27 @@ public class MetaDataPopulationService {
             if (StringUtils.isNoneBlank(artifactMetaData.originId, artifactMetaData.forge)) {
                 final List<RepoPath> artifactsWithOriginId = inspectionPropertyService.getArtifactsWithExternalIdProperties(repoKey, artifactMetaData.forge, artifactMetaData.originId);
                 for (final RepoPath repoPath : artifactsWithOriginId) {
-                    final VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(artifactMetaData.highSeverityCount, artifactMetaData.mediumSeverityCount, artifactMetaData.lowSeverityCount);
-                    populateBlackDuckMetadata(repoPath, vulnerabilityAggregate, artifactMetaData.policyStatus, artifactMetaData.componentVersionLink);
+                    populateBlackDuckMetadata(repoPath, artifactMetaData.vulnerabilityAggregate, artifactMetaData.policyStatus, artifactMetaData.componentVersionLink);
                 }
             }
         }
     }
 
     private void populateBlackDuckMetadata(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate, final PolicySummaryStatusType policySummaryStatusType, final String componentVersionUrl) {
-        final String highVulnerabilities = Integer.toString(vulnerabilityAggregate.getHighSeverityCount());
-        final String mediumVulnerabilities = Integer.toString(vulnerabilityAggregate.getMediumSeverityCount());
-        final String lowVulnerabilities = Integer.toString(vulnerabilityAggregate.getLowSeverityCount());
+        final String highVulnerabilities;
+        final String mediumVulnerabilities;
+        final String lowVulnerabilities;
+        if (vulnerabilityAggregate != null) {
+            highVulnerabilities = Integer.toString(vulnerabilityAggregate.getHighSeverityCount());
+            mediumVulnerabilities = Integer.toString(vulnerabilityAggregate.getMediumSeverityCount());
+            lowVulnerabilities = Integer.toString(vulnerabilityAggregate.getLowSeverityCount());
+        } else {
+            final String unknownVulnerabilitiesMessage = "An error occured retrivieng vulnerabilities for this component";
+            highVulnerabilities = unknownVulnerabilitiesMessage;
+            mediumVulnerabilities = unknownVulnerabilitiesMessage;
+            lowVulnerabilities = unknownVulnerabilitiesMessage;
+        }
+
         final String policySummary = policySummaryStatusType.toString();
         final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(highVulnerabilities, mediumVulnerabilities, lowVulnerabilities, policySummary, componentVersionUrl);
         inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);

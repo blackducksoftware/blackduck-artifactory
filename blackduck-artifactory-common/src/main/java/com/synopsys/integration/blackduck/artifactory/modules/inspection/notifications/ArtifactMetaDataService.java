@@ -38,6 +38,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.ArtifactMetaData;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
@@ -103,7 +104,20 @@ public class ArtifactMetaDataService {
     }
 
     private void populateMetaDataMap(final String repoKey, final Map<String, ArtifactMetaData> idToArtifactMetaData, final CompositeComponentModel compositeComponentModel) {
-        compositeComponentModel.originViews.forEach(originView -> {
+        final ComponentVersionView componentVersionView = compositeComponentModel.componentVersionView;
+        final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
+
+        VulnerabilityAggregate vulnerabilityAggregate = null;
+        if (vulnerabilitiesLink.isPresent()) {
+            try {
+                final List<VulnerabilityView> vulnerabilityViews = blackDuckService.getAllResponses(vulnerabilitiesLink.get(), VulnerabilityView.class);
+                vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(vulnerabilityViews);
+            } catch (final IntegrationException e) {
+                logger.error(String.format("Can't populate vulnerability counts for %s: %s", componentVersionView.getMeta().getHref(), e.getMessage()));
+            }
+        }
+
+        for (final OriginView originView : compositeComponentModel.originViews) {
             final String forge = originView.getOriginName();
             final String originId = originView.getOriginId();
             if (!idToArtifactMetaData.containsKey(key(forge, originId))) {
@@ -111,33 +125,11 @@ public class ArtifactMetaDataService {
                 artifactMetaData.repoKey = repoKey;
                 artifactMetaData.forge = forge;
                 artifactMetaData.originId = originId;
-                artifactMetaData.componentVersionLink = compositeComponentModel.componentVersionView.getMeta().getHref();
+                artifactMetaData.componentVersionLink = componentVersionView.getMeta().getHref();
                 artifactMetaData.policyStatus = compositeComponentModel.versionBomComponentView.getPolicyStatus();
-
-                populateVulnerabilityCounts(artifactMetaData, compositeComponentModel.componentVersionView);
+                artifactMetaData.vulnerabilityAggregate = vulnerabilityAggregate;
 
                 idToArtifactMetaData.put(key(forge, originId), artifactMetaData);
-            }
-        });
-    }
-
-    private void populateVulnerabilityCounts(final ArtifactMetaData artifactMetaData, final ComponentVersionView componentVersionView) {
-        final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
-
-        if (vulnerabilitiesLink.isPresent()) {
-            try {
-                final List<VulnerabilityView> componentVulnerabilities = blackDuckService.getAllResponses(vulnerabilitiesLink.get(), VulnerabilityView.class);
-                componentVulnerabilities.forEach(vulnerability -> {
-                    if ("HIGH".equals(vulnerability.getSeverity())) {
-                        artifactMetaData.highSeverityCount++;
-                    } else if ("MEDIUM".equals(vulnerability.getSeverity())) {
-                        artifactMetaData.mediumSeverityCount++;
-                    } else if ("LOW".equals(vulnerability.getSeverity())) {
-                        artifactMetaData.lowSeverityCount++;
-                    }
-                });
-            } catch (final IntegrationException e) {
-                logger.error(String.format("Can't populate vulnerability counts for %s: %s", componentVersionView.getMeta().getHref(), e.getMessage()));
             }
         }
     }

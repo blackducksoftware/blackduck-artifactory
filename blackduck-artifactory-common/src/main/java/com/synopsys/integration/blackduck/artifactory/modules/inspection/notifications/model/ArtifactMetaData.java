@@ -28,9 +28,7 @@ import com.synopsys.integration.util.Stringable;
 public class ArtifactMetaData extends Stringable {
     public String repoKey;
     public String componentVersionLink;
-    public int highSeverityCount;
-    public int mediumSeverityCount;
-    public int lowSeverityCount;
+    public VulnerabilityAggregate vulnerabilityAggregate;
     public PolicySummaryStatusType policyStatus;
     public String forge;
     public String originId;
