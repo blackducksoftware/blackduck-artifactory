@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
 
@@ -75,15 +74,7 @@ public class ArtifactMetaDataService {
         if (projectVersionWrapper.isPresent()) {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
             final List<VersionBomComponentView> versionBomComponentViews = blackDuckService.getAllResponses(projectVersionView, ProjectVersionView.COMPONENTS_LINK_RESPONSE);
-            final List<CompositeComponentModel> projectVersionComponentVersionModels = versionBomComponentViews.stream()
-                                                                                           .map(this::generateCompositeComponentModel)
-                                                                                           .filter(Optional::isPresent)
-                                                                                           .map(Optional::get)
-                                                                                           .collect(Collectors.toList());
-
-            for (final CompositeComponentModel compositeComponentModel : projectVersionComponentVersionModels) {
-                populateMetaDataMap(idToArtifactMetaData, compositeComponentModel);
-            }
+            versionBomComponentViews.forEach(versionBomComponentView -> processVersionBoaComponentView(idToArtifactMetaData, versionBomComponentView));
         } else {
             logger.debug(String.format("Failed to find project '%s' and version '%s' on repo '%s'", projectName, projectVersionName, repoKey));
         }
@@ -91,23 +82,20 @@ public class ArtifactMetaDataService {
         return new ArrayList<>(idToArtifactMetaData.values());
     }
 
-    private Optional<CompositeComponentModel> generateCompositeComponentModel(final VersionBomComponentView versionBomComponentView) {
-        CompositeComponentModel compositeComponentModel = null;
+    private void processVersionBoaComponentView(final Map<String, ArtifactMetaData> idToArtifactMetaData, final VersionBomComponentView versionBomComponentView) {
         final UriSingleResponse<ComponentVersionView> componentVersionViewUriResponse = new UriSingleResponse<>(versionBomComponentView.getComponentVersion(), ComponentVersionView.class);
 
         try {
             final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUriResponse);
             final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
-            compositeComponentModel = new CompositeComponentModel(versionBomComponentView, componentVersionView, originViews);
+
+            populateMetaDataMap(idToArtifactMetaData, componentVersionView, versionBomComponentView, originViews);
         } catch (final IntegrationException e) {
             logger.error(String.format("Could not create the CompositeComponentModel for '%s:%s': %s", versionBomComponentView.getComponentName(), versionBomComponentView.getComponentVersionName(), e.getMessage()), e);
         }
-
-        return Optional.ofNullable(compositeComponentModel);
     }
 
-    private void populateMetaDataMap(final Map<String, ArtifactMetaData> idToArtifactMetaData, final CompositeComponentModel compositeComponentModel) {
-        final ComponentVersionView componentVersionView = compositeComponentModel.getComponentVersionView();
+    private void populateMetaDataMap(final Map<String, ArtifactMetaData> idToArtifactMetaData, final ComponentVersionView componentVersionView, final VersionBomComponentView versionBomComponentView, final List<OriginView> originViews) {
         final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
 
         VulnerabilityAggregate vulnerabilityAggregate = null;
@@ -120,7 +108,7 @@ public class ArtifactMetaDataService {
             }
         }
 
-        for (final OriginView originView : compositeComponentModel.getOriginViews()) {
+        for (final OriginView originView : originViews) {
             final String forge = originView.getOriginName();
             final String originId = originView.getOriginId();
             final String key = key(forge, originId);
@@ -128,7 +116,7 @@ public class ArtifactMetaDataService {
                 final PolicyVulnerabilityAggregate.Builder builder = new PolicyVulnerabilityAggregate.Builder();
                 builder.setVulnerabilityAggregate(vulnerabilityAggregate);
                 builder.setComponentVersionUrl(componentVersionView.getMeta().getHref());
-                builder.setPolicySummaryStatusType(compositeComponentModel.getVersionBomComponentView().getPolicyStatus());
+                builder.setPolicySummaryStatusType(versionBomComponentView.getPolicyStatus());
                 final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = builder.build();
 
                 final ArtifactMetaData artifactMetaData = new ArtifactMetaData(forge, originId, policyVulnerabilityAggregate);
