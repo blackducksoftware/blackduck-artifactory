@@ -29,12 +29,9 @@ import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 
 public class CompositeComponentModel {
-    public VersionBomComponentView versionBomComponentView;
-    public ComponentVersionView componentVersionView;
-    public List<OriginView> originViews;
-
-    public CompositeComponentModel() {
-    }
+    private final VersionBomComponentView versionBomComponentView;
+    private final ComponentVersionView componentVersionView;
+    private final List<OriginView> originViews;
 
     public CompositeComponentModel(final VersionBomComponentView versionBomComponentView, final ComponentVersionView componentVersionView, final List<OriginView> originViews) {
         this.versionBomComponentView = versionBomComponentView;
@@ -42,4 +39,15 @@ public class CompositeComponentModel {
         this.originViews = originViews;
     }
 
+    public VersionBomComponentView getVersionBomComponentView() {
+        return versionBomComponentView;
+    }
+
+    public ComponentVersionView getComponentVersionView() {
+        return componentVersionView;
+    }
+
+    public List<OriginView> getOriginViews() {
+        return originViews;
+    }
 }

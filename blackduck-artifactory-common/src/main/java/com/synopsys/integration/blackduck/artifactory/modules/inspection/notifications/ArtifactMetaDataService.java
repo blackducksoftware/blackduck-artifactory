@@ -77,10 +77,12 @@ public class ArtifactMetaDataService {
             final List<VersionBomComponentView> versionBomComponentViews = blackDuckService.getAllResponses(projectVersionView, ProjectVersionView.COMPONENTS_LINK_RESPONSE);
             final List<CompositeComponentModel> projectVersionComponentVersionModels = versionBomComponentViews.stream()
                                                                                            .map(this::generateCompositeComponentModel)
+                                                                                           .filter(Optional::isPresent)
+                                                                                           .map(Optional::get)
                                                                                            .collect(Collectors.toList());
 
-            for (final CompositeComponentModel projectVersionComponentVersionModel : projectVersionComponentVersionModels) {
-                populateMetaDataMap(idToArtifactMetaData, projectVersionComponentVersionModel);
+            for (final CompositeComponentModel compositeComponentModel : projectVersionComponentVersionModels) {
+                populateMetaDataMap(idToArtifactMetaData, compositeComponentModel);
             }
         } else {
             logger.debug(String.format("Failed to find project '%s' and version '%s' on repo '%s'", projectName, projectVersionName, repoKey));
@@ -89,8 +91,8 @@ public class ArtifactMetaDataService {
         return new ArrayList<>(idToArtifactMetaData.values());
     }
 
-    private CompositeComponentModel generateCompositeComponentModel(final VersionBomComponentView versionBomComponentView) {
-        CompositeComponentModel compositeComponentModel = new CompositeComponentModel();
+    private Optional<CompositeComponentModel> generateCompositeComponentModel(final VersionBomComponentView versionBomComponentView) {
+        CompositeComponentModel compositeComponentModel = null;
         final UriSingleResponse<ComponentVersionView> componentVersionViewUriResponse = new UriSingleResponse<>(versionBomComponentView.getComponentVersion(), ComponentVersionView.class);
 
         try {
@@ -98,14 +100,14 @@ public class ArtifactMetaDataService {
             final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
             compositeComponentModel = new CompositeComponentModel(versionBomComponentView, componentVersionView, originViews);
         } catch (final IntegrationException e) {
-            logger.error(String.format("Could not create the CompositeComponentModel: %s", e.getMessage()), e);
+            logger.error(String.format("Could not create the CompositeComponentModel for '%s:%s': %s", versionBomComponentView.getComponentName(), versionBomComponentView.getComponentVersionName(), e.getMessage()), e);
         }
 
-        return compositeComponentModel;
+        return Optional.ofNullable(compositeComponentModel);
     }
 
     private void populateMetaDataMap(final Map<String, ArtifactMetaData> idToArtifactMetaData, final CompositeComponentModel compositeComponentModel) {
-        final ComponentVersionView componentVersionView = compositeComponentModel.componentVersionView;
+        final ComponentVersionView componentVersionView = compositeComponentModel.getComponentVersionView();
         final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
 
         VulnerabilityAggregate vulnerabilityAggregate = null;
@@ -118,7 +120,7 @@ public class ArtifactMetaDataService {
             }
         }
 
-        for (final OriginView originView : compositeComponentModel.originViews) {
+        for (final OriginView originView : compositeComponentModel.getOriginViews()) {
             final String forge = originView.getOriginName();
             final String originId = originView.getOriginId();
             final String key = key(forge, originId);
@@ -126,7 +128,7 @@ public class ArtifactMetaDataService {
                 final PolicyVulnerabilityAggregate.Builder builder = new PolicyVulnerabilityAggregate.Builder();
                 builder.setVulnerabilityAggregate(vulnerabilityAggregate);
                 builder.setComponentVersionUrl(componentVersionView.getMeta().getHref());
-                builder.setPolicySummaryStatusType(compositeComponentModel.versionBomComponentView.getPolicyStatus());
+                builder.setPolicySummaryStatusType(compositeComponentModel.getVersionBomComponentView().getPolicyStatus());
                 final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = builder.build();
 
                 final ArtifactMetaData artifactMetaData = new ArtifactMetaData(forge, originId, policyVulnerabilityAggregate);
