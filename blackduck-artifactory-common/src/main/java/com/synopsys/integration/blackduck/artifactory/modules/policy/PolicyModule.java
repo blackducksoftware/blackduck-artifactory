@@ -51,7 +51,7 @@ public class PolicyModule implements Module {
         String reason = null;
         BlockReason blockReason = BlockReason.NO_BLOCK;
         if (shouldCancelOnPolicyViolation(repoPath)) {
-            reason = "because it violates a policy in your Black Duck Hub.";
+            reason = "because it violates a policy in Black Duck.";
             blockReason = BlockReason.IN_VIOLATION;
         }
 
