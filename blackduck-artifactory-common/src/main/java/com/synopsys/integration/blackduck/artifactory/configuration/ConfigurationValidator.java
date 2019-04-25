@@ -78,6 +78,10 @@ public abstract class ConfigurationValidator {
         return true;
     }
 
+    protected void validateList(final PropertyGroupReport statusReport, final ConfigurationProperty property, final List<?> list) {
+        validateList(statusReport, property, list, "Please provide a comma separated list of values.");
+    }
+
     protected void validateList(final PropertyGroupReport statusReport, final ConfigurationProperty property, final List<?> list, final String errorMessage) {
         final boolean notNull = validateNotNull(statusReport, property, list);
 
