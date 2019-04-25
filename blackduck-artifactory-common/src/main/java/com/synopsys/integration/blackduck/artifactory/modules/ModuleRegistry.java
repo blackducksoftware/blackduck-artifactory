@@ -56,7 +56,7 @@ public class ModuleRegistry {
         moduleConfig.validate(propertyGroupReport);
 
         allModules.add(module);
-        if (builderStatus.isValid()) {
+        if (!propertyGroupReport.hasError()) {
             registeredModules.add(module);
             analyticsService.registerAnalyzable(module);
             logger.info(String.format("Successfully registered '%s'", moduleConfig.getModuleName()));
