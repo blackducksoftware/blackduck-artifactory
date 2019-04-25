@@ -50,23 +50,25 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class ArtifactMetaDataService {
     private static final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(ArtifactMetaDataService.class));
 
-    private final BlackDuckServicesFactory blackDuckServicesFactory;
+    private final BlackDuckService blackDuckService;
+    private final ProjectService projectService;
 
     public static ArtifactMetaDataService createDefault(final BlackDuckServerConfig blackDuckServerConfig) {
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
-        return new ArtifactMetaDataService(blackDuckServicesFactory);
+        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+        final ProjectService projectService = blackDuckServicesFactory.createProjectService();
+        return new ArtifactMetaDataService(blackDuckService, projectService);
     }
 
-    public ArtifactMetaDataService(final BlackDuckServicesFactory blackDuckServicesFactory) {
-        this.blackDuckServicesFactory = blackDuckServicesFactory;
+    public ArtifactMetaDataService(final BlackDuckService blackDuckService, final ProjectService projectService) {
+        this.blackDuckService = blackDuckService;
+        this.projectService = projectService;
     }
 
     public List<ArtifactMetaData> getArtifactMetadataOfRepository(final String repoKey, final String projectName, final String projectVersionName) throws IntegrationException {
-        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
-        final ProjectService projectDataService = blackDuckServicesFactory.createProjectService();
         final Map<String, ArtifactMetaData> idToArtifactMetaData = new HashMap<>();
 
-        final Optional<ProjectVersionWrapper> projectVersionWrapper = projectDataService.getProjectVersion(projectName, projectVersionName);
+        final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
 
         if (projectVersionWrapper.isPresent()) {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
@@ -88,7 +90,7 @@ public class ArtifactMetaDataService {
     private CompositeComponentModel generateCompositeComponentModel(final VersionBomComponentView versionBomComponentView) {
         CompositeComponentModel compositeComponentModel = new CompositeComponentModel();
         final UriSingleResponse<ComponentVersionView> componentVersionViewUriResponse = new UriSingleResponse<>(versionBomComponentView.getComponentVersion(), ComponentVersionView.class);
-        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+
         try {
             final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUriResponse);
             final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
