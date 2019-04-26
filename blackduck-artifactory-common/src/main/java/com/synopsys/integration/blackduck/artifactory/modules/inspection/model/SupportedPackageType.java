@@ -31,6 +31,7 @@ import com.synopsys.integration.bdio.model.Forge;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty;
 
 public enum SupportedPackageType {
+    COCOAPODS("cocoapods", Forge.COCOAPODS, "pods.name", "pods.version", InspectionModuleProperty.PATTERNS_COCOAPODS),
     GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version", InspectionModuleProperty.PATTERNS_RUBYGEMS),
     MAVEN("maven", Forge.MAVEN, InspectionModuleProperty.PATTERNS_MAVEN),
     GRADLE("gradle", Forge.MAVEN, InspectionModuleProperty.PATTERNS_GRADLE),

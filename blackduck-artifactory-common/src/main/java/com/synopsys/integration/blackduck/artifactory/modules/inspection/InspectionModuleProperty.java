@@ -30,6 +30,7 @@ public enum InspectionModuleProperty implements ConfigurationProperty {
     REINSPECT_CRON("reinspect.cron"),
     METADATA_BLOCK("metadata.block"),
     PATTERNS_BOWER("patterns.bower"),
+    PATTERNS_COCOAPODS("patterns.cocoapods"),
     PATTERNS_CRAN("patterns.cran"),
     PATTERNS_RUBYGEMS("patterns.rubygems"),
     PATTERNS_MAVEN("patterns.maven"),
