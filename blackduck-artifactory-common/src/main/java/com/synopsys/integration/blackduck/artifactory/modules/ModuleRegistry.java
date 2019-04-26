@@ -59,10 +59,10 @@ public class ModuleRegistry {
         if (!propertyGroupReport.hasError()) {
             registeredModules.add(module);
             analyticsService.registerAnalyzable(module);
-            logger.info(String.format("Successfully registered '%s'", moduleConfig.getModuleName()));
+            logger.info(String.format("Successfully registered '%s'.", moduleConfig.getModuleName()));
         } else {
             moduleConfig.setEnabled(false);
-            logger.warn(String.format("Can't register module '%s' due to an invalid configuration. See details below. %s%s", moduleConfig.getModuleName(), System.lineSeparator(), builderStatus.getFullErrorMessage(System.lineSeparator())));
+            logger.warn(String.format("Can't register module '%s' due to an invalid configuration. See details in the Status Check.", moduleConfig.getModuleName()));
         }
     }
 

@@ -52,6 +52,7 @@ import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class PluginService {
@@ -103,8 +104,10 @@ public class PluginService {
         if (configValidationReport.getGeneralPropertyReport().hasError()) {
             moduleRegistry.setAllModulesEnabledState(false);
         }
-        final String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport);
-        logger.info(statusCheckMessage);
+        final LogLevel logLevel = logger.getLogLevel();
+        final boolean includeValid = logLevel.isLoggable(LogLevel.INFO);
+        final String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport, includeValid);
+        logger.warn(statusCheckMessage);
 
         final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(ModuleManager.class);
         final ModuleManager moduleManager = ModuleManager.createFromModules(moduleRegistry, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
@@ -126,7 +129,7 @@ public class PluginService {
     public String logStatusCheckMessage(final TriggerType triggerType) {
         LogUtil.start(logger, "generateStatusCheckMessage", triggerType);
         final ConfigValidationReport configValidationReport = configValidationService.validateConfig();
-        final String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport);
+        final String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport, true);
         logger.info(statusCheckMessage);
         LogUtil.finish(logger, "generateStatusCheckMessage", triggerType);
 

@@ -71,37 +71,37 @@ public class ConfigValidationService {
         return new ConfigValidationReport(generalPropertyReport, propertyGroupReports);
     }
 
-    public String generateStatusCheckMessage(final ConfigValidationReport configValidationReport) {
+    public String generateStatusCheckMessage(final ConfigValidationReport configValidationReport, final boolean includeValid) {
         final String pluginVersion = getPluginVersion();
         final StringBuilder statusCheckMessage = new StringBuilder(BLOCK_SEPARATOR + String.format("Status Check: Plugin Version - %s", pluginVersion) + BLOCK_SEPARATOR);
 
         final PropertyGroupReport generalPropertyReport = configValidationReport.getGeneralPropertyReport();
         final String configErrorMessage = generalPropertyReport.hasError() ? "CONFIGURATION ERROR" : "";
         statusCheckMessage.append(String.format("General Settings: %s", configErrorMessage)).append(LINE_SEPARATOR);
-        appendPropertyGroupReport(statusCheckMessage, generalPropertyReport);
+        appendPropertyGroupReport(statusCheckMessage, generalPropertyReport, includeValid);
         statusCheckMessage.append(BLOCK_SEPARATOR);
 
         for (final PropertyGroupReport modulePropertyReport : configValidationReport.getModulePropertyReports()) {
             final Optional<ModuleConfig> moduleConfigsByName = moduleRegistry.getFirstModuleConfigByName(modulePropertyReport.getPropertyGroupName());
             final boolean enabled = moduleConfigsByName.isPresent() && moduleConfigsByName.get().isEnabled();
-            appendPropertyReportForModule(statusCheckMessage, modulePropertyReport, enabled);
+            appendPropertyReportForModule(statusCheckMessage, modulePropertyReport, enabled, includeValid);
             statusCheckMessage.append(BLOCK_SEPARATOR);
         }
 
         return statusCheckMessage.toString();
     }
 
-    private void appendPropertyReportForModule(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport, final boolean enabled) {
+    private void appendPropertyReportForModule(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport, final boolean enabled, final boolean includeValid) {
         final String moduleName = propertyGroupReport.getPropertyGroupName();
         final String state = enabled ? "Enabled" : "Disabled";
         final String configErrorMessage = propertyGroupReport.hasError() ? "CONFIGURATION ERROR" : "";
         final String moduleLine = String.format("%s [%s] %s", moduleName, state, configErrorMessage);
         statusCheckMessage.append(moduleLine).append(LINE_SEPARATOR);
 
-        appendPropertyGroupReport(statusCheckMessage, propertyGroupReport);
+        appendPropertyGroupReport(statusCheckMessage, propertyGroupReport, includeValid);
     }
 
-    private void appendPropertyGroupReport(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport) {
+    private void appendPropertyGroupReport(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport, final boolean includeValid) {
         for (final PropertyValidationResult propertyReport : propertyGroupReport.getPropertyReports()) {
             final Optional<String> errorMessage = propertyReport.getErrorMessage();
 
@@ -109,7 +109,10 @@ public class ConfigValidationService {
             final String property = propertyReport.getConfigurationProperty().getKey();
             final String reportSuffix = errorMessage.isPresent() ? String.format(LINE_SEPARATOR + "      * %s", errorMessage.get()) : "";
             final String reportLine = String.format("[%s] - %s %s", mark, property, reportSuffix);
-            statusCheckMessage.append(wrapLine(reportLine)).append(LINE_SEPARATOR);
+
+            if (includeValid || errorMessage.isPresent()) {
+                statusCheckMessage.append(wrapLine(reportLine)).append(LINE_SEPARATOR);
+            }
         }
 
         if (!propertyGroupReport.getBuilderStatus().isValid()) {
@@ -119,7 +122,7 @@ public class ConfigValidationService {
     }
 
     private String wrapLine(final String line) {
-        return WordUtils.wrap(line, LINE_CHARACTER_LIMIT, LINE_SEPARATOR + "        ", true);
+        return WordUtils.wrap(line, LINE_CHARACTER_LIMIT, LINE_SEPARATOR + "        ", false);
     }
 
     private String getPluginVersion() {
