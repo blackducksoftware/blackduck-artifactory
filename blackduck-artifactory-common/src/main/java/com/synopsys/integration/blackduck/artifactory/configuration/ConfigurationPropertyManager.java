@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -111,9 +112,16 @@ public class ConfigurationPropertyManager {
     }
 
     public List<String> getPropertyAsList(final ConfigurationProperty configurationProperty) {
+        final List<String> values;
         final String property = getProperty(configurationProperty);
-        final String[] propertyValues = property.split(",");
 
-        return Arrays.asList(propertyValues);
+        if (StringUtils.isNotBlank(property)) {
+            final String[] propertyValues = property.split(",");
+            values = Arrays.asList(propertyValues);
+        } else {
+            values = Collections.emptyList();
+        }
+
+        return values;
     }
 }
