@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.composer.ComposerExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.log.IntLogger;
@@ -23,11 +24,14 @@ public class ArtifactoryExternalIdFactory implements ExternalIdExtractor {
     private final ExternalIdFactory externalIdFactory;
     private final InspectionPropertyService inspectionPropertyService;
     private final BlackDuckPropertiesExternalIdFactory blackDuckPropertiesExternalIdFactory;
+    private final ComposerExternalIdFactory composerExternalIdFactory;
 
-    public ArtifactoryExternalIdFactory(final ArtifactoryPAPIService artifactoryPAPIService, final ExternalIdFactory externalIdFactory, final InspectionPropertyService inspectionPropertyService) {
+    public ArtifactoryExternalIdFactory(final ArtifactoryPAPIService artifactoryPAPIService, final ExternalIdFactory externalIdFactory, final InspectionPropertyService inspectionPropertyService,
+        final ComposerExternalIdFactory composerExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.externalIdFactory = externalIdFactory;
         this.inspectionPropertyService = inspectionPropertyService;
+        this.composerExternalIdFactory = composerExternalIdFactory;
         this.blackDuckPropertiesExternalIdFactory = new BlackDuckPropertiesExternalIdFactory(inspectionPropertyService, externalIdFactory);
     }
 
@@ -43,9 +47,13 @@ public class ArtifactoryExternalIdFactory implements ExternalIdExtractor {
         }
 
         if (externalId == null && supportedPackageType.isPresent()) {
-            final ExternalIdExtractor externalIdExtractor = getExternalIdExtractor(supportedPackageType.get());
-            externalId = externalIdExtractor.extractExternalId(repoPath).orElse(null);
-        } else {
+            if (supportedPackageType.get().equals(SupportedPackageType.COMPOSER)) {
+                externalId = composerExternalIdFactory.extractExternalId(repoPath).orElse(null);
+            } else {
+                final ExternalIdExtractor externalIdExtractor = getExternalIdExtractor(supportedPackageType.get());
+                externalId = externalIdExtractor.extractExternalId(repoPath).orElse(null);
+            }
+        } else if (!supportedPackageType.isPresent()) {
             logger.warn(String.format("Package type (%s) not supported", packageType));
         }
 

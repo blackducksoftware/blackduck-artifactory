@@ -142,4 +142,12 @@ public class ArtifactoryPAPIService {
     public List<RepoPath> itemsByProperties(final SetMultimap<String, String> properties, final String... repoKeys) {
         return searches.itemsByProperties(properties, repoKeys);
     }
+
+    public List<RepoPath> itemsByName(final String artifactByName, final String... repoKeys) {
+        return searches.artifactsByName(artifactByName, repoKeys);
+    }
+
+    public ResourceStreamHandle getArtifactContent(final RepoPath repoPath) {
+        return repositories.getContent(repoPath);
+    }
 }

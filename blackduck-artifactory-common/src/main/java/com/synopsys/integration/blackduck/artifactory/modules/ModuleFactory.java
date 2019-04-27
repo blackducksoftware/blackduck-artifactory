@@ -27,6 +27,7 @@ import java.io.IOException;
 
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -41,6 +42,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.ArtifactoryExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.composer.ComposerExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRetrievalService;
@@ -73,17 +75,21 @@ public class ModuleFactory {
     private final BlackDuckServerConfig blackDuckServerConfig;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final ArtifactSearchService artifactSearchService;
     private final DateTimeManager dateTimeManager;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
+    private final Gson gson;
 
     public ModuleFactory(final ConfigurationPropertyManager configurationPropertyManager, final BlackDuckServerConfig blackDuckServerConfig, final ArtifactoryPAPIService artifactoryPAPIService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager, final BlackDuckServicesFactory blackDuckServicesFactory) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactSearchService artifactSearchService, final DateTimeManager dateTimeManager, final BlackDuckServicesFactory blackDuckServicesFactory, final Gson gson) {
         this.configurationPropertyManager = configurationPropertyManager;
         this.blackDuckServerConfig = blackDuckServerConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactoryPropertyService = artifactoryPropertyService;
+        this.artifactSearchService = artifactSearchService;
         this.dateTimeManager = dateTimeManager;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
+        this.gson = gson;
     }
 
     public ScanModule createScanModule(final File blackDuckDirectory) throws IOException, IntegrationException {
@@ -102,7 +108,8 @@ public class ModuleFactory {
         final ProjectService projectService = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(InspectionPropertyService.class))).createProjectService();
         final InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPropertyService, projectService, inspectionModuleConfig);
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, externalIdFactory, inspectionPropertyService);
+        final ComposerExternalIdFactory composerExternalIdFactory = new ComposerExternalIdFactory(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, externalIdFactory, inspectionPropertyService, composerExternalIdFactory);
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(inspectionPropertyService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(new Slf4jIntLogger(LoggerFactory.getLogger(BlackDuckBOMService.class)));
@@ -111,7 +118,7 @@ public class ModuleFactory {
         final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
         final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService, metaDataPopulationService);
         final NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
-        final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPropertyService);
+        final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPAPIService, artifactoryPropertyService);
         final NotificationRetrievalService notificationRetrievalService = new NotificationRetrievalService(blackDuckService);
         final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationRetrievalService, blackDuckService, notificationService, artifactSearchService, inspectionPropertyService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactMetaDataService, metaDataPopulationService, artifactNotificationService);

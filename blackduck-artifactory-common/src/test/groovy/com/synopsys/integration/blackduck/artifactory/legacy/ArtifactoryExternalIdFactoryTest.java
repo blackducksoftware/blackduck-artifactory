@@ -43,6 +43,7 @@ import org.artifactory.md.Properties;
 import org.artifactory.md.PropertiesInfo;
 import org.artifactory.repo.RepoPath;
 import org.junit.jupiter.api.Test;
+import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
@@ -50,9 +51,11 @@ import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.ArtifactoryExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.composer.ComposerExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
+// TODO: Add composer test. Might be tricky.
 public class ArtifactoryExternalIdFactoryTest {
     @Test
     public void createNugetExternalId() {
@@ -109,7 +112,10 @@ public class ArtifactoryExternalIdFactoryTest {
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
         final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
         when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, new ExternalIdFactory(), inspectionPropertyService);
+        final ComposerExternalIdFactory composerExternalIdFactory = mock(ComposerExternalIdFactory.class);
+        when(composerExternalIdFactory.extractExternalId(repoPath))
+            .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, new ExternalIdFactory(), inspectionPropertyService, composerExternalIdFactory);
 
         Optional<ExternalId> externalId = artifactoryExternalIdFactory.extractExternalId(repoPath);
 
@@ -134,7 +140,10 @@ public class ArtifactoryExternalIdFactoryTest {
         final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
         when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, new ExternalIdFactory(), inspectionPropertyService);
+        final ComposerExternalIdFactory composerExternalIdFactory = mock(ComposerExternalIdFactory.class);
+        when(composerExternalIdFactory.extractExternalId(repoPath))
+            .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
+        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, new ExternalIdFactory(), inspectionPropertyService, composerExternalIdFactory);
 
         Optional<ExternalId> externalId = artifactoryExternalIdFactory.extractExternalId(repoPath);
         assertTrue(externalId.isPresent());
