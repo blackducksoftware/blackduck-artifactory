@@ -33,6 +33,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 public enum SupportedPackageType {
     COCOAPODS("cocoapods", Forge.COCOAPODS, "pods.name", "pods.version", InspectionModuleProperty.PATTERNS_COCOAPODS),
     GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version", InspectionModuleProperty.PATTERNS_RUBYGEMS),
+    GO("go", Forge.GOLANG, "go.name", "go.version", InspectionModuleProperty.PATTERNS_GO),
     MAVEN("maven", Forge.MAVEN, InspectionModuleProperty.PATTERNS_MAVEN),
     GRADLE("gradle", Forge.MAVEN, InspectionModuleProperty.PATTERNS_GRADLE),
     PYPI("pypi", Forge.PYPI, "pypi.name", "pypi.version", InspectionModuleProperty.PATTERNS_PYPI),
