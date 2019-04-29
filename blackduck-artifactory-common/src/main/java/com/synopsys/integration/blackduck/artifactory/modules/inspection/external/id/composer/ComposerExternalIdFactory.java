@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.resource.ResourceStreamHandle;
 import org.slf4j.LoggerFactory;
@@ -59,15 +61,28 @@ public class ComposerExternalIdFactory extends BaseExternalIdFactory {
         ExternalId externalId = null;
         for (final RepoPath jsonFileRepoPath : jsonFileRepoPaths) {
             final List<Version> versions = parseJson(jsonFileRepoPath);
+            final List<ExternalId> externalIds = new ArrayList<>();
 
             for (final Version version : versions) {
                 final String referenceHash = version.getVersionSource().getReference();
                 final String artifactHash = fileNamePieces.getHash();
                 if (referenceHash.equals(artifactHash)) {
                     final Forge forge = supportedPackageType.get().getForge();
-                    externalId = createNameVersionExternalId(externalIdFactory, forge, version.getName(), version.getVersion()).orElse(null);
-                    break;
+                    final ExternalId foundExternalId = createNameVersionExternalId(externalIdFactory, forge, version.getName(), version.getVersion()).orElse(null);
+                    externalIds.add(foundExternalId);
                 }
+            }
+
+            // Try to find an external id that contains version numbers since dev releases can also be in this list.
+            for (final ExternalId foundExternalId : externalIds) {
+                final String[] numbers = IntStream.rangeClosed(0, 9)
+                                             .boxed()
+                                             .map(String::valueOf)
+                                             .toArray(String[]::new);
+                if (StringUtils.containsAny(foundExternalId.version, numbers) || externalId == null) {
+                    externalId = foundExternalId;
+                }
+
             }
 
             if (externalId != null) {
