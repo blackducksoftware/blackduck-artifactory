@@ -29,10 +29,13 @@ import org.artifactory.repo.RepoPath;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
+// TODO: Move search services from ArtifactoryPropertyService to here.
 public class ArtifactSearchService {
+    private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
 
-    public ArtifactSearchService(final ArtifactoryPropertyService artifactoryPropertyService) {
+    public ArtifactSearchService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactoryPropertyService artifactoryPropertyService) {
+        this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactoryPropertyService = artifactoryPropertyService;
     }
 
@@ -42,5 +45,9 @@ public class ArtifactSearchService {
         setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName(), originId);
 
         return artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(setMultimap, repoKeys);
+    }
+
+    public List<RepoPath> findArtifactByName(final String artifactName, final String... repoKeys) {
+        return artifactoryPAPIService.itemsByName(artifactName, repoKeys);
     }
 }
