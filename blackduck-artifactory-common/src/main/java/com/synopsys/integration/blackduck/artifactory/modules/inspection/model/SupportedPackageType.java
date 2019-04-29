@@ -33,6 +33,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 public enum SupportedPackageType {
     BOWER("bower", Forge.NPM, "bower.name", "bower.version", InspectionModuleProperty.PATTERNS_BOWER),
     COCOAPODS("cocoapods", Forge.COCOAPODS, "pods.name", "pods.version", InspectionModuleProperty.PATTERNS_COCOAPODS),
+    COMPOSER("composer", Forge.PACKAGIST, InspectionModuleProperty.PATTERNS_COMPOSER),
     CRAN("cran", Forge.CRAN, "cran.name", "cran.version", InspectionModuleProperty.PATTERNS_CRAN),
     GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version", InspectionModuleProperty.PATTERNS_RUBYGEMS),
     GO("go", Forge.GOLANG, "go.name", "go.version", InspectionModuleProperty.PATTERNS_GO),

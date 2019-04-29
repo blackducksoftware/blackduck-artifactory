@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
@@ -40,10 +39,10 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.util.ArtifactoryExternalIdFactory;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
@@ -59,18 +58,17 @@ public class ArtifactInspectionService {
     private final InspectionModuleConfig inspectionModuleConfig;
     private final InspectionPropertyService inspectionPropertyService;
     private final ProjectService projectService;
-    private final ArtifactoryExternalIdFactory artifactoryExternalIdFactory;
+    private final ExternalIdService externalIdService;
 
     public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService, final MetaDataPopulationService metaDataPopulationService,
-        final InspectionModuleConfig inspectionModuleConfig, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService,
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory) {
+        final InspectionModuleConfig inspectionModuleConfig, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService, final ExternalIdService externalIdService) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.inspectionPropertyService = inspectionPropertyService;
         this.projectService = projectService;
-        this.artifactoryExternalIdFactory = artifactoryExternalIdFactory;
+        this.externalIdService = externalIdService;
     }
 
     public boolean shouldInspectArtifact(final RepoPath repoPath) {
@@ -92,18 +90,8 @@ public class ArtifactInspectionService {
         return wildcardFileFilter.accept(artifact);
     }
 
-    public void identifyAndMarkArtifact(final RepoPath repoPath) {
-        final String repoKey = repoPath.getRepoKey();
-        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
-        if (packageType.isPresent()) {
-            identifyAndMarkArtifact(repoPath, packageType.get());
-        } else {
-            logger.warn(String.format("The repository '%s' has no package type. Inspection cannot be performed on artifact: %s", repoKey, repoPath.getPath()));
-        }
-    }
-
-    public Artifact identifyAndMarkArtifact(final RepoPath repoPath, final String packageType) {
-        final Artifact artifact = identifyArtifact(repoPath, packageType);
+    public Artifact identifyAndMarkArtifact(final RepoPath repoPath) {
+        final Artifact artifact = identifyArtifact(repoPath);
         try {
             metaDataPopulationService.populateExternalIdMetadata(artifact);
         } catch (final FailedInspectionException e) {
@@ -112,12 +100,8 @@ public class ArtifactInspectionService {
         return artifact;
     }
 
-    private Artifact identifyArtifact(final RepoPath repoPath, final String packageType) {
-        final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
-        final org.artifactory.md.Properties properties = artifactoryPAPIService.getProperties(repoPath);
-        final Optional<ExternalId> possibleExternalId = artifactoryExternalIdFactory.createExternalId(packageType, fileLayoutInfo, repoPath, properties);
-        final ExternalId externalId = possibleExternalId.orElse(null);
-
+    private Artifact identifyArtifact(final RepoPath repoPath) {
+        final ExternalId externalId = externalIdService.extractExternalId(repoPath).orElse(null);
         return new Artifact(repoPath, externalId);
     }
 
@@ -171,7 +155,7 @@ public class ArtifactInspectionService {
 
         final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns).stream()
                                              .filter(this::isArtifactPendingOrShouldRetry)
-                                             .map(repoPath -> identifyArtifact(repoPath, packageType.get()))
+                                             .map(this::identifyArtifact)
                                              .collect(Collectors.toList());
 
         for (final Artifact artifact : artifacts) {

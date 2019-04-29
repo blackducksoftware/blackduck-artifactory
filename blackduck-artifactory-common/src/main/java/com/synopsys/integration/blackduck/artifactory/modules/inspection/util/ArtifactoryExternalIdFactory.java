@@ -51,26 +51,12 @@ public class ArtifactoryExternalIdFactory {
     }
 
     public Optional<ExternalId> createExternalId(final String packageType, final FileLayoutInfo fileLayoutInfo, final RepoPath repoPath, final org.artifactory.md.Properties properties) {
-        Optional<ExternalId> optionalExternalId = Optional.empty();
+        final Optional<ExternalId> optionalExternalId;
 
         if (inspectionPropertyService.hasExternalIdProperties(repoPath)) {
             optionalExternalId = createExternalIdFromOriginIdProperties(repoPath);
         } else {
-            try {
-                final Optional<SupportedPackageType> possiblySupportedPackageType = SupportedPackageType.getAsSupportedPackageType(packageType);
-                if (possiblySupportedPackageType.isPresent()) {
-                    final SupportedPackageType supportedPackageType = possiblySupportedPackageType.get();
-                    if (supportedPackageType.hasNameVersionProperties()) {
-                        optionalExternalId = createNameVersionExternalId(supportedPackageType, fileLayoutInfo, properties);
-                    } else {
-                        optionalExternalId = createMavenExternalId(fileLayoutInfo);
-                    }
-                } else {
-                    logger.warn(String.format("Package type (%s) not supported", packageType));
-                }
-            } catch (final Exception e) {
-                logger.error("Could not resolve the item to a dependency:", e);
-            }
+            optionalExternalId = createExternalIdFromArtifactoryMetadata(packageType, fileLayoutInfo, properties);
         }
 
         return optionalExternalId;
@@ -104,23 +90,47 @@ public class ArtifactoryExternalIdFactory {
         }
     }
 
-    private Optional<ExternalId> createNameVersionExternalId(final SupportedPackageType supportedPackageType, final FileLayoutInfo fileLayoutInfo, final org.artifactory.md.Properties properties) {
-        Optional<ExternalId> externalId = createNameVersionExternalIdFromProperties(supportedPackageType.getForge(), properties, supportedPackageType.getArtifactoryNameProperty(), supportedPackageType.getArtifactoryVersionProperty());
-        if (!externalId.isPresent()) {
-            externalId = createNameVersionExternalIdFromFileLayoutInfo(supportedPackageType.getForge(), fileLayoutInfo);
+    private Optional<ExternalId> createExternalIdFromArtifactoryMetadata(final String packageType, final FileLayoutInfo fileLayoutInfo, final org.artifactory.md.Properties properties) {
+        Optional<ExternalId> optionalExternalId = Optional.empty();
+
+        try {
+            final Optional<SupportedPackageType> possiblySupportedPackageType = SupportedPackageType.getAsSupportedPackageType(packageType);
+            if (possiblySupportedPackageType.isPresent()) {
+                final SupportedPackageType supportedPackageType = possiblySupportedPackageType.get();
+                final Forge forge = supportedPackageType.getForge();
+
+                if (supportedPackageType.hasNameVersionProperties()) {
+                    final String nameProperty = supportedPackageType.getArtifactoryNameProperty();
+                    final String versionProperty = supportedPackageType.getArtifactoryVersionProperty();
+                    optionalExternalId = createNameVersionExternalIdFromProperties(forge, properties, nameProperty, versionProperty);
+                }
+
+                if (!optionalExternalId.isPresent()) {
+                    optionalExternalId = createExternalIdFromFileLayoutInfo(forge, fileLayoutInfo);
+                }
+            } else {
+                logger.warn(String.format("Package type (%s) not supported", packageType));
+            }
+        } catch (final Exception e) {
+            logger.error("Could not resolve the item to a dependency:", e);
         }
-        return externalId;
+
+        return optionalExternalId;
+    }
+
+    private Optional<ExternalId> createExternalIdFromFileLayoutInfo(final Forge forge, final FileLayoutInfo fileLayoutInfo) {
+        final String name = fileLayoutInfo.getModule();
+        final String version = fileLayoutInfo.getBaseRevision();
+        if (forge.equals(Forge.MAVEN)) {
+            final String group = fileLayoutInfo.getOrganization();
+            return createMavenExternalId(group, name, version);
+        }
+        return createNameVersionExternalId(forge, name, version);
     }
 
     private Optional<ExternalId> createNameVersionExternalIdFromProperties(final Forge forge, final org.artifactory.md.Properties properties, final String namePropertyName, final String versionPropertyName) {
         final String name = properties.getFirst(namePropertyName);
         final String version = properties.getFirst(versionPropertyName);
-        return createNameVersionExternalId(forge, name, version);
-    }
-
-    private Optional<ExternalId> createNameVersionExternalIdFromFileLayoutInfo(final Forge forge, final FileLayoutInfo fileLayoutInfo) {
-        final String name = fileLayoutInfo.getModule();
-        final String version = fileLayoutInfo.getBaseRevision();
         return createNameVersionExternalId(forge, name, version);
     }
 
@@ -132,11 +142,8 @@ public class ArtifactoryExternalIdFactory {
         return Optional.ofNullable(externalId);
     }
 
-    private Optional<ExternalId> createMavenExternalId(final FileLayoutInfo fileLayoutInfo) {
+    private Optional<ExternalId> createMavenExternalId(final String group, final String name, final String version) {
         ExternalId externalId = null;
-        final String group = fileLayoutInfo.getOrganization();
-        final String name = fileLayoutInfo.getModule();
-        final String version = fileLayoutInfo.getBaseRevision();
         if (StringUtils.isNoneBlank(group, name, version)) {
             externalId = externalIdFactory.createMavenExternalId(group, name, version);
         }

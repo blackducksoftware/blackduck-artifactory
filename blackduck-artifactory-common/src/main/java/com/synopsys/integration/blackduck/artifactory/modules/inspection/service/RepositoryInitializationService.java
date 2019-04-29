@@ -111,7 +111,7 @@ public class RepositoryInitializationService {
 
         final List<RepoPath> identifiableRepoPaths = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), fileNamePatterns);
         final List<Dependency> dependencies = identifiableRepoPaths.stream()
-                                                  .map(repoPath -> artifactInspectionService.identifyAndMarkArtifact(repoPath, packageType.get()))
+                                                  .map(artifactInspectionService::identifyAndMarkArtifact)
                                                   .map(Artifact::getExternalId)
                                                   .filter(Optional::isPresent)
                                                   .map(Optional::get)

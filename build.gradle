@@ -46,8 +46,11 @@ apply from: 'generateConfig.gradle'
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            def artifactName = "${buildDir}/distributions/${project.name}-${project.version}.zip"
-            artifact(artifactName)
+            def artifactName = "${buildDir}/distributions/${project.name}-${project.version}"
+            def zipArtifactName = "${artifactName}.zip"
+            def tarArtifactName = "${artifactName}.tgz"
+            artifact(zipArtifactName)
+            artifact(tarArtifactName)
         }
     }
 }
@@ -59,8 +62,10 @@ artifactory {
 }
 
 final String folderName = "blackduck-artifactory-$version"
+
 task createFinalZip(type: Zip) {
     dependsOn build, generateConfig
+
     from("${projectDir}/src/main/resources/") {
         include 'version.txt'
         into "$folderName/lib"
@@ -82,9 +87,37 @@ task createFinalZip(type: Zip) {
     }
 }
 
-configure(subprojects) { project ->
-    group = 'com.blackducksoftware.integration'
-    version = parentVersion
+task createFinalTar(type: Tar) {
+    dependsOn build, generateConfig
+    from("${projectDir}/src/main/resources/") {
+        include 'version.txt'
+        into "$folderName/lib"
+    }
+
+    from("${projectDir}/build/configs/") {
+        include 'blackDuckPlugin.properties'
+        into "$folderName/lib"
+    }
+
+    from("${projectDir}/src/main/groovy/com/synopsys/integration/blackduck/artifactory") {
+        include 'blackDuckPlugin.groovy'
+        into "$folderName"
+    }
+
+    from(configurations.compile) {
+        include 'blackduck-artifactory-common*.jar'
+        into "$folderName/lib"
+    }
+
+    compression = Compression.GZIP
+}
+
+createFinalZip.finalizedBy createFinalTar
+
+configure(subprojects) {
+    project ->
+        group = 'com.blackducksoftware.integration'
+        version = parentVersion
 }
 
 subprojects {

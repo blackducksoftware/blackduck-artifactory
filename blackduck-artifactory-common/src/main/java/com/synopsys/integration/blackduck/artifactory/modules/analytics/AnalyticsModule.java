@@ -27,7 +27,7 @@ import java.util.List;
 
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
+import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
@@ -39,15 +39,15 @@ public class AnalyticsModule implements Module {
     private final AnalyticsModuleConfig analyticsModuleConfig;
     private final AnalyticsService analyticsService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
-    private final ModuleRegistry moduleRegistry;
+    private final ModuleManager moduleManager;
 
     private int submissionAttemptCounter = 0;
 
-    public AnalyticsModule(final AnalyticsModuleConfig analyticsModuleConfig, final AnalyticsService analyticsService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ModuleRegistry moduleRegistry) {
+    public AnalyticsModule(final AnalyticsModuleConfig analyticsModuleConfig, final AnalyticsService analyticsService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ModuleManager moduleManager) {
         this.analyticsModuleConfig = analyticsModuleConfig;
         this.analyticsService = analyticsService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
-        this.moduleRegistry = moduleRegistry;
+        this.moduleManager = moduleManager;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class AnalyticsModule implements Module {
      * This should be used infrequently such as once a day due to quota
      */
     public Boolean submitAnalytics() {
-        moduleRegistry.getModuleConfigs().forEach(this::updateModuleStatus);
+        moduleManager.getModuleConfigs().forEach(this::updateModuleStatus);
 
         final boolean analyticsSuccess = analyticsService.submitAnalytics();
         if (!analyticsSuccess) {
