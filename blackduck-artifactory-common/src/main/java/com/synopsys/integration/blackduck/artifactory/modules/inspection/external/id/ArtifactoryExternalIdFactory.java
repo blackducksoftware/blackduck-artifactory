@@ -47,12 +47,8 @@ public class ArtifactoryExternalIdFactory implements ExternalIdExtractor {
         }
 
         if (externalId == null && supportedPackageType.isPresent()) {
-            if (supportedPackageType.get().equals(SupportedPackageType.COMPOSER)) {
-                externalId = composerExternalIdFactory.extractExternalId(repoPath).orElse(null);
-            } else {
-                final ExternalIdExtractor externalIdExtractor = getExternalIdExtractor(supportedPackageType.get());
-                externalId = externalIdExtractor.extractExternalId(repoPath).orElse(null);
-            }
+            final ExternalIdExtractor externalIdExtractor = getExternalIdExtractor(supportedPackageType.get());
+            externalId = externalIdExtractor.extractExternalId(repoPath).orElse(null);
         } else if (!supportedPackageType.isPresent()) {
             logger.warn(String.format("Package type (%s) not supported", packageType));
         }
@@ -64,7 +60,9 @@ public class ArtifactoryExternalIdFactory implements ExternalIdExtractor {
         final String key = supportedPackageType.getArtifactoryName();
 
         if (!externalIdExtractorMap.containsKey(key)) {
-            if (supportedPackageType.hasNameVersionProperties()) {
+            if (supportedPackageType.equals(SupportedPackageType.COMPOSER)) {
+                externalIdExtractorMap.put(key, composerExternalIdFactory);
+            } else if (supportedPackageType.hasNameVersionProperties()) {
                 final ArtifactoryPropertiesExternalIdFactory artifactoryPropertiesExternalIdFactory = new ArtifactoryPropertiesExternalIdFactory(supportedPackageType, artifactoryPAPIService, externalIdFactory);
                 final FileLayoutExternalIdFactory fileLayoutExternalIdFactory = new FileLayoutExternalIdFactory(supportedPackageType, artifactoryPAPIService, externalIdFactory);
                 final NameVersionExternalIdFactory nameVersionExternalIdFactory = new NameVersionExternalIdFactory(artifactoryPropertiesExternalIdFactory, fileLayoutExternalIdFactory);
