@@ -23,7 +23,7 @@
 package com.synopsys.integration.blackduck.artifactory
 
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig
-import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager
+import com.synopsys.integration.blackduck.artifactory.modules.PluginAPI
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule
 import groovy.transform.Field
 import org.artifactory.fs.ItemInfo
@@ -34,7 +34,7 @@ import org.artifactory.request.Request
 // If this is empty, we will default to ${ARTIFACTORY_HOME}/etc/plugins/lib/blackDuckPlugin.properties
 @Field String propertiesFilePathOverride = ""
 @Field PluginService pluginService
-@Field ModuleManager moduleManager
+@Field PluginAPI pluginAPI
 
 initialize(TriggerType.STARTUP)
 
@@ -85,7 +85,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
      **/
     blackDuckSetModuleState() { params ->
-        moduleManager.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        pluginAPI.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -122,7 +122,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
      **/
     blackDuckScan(httpMethod: 'POST') { params ->
-        moduleManager.triggerScan(TriggerType.REST_REQUEST)
+        pluginAPI.triggerScan(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -148,7 +148,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckAddScanPolicyStatus"
      **/
     blackDuckAddScanPolicyStatus(httpMethod: 'POST') { params ->
-        moduleManager.addScanPolicyStatus(TriggerType.REST_REQUEST)
+        pluginAPI.addScanPolicyStatus(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -168,7 +168,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanProperties() { params ->
-        moduleManager.deleteScanProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        pluginAPI.deleteScanProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -188,7 +188,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanPropertiesFromFailures() { params ->
-        moduleManager.deleteScanPropertiesFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        pluginAPI.deleteScanPropertiesFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -208,7 +208,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromOutOfDate?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckDeleteScanPropertiesFromOutOfDate() { params ->
-        moduleManager.deleteScanPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        pluginAPI.deleteScanPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
@@ -223,7 +223,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties?params=properties=blackduck.inspectionStatus"
      **/
     blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
-        moduleManager.deleteInspectionProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        pluginAPI.deleteInspectionProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -237,7 +237,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReinspectFromFailures?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
     blackDuckReinspectFromFailures() { params ->
-        moduleManager.reinspectFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+        pluginAPI.reinspectFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -259,7 +259,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyIdentifyArtifacts"
      **/
     blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
-        moduleManager.inspectDelta(TriggerType.REST_REQUEST)
+        pluginAPI.inspectDelta(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -279,7 +279,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
      **/
     blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
-        moduleManager.populateMetadataInBulk(TriggerType.REST_REQUEST)
+        pluginAPI.populateMetadataInBulk(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -301,7 +301,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyUpdateMetadata"
      **/
     blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
-        moduleManager.updateMetadata(TriggerType.REST_REQUEST)
+        pluginAPI.updateMetadata(TriggerType.REST_REQUEST)
     }
 
     //////////////////////////////////////////////// ANALYTICS EXECUTIONS ////////////////////////////////////////////////
@@ -313,7 +313,7 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSubmitAnalytics"
      */
     blackDuckSubmitAnalytics(httpMethod: 'POST') { params ->
-        message = moduleManager.submitAnalytics(TriggerType.REST_REQUEST)
+        message = pluginAPI.submitAnalytics(TriggerType.REST_REQUEST)
     }
 }
 
@@ -323,48 +323,46 @@ jobs {
     /**
      * The functionality is described above the blackDuckScan execution
      **/
-    blackDuckScan(cron: moduleManager.getScanCron()) {
-        moduleManager.triggerScan(TriggerType.CRON_JOB)
+    blackDuckScan(cron: pluginAPI.getScanCron()) {
+        pluginAPI.triggerScan(TriggerType.CRON_JOB)
     }
 
-    blackDuckAddScanPolicyStatus(cron: moduleManager.getScanCron()) {
-        moduleManager.addScanPolicyStatus(TriggerType.CRON_JOB)
+    blackDuckAddScanPolicyStatus(cron: pluginAPI.getScanCron()) {
+        pluginAPI.addScanPolicyStatus(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
-
-    // TODO: Create docs / endpoints for new cron jobs
-
-    blackDuckInitialBomUpload(cron: moduleManager.getInspectionCron()) {
-        moduleManager.initializeRepositories(TriggerType.CRON_JOB)
+    
+    blackDuckInitialBomUpload(cron: pluginAPI.getInspectionCron()) {
+        pluginAPI.initializeRepositories(TriggerType.CRON_JOB)
     }
 
     /**
      * The functionality is described above the blackDuckManuallyPopulateMetadata execution
      **/
-    blackDuckBulkMetadataPopulation(cron: moduleManager.getInspectionCron()) {
-        moduleManager.populateMetadataInBulk(TriggerType.CRON_JOB)
+    blackDuckBulkMetadataPopulation(cron: pluginAPI.getInspectionCron()) {
+        pluginAPI.populateMetadataInBulk(TriggerType.CRON_JOB)
     }
 
     /**
      * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
      **/
-    blackDuckInspectDelta(cron: moduleManager.getInspectionCron()) {
-        moduleManager.inspectDelta(TriggerType.CRON_JOB)
+    blackDuckInspectDelta(cron: pluginAPI.getInspectionCron()) {
+        pluginAPI.inspectDelta(TriggerType.CRON_JOB)
     }
 
     /**
      * The functionality is described above the blackDuckManuallyUpdateMetadata execution
      **/
-    blackDuckUpdateMetadata(cron: moduleManager.getInspectionCron()) {
-        moduleManager.updateMetadata(TriggerType.CRON_JOB)
+    blackDuckUpdateMetadata(cron: pluginAPI.getInspectionCron()) {
+        pluginAPI.updateMetadata(TriggerType.CRON_JOB)
     }
 
     /**
      * The functionality is described above the blackDuckReinspectFromFailures execution
      */
-    blackDuckReinspectFromFailures(cron: moduleManager.getReinspectCron()) {
-        moduleManager.reinspectFromFailures(TriggerType.CRON_JOB)
+    blackDuckReinspectFromFailures(cron: pluginAPI.getReinspectCron()) {
+        pluginAPI.reinspectFromFailures(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// ANALYTICS JOBS ////////////////////////////////////////////////
@@ -373,7 +371,7 @@ jobs {
      * Submits usage analytics. For developer use only
      **/
     blackDuckSubmitAnalytics(cron: AnalyticsModule.SUBMIT_ANALYTICS_CRON) {
-        moduleManager.submitAnalytics(TriggerType.CRON_JOB)
+        pluginAPI.submitAnalytics(TriggerType.CRON_JOB)
     }
 }
 
@@ -386,7 +384,7 @@ storage {
      * item (org.artifactory.fs.ItemInfo) - the original item being created.
      */
     afterCreate { ItemInfo item ->
-        moduleManager.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
+        pluginAPI.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
 
     /**
@@ -397,7 +395,7 @@ storage {
      * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the copy.
      */
     afterCopy { ItemInfo item, RepoPath targetRepoPath, properties ->
-        moduleManager.handleAfterCopyEvent(targetRepoPath, TriggerType.STORAGE_AFTER_COPY)
+        pluginAPI.handleAfterCopyEvent(targetRepoPath, TriggerType.STORAGE_AFTER_COPY)
     }
 
     /**
@@ -408,15 +406,15 @@ storage {
      * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the move.
      */
     afterMove { ItemInfo item, RepoPath targetRepoPath, properties ->
-        moduleManager.handleAfterMoveEvent(targetRepoPath, TriggerType.STORAGE_AFTER_MOVE)
+        pluginAPI.handleAfterMoveEvent(targetRepoPath, TriggerType.STORAGE_AFTER_MOVE)
     }
 }
 
 //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 download {
     beforeDownload { Request request, RepoPath repoPath ->
-        moduleManager.handleBeforeDownloadEventPolicy(TriggerType.BEFORE_DOWNLOAD, repoPath)
-        moduleManager.handleBeforeDownloadEventInspection(TriggerType.BEFORE_DOWNLOAD, repoPath)
+        pluginAPI.handleBeforeDownloadEventPolicy(TriggerType.BEFORE_DOWNLOAD, repoPath)
+        pluginAPI.handleBeforeDownloadEventInspection(TriggerType.BEFORE_DOWNLOAD, repoPath)
     }
 }
 
@@ -430,7 +428,7 @@ private void initialize(final TriggerType triggerType) {
     final DirectoryConfig pluginConfig = DirectoryConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
 
     pluginService = new PluginService(pluginConfig, repositories, searches)
-    moduleManager = pluginService.initializePlugin()
+    pluginAPI = pluginService.initializePlugin()
 
     log.info("... completed intialization of blackDuckPlugin from ${triggerType.getLogName()}")
 }

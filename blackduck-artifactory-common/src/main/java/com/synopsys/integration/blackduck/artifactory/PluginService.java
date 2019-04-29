@@ -40,7 +40,7 @@ import com.synopsys.integration.blackduck.artifactory.configuration.PluginConfig
 import com.synopsys.integration.blackduck.artifactory.configuration.model.ConfigValidationReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
-import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
+import com.synopsys.integration.blackduck.artifactory.modules.PluginAPI;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService;
@@ -72,7 +72,7 @@ public class PluginService {
         this.searches = searches;
     }
 
-    public ModuleManager initializePlugin() throws IOException, IntegrationException {
+    public PluginAPI initializePlugin() throws IOException, IntegrationException {
         logger.info("initializing blackDuckPlugin...");
 
         final File propertiesFile = getPropertiesFile();
@@ -90,31 +90,31 @@ public class PluginService {
         final AnalyticsService analyticsService = AnalyticsService.createFromBlackDuckServerConfig(directoryConfig, blackDuckServerConfig);
         final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
         final ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, dateTimeManager, blackDuckServicesFactory);
-        final ModuleRegistry moduleRegistry = new ModuleRegistry(analyticsService);
+        final ModuleManager moduleManager = new ModuleManager(analyticsService);
 
         final ScanModule scanModule = moduleFactory.createScanModule(blackDuckDirectory);
         final InspectionModule inspectionModule = moduleFactory.createInspectionModule();
         final PolicyModule policyModule = moduleFactory.createPolicyModule();
-        final AnalyticsModule analyticsModule = moduleFactory.createAnalyticsModule(analyticsService, moduleRegistry);
+        final AnalyticsModule analyticsModule = moduleFactory.createAnalyticsModule(analyticsService, moduleManager);
 
-        moduleRegistry.registerModules(scanModule, inspectionModule, policyModule, analyticsModule);
+        moduleManager.registerModules(scanModule, inspectionModule, policyModule, analyticsModule);
 
-        configValidationService = new ConfigValidationService(moduleRegistry, pluginConfig, directoryConfig.getVersionFile());
+        configValidationService = new ConfigValidationService(moduleManager, pluginConfig, directoryConfig.getVersionFile());
         final ConfigValidationReport configValidationReport = configValidationService.validateConfig();
         if (configValidationReport.getGeneralPropertyReport().hasError()) {
-            moduleRegistry.setAllModulesEnabledState(false);
+            moduleManager.setAllModulesEnabledState(false);
         }
         final LogLevel logLevel = logger.getLogLevel();
         final boolean includeValid = logLevel.isLoggable(LogLevel.INFO);
         final String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport, includeValid);
         logger.warn(statusCheckMessage);
 
-        final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(ModuleManager.class);
-        final ModuleManager moduleManager = ModuleManager.createFromModules(moduleRegistry, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
-        analyticsService.registerAnalyzable(moduleManager);
+        final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PluginAPI.class);
+        final PluginAPI pluginAPI = PluginAPI.createFromModules(moduleManager, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
+        analyticsService.registerAnalyzable(pluginAPI);
 
         logger.info("...blackDuckPlugin initialized.");
-        return moduleManager;
+        return pluginAPI;
     }
 
     public void reloadBlackDuckDirectory(final TriggerType triggerType) throws IOException, IntegrationException {

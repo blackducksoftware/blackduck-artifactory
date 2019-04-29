@@ -135,10 +135,10 @@ public class ModuleFactory {
         return new PolicyModule(policyModuleConfig, artifactoryPropertyService, featureAnalyticsCollector);
     }
 
-    public AnalyticsModule createAnalyticsModule(final AnalyticsService analyticsService, final ModuleRegistry moduleRegistry) {
+    public AnalyticsModule createAnalyticsModule(final AnalyticsService analyticsService, final ModuleManager moduleManager) {
         final AnalyticsModuleConfig analyticsModuleConfig = AnalyticsModuleConfig.createFromProperties(configurationPropertyManager);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
-        return new AnalyticsModule(analyticsModuleConfig, analyticsService, simpleAnalyticsCollector, moduleRegistry);
+        return new AnalyticsModule(analyticsModuleConfig, analyticsService, simpleAnalyticsCollector, moduleManager);
     }
 }

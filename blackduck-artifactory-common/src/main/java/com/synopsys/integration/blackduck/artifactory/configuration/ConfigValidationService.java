@@ -37,7 +37,7 @@ import com.synopsys.integration.blackduck.artifactory.configuration.model.Config
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyValidationResult;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.ModuleRegistry;
+import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
 import com.synopsys.integration.builder.BuilderStatus;
 
 public class ConfigValidationService {
@@ -45,12 +45,12 @@ public class ConfigValidationService {
     private final String LINE_SEPARATOR = System.lineSeparator();
     private final String BLOCK_SEPARATOR = LINE_SEPARATOR + StringUtils.repeat("-", LINE_CHARACTER_LIMIT) + LINE_SEPARATOR;
 
-    private final ModuleRegistry moduleRegistry;
+    private final ModuleManager moduleManager;
     private final PluginConfig pluginConfig;
     private final File versionFile;
 
-    public ConfigValidationService(final ModuleRegistry moduleRegistry, final PluginConfig pluginConfig, final File versionFile) {
-        this.moduleRegistry = moduleRegistry;
+    public ConfigValidationService(final ModuleManager moduleManager, final PluginConfig pluginConfig, final File versionFile) {
+        this.moduleManager = moduleManager;
         this.pluginConfig = pluginConfig;
         this.versionFile = versionFile;
     }
@@ -61,7 +61,7 @@ public class ConfigValidationService {
         pluginConfig.validate(generalPropertyReport);
 
         final List<PropertyGroupReport> propertyGroupReports = new ArrayList<>();
-        for (final ModuleConfig moduleConfig : moduleRegistry.getAllModuleConfigs()) {
+        for (final ModuleConfig moduleConfig : moduleManager.getAllModuleConfigs()) {
             final BuilderStatus propertyGroupBuilderStatus = new BuilderStatus();
             final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), propertyGroupBuilderStatus);
             moduleConfig.validate(propertyGroupReport);
@@ -82,7 +82,7 @@ public class ConfigValidationService {
         statusCheckMessage.append(BLOCK_SEPARATOR);
 
         for (final PropertyGroupReport modulePropertyReport : configValidationReport.getModulePropertyReports()) {
-            final Optional<ModuleConfig> moduleConfigsByName = moduleRegistry.getFirstModuleConfigByName(modulePropertyReport.getPropertyGroupName());
+            final Optional<ModuleConfig> moduleConfigsByName = moduleManager.getFirstModuleConfigByName(modulePropertyReport.getPropertyGroupName());
             final boolean enabled = moduleConfigsByName.isPresent() && moduleConfigsByName.get().isEnabled();
             appendPropertyReportForModule(statusCheckMessage, modulePropertyReport, enabled, includeValid);
             statusCheckMessage.append(BLOCK_SEPARATOR);
