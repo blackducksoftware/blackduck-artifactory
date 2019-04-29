@@ -25,6 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules;
 import java.io.File;
 import java.io.IOException;
 
+import com.google.gson.Gson;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -38,6 +39,10 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.collecto
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.BlackDuckPropertiesExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRetrievalService;
@@ -47,7 +52,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataPopulationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.util.ArtifactoryExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
@@ -70,17 +74,21 @@ public class ModuleFactory {
     private final BlackDuckServerConfig blackDuckServerConfig;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final ArtifactSearchService artifactSearchService;
     private final DateTimeManager dateTimeManager;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
+    private final Gson gson;
 
     public ModuleFactory(final ConfigurationPropertyManager configurationPropertyManager, final BlackDuckServerConfig blackDuckServerConfig, final ArtifactoryPAPIService artifactoryPAPIService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final DateTimeManager dateTimeManager, final BlackDuckServicesFactory blackDuckServicesFactory) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactSearchService artifactSearchService, final DateTimeManager dateTimeManager, final BlackDuckServicesFactory blackDuckServicesFactory, final Gson gson) {
         this.configurationPropertyManager = configurationPropertyManager;
         this.blackDuckServerConfig = blackDuckServerConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactoryPropertyService = artifactoryPropertyService;
+        this.artifactSearchService = artifactSearchService;
         this.dateTimeManager = dateTimeManager;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
+        this.gson = gson;
     }
 
     public ScanModule createScanModule(final File blackDuckDirectory) throws IOException, IntegrationException {
@@ -108,20 +116,22 @@ public class ModuleFactory {
         final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
 
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
-        final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPropertyService);
         final InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPropertyService, projectService, inspectionModuleConfig);
+        final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPAPIService, artifactoryPropertyService);
         final NotificationRetrievalService notificationRetrievalService = new NotificationRetrievalService(blackDuckService);
 
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(inspectionPropertyService, externalIdFactory);
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(inspectionPropertyService, artifactMetaDataService, componentService);
 
         final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationRetrievalService, blackDuckService, notificationService, artifactSearchService, inspectionPropertyService);
         final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService, metaDataPopulationService);
 
+        final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdExtractor = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, externalIdFactory);
+        final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
+        final ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor);
         final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, metaDataPopulationService, inspectionModuleConfig, inspectionPropertyService, projectService,
-            artifactoryExternalIdFactory);
+            externalIdService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactMetaDataService, metaDataPopulationService, artifactNotificationService);
-
         final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, bdioUploadService, artifactInspectionService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
