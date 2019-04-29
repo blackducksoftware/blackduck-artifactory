@@ -31,19 +31,22 @@ public class ExternalIdService {
     public Optional<ExternalId> extractExternalId(final RepoPath repoPath) {
         final String repoKey = repoPath.getRepoKey();
         final String packageType = artifactoryPAPIService.getPackageType(repoKey).orElse(null);
-        final Optional<SupportedPackageType> supportedPackageType = SupportedPackageType.getAsSupportedPackageType(packageType);
+        final Optional<SupportedPackageType> supportedPackageTypeOptional = SupportedPackageType.getAsSupportedPackageType(packageType);
 
-        ExternalId externalId = blackDuckPropertiesExternalIdFactory.extractExternalId(repoPath).orElse(null);
+        ExternalId externalId = null;
+        if (supportedPackageTypeOptional.isPresent()) {
+            final SupportedPackageType supportedPackageType = supportedPackageTypeOptional.get();
 
-        if (externalId == null && supportedPackageType.isPresent()) {
-            if (supportedPackageType.get().equals(SupportedPackageType.COMPOSER)) {
-                externalId = composerExternalIdFactory.extractExternalId(supportedPackageType.get(), repoPath).orElse(null);
+            externalId = blackDuckPropertiesExternalIdFactory.extractExternalId(supportedPackageType, repoPath).orElse(null);
+
+            if (supportedPackageType.equals(SupportedPackageType.COMPOSER)) {
+                externalId = composerExternalIdFactory.extractExternalId(supportedPackageType, repoPath).orElse(null);
             }
 
             if (externalId == null) {
-                externalId = artifactoryInfoExternalIdExtractor.extractExternalId(supportedPackageType.get(), repoPath).orElse(null);
+                externalId = artifactoryInfoExternalIdExtractor.extractExternalId(supportedPackageType, repoPath).orElse(null);
             }
-        } else if (!supportedPackageType.isPresent()) {
+        } else {
             logger.warn(String.format("Package type (%s) not supported", packageType));
         }
 
