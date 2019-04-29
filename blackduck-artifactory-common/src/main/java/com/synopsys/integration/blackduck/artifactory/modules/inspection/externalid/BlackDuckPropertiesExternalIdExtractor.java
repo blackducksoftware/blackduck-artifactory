@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid;
 
 import java.util.Optional;
 
@@ -14,13 +14,13 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
-public class BlackDuckPropertiesExternalIdFactory extends BaseExternalIdFactory {
+public class BlackDuckPropertiesExternalIdExtractor {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final InspectionPropertyService inspectionPropertyService;
     private final ExternalIdFactory externalIdFactory;
 
-    public BlackDuckPropertiesExternalIdFactory(final InspectionPropertyService inspectionPropertyService, final ExternalIdFactory externalIdFactory) {
+    public BlackDuckPropertiesExternalIdExtractor(final InspectionPropertyService inspectionPropertyService, final ExternalIdFactory externalIdFactory) {
         this.inspectionPropertyService = inspectionPropertyService;
         this.externalIdFactory = externalIdFactory;
     }
@@ -28,7 +28,6 @@ public class BlackDuckPropertiesExternalIdFactory extends BaseExternalIdFactory 
     /**
      * Extracts an ExternalId from the blackduck forge and originId properties
      */
-    @Override
     public Optional<ExternalId> extractExternalId(final RepoPath repoPath) {
         final ExternalIdProperties externalIdProperties = inspectionPropertyService.getExternalIdProperties(repoPath);
 

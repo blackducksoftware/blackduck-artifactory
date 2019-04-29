@@ -39,7 +39,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.ExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;

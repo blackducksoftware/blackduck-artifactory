@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.composer.model;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model;
 
 import com.google.gson.annotations.SerializedName;
 

@@ -50,13 +50,15 @@ import com.google.common.collect.Multiset;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.ArtifactoryExternalIdFactory;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.external.id.composer.ComposerExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.BlackDuckPropertiesExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
 // TODO: Add composer test. Might be tricky.
-public class ArtifactoryExternalIdFactoryTest {
+public class ExternalIdExtractorTest {
     @Test
     public void createNugetExternalId() {
         final Map<String, String> propertiesMap = new HashMap<>();
@@ -112,24 +114,27 @@ public class ArtifactoryExternalIdFactoryTest {
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
         final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
         when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
-        final ComposerExternalIdFactory composerExternalIdFactory = mock(ComposerExternalIdFactory.class);
-        when(composerExternalIdFactory.extractExternalId(repoPath))
+        final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdExtractor = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, new ExternalIdFactory());
+        final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, new ExternalIdFactory());
+        final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
+        when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, new ExternalIdFactory(), inspectionPropertyService, composerExternalIdFactory);
+        final ExternalIdExtractor externalIdExtractor = new ExternalIdExtractor(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+            composerExternalIdExtractor);
 
-        Optional<ExternalId> externalId = artifactoryExternalIdFactory.extractExternalId(repoPath);
-
-        assertTrue(externalId.isPresent());
-
-        externalId = artifactoryExternalIdFactory.extractExternalId(repoPathMissingFileLayout);
+        Optional<ExternalId> externalId = externalIdExtractor.extractExternalId(repoPath);
 
         assertTrue(externalId.isPresent());
 
-        externalId = artifactoryExternalIdFactory.extractExternalId(repoPathMissingProperties);
+        externalId = externalIdExtractor.extractExternalId(repoPathMissingFileLayout);
 
         assertTrue(externalId.isPresent());
 
-        externalId = artifactoryExternalIdFactory.extractExternalId(repoPathMissingFileLayoutAndProperties);
+        externalId = externalIdExtractor.extractExternalId(repoPathMissingProperties);
+
+        assertTrue(externalId.isPresent());
+
+        externalId = externalIdExtractor.extractExternalId(repoPathMissingFileLayoutAndProperties);
 
         assertFalse(externalId.isPresent());
     }
@@ -140,15 +145,18 @@ public class ArtifactoryExternalIdFactoryTest {
         final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
         when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
-        final ComposerExternalIdFactory composerExternalIdFactory = mock(ComposerExternalIdFactory.class);
-        when(composerExternalIdFactory.extractExternalId(repoPath))
+        final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdExtractor = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, new ExternalIdFactory());
+        final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, new ExternalIdFactory());
+        final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
+        when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
-        final ArtifactoryExternalIdFactory artifactoryExternalIdFactory = new ArtifactoryExternalIdFactory(artifactoryPAPIService, new ExternalIdFactory(), inspectionPropertyService, composerExternalIdFactory);
+        final ExternalIdExtractor externalIdExtractor = new ExternalIdExtractor(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+            composerExternalIdExtractor);
 
-        Optional<ExternalId> externalId = artifactoryExternalIdFactory.extractExternalId(repoPath);
+        Optional<ExternalId> externalId = externalIdExtractor.extractExternalId(repoPath);
         assertTrue(externalId.isPresent());
 
-        externalId = artifactoryExternalIdFactory.extractExternalId(repoPathMissingFileLayout);
+        externalId = externalIdExtractor.extractExternalId(repoPathMissingFileLayout);
         assertFalse(externalId.isPresent());
     }
 
