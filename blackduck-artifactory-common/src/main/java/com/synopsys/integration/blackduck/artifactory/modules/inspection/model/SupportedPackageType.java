@@ -31,16 +31,16 @@ import com.synopsys.integration.bdio.model.Forge;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty;
 
 public enum SupportedPackageType {
+    BOWER("bower", Forge.NPM, "bower.name", "bower.version", InspectionModuleProperty.PATTERNS_BOWER),
     COCOAPODS("cocoapods", Forge.COCOAPODS, "pods.name", "pods.version", InspectionModuleProperty.PATTERNS_COCOAPODS),
+    CRAN("cran", Forge.CRAN, "cran.name", "cran.version", InspectionModuleProperty.PATTERNS_CRAN),
     GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version", InspectionModuleProperty.PATTERNS_RUBYGEMS),
     GO("go", Forge.GOLANG, "go.name", "go.version", InspectionModuleProperty.PATTERNS_GO),
-    MAVEN("maven", Forge.MAVEN, InspectionModuleProperty.PATTERNS_MAVEN),
     GRADLE("gradle", Forge.MAVEN, InspectionModuleProperty.PATTERNS_GRADLE),
-    PYPI("pypi", Forge.PYPI, "pypi.name", "pypi.version", InspectionModuleProperty.PATTERNS_PYPI),
-    NUGET("nuget", Forge.NUGET, "nuget.id", "nuget.version", InspectionModuleProperty.PATTERNS_NUGET),
+    MAVEN("maven", Forge.MAVEN, InspectionModuleProperty.PATTERNS_MAVEN),
     NPM("npm", Forge.NPM, "npm.name", "npm.version", InspectionModuleProperty.PATTERNS_NPM),
-    CRAN("cran", Forge.CRAN, "cran.name", "cran.version", InspectionModuleProperty.PATTERNS_CRAN),
-    BOWER("bower", Forge.NPM, "bower.name", "bower.version", InspectionModuleProperty.PATTERNS_BOWER);
+    NUGET("nuget", Forge.NUGET, "nuget.id", "nuget.version", InspectionModuleProperty.PATTERNS_NUGET),
+    PYPI("pypi", Forge.PYPI, "pypi.name", "pypi.version", InspectionModuleProperty.PATTERNS_PYPI);
 
     private final String artifactoryName;
     private final Forge forge;
