@@ -43,7 +43,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.BlackDuckPropertiesExternalIdExtractor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
@@ -113,7 +113,7 @@ public class ModuleFactory {
         final ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
         final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdFactory = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, externalIdFactory);
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
-        final ExternalIdExtractor externalIdExtractor = new ExternalIdExtractor(artifactoryPAPIService, blackDuckPropertiesExternalIdFactory, artifactoryInfoExternalIdExtractor,
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdFactory, artifactoryInfoExternalIdExtractor,
             composerExternalIdExtractor);
         final ArtifactMetaDataService artifactMetaDataService = ArtifactMetaDataService.createDefault(blackDuckServerConfig);
         final MetaDataPopulationService metaDataPopulationService = new MetaDataPopulationService(inspectionPropertyService, artifactMetaDataService, blackDuckServicesFactory.createComponentService());
@@ -131,7 +131,7 @@ public class ModuleFactory {
         final BdioUploadService bdioUploadService = blackDuckServicesFactory.createBdioUploadService();
 
         final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, metaDataPopulationService, inspectionModuleConfig, inspectionPropertyService, projectService,
-            externalIdExtractor);
+            externalIdService);
         final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, bdioUploadService, artifactInspectionService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,

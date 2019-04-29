@@ -52,13 +52,13 @@ import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.BlackDuckPropertiesExternalIdExtractor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
 // TODO: Add composer test. Might be tricky.
-public class ExternalIdExtractorTest {
+public class ExternalIdServiceTest {
     @Test
     public void createNugetExternalId() {
         final Map<String, String> propertiesMap = new HashMap<>();
@@ -119,22 +119,22 @@ public class ExternalIdExtractorTest {
         final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
-        final ExternalIdExtractor externalIdExtractor = new ExternalIdExtractor(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
             composerExternalIdExtractor);
 
-        Optional<ExternalId> externalId = externalIdExtractor.extractExternalId(repoPath);
+        Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);
 
         assertTrue(externalId.isPresent());
 
-        externalId = externalIdExtractor.extractExternalId(repoPathMissingFileLayout);
+        externalId = externalIdService.extractExternalId(repoPathMissingFileLayout);
 
         assertTrue(externalId.isPresent());
 
-        externalId = externalIdExtractor.extractExternalId(repoPathMissingProperties);
+        externalId = externalIdService.extractExternalId(repoPathMissingProperties);
 
         assertTrue(externalId.isPresent());
 
-        externalId = externalIdExtractor.extractExternalId(repoPathMissingFileLayoutAndProperties);
+        externalId = externalIdService.extractExternalId(repoPathMissingFileLayoutAndProperties);
 
         assertFalse(externalId.isPresent());
     }
@@ -150,13 +150,13 @@ public class ExternalIdExtractorTest {
         final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
-        final ExternalIdExtractor externalIdExtractor = new ExternalIdExtractor(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
             composerExternalIdExtractor);
 
-        Optional<ExternalId> externalId = externalIdExtractor.extractExternalId(repoPath);
+        Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);
         assertTrue(externalId.isPresent());
 
-        externalId = externalIdExtractor.extractExternalId(repoPathMissingFileLayout);
+        externalId = externalIdService.extractExternalId(repoPathMissingFileLayout);
         assertFalse(externalId.isPresent());
     }
 

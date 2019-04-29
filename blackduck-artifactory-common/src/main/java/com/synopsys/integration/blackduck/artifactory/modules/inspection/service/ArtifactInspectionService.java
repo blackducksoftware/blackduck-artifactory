@@ -39,7 +39,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
@@ -58,17 +58,17 @@ public class ArtifactInspectionService {
     private final InspectionModuleConfig inspectionModuleConfig;
     private final InspectionPropertyService inspectionPropertyService;
     private final ProjectService projectService;
-    private final ExternalIdExtractor externalIdExtractor;
+    private final ExternalIdService externalIdService;
 
     public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService, final MetaDataPopulationService metaDataPopulationService,
-        final InspectionModuleConfig inspectionModuleConfig, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService, final ExternalIdExtractor externalIdExtractor) {
+        final InspectionModuleConfig inspectionModuleConfig, final InspectionPropertyService inspectionPropertyService, final ProjectService projectService, final ExternalIdService externalIdService) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.metaDataPopulationService = metaDataPopulationService;
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.inspectionPropertyService = inspectionPropertyService;
         this.projectService = projectService;
-        this.externalIdExtractor = externalIdExtractor;
+        this.externalIdService = externalIdService;
     }
 
     public boolean shouldInspectArtifact(final RepoPath repoPath) {
@@ -101,7 +101,7 @@ public class ArtifactInspectionService {
     }
 
     private Artifact identifyArtifact(final RepoPath repoPath) {
-        final ExternalId externalId = externalIdExtractor.extractExternalId(repoPath).orElse(null);
+        final ExternalId externalId = externalIdService.extractExternalId(repoPath).orElse(null);
         return new Artifact(repoPath, externalId);
     }
 

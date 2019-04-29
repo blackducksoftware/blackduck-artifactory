@@ -12,7 +12,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.S
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
-public class ExternalIdExtractor {
+public class ExternalIdService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPAPIService artifactoryPAPIService;
@@ -20,7 +20,7 @@ public class ExternalIdExtractor {
     private final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor;
     private final ComposerExternalIdExtractor composerExternalIdFactory;
 
-    public ExternalIdExtractor(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdFactory,
+    public ExternalIdService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdFactory,
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor, final ComposerExternalIdExtractor composerExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckPropertiesExternalIdFactory = blackDuckPropertiesExternalIdFactory;

@@ -15,7 +15,7 @@ import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 
-public class ArtifactoryInfoExternalIdExtractor {
+public class ArtifactoryInfoExternalIdExtractor implements ExternalIdExtactor {
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ExternalIdFactory externalIdFactory;
 
@@ -24,6 +24,7 @@ public class ArtifactoryInfoExternalIdExtractor {
         this.externalIdFactory = externalIdFactory;
     }
 
+    @Override
     public Optional<ExternalId> extractExternalId(final SupportedPackageType supportedPackageType, final RepoPath repoPath) {
         ExternalId externalId = extractExternalIdFromProperties(supportedPackageType, repoPath).orElse(null);
 

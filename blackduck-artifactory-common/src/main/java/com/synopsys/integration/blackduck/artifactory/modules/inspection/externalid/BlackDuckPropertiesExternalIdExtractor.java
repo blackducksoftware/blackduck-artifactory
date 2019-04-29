@@ -10,11 +10,12 @@ import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ExternalIdProperties;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
-public class BlackDuckPropertiesExternalIdExtractor {
+public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtactor {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final InspectionPropertyService inspectionPropertyService;
@@ -28,7 +29,8 @@ public class BlackDuckPropertiesExternalIdExtractor {
     /**
      * Extracts an ExternalId from the blackduck forge and originId properties
      */
-    public Optional<ExternalId> extractExternalId(final RepoPath repoPath) {
+    @Override
+    public Optional<ExternalId> extractExternalId(final SupportedPackageType supportedPackageType, final RepoPath repoPath) {
         final ExternalIdProperties externalIdProperties = inspectionPropertyService.getExternalIdProperties(repoPath);
 
         ExternalId externalId = null;
