@@ -35,6 +35,7 @@ public enum InspectionModuleProperty implements ConfigurationProperty {
     PATTERNS_CRAN("patterns.cran"),
     PATTERNS_RUBYGEMS("patterns.rubygems"),
     PATTERNS_MAVEN("patterns.maven"),
+    PATTERNS_GO("patterns.go"),
     PATTERNS_GRADLE("patterns.gradle"),
     PATTERNS_PYPI("patterns.pypi"),
     PATTERNS_NUGET("patterns.nuget"),
