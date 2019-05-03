@@ -3,7 +3,7 @@ The BlackDuck Artifactory solution consists a single plugin, the blackDuckPlugin
 
 The ScannerModule in the blackDuckPlugin, can be configured to routinely scan your artifacts for open source vulnerabilities via the Black Duck Signature Scanner.
 
-The InspectionModuke in the blackDuckPlugin, can be configured to inspect your Artifactory remote repository caches for open source components and populate Black Duck vulnerability and policy metadata on them.
+The InspectionModule in the blackDuckPlugin, can be configured to inspect your Artifactory remote repository caches for open source components and populate Black Duck vulnerability and policy metadata on them.
 
 The PolicyModule  in the blackDuckPlugin, can be configured to stop downloads of artifacts that either violate policy or if the artifact is missing policy metadata.
 
