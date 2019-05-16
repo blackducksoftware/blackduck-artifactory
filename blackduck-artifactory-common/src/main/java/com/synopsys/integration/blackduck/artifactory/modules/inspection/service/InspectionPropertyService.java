@@ -94,10 +94,22 @@ public class InspectionPropertyService {
     }
 
     public void setPolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities(), logger);
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType(), logger);
+        this.populatePolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate, true);
+    }
+
+    public void updatePolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
+        this.populatePolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate, false);
+    }
+
+    private void populatePolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate, final boolean overrideValues) {
+        if (overrideValues || policyVulnerabilityAggregate.hasVulnerabilityData()) {
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities(), logger);
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities(), logger);
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities(), logger);
+        }
+        if (overrideValues || policyVulnerabilityAggregate.hasPolicyData()) {
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType(), logger);
+        }
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, policyVulnerabilityAggregate.getComponentVersionUrl(), logger);
         setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
     }

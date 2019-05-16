@@ -36,7 +36,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;

@@ -88,7 +88,7 @@ public class ArtifactNotificationService {
             final RepoPath repoPath = RepoPathFactory.create(entry.getKey());
             final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = entry.getValue().build();
 
-            inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
+            inspectionPropertyService.updatePolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
         }
 
         return getLatestNotificationCreatedAtDate(notificationUserViews);

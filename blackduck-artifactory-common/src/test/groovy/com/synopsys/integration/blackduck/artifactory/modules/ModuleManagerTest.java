@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModule;
 import com.synopsys.integration.blackduck.artifactory.modules.mock.MockModuleConfig;
 
@@ -49,6 +49,8 @@ public class ModuleManagerTest {
     }
 
     private class MockConfigProperty implements ConfigurationProperty {
+        private final String key;
+
         public MockConfigProperty(final String key) {
             this.key = key;
         }
@@ -57,7 +59,5 @@ public class ModuleManagerTest {
         public String getKey() {
             return key;
         }
-
-        private final String key;
     }
 }

@@ -31,7 +31,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.serivce.AnalyticsService;
+import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 
 public class AnalyticsModule implements Module {
     public final static String SUBMIT_ANALYTICS_CRON = "0 0 0 1/1 * ? *"; // Every day at 12 am
