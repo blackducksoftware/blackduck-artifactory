@@ -14,7 +14,7 @@ plugins {
     id 'groovy'
 }
 
-version = '7.1.0-SNAPSHOT'
+version = '7.0.0-SNAPSHOT'
 final String parentVersion = project.version
 final String artifactoryMinimumVersion = '5.6.2'
 
@@ -114,10 +114,9 @@ task createFinalTar(type: Tar) {
 
 createFinalZip.finalizedBy createFinalTar
 
-configure(subprojects) {
-    project ->
-        group = 'com.blackducksoftware.integration'
-        version = parentVersion
+configure(subprojects) { project ->
+    group = 'com.blackducksoftware.integration'
+    version = parentVersion
 }
 
 subprojects {

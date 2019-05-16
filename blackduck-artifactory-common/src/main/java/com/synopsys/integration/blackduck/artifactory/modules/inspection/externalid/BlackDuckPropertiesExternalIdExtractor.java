@@ -1,5 +1,29 @@
+/**
+ * blackduck-artifactory-common
+ *
+ * Copyright (c) 2019 Synopsys, Inc.
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid;
 
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 
 import org.artifactory.repo.RepoPath;
@@ -16,8 +40,8 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtactor {
+    public static final String INVALID_PROPERTY_MESSAGE_FORMAT = "Property %s does not exist or is invalid.";
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-
     private final InspectionPropertyService inspectionPropertyService;
     private final ExternalIdFactory externalIdFactory;
 
@@ -34,14 +58,19 @@ public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtacto
         final ExternalIdProperties externalIdProperties = inspectionPropertyService.getExternalIdProperties(repoPath);
 
         ExternalId externalId = null;
-        if (externalIdProperties.getForge().isPresent() && externalIdProperties.getOriginId().isPresent()) {
-            final Forge forge = Forge.getKnownForges().get(externalIdProperties.getForge().get());
-            if (forge == null) {
-                logger.debug(String.format("Failed to extract forge from property %s.", BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName()));
-                return Optional.empty();
-            }
+        final Map<String, Forge> knownForges = Forge.getKnownForges();
+        Arrays.stream(SupportedPackageType.values())
+            .map(SupportedPackageType::getForge)
+            .forEach(artifactoryForge -> knownForges.putIfAbsent(artifactoryForge.getName(), artifactoryForge));
 
-            final String originId = externalIdProperties.getOriginId().get();
+        final Forge forge = externalIdProperties.getForge().map(knownForges::get).orElse(null);
+        final String originId = externalIdProperties.getOriginId().orElse(null);
+
+        if (forge == null) {
+            logger.debug(String.format(INVALID_PROPERTY_MESSAGE_FORMAT, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName()));
+        } else if (originId == null) {
+            logger.debug(String.format(INVALID_PROPERTY_MESSAGE_FORMAT, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName()));
+        } else {
             final String[] originIdPieces = originId.split(forge.getKbSeparator());
 
             if (originIdPieces.length == 2) {
@@ -51,8 +80,6 @@ public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtacto
             } else {
                 logger.debug(String.format("Invalid forge and/or origin id on artifact '%s'", repoPath.getPath()));
             }
-        } else {
-            logger.debug(String.format("Unable to generate an external id from blackduck properties on artifact '%s'", repoPath.getPath()));
         }
 
         return Optional.ofNullable(externalId);
