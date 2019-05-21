@@ -97,6 +97,15 @@ public class ExternalIdServiceTest {
     }
 
     @Test
+    void createMultipleSeparatorExternalId() {
+        final Map<String, String> propertiesMap = new HashMap<>();
+        propertiesMap.put("npm.name", "component/name");
+        propertiesMap.put("npm.version", "version");
+
+        testNameVersionExternalIdCreation(propertiesMap, SupportedPackageType.NPM);
+    }
+
+    @Test
     public void createMavenExternalId() {
         testMavenDependencyCreation(SupportedPackageType.MAVEN);
     }
@@ -413,12 +422,11 @@ public class ExternalIdServiceTest {
     }
 
     protected class MockRepoPath implements RepoPath {
-        private final String key = "test";
-        private final String path;
-
         public final FileLayoutInfo fileLayoutInfo;
         public final Properties properties;
         public final SupportedPackageType supportedPackageType;
+        private final String key = "test";
+        private final String path;
 
         public MockRepoPath(final String path, final FileLayoutInfo fileLayoutInfo, final Properties properties, final SupportedPackageType supportedPackageType) {
             this.fileLayoutInfo = fileLayoutInfo;

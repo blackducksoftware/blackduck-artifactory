@@ -78,7 +78,11 @@ public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtacto
             } else if (originIdPieces.length == 3 && forge.equals(Forge.MAVEN)) {
                 externalId = externalIdFactory.createMavenExternalId(originIdPieces[0], originIdPieces[1], originIdPieces[2]);
             } else {
-                logger.debug(String.format("Invalid forge and/or origin id on artifact '%s'", repoPath.getPath()));
+                // In this case, we assume that the name must have the KbSeparator in it, ex: @babel/core/7.4.3
+                final int kbSeparatorIndex = originId.lastIndexOf(forge.getKbSeparator());
+                final String name = originId.substring(0, kbSeparatorIndex);
+                final String version = originId.substring(kbSeparatorIndex + 1);
+                externalId = externalIdFactory.createNameVersionExternalId(forge, name, version);
             }
         }
 
