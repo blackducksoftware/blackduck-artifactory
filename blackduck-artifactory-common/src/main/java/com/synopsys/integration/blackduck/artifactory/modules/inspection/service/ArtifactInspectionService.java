@@ -154,7 +154,7 @@ public class ArtifactInspectionService {
         }
 
         final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns).stream()
-                                             .filter(this::isArtifactPendingOrShouldRetry)
+                                             .filter(this::shouldPerformDeltaAnalysis)
                                              .map(this::identifyArtifact)
                                              .collect(Collectors.toList());
 
@@ -172,7 +172,9 @@ public class ArtifactInspectionService {
         }
     }
 
-    private boolean isArtifactPendingOrShouldRetry(final RepoPath repoPath) {
-        return inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.PENDING) || inspectionPropertyService.shouldRetryInspection(repoPath);
+    private boolean shouldPerformDeltaAnalysis(final RepoPath repoPath) {
+        return !inspectionPropertyService.hasExternalIdProperties(repoPath)
+                   || inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.PENDING)
+                   || inspectionPropertyService.shouldRetryInspection(repoPath);
     }
 }
