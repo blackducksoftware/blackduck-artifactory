@@ -131,7 +131,7 @@ public class ModuleFactory {
         final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor);
         final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, metaDataPopulationService, inspectionModuleConfig, inspectionPropertyService, projectService,
             externalIdService);
-        final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactMetaDataService, metaDataPopulationService, artifactNotificationService);
+        final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, bdioUploadService, artifactInspectionService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataPopulationService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,

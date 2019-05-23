@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
@@ -42,16 +41,11 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class MetaDataUpdateService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(MetaDataUpdateService.class));
 
-    private final ArtifactMetaDataService artifactMetaDataService;
-    private final MetaDataPopulationService metadataPopulationService;
     private final InspectionPropertyService inspectionPropertyService;
     private final ArtifactNotificationService artifactNotificationService;
 
-    public MetaDataUpdateService(final InspectionPropertyService inspectionPropertyService, final ArtifactMetaDataService artifactMetaDataService, final MetaDataPopulationService metadataPopulationService,
-        final ArtifactNotificationService artifactNotificationService) {
+    public MetaDataUpdateService(final InspectionPropertyService inspectionPropertyService, final ArtifactNotificationService artifactNotificationService) {
         this.inspectionPropertyService = inspectionPropertyService;
-        this.artifactMetaDataService = artifactMetaDataService;
-        this.metadataPopulationService = metadataPopulationService;
         this.artifactNotificationService = artifactNotificationService;
     }
 
