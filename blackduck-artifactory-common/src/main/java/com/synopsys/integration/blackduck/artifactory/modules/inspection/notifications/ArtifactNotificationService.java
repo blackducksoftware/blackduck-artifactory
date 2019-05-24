@@ -23,6 +23,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -145,29 +146,23 @@ public class ArtifactNotificationService {
     }
 
     private <T extends BlackDuckNotification> List<AffectedArtifact<T>> findAffectedArtifacts(final List<String> repoKeys, final T notification) {
-        final List<AffectedArtifact<T>> affectedArtifacts = new ArrayList<>();
-
         try {
             final List<NameVersion> affectedProjectVersions = notification.getAffectedProjectVersions();
             final String[] affectedRepoKeys = determineAffectedRepos(repoKeys, affectedProjectVersions).toArray(new String[0]);
             final ComponentVersionView componentVersionView = notification.getComponentVersionView();
             final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
 
-            for (final OriginView originView : originViews) {
-                final String forge = originView.getOriginName();
-                final String originId = originView.getOriginId();
-                final List<AffectedArtifact<T>> artifactsWithOriginId = artifactSearchService.findArtifactsWithOriginId(forge, originId, affectedRepoKeys).stream()
-                                                                            .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
-                                                                            .collect(Collectors.toList());
-                affectedArtifacts.addAll(artifactsWithOriginId);
-            }
-
-            return affectedArtifacts;
+            return originViews.stream()
+                       .filter(originView -> originView.getOriginId() != null)
+                       .filter(originView -> originView.getOriginName() != null)
+                       .map(originView -> artifactSearchService.findArtifactsWithOriginId(originView.getOriginName(), originView.getOriginId(), affectedRepoKeys))
+                       .flatMap(List::stream)
+                       .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
+                       .collect(Collectors.toList());
         } catch (final IntegrationException e) {
             logger.error(String.format("Failed to get origins for: %s", notification.getComponentVersionView().getHref().orElse("Unknown")), e);
+            return Collections.emptyList();
         }
-
-        return affectedArtifacts;
     }
 
     private List<String> determineAffectedRepos(final List<String> repoKeys, final List<NameVersion> affectedProjectVersions) {
