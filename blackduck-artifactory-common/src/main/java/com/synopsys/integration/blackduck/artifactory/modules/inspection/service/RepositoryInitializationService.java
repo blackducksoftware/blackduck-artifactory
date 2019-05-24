@@ -46,6 +46,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.BdioUploadService;
 import com.synopsys.integration.blackduck.codelocation.bdioupload.UploadTarget;
 import com.synopsys.integration.exception.IntegrationException;
@@ -92,15 +93,21 @@ public class RepositoryInitializationService {
             return;
         }
 
-        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
-        if (!packageType.isPresent()) {
-            logger.warn("Skipping initialization of configured repo '%s' because it is a package type was not found. Please remove this repo from your configuration or ensure a package type is specified");
+        final Optional<String> possiblePackageType = artifactoryPAPIService.getPackageType(repoKey);
+        if (!possiblePackageType.isPresent()) {
+            logger.warn("Skipping initialization of configured repo '%s' because its package type was not found. Please remove this repo from your configuration or ensure a package type is specified");
             throw new FailedInspectionException(repoKeyPath, "Repository package type not found.");
         }
+        final String packageType = possiblePackageType.get();
 
-        final List<String> fileNamePatterns = inspectionModuleConfig.getPatternsForPackageType(packageType.get());
+        if (!SupportedPackageType.getAsSupportedPackageType(packageType).isPresent()) {
+            logger.warn("Skipping initialization of configured repo '%s' because its package type is not supported. Please remove this repo from your configuration or specify a supported package type");
+            throw new FailedInspectionException(repoKeyPath, "Repository package type not supported.");
+        }
+
+        final List<String> fileNamePatterns = inspectionModuleConfig.getPatternsForPackageType(packageType);
         if (fileNamePatterns.isEmpty()) {
-            final String message = String.format("No file name patterns configured for discovered package type '%s'.", packageType.get());
+            final String message = String.format("No file name patterns configured for discovered package type '%s'.", packageType);
             logger.warn(message);
             throw new FailedInspectionException(repoKeyPath, message);
         }
@@ -123,7 +130,7 @@ public class RepositoryInitializationService {
         mutableDependencyGraph.addChildrenToRoot(dependencies);
         final Forge artifactoryForge = new Forge("/", "/", "artifactory");
         final ExternalId projectExternalId = simpleBdioFactory.createNameVersionExternalId(artifactoryForge, projectName, projectVersionName);
-        final String codeLocationName = StringUtils.join(Arrays.asList(projectName, projectVersionName, packageType.get()), "/");
+        final String codeLocationName = StringUtils.join(Arrays.asList(projectName, projectVersionName, packageType), "/");
         final SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, projectName, projectVersionName, projectExternalId, mutableDependencyGraph);
 
         try {
