@@ -128,7 +128,7 @@ public class RepositoryInitializationService {
         final SimpleBdioFactory simpleBdioFactory = new SimpleBdioFactory();
         final MutableDependencyGraph mutableDependencyGraph = simpleBdioFactory.createMutableDependencyGraph();
         mutableDependencyGraph.addChildrenToRoot(dependencies);
-        final Forge artifactoryForge = new Forge("/", "/", "artifactory");
+        final Forge artifactoryForge = new Forge("/", "artifactory");
         final ExternalId projectExternalId = simpleBdioFactory.createNameVersionExternalId(artifactoryForge, projectName, projectVersionName);
         final String codeLocationName = StringUtils.join(Arrays.asList(projectName, projectVersionName, packageType), "/");
         final SimpleBdioDocument simpleBdioDocument = simpleBdioFactory.createSimpleBdioDocument(codeLocationName, projectName, projectVersionName, projectExternalId, mutableDependencyGraph);

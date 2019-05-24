@@ -82,7 +82,7 @@ public class InspectionPropertyService {
     }
 
     public void setExternalIdProperties(final RepoPath repoPath, final ExternalId externalId) {
-        final String blackDuckOriginId = externalId.createBlackDuckOriginId();
+        final String blackDuckOriginId = externalId.createExternalId();
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId, logger);
         final String blackduckForge = externalId.forge.getName();
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);

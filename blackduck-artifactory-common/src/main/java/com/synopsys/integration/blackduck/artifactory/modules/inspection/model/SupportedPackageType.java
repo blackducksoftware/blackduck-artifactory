@@ -31,7 +31,7 @@ import com.synopsys.integration.bdio.model.Forge;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty;
 
 public enum SupportedPackageType {
-    BOWER("bower", new Forge("/", "/", "npmjs"), "bower.name", "bower.version", InspectionModuleProperty.PATTERNS_BOWER),
+    BOWER("bower", Forge.NPMJS, "bower.name", "bower.version", InspectionModuleProperty.PATTERNS_BOWER),
     COCOAPODS("cocoapods", Forge.COCOAPODS, "pods.name", "pods.version", InspectionModuleProperty.PATTERNS_COCOAPODS),
     COMPOSER("composer", Forge.PACKAGIST, InspectionModuleProperty.PATTERNS_COMPOSER),
     CRAN("cran", Forge.CRAN, "cran.name", "cran.version", InspectionModuleProperty.PATTERNS_CRAN),
@@ -40,7 +40,7 @@ public enum SupportedPackageType {
     // GO("go", Forge.GOLANG, "go.name", "go.version", InspectionModuleProperty.PATTERNS_GO),
     GRADLE("gradle", Forge.MAVEN, InspectionModuleProperty.PATTERNS_GRADLE),
     MAVEN("maven", Forge.MAVEN, InspectionModuleProperty.PATTERNS_MAVEN),
-    NPM("npm", new Forge("/", "/", "npmjs"), "npm.name", "npm.version", InspectionModuleProperty.PATTERNS_NPM),
+    NPM("npm", Forge.NPMJS, "npm.name", "npm.version", InspectionModuleProperty.PATTERNS_NPM),
     NUGET("nuget", Forge.NUGET, "nuget.id", "nuget.version", InspectionModuleProperty.PATTERNS_NUGET),
     PYPI("pypi", Forge.PYPI, "pypi.name", "pypi.version", InspectionModuleProperty.PATTERNS_PYPI);
 

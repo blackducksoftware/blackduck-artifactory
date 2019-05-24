@@ -127,10 +127,11 @@ public class BlackDuckBOMService {
     }
 
     private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
-        final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getExactComponentMatch(externalId);
+        // TODO: Update this in 7.1.0 to filter based on the stored search results
+        final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getFirstOrEmptyResult(externalId);
 
         if (!componentSearchResultView.isPresent()) {
-            throw new IntegrationException(String.format("No search results for component found: %s", externalId.createBlackDuckOriginId()));
+            throw new IntegrationException(String.format("No search results for component found: %s", externalId.createExternalId()));
         }
 
         final String componentVersionUrl = componentSearchResultView.get().getVersion();

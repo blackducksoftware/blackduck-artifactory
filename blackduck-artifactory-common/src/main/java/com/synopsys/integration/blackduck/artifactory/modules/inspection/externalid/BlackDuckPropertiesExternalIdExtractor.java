@@ -71,7 +71,7 @@ public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtacto
         } else if (originId == null) {
             logger.debug(String.format(INVALID_PROPERTY_MESSAGE_FORMAT, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName()));
         } else {
-            final String[] originIdPieces = originId.split(forge.getKbSeparator());
+            final String[] originIdPieces = originId.split(forge.getSeparator());
 
             if (originIdPieces.length == 2) {
                 externalId = externalIdFactory.createNameVersionExternalId(forge, originIdPieces[0], originIdPieces[1]);
@@ -79,7 +79,7 @@ public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtacto
                 externalId = externalIdFactory.createMavenExternalId(originIdPieces[0], originIdPieces[1], originIdPieces[2]);
             } else {
                 // In this case, we assume that the name must have the KbSeparator in it, ex: @babel/core/7.4.3
-                final int kbSeparatorIndex = originId.lastIndexOf(forge.getKbSeparator());
+                final int kbSeparatorIndex = originId.lastIndexOf(forge.getSeparator());
                 final String name = originId.substring(0, kbSeparatorIndex);
                 final String version = originId.substring(kbSeparatorIndex + 1);
                 externalId = externalIdFactory.createNameVersionExternalId(forge, name, version);

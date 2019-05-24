@@ -16,7 +16,9 @@ plugins {
 
 version = '7.0.0-SNAPSHOT'
 final String parentVersion = project.version
+
 final String artifactoryMinimumVersion = '5.6.2'
+final String blackDuckCommonVersion = '43.0.0'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 
@@ -28,7 +30,7 @@ dependencies {
     compile project(":blackduck-artifactory-common")
 
     implementation 'org.codehaus.groovy:groovy-all:2.4.15'
-    implementation 'com.blackducksoftware.integration:blackduck-common:42.3.0'
+    implementation 'com.blackducksoftware.integration:blackduck-common:' + blackDuckCommonVersion
 
     compileOnly 'org.apache.commons:commons-configuration2:2.2'
 
@@ -117,6 +119,10 @@ createFinalZip.finalizedBy createFinalTar
 configure(subprojects) { project ->
     group = 'com.blackducksoftware.integration'
     version = parentVersion
+    dependencies {
+        ext.artifactoryMinimumVersion = artifactoryMinimumVersion
+        ext.blackDuckCommonVersion = blackDuckCommonVersion
+    }
 }
 
 subprojects {
