@@ -132,17 +132,17 @@ public class ScanPolicyService {
     private ProjectVersionWrapper resolveProjectVersionWrapper(final RepoPath repoPath) throws IntegrationException {
         final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
 
-        ProjectVersionWrapper projectVersionViewWrapper = null;
         if (nameVersion.isPresent()) {
             final String projectName = nameVersion.get().getName();
             final String projectVersionName = nameVersion.get().getVersion();
+            final String failureMessage = String.format("Failed to find Black Duck project version with name '%s' and version '%s'.", projectName, projectVersionName);
             try {
-                projectVersionViewWrapper = projectService.getProjectVersion(projectName, projectVersionName).orElse(null);
+                return projectService.getProjectVersion(projectName, projectVersionName).orElseThrow(() -> new IntegrationException(failureMessage));
             } catch (final IntegrationException e) {
-                throw new IntegrationException(String.format("Failed to find Black Duck project version with name '%s' and version '%s'", projectName, projectVersionName), e);
+                throw new IntegrationException(failureMessage, e);
             }
+        } else {
+            throw new IntegrationException("Failed to extract project name and project vesion from properties.");
         }
-
-        return projectVersionViewWrapper;
     }
 }
