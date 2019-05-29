@@ -197,6 +197,8 @@ public class ArtifactScanService {
 
         if (scanResult.equals(Result.FAILURE)) {
             logger.warn(String.format("The BlackDuck CLI failed to scan %s", repoPath.getName()));
+            final Optional<String> errorMessage = scanCommandOutput.get().getErrorMessage();
+            errorMessage.ifPresent(message -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT_MESSAGE, message, logger));
             return;
         }
 
