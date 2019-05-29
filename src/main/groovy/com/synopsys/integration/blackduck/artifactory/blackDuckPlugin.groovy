@@ -263,26 +263,6 @@ executions {
     }
 
     /**
-     * Manual execution of the Populate Metadata step of inspection on a specific repository.
-     * Automatic execution is performed by the blackDuckBulkMetadataPopulation CRON job below.
-     *
-     * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying notifications
-     * to look up vulnerability notifications in Black Duck, then populates that vulnerability notifications on the artifact in Artifactory.
-     *
-     * Metadata populated:
-     * blackduck.highVulnerabilities
-     * blackduck.mediumVulnerabilities
-     * blackduck.lowVulnerabilities
-     * blackduck.policyStatusView
-     *
-     * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
-     **/
-    blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
-        pluginAPI.populateMetadataInBulk(TriggerType.REST_REQUEST)
-    }
-
-    /**
      * Manual execution of the Update Metadata step of inspection on a specific repository.
      * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
      *
@@ -332,16 +312,9 @@ jobs {
     }
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
-    
-    blackDuckInitialBomUpload(cron: pluginAPI.getInspectionCron()) {
-        pluginAPI.initializeRepositories(TriggerType.CRON_JOB)
-    }
 
-    /**
-     * The functionality is described above the blackDuckManuallyPopulateMetadata execution
-     **/
-    blackDuckBulkMetadataPopulation(cron: pluginAPI.getInspectionCron()) {
-        pluginAPI.populateMetadataInBulk(TriggerType.CRON_JOB)
+    blackDuckInitializeRepos(cron: pluginAPI.getInspectionCron()) {
+        pluginAPI.initializeRepositories(TriggerType.CRON_JOB)
     }
 
     /**

@@ -90,14 +90,13 @@ public class ArtifactInspectionService {
         return wildcardFileFilter.accept(artifact);
     }
 
-    public Artifact identifyAndMarkArtifact(final RepoPath repoPath) {
+    public void identifyAndMarkArtifact(final RepoPath repoPath) {
         final Artifact artifact = identifyArtifact(repoPath);
         try {
             metaDataPopulationService.populateExternalIdMetadata(artifact);
         } catch (final FailedInspectionException e) {
             inspectionPropertyService.failInspection(e);
         }
-        return artifact;
     }
 
     private Artifact identifyArtifact(final RepoPath repoPath) {

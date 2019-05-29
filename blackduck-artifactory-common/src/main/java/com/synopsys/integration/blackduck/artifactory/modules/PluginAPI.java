@@ -162,10 +162,6 @@ public class PluginAPI implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::initializeRepositories);
     }
 
-    public void populateMetadataInBulk(final TriggerType triggerType) {
-        runMethod(inspectionModuleConfig, triggerType, inspectionModule::populateMetadataInBulk);
-    }
-
     public String getInspectionCron() {
         return inspectionModuleConfig.getInspectionCron();
     }

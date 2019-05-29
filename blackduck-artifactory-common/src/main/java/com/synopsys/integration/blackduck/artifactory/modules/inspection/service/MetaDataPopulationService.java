@@ -22,25 +22,18 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.service;
 
-import java.util.List;
-
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactMetaDataService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.ArtifactMetaData;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ComponentService;
@@ -53,33 +46,11 @@ public class MetaDataPopulationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(MetaDataPopulationService.class));
 
     private final InspectionPropertyService inspectionPropertyService;
-    private final ArtifactMetaDataService artifactMetaDataService;
     private final ComponentService componentService;
 
-    public MetaDataPopulationService(final InspectionPropertyService inspectionPropertyService, final ArtifactMetaDataService artifactMetaDataService, final ComponentService componentService) {
-        this.artifactMetaDataService = artifactMetaDataService;
+    public MetaDataPopulationService(final InspectionPropertyService inspectionPropertyService, final ComponentService componentService) {
         this.inspectionPropertyService = inspectionPropertyService;
         this.componentService = componentService;
-    }
-
-    public void populateMetadata(final String repoKey) {
-        final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final boolean isStatusPending = inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
-
-        if (isStatusPending) {
-            logger.debug(String.format("Populating notifications in bulk on repoKey: %s", repoKey));
-            try {
-                final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
-                final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
-
-                final List<ArtifactMetaData> artifactMetaDataList = artifactMetaDataService.getArtifactMetadataOfRepository(repoKey, projectName, projectVersionName);
-                populateBlackDuckMetadataFromIdMetadata(repoKey, artifactMetaDataList);
-
-                inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
-            } catch (final Exception e) {
-                logger.error(String.format("The Black Duck %s encountered a problem while populating artifact notifications in repository '%s'", InspectionModule.class.getSimpleName(), repoKey), e);
-            }
-        }
     }
 
     public void populateExternalIdMetadata(final Artifact artifact) throws FailedInspectionException {
@@ -88,7 +59,7 @@ public class MetaDataPopulationService {
 
     public void populateExternalIdMetadata(final RepoPath repoPath, @Nullable final ExternalId externalId) throws FailedInspectionException {
         if (externalId == null) {
-            logger.debug(String.format("Could not populate artifact with notifications. Missing externalId: %s", repoPath));
+            logger.debug(String.format("Could not populate artifact with external id metadata. Missing externalId: %s", repoPath));
             throw new FailedInspectionException(repoPath, "Artifactory failed to provide sufficient information to identify the artifact");
         }
 
@@ -101,20 +72,6 @@ public class MetaDataPopulationService {
         final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
         final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(vulnerabilityAggregate, policySummaryStatusType, componentVersionView.getHref().orElse(null));
         populateBlackDuckMetadata(repoPath, policyVulnerabilityAggregate);
-    }
-
-    private void populateBlackDuckMetadataFromIdMetadata(final String repoKey, final List<ArtifactMetaData> artifactMetaDataList) {
-        for (final ArtifactMetaData artifactMetaData : artifactMetaDataList) {
-            final String forge = artifactMetaData.getForge();
-            final String originId = artifactMetaData.getOriginId();
-
-            if (StringUtils.isNoneBlank(forge, originId)) {
-                final List<RepoPath> artifactsWithOriginId = inspectionPropertyService.getArtifactsWithExternalIdProperties(repoKey, forge, originId);
-                for (final RepoPath repoPath : artifactsWithOriginId) {
-                    populateBlackDuckMetadata(repoPath, artifactMetaData.getPolicyVulnerabilityAggregate());
-                }
-            }
-        }
     }
 
     private void populateBlackDuckMetadata(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {

@@ -91,13 +91,6 @@ public class InspectionModule implements Module {
         // updateAnalytics();
     }
 
-    public void populateMetadataInBulk() {
-        inspectionModuleConfig.getRepos().forEach(metaDataPopulationService::populateMetadata);
-
-        // TODO: Implement in 7.1.0
-        // updateAnalytics();
-    }
-
     public void reinspectFromFailures() {
         final Map<String, List<String>> params = new HashMap<>();
         params.put("properties", Arrays.asList(BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(), BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName()));
