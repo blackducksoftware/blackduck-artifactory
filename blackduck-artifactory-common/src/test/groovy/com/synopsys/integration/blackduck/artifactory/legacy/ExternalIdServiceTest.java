@@ -54,7 +54,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.BlackDuckPropertiesExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ExternalIdProperties;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.OriginIdProperties;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
@@ -124,10 +124,10 @@ public class ExternalIdServiceTest {
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
 
         final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
-        when(inspectionPropertyService.getExternalIdProperties(repoPath)).thenReturn(new ExternalIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayout)).thenReturn(new ExternalIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingProperties)).thenReturn(new ExternalIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayoutAndProperties)).thenReturn(new ExternalIdProperties(null, null));
+        when(inspectionPropertyService.getExternalIdProperties(repoPath)).thenReturn(new OriginIdProperties(null, null));
+        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayout)).thenReturn(new OriginIdProperties(null, null));
+        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingProperties)).thenReturn(new OriginIdProperties(null, null));
+        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayoutAndProperties)).thenReturn(new OriginIdProperties(null, null));
 
         final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdExtractor = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, new ExternalIdFactory());
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, new ExternalIdFactory());
@@ -135,7 +135,7 @@ public class ExternalIdServiceTest {
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
 
-        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor,
             composerExternalIdExtractor);
 
         Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);
@@ -161,8 +161,8 @@ public class ExternalIdServiceTest {
 
         final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
         when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
-        when(inspectionPropertyService.getExternalIdProperties(repoPath)).thenReturn(new ExternalIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayout)).thenReturn(new ExternalIdProperties(null, null));
+        when(inspectionPropertyService.getExternalIdProperties(repoPath)).thenReturn(new OriginIdProperties(null, null));
+        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayout)).thenReturn(new OriginIdProperties(null, null));
 
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
         final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdExtractor = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, new ExternalIdFactory());
@@ -171,7 +171,7 @@ public class ExternalIdServiceTest {
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
 
-        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor,
             composerExternalIdExtractor);
 
         Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);

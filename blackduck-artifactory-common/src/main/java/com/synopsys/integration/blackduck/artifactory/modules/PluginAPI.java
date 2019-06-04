@@ -138,8 +138,8 @@ public class PluginAPI implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterMoveEvent);
     }
 
-    public void inspectDelta(final TriggerType triggerType) {
-        runMethod(inspectionModuleConfig, triggerType, inspectionModule::inspectDelta);
+    public void inspectAllUnknownArtifacts(final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, inspectionModule::inspectAllUnknownArtifacts);
     }
 
     public void updateMetadata(final TriggerType triggerType) {

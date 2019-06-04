@@ -33,7 +33,7 @@ import com.synopsys.integration.bdio.model.Forge;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ExternalIdProperties;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.OriginIdProperties;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.log.IntLogger;
@@ -55,7 +55,7 @@ public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtacto
      */
     @Override
     public Optional<ExternalId> extractExternalId(final SupportedPackageType supportedPackageType, final RepoPath repoPath) {
-        final ExternalIdProperties externalIdProperties = inspectionPropertyService.getExternalIdProperties(repoPath);
+        final OriginIdProperties originIdProperties = inspectionPropertyService.getExternalIdProperties(repoPath);
 
         ExternalId externalId = null;
         final Map<String, Forge> knownForges = Forge.getKnownForges();
@@ -63,8 +63,8 @@ public class BlackDuckPropertiesExternalIdExtractor implements ExternalIdExtacto
             .map(SupportedPackageType::getForge)
             .forEach(artifactoryForge -> knownForges.putIfAbsent(artifactoryForge.getName(), artifactoryForge));
 
-        final Forge forge = externalIdProperties.getForge().map(knownForges::get).orElse(null);
-        final String originId = externalIdProperties.getOriginId().orElse(null);
+        final Forge forge = originIdProperties.getForge().map(knownForges::get).orElse(null);
+        final String originId = originIdProperties.getOriginId().orElse(null);
 
         if (forge == null) {
             logger.debug(String.format(INVALID_PROPERTY_MESSAGE_FORMAT, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName()));
