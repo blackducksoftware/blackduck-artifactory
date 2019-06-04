@@ -53,9 +53,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.OriginIdProperties;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
 // TODO: Add composer test. Might be tricky.
 public class ExternalIdServiceTest {
@@ -122,12 +120,6 @@ public class ExternalIdServiceTest {
 
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
 
-        final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
-        when(inspectionPropertyService.getExternalIdProperties(repoPath)).thenReturn(new OriginIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayout)).thenReturn(new OriginIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingProperties)).thenReturn(new OriginIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayoutAndProperties)).thenReturn(new OriginIdProperties(null, null));
-
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, new ExternalIdFactory());
         final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
@@ -156,11 +148,6 @@ public class ExternalIdServiceTest {
     private void testMavenDependencyCreation(final SupportedPackageType supportedPackageType) {
         final MockRepoPath repoPath = createValidRepoPath(new HashMap<>(), supportedPackageType);
         final MockRepoPath repoPathMissingFileLayout = createRepoPathMissingFileLayout(repoPath);
-
-        final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
-        when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
-        when(inspectionPropertyService.getExternalIdProperties(repoPath)).thenReturn(new OriginIdProperties(null, null));
-        when(inspectionPropertyService.getExternalIdProperties(repoPathMissingFileLayout)).thenReturn(new OriginIdProperties(null, null));
 
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, new ExternalIdFactory());
