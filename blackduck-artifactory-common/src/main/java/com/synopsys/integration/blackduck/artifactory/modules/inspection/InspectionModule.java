@@ -121,10 +121,12 @@ public class InspectionModule implements Module {
     }
 
     public void reinspectFromFailures(final Map<String, List<String>> params) {
-        inspectionModuleConfig.getRepos().stream()
-            .map(repoKey -> inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
-            .flatMap(Collection::stream)
-            .peek(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger))
+        final List<RepoPath> repoPaths = inspectionModuleConfig.getRepos().stream()
+                                             .map(repoKey -> inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
+                                             .flatMap(Collection::stream).collect(Collectors.toList());
+
+        repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
+        repoPaths.stream()
             .filter(artifactInspectionService::shouldInspectArtifact)
             .forEach(artifactInspectionService::inspectSingleArtifact);
 
