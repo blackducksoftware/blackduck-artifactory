@@ -242,7 +242,7 @@ executions {
 
     /**
      * Manual execution of the Identify Artifacts step of inspection on a specific repository.
-     * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
+     * Automatic execution is performed by the blackDuckInspectAllUnknownArtifacts CRON job below.
      *
      * Identifies artifacts in the repository and populates identifying notifications on them for use by the Populate Metadata and Update Metadata
      * steps.
@@ -356,7 +356,7 @@ jobs {
 
 storage {
     //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
-    
+
     /**
      * Handle after create events.
      *
