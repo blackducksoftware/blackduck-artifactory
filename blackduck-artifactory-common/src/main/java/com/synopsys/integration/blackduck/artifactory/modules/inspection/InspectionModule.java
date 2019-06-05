@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import org.artifactory.exception.CancelException;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -104,7 +105,10 @@ public class InspectionModule implements Module {
     }
 
     public void updateMetadata() {
-        inspectionModuleConfig.getRepos().forEach(metaDataUpdateService::updateMetadata);
+        final List<RepoPath> repoKeyPaths = inspectionModuleConfig.getRepos().stream()
+                                                .map(RepoPathFactory::create)
+                                                .collect(Collectors.toList());
+        metaDataUpdateService.updateMetadata(repoKeyPaths);
 
         // TODO: Implement in 7.1.0
         // updateAnalytics();

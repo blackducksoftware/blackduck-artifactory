@@ -22,12 +22,11 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.service;
 
-import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
@@ -49,16 +48,15 @@ public class MetaDataUpdateService {
         this.artifactNotificationService = artifactNotificationService;
     }
 
-    public void updateMetadata(final String repoKey) {
-        final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-        final boolean shouldTryUpdate = inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+    public void updateMetadata(final List<RepoPath> repoKeyPaths) {
+        final Date now = new Date();
+        Date earliestDate = now;
+        for (final RepoPath repoKeyPath : repoKeyPaths) {
+            final boolean shouldTryUpdate = inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
 
-        if (shouldTryUpdate) {
-            final Optional<Date> lastUpdateProperty = inspectionPropertyService.getLastUpdate(repoKeyPath);
-            final Optional<Date> lastInspectionProperty = inspectionPropertyService.getLastInspection(repoKeyPath);
-
-            try {
-                final Date now = new Date();
+            if (shouldTryUpdate) {
+                final Optional<Date> lastUpdateProperty = inspectionPropertyService.getLastUpdate(repoKeyPath);
+                final Optional<Date> lastInspectionProperty = inspectionPropertyService.getLastInspection(repoKeyPath);
                 final Date dateToCheck;
 
                 if (lastUpdateProperty.isPresent()) {
@@ -66,25 +64,26 @@ public class MetaDataUpdateService {
                 } else if (lastInspectionProperty.isPresent()) {
                     dateToCheck = lastInspectionProperty.get();
                 } else {
-                    throw new IntegrationException(String.format(
+                    final String message = String.format(
                         "Could not find timestamp property on %s. Black Duck artifactory notifications is likely malformed and requires re-inspection. Run the blackDuckDeleteInspectionProperties rest endpoint to re-inspect all configured repositories or delete the malformed properties manually.",
-                        repoKeyPath.toPath()));
+                        repoKeyPath.toPath());
+                    logger.debug(message);
+                    inspectionPropertyService.failInspection(repoKeyPath, message);
+                    continue;
                 }
 
-                final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
-                final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
-
-                final Optional<Date> lastNotificationDate = artifactNotificationService.updateMetadataFromNotifications(Collections.singletonList(repoKey), dateToCheck, now);
-                inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-                // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
-                inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(dateToCheck));
-
-                inspectionPropertyService.updateUIUrl(repoKeyPath, projectName, projectVersionName);
-            } catch (final IntegrationException e) {
-                logger.error(String.format("The Black Duck %s encountered a problem while updating artifact notifications from BlackDuck notifications in repository [%s]", InspectionModule.class.getSimpleName(), repoKey));
-                logger.debug(e.getMessage(), e);
-                inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE);
+                if (dateToCheck.before(earliestDate)) {
+                    earliestDate = dateToCheck;
+                }
             }
+        }
+
+        try {
+            artifactNotificationService.updateMetadataFromNotifications(repoKeyPaths, earliestDate, now);
+        } catch (final IntegrationException e) {
+            logger.error(String.format("The Black Duck %s encountered a problem while updating artifact notifications from BlackDuck notifications.", InspectionModule.class.getSimpleName()));
+            logger.debug(e.getMessage(), e);
+            repoKeyPaths.forEach(repoKeyPath -> inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE));
         }
     }
 
