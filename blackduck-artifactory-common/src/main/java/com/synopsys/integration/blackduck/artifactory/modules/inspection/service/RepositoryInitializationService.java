@@ -41,9 +41,6 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
-/**
- * Handles the initial BOM upload for a repository
- */
 public class RepositoryInitializationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
