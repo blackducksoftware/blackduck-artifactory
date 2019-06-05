@@ -1,6 +1,30 @@
 include "blackduck-artifactory-common"
 
+enum ProjectLanguage {
+    JAVA("gradle"),
+    KOTLIN("gradle.kts")
+
+    public final String buildFileExtension
+
+    ProjectLanguage(final String buildFileExtension) {
+        this.buildFileExtension = buildFileExtension
+    }
+}
+
+final Map<String, ProjectLanguage> projectOverrides = [
+    "artifactory-automation": ProjectLanguage.KOTLIN
+] as Map<String, ProjectLanguage>
+
 rootProject.name = 'blackduck-artifactory'
 rootProject.children.each { project ->
-    project.buildFileName = "${project.name}.gradle"
+    ProjectLanguage projectLanguage
+    if (projectOverrides[project.name] != null) {
+        projectLanguage = projectOverrides[project.name]
+    } else {
+        projectLanguage = ProjectLanguage.JAVA
+    }
+
+    project.buildFileName = "${project.name}.${projectLanguage.buildFileExtension}"
 }
+include 'artifactory-automation'
+
