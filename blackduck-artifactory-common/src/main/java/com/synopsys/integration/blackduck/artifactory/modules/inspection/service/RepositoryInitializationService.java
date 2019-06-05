@@ -69,8 +69,8 @@ public class RepositoryInitializationService {
 
     private void initializeRepository(final RepoPath repoKeyPath) throws FailedInspectionException {
         final String repoKey = repoKeyPath.getRepoKey();
-        final Optional<InspectionStatus> repoInspectionStatus = inspectionPropertyService.getInspectionStatus(repoKeyPath);
-        if (repoInspectionStatus.isPresent()) {
+
+        if (inspectionPropertyService.shouldRetryInspection(repoKeyPath)) {
             // If an inspection status is present, we don't need to do a BOM upload. A failure will be cleared automatically or by a user.
             logger.debug(String.format("Not performing repo initialization on '%s' because it has already been initialized.", repoKey));
             return;
