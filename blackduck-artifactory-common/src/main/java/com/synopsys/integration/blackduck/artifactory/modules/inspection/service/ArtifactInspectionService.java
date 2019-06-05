@@ -130,7 +130,7 @@ public class ArtifactInspectionService {
     private void inspectAllUnknownArtifacts(final RepoPath repoKeyPath) throws FailedInspectionException {
         final String repoKey = repoKeyPath.getRepoKey();
 
-        if (!inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
+        if (inspectionPropertyService.hasInspectionStatus(repoKeyPath) && !inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
             // Only inspect a delta if the repository has been successfully initialized.
             return;
         }

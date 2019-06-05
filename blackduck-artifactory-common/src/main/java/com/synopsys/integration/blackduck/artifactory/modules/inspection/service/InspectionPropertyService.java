@@ -141,8 +141,11 @@ public class InspectionPropertyService {
 
     public Optional<InspectionStatus> getInspectionStatus(final RepoPath repoPath) {
         final Optional<String> inspectionStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS);
-
         return inspectionStatus.map(InspectionStatus::valueOf);
+    }
+
+    public boolean hasInspectionStatus(final RepoPath repoPath) {
+        return artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS);
     }
 
     public List<RepoPath> getAllArtifactsInRepoWithInspectionStatus(final String repoKey, final InspectionStatus inspectionStatus) {
