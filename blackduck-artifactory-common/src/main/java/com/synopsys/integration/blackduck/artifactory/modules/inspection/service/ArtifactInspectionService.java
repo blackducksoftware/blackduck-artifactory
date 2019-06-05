@@ -106,14 +106,11 @@ public class ArtifactInspectionService {
             final String repoKey = repoPath.getRepoKey();
             final String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
             final String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
-            final Optional<ProjectVersionWrapper> projectVersion = projectService.getProjectVersion(repoProjectName, repoProjectVersionName);
-
-            if (!projectVersion.isPresent()) {
-                throw new FailedInspectionException(repoPath, "Failed to get project and version from Black Duck.");
-            }
+            final ProjectVersionWrapper projectVersion = projectService.getProjectVersion(repoProjectName, repoProjectVersionName)
+                                                             .orElseThrow(() -> new FailedInspectionException(repoPath, "Failed to get project and version from Black Duck."));
 
             final Artifact artifact = identifyArtifact(repoPath);
-            final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersion.get().getProjectVersionView());
+            final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersion.getProjectVersionView());
             populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper);
         } catch (final IntegrationException e) {
             inspectionPropertyService.failInspection(repoPath, e.getMessage());

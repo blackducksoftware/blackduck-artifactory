@@ -125,13 +125,10 @@ public class BlackDuckBOMService {
 
     private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
         // TODO: Update this in 7.1.0 to filter based on the stored search results
-        final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getFirstOrEmptyResult(externalId);
+        final ComponentSearchResultView componentSearchResultView = componentService.getFirstOrEmptyResult(externalId)
+                                                                        .orElseThrow(() -> new IntegrationException(String.format("No search results for component found: %s", externalId.createExternalId())));
 
-        if (!componentSearchResultView.isPresent()) {
-            throw new IntegrationException(String.format("No search results for component found: %s", externalId.createExternalId()));
-        }
-
-        final String componentVersionUrl = componentSearchResultView.get().getVersion();
+        final String componentVersionUrl = componentSearchResultView.getVersion();
         final ComponentVersionView componentVersionView = blackDuckService.getResponse(new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class));
         final Optional<String> projectVersionViewHref = projectVersionView.getHref();
         final Optional<String> componentVersionViewHref = componentVersionView.getHref();
@@ -145,7 +142,7 @@ public class BlackDuckBOMService {
             final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
             final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
 
-            return new ComponentViewWrapper(versionBomComponentView, componentVersionView, componentSearchResultView.get());
+            return new ComponentViewWrapper(versionBomComponentView, componentVersionView, componentSearchResultView);
         } else {
             throw new IntegrationException("projectVersionViewHref or componentVersionViewHref is not present");
         }
