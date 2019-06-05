@@ -38,14 +38,11 @@ public class ExternalIdService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final ArtifactoryPAPIService artifactoryPAPIService;
-    private final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdFactory;
     private final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor;
     private final ComposerExternalIdExtractor composerExternalIdFactory;
 
-    public ExternalIdService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdFactory,
-        final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor, final ComposerExternalIdExtractor composerExternalIdFactory) {
+    public ExternalIdService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor, final ComposerExternalIdExtractor composerExternalIdFactory) {
         this.artifactoryPAPIService = artifactoryPAPIService;
-        this.blackDuckPropertiesExternalIdFactory = blackDuckPropertiesExternalIdFactory;
         this.artifactoryInfoExternalIdExtractor = artifactoryInfoExternalIdExtractor;
         this.composerExternalIdFactory = composerExternalIdFactory;
     }
@@ -58,8 +55,6 @@ public class ExternalIdService {
         ExternalId externalId = null;
         if (supportedPackageTypeOptional.isPresent()) {
             final SupportedPackageType supportedPackageType = supportedPackageTypeOptional.get();
-
-            externalId = blackDuckPropertiesExternalIdFactory.extractExternalId(supportedPackageType, repoPath).orElse(null);
 
             if (supportedPackageType.equals(SupportedPackageType.COMPOSER)) {
                 externalId = composerExternalIdFactory.extractExternalId(supportedPackageType, repoPath).orElse(null);
