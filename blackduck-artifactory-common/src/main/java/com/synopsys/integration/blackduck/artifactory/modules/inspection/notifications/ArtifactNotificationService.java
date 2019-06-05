@@ -66,8 +66,7 @@ public class ArtifactNotificationService {
     private final InspectionPropertyService inspectionPropertyService;
 
     public ArtifactNotificationService(final NotificationRetrievalService notificationRetrievalService, final BlackDuckService blackDuckService, final NotificationService notificationService,
-        final ArtifactSearchService artifactSearchService,
-        final InspectionPropertyService inspectionPropertyService) {
+        final ArtifactSearchService artifactSearchService, final InspectionPropertyService inspectionPropertyService) {
         this.notificationRetrievalService = notificationRetrievalService;
         this.blackDuckService = blackDuckService;
         this.notificationService = notificationService;

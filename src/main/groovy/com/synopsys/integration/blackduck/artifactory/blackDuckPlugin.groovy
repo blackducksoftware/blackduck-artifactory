@@ -250,41 +250,26 @@ executions {
      * Metadata populated on artifacts:
      * blackduck.forge
      * blackduck.originId
+     * blackduck.highVulnerabilities
+     * blackduck.mediumVulnerabilities
+     * blackduck.lowVulnerabilities
+     * blackduck.componentVersionUrl
+     * blackduck.policyStatus
      *
      * Metadata populated on repositories:
      * blackduck.inspectionTime
      * blackduck.inspectionStatus
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyIdentifyArtifacts"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyInspectAllUnknownArtifacts"
      **/
-    blackDuckManuallyIdentifyArtifacts(httpMethod: 'POST') { params ->
-        pluginAPI.inspectDelta(TriggerType.REST_REQUEST)
-    }
-
-    /**
-     * Manual execution of the Populate Metadata step of inspection on a specific repository.
-     * Automatic execution is performed by the blackDuckBulkMetadataPopulation CRON job below.
-     *
-     * For each artifact that matches the configured patterns in the configured repositories, uses the pre-populated identifying notifications
-     * to look up vulnerability notifications in Black Duck, then populates that vulnerability notifications on the artifact in Artifactory.
-     *
-     * Metadata populated:
-     * blackduck.highVulnerabilities
-     * blackduck.mediumVulnerabilities
-     * blackduck.lowVulnerabilities
-     * blackduck.policyStatusView
-     *
-     * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPopulateMetadata"
-     **/
-    blackDuckManuallyPopulateMetadata(httpMethod: 'POST') { params ->
-        pluginAPI.populateMetadataInBulk(TriggerType.REST_REQUEST)
+    blackDuckManuallyInspectAllUnknownArtifacts(httpMethod: 'POST') { params ->
+        pluginAPI.inspectAllUnknownArtifacts(TriggerType.REST_REQUEST)
     }
 
     /**
      * Manual execution of the Update Metadata step of inspection on a specific repository.
-     * Automatic execution is performed by the blackDuckIdentifyArtifacts CRON job below.
+     * Automatic execution is performed by the blackDuckInspectAllUnknownArtifacts CRON job below.
      *
      * For each artifact that matches the configured patterns in the configured repositories, checks for updates to that notifications in Black Duck
      * since the last time the repository was inspected.
@@ -292,6 +277,7 @@ executions {
      * Metadata updated on artifacts:
      * blackduck.forge
      * blackduck.originId
+
      *
      * Metadata updated on repositories:
      * blackduck.inspectionTime
@@ -332,23 +318,16 @@ jobs {
     }
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////
-    
-    blackDuckInitialBomUpload(cron: pluginAPI.getInspectionCron()) {
+
+    blackDuckInitializeRepos(cron: pluginAPI.getInspectionCron()) {
         pluginAPI.initializeRepositories(TriggerType.CRON_JOB)
     }
 
     /**
-     * The functionality is described above the blackDuckManuallyPopulateMetadata execution
+     * The functionality is described above the blackDuckManuallyInspectAllUnknownArtifacts execution
      **/
-    blackDuckBulkMetadataPopulation(cron: pluginAPI.getInspectionCron()) {
-        pluginAPI.populateMetadataInBulk(TriggerType.CRON_JOB)
-    }
-
-    /**
-     * The functionality is described above the blackDuckManuallyIdentifyArtifacts execution
-     **/
-    blackDuckInspectDelta(cron: pluginAPI.getInspectionCron()) {
-        pluginAPI.inspectDelta(TriggerType.CRON_JOB)
+    blackDuckInspectAllUnknownArtifacts(cron: pluginAPI.getInspectionCron()) {
+        pluginAPI.inspectAllUnknownArtifacts(TriggerType.CRON_JOB)
     }
 
     /**
@@ -375,8 +354,9 @@ jobs {
     }
 }
 
-//////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
 storage {
+    //////////////////////////////////////////////// INSPECTION STORAGE ////////////////////////////////////////////////
+    
     /**
      * Handle after create events.
      *
@@ -410,8 +390,9 @@ storage {
     }
 }
 
-//////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 download {
+    //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
+
     beforeDownload { Request request, RepoPath repoPath ->
         pluginAPI.handleBeforeDownloadEventPolicy(TriggerType.BEFORE_DOWNLOAD, repoPath)
         pluginAPI.handleBeforeDownloadEventInspection(TriggerType.BEFORE_DOWNLOAD, repoPath)

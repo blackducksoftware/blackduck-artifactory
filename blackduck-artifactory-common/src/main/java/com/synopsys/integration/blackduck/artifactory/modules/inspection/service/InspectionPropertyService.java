@@ -33,14 +33,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ExternalIdProperties;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ProjectService;
@@ -64,29 +62,13 @@ public class InspectionPropertyService {
         this.inspectionModuleConfig = inspectionModuleConfig;
     }
 
-    public List<RepoPath> getArtifactsWithExternalIdProperties(final String repoKey, final String forge, final String originId) {
-        final SetMultimap<String, String> setMultimap = HashMultimap.create();
-        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), forge);
-        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName(), originId);
-        return artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(setMultimap, repoKey);
-    }
-
     public boolean hasExternalIdProperties(final RepoPath repoPath) {
         return artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) && artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE);
     }
 
-    public ExternalIdProperties getExternalIdProperties(final RepoPath repoPath) {
-        final Optional<String> forgeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE);
-        final Optional<String> originIdProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID);
-        return new ExternalIdProperties(forgeProperty.orElse(null), originIdProperty.orElse(null));
-    }
-
-    public void setExternalIdProperties(final RepoPath repoPath, final ExternalId externalId) {
-        final String blackDuckOriginId = externalId.createExternalId();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, blackDuckOriginId, logger);
-        final String blackduckForge = externalId.forge.getName();
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, blackduckForge, logger);
-        setInspectionStatus(repoPath, InspectionStatus.PENDING);
+    public void setExternalIdProperties(final RepoPath repoPath, final String forge, final String originId) {
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, originId, logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, forge, logger);
     }
 
     public boolean shouldRetryInspection(final RepoPath repoPath) {

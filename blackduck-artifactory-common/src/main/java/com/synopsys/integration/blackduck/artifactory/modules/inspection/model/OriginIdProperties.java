@@ -24,11 +24,11 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
 import java.util.Optional;
 
-public class ExternalIdProperties {
+public class OriginIdProperties {
     private final String forge;
     private final String originId;
 
-    public ExternalIdProperties(final String forge, final String originId) {
+    public OriginIdProperties(final String forge, final String originId) {
         this.forge = forge;
         this.originId = originId;
     }
