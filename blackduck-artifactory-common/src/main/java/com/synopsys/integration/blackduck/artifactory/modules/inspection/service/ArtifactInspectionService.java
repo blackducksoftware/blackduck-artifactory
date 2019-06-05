@@ -161,7 +161,7 @@ public class ArtifactInspectionService {
                 throw new IntegrationException(String.format("Project '%s' and version '%s' could not be found.", projectName, projectVersionName));
             }
         } catch (final IntegrationException e) {
-            logger.error("An error occurred when attempting to get the project version from Black Duck.", e);
+            logger.debug("An error occurred when attempting to get the project version from Black Duck.", e);
             throw new FailedInspectionException(repoKeyPath, String.format("Failed to get project version from Black Duck: %s", e.getMessage()));
         }
 

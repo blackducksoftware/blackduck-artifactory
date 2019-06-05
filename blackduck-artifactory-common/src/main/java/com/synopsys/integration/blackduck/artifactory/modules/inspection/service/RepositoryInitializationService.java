@@ -77,13 +77,13 @@ public class RepositoryInitializationService {
 
         final Optional<String> possiblePackageType = artifactoryPAPIService.getPackageType(repoKey);
         if (!possiblePackageType.isPresent()) {
-            logger.warn("Skipping initialization of configured repo '%s' because its package type was not found. Please remove this repo from your configuration or ensure a package type is specified");
+            logger.warn(String.format("Skipping initialization of configured repo '%s' because its package type was not found. Please remove this repo from your configuration or ensure a package type is specified", repoKey));
             throw new FailedInspectionException(repoKeyPath, "Repository package type not found.");
         }
         final String packageType = possiblePackageType.get();
 
         if (!SupportedPackageType.getAsSupportedPackageType(packageType).isPresent()) {
-            logger.warn("Skipping initialization of configured repo '%s' because its package type is not supported. Please remove this repo from your configuration or specify a supported package type");
+            logger.warn(String.format("Skipping initialization of configured repo '%s' because its package type is not supported. Please remove this repo from your configuration or specify a supported package type", repoKey));
             throw new FailedInspectionException(repoKeyPath, "Repository package type not supported.");
         }
 
@@ -109,7 +109,9 @@ public class RepositoryInitializationService {
                 inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             }
         } catch (final IntegrationException e) {
-            throw new FailedInspectionException(repoKeyPath, String.format("Failed to create project and version in Black Duck for repository '%s'", repoKey));
+            final String message = String.format("Failed to create project and version in Black Duck for repository '%s'", repoKey);
+            logger.debug(message, e);
+            throw new FailedInspectionException(repoKeyPath, message);
         }
     }
 }
