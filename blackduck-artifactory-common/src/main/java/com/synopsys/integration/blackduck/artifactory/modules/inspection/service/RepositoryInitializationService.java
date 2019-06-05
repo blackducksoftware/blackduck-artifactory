@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.generated.component.ProjectRequest;
 import com.synopsys.integration.blackduck.api.generated.component.ProjectVersionRequest;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionPhaseType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
@@ -104,6 +105,7 @@ public class RepositoryInitializationService {
                 projectRequest.setName(projectName);
                 final ProjectVersionRequest projectVersionRequest = new ProjectVersionRequest();
                 projectVersionRequest.setVersionName(projectVersionName);
+                projectVersionRequest.setPhase(ProjectVersionPhaseType.RELEASED);
                 projectRequest.setVersionRequest(projectVersionRequest);
                 projectService.createProject(projectRequest);
                 inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
