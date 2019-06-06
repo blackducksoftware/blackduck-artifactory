@@ -153,13 +153,10 @@ public class ArtifactInspectionService {
         try {
             final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
             final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
-            final Optional<ProjectVersionWrapper> projectVersionWrapperOptional = projectService.getProjectVersion(projectName, projectVersionName);
-
-            if (projectVersionWrapperOptional.isPresent()) {
-                projectVersionView = projectVersionWrapperOptional.get().getProjectVersionView();
-            } else {
-                throw new IntegrationException(String.format("Project '%s' and version '%s' could not be found.", projectName, projectVersionName));
-            }
+            projectVersionView = projectService.getProjectVersion(projectName, projectVersionName)
+                                     .map(ProjectVersionWrapper::getProjectVersionView)
+                                     .orElseThrow(() -> new IntegrationException(String.format("Project '%s' and version '%s' could not be found.", projectName, projectVersionName)));
+            inspectionPropertyService.updateUIUrl(repoKeyPath, projectVersionView);
         } catch (final IntegrationException e) {
             logger.debug("An error occurred when attempting to get the project version from Black Duck.", e);
             throw new FailedInspectionException(repoKeyPath, String.format("Failed to get project version from Black Duck: %s", e.getMessage()));

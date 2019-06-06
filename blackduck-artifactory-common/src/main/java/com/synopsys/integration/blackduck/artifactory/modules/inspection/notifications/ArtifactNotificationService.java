@@ -44,6 +44,7 @@ import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.AffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.BlackDuckNotification;
@@ -103,6 +104,14 @@ public class ArtifactNotificationService {
             inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
             // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
             inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
+            final String repoKey = repoKeyPath.getRepoKey();
+            final String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
+            final String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+            try {
+                inspectionPropertyService.updateUIUrl(repoKeyPath, repoProjectName, repoProjectVersionName);
+            } catch (final IntegrationException e) {
+                logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoKey));
+            }
         });
 
     }

@@ -185,10 +185,12 @@ public class InspectionPropertyService {
 
         if (projectVersionWrapper.isPresent()) {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
-            final Optional<String> projectVersionUIUrl = projectVersionView.getHref();
-
-            projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
+            updateUIUrl(repoPath, projectVersionView);
         }
+    }
+
+    public void updateUIUrl(final RepoPath repoPath, final ProjectVersionView projectVersionView) {
+        projectVersionView.getHref().ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
     }
 
     public Optional<Date> getLastUpdate(final RepoPath repoKeyPath) {

@@ -39,6 +39,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.excepti
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -109,7 +110,8 @@ public class RepositoryInitializationService {
                 projectVersionRequest.setPhase(ProjectVersionPhaseType.RELEASED);
                 projectVersionRequest.setDistribution(ProjectVersionDistributionType.INTERNAL);
                 projectRequest.setVersionRequest(projectVersionRequest);
-                projectService.createProject(projectRequest);
+                final ProjectVersionWrapper projectVersionWrapper = projectService.createProject(projectRequest);
+                inspectionPropertyService.updateUIUrl(repoKeyPath, projectVersionWrapper.getProjectVersionView());
                 inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             }
         } catch (final IntegrationException e) {
