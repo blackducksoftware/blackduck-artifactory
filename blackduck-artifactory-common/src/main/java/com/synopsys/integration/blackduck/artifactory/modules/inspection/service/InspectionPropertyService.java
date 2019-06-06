@@ -102,6 +102,7 @@ public class InspectionPropertyService {
 
     public void failInspection(final RepoPath repoPath, final String inspectionStatusMessage) {
         final int retryCount = getFailedInspectionCount(repoPath) + 1;
+        logger.debug(String.format("Attempting to fail inspection for '%s' with message '%s'", repoPath.toPath(), inspectionStatusMessage));
         if (retryCount > inspectionModuleConfig.getRetryCount()) {
             logger.debug(String.format("Attempting to fail inspection more than the number of maximum attempts: %s", repoPath.getPath()));
         } else {
@@ -110,8 +111,7 @@ public class InspectionPropertyService {
     }
 
     public Integer getFailedInspectionCount(final RepoPath repoPath) {
-        final Optional<Integer> retryCount = artifactoryPropertyService.getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT);
-        return retryCount.orElse(0);
+        return artifactoryPropertyService.getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT).orElse(0);
     }
 
     public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status) {
