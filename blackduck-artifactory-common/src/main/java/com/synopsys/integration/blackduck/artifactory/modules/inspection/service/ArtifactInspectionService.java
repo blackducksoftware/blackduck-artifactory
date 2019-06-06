@@ -192,8 +192,8 @@ public class ArtifactInspectionService {
     }
 
     private boolean shouldPerformDeltaAnalysis(final RepoPath repoPath) {
-        return !inspectionPropertyService.hasExternalIdProperties(repoPath)
-                   || inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.PENDING)
-                   || inspectionPropertyService.shouldRetryInspection(repoPath);
+        return (!inspectionPropertyService.hasInspectionStatus(repoPath) && !inspectionPropertyService.hasExternalIdProperties(repoPath))
+                   || inspectionPropertyService.shouldRetryInspection(repoPath)
+                   || inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);
     }
 }
