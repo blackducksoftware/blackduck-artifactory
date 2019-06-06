@@ -72,7 +72,7 @@ public class InspectionPropertyService {
     }
 
     public boolean shouldRetryInspection(final RepoPath repoPath) {
-        return assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount();
+        return !hasInspectionStatus(repoPath) || (assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount());
     }
 
     public void setPolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
