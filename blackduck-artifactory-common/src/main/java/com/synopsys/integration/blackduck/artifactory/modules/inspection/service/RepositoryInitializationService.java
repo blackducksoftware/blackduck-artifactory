@@ -33,6 +33,7 @@ import com.synopsys.integration.blackduck.api.generated.component.ProjectRequest
 import com.synopsys.integration.blackduck.api.generated.component.ProjectVersionRequest;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionDistributionType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionPhaseType;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
@@ -102,7 +103,9 @@ public class RepositoryInitializationService {
         inspectionPropertyService.setRepoProjectNameProperties(repoKey, projectName, projectVersionName);
 
         try {
-            if (!projectService.getProjectVersion(projectName, projectVersionName).isPresent()) {
+            final ProjectVersionView projectVersionView;
+            final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
+            if (!projectVersionWrapper.isPresent()) {
                 final ProjectRequest projectRequest = new ProjectRequest();
                 projectRequest.setName(projectName);
                 final ProjectVersionRequest projectVersionRequest = new ProjectVersionRequest();
@@ -110,10 +113,13 @@ public class RepositoryInitializationService {
                 projectVersionRequest.setPhase(ProjectVersionPhaseType.RELEASED);
                 projectVersionRequest.setDistribution(ProjectVersionDistributionType.INTERNAL);
                 projectRequest.setVersionRequest(projectVersionRequest);
-                final ProjectVersionWrapper projectVersionWrapper = projectService.createProject(projectRequest);
-                inspectionPropertyService.updateUIUrl(repoKeyPath, projectVersionWrapper.getProjectVersionView());
-                inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+                projectVersionView = projectService.createProject(projectRequest).getProjectVersionView();
+            } else {
+                projectVersionView = projectVersionWrapper.get().getProjectVersionView();
             }
+
+            inspectionPropertyService.updateUIUrl(repoKeyPath, projectVersionView);
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
         } catch (final IntegrationException e) {
             final String message = String.format("Failed to create project and version in Black Duck for repository '%s'", repoKey);
             logger.debug(message, e);
