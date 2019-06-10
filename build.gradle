@@ -27,7 +27,7 @@ license {
 }
 
 dependencies {
-    compile project(":blackduck-artifactory-common")
+    compile project("blackduck-artifactory-common")
 
     implementation 'org.codehaus.groovy:groovy-all:2.4.15'
     implementation 'com.blackducksoftware.integration:blackduck-common:' + blackDuckCommonVersion
