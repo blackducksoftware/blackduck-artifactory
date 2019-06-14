@@ -115,6 +115,7 @@ task createFinalTar(type: Tar) {
 }
 
 createFinalZip.finalizedBy createFinalTar
+build.finalizedBy createFinalZip
 
 configure(subprojects) { project ->
     group = 'com.blackducksoftware.integration'
