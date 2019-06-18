@@ -212,6 +212,16 @@ executions {
     }
 
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
+    /**
+     * Manual execution of the Repository Initialization step of inspection.
+     * Automatic execution is performed by the blackDuckInitializeRepos CRON job below.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckInitializeRepositories"
+     **/
+    blackDuckInitializeRepositories() { params ->
+        pluginAPI.initializeRepositories(TriggerType.REST_REQUEST)
+    }
 
     /**
      * Removes all properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect.
