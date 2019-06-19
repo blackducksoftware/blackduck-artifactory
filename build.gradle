@@ -11,6 +11,7 @@ buildscript {
 }
 
 plugins {
+    id 'java'
     id 'groovy'
 }
 
@@ -118,7 +119,7 @@ createFinalZip.finalizedBy createFinalTar
 build.finalizedBy createFinalZip
 
 configure(subprojects) { project ->
-    group = 'com.blackducksoftware.integration'
+    group = 'com.synopsys.integration'
     version = parentVersion
     dependencies {
         ext.artifactoryMinimumVersion = artifactoryMinimumVersion
@@ -128,6 +129,6 @@ configure(subprojects) { project ->
 
 subprojects {
     tasks.withType(Test) {
-        maxParallelForks = 4
+        maxParallelForks = 1 // Do not allow parrallel forks otherwise the automation tests may attempt to spin up multiple Artifactory instances.
     }
 }

@@ -1,3 +1,4 @@
 include "blackduck-artifactory-common"
+include 'blackduck-artifactory-automation'
 
 rootProject.name = 'blackduck-artifactory'
