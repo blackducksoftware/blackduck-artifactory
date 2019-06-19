@@ -53,13 +53,11 @@ public class BlackDuckBOMService {
     private final ProjectBomService projectBomService;
     private final ComponentService componentService;
     private final BlackDuckService blackDuckService;
-    private final MetaDataPopulationService metaDataPopulationService;
 
-    public BlackDuckBOMService(final ProjectBomService projectBomService, final ComponentService componentService, final BlackDuckService blackDuckService, final MetaDataPopulationService metaDataPopulationService) {
+    public BlackDuckBOMService(final ProjectBomService projectBomService, final ComponentService componentService, final BlackDuckService blackDuckService) {
         this.projectBomService = projectBomService;
         this.componentService = componentService;
         this.blackDuckService = blackDuckService;
-        this.metaDataPopulationService = metaDataPopulationService;
     }
 
     public ComponentViewWrapper addArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) throws FailedInspectionException {
@@ -108,7 +106,6 @@ public class BlackDuckBOMService {
             try {
                 logger.debug("Will attempt to grab policy status from Black Duck directly.");
                 componentViewWrapper = getComponentViewWrapper(projectVersionView, artifactExternalId);
-                metaDataPopulationService.populateBlackDuckMetadata(repoPath, componentViewWrapper.getComponentVersionView(), componentViewWrapper.getVersionBomComponentView());
             } catch (final IntegrationException e1) {
                 logger.debug("Failed to populate artifact with policy info even though it already exists in the BOM", e1);
                 throw new FailedInspectionException(repoPath, "Failed to retrieve policy information");
@@ -127,13 +124,11 @@ public class BlackDuckBOMService {
     }
 
     private ComponentViewWrapper getComponentViewWrapper(final ProjectVersionView projectVersionView, final ExternalId externalId) throws IntegrationException {
-        final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getExactComponentMatch(externalId);
+        // TODO: Update this in 7.1.0 to filter based on the stored search results
+        final ComponentSearchResultView componentSearchResultView = componentService.getFirstOrEmptyResult(externalId)
+                                                                        .orElseThrow(() -> new IntegrationException(String.format("No search results for component found: %s", externalId.createExternalId())));
 
-        if (!componentSearchResultView.isPresent()) {
-            throw new IntegrationException(String.format("No search results for component found: %s", externalId.createBlackDuckOriginId()));
-        }
-
-        final String componentVersionUrl = componentSearchResultView.get().getVersion();
+        final String componentVersionUrl = componentSearchResultView.getVersion();
         final ComponentVersionView componentVersionView = blackDuckService.getResponse(new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class));
         final Optional<String> projectVersionViewHref = projectVersionView.getHref();
         final Optional<String> componentVersionViewHref = componentVersionView.getHref();
@@ -147,7 +142,7 @@ public class BlackDuckBOMService {
             final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
             final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
 
-            return new ComponentViewWrapper(versionBomComponentView, componentVersionView);
+            return new ComponentViewWrapper(versionBomComponentView, componentVersionView, componentSearchResultView);
         } else {
             throw new IntegrationException("projectVersionViewHref or componentVersionViewHref is not present");
         }

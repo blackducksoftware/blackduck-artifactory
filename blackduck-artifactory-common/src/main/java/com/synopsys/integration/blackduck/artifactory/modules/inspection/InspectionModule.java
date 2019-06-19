@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import org.artifactory.exception.CancelException;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -45,7 +46,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.collecto
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataPopulationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.log.IntLogger;
@@ -56,7 +56,6 @@ public class InspectionModule implements Module {
 
     private final InspectionModuleConfig inspectionModuleConfig;
     private final ArtifactoryPAPIService artifactoryPAPIService;
-    private final MetaDataPopulationService metaDataPopulationService;
     private final MetaDataUpdateService metaDataUpdateService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final InspectionPropertyService inspectionPropertyService;
@@ -64,12 +63,11 @@ public class InspectionModule implements Module {
     private final RepositoryInitializationService repositoryInitializationService;
     private final ArtifactInspectionService artifactInspectionService;
 
-    public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactoryPAPIService artifactoryPAPIService, final MetaDataPopulationService metaDataPopulationService,
-        final MetaDataUpdateService metaDataUpdateService, final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
+    public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactoryPAPIService artifactoryPAPIService, final MetaDataUpdateService metaDataUpdateService,
+        final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
         final RepositoryInitializationService repositoryInitializationService, final ArtifactInspectionService artifactInspectionService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
-        this.metaDataPopulationService = metaDataPopulationService;
         this.metaDataUpdateService = metaDataUpdateService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.inspectionPropertyService = inspectionPropertyService;
@@ -86,12 +84,9 @@ public class InspectionModule implements Module {
     //////////////////////// New cron jobs ////////////////////////
     public void initializeRepositories() {
         inspectionModuleConfig.getRepos().forEach(repositoryInitializationService::initializeRepository);
-        updateAnalytics();
-    }
 
-    public void populateMetadataInBulk() {
-        inspectionModuleConfig.getRepos().forEach(metaDataPopulationService::populateMetadata);
-        updateAnalytics();
+        // TODO: Implement in 7.1.0
+        // updateAnalytics();
     }
 
     public void reinspectFromFailures() {
@@ -102,14 +97,21 @@ public class InspectionModule implements Module {
 
     //////////////////////// Old cron jobs ////////////////////////
 
-    public void inspectDelta() {
-        inspectionModuleConfig.getRepos().forEach(artifactInspectionService::inspectDelta);
-        updateAnalytics();
+    public void inspectAllUnknownArtifacts() {
+        inspectionModuleConfig.getRepos().forEach(artifactInspectionService::inspectAllUnknownArtifacts);
+
+        // TODO: Implement in 7.1.0
+        // updateAnalytics();
     }
 
     public void updateMetadata() {
-        inspectionModuleConfig.getRepos().forEach(metaDataUpdateService::updateMetadata);
-        updateAnalytics();
+        final List<RepoPath> repoKeyPaths = inspectionModuleConfig.getRepos().stream()
+                                                .map(RepoPathFactory::create)
+                                                .collect(Collectors.toList());
+        metaDataUpdateService.updateMetadata(repoKeyPaths);
+
+        // TODO: Implement in 7.1.0
+        // updateAnalytics();
     }
 
     //////////////////////// Endpoints ////////////////////////
@@ -117,21 +119,23 @@ public class InspectionModule implements Module {
     public void deleteInspectionProperties(final Map<String, List<String>> params) {
         inspectionModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
-        updateAnalytics();
+
+        // TODO: Implement in 7.1.0
+        // updateAnalytics();
     }
 
     public void reinspectFromFailures(final Map<String, List<String>> params) {
         final List<RepoPath> repoPaths = inspectionModuleConfig.getRepos().stream()
                                              .map(repoKey -> inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
-                                             .flatMap(Collection::stream)
-                                             .collect(Collectors.toList());
+                                             .flatMap(Collection::stream).collect(Collectors.toList());
 
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
         repoPaths.stream()
             .filter(artifactInspectionService::shouldInspectArtifact)
-            .forEach(artifactInspectionService::identifyAndMarkArtifact);
+            .forEach(artifactInspectionService::inspectSingleArtifact);
 
-        updateAnalytics();
+        // TODO: Implement in 7.1.0
+        // updateAnalytics();
     }
 
     //////////////////////// Event Listeners ////////////////////////
@@ -151,19 +155,14 @@ public class InspectionModule implements Module {
 
     private void handleStorageEvent(final RepoPath repoPath) {
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
-            try {
-                artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, new HashMap<>(), logger);
-                artifactInspectionService.identifyAndMarkArtifact(repoPath);
-            } catch (final Exception e) {
-                logger.error(String.format("Failed to inspect artifact added to storage: %s", repoPath.toPath()));
-                logger.debug(e.getMessage(), e);
-                inspectionPropertyService.failInspection(repoPath, e.getMessage());
-            }
+            artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, new HashMap<>(), logger);
+            artifactInspectionService.inspectSingleArtifact(repoPath);
         } else {
             logger.debug(String.format("Artifact at '%s' is not existent, the repo is not configured to be inspected, or the artifact doesn't have a matching pattern", repoPath.toPath()));
         }
 
-        updateAnalytics();
+        // TODO: Implement in 7.1.0
+        // updateAnalytics();
     }
 
     public void handleBeforeDownloadEvent(final RepoPath repoPath) throws CancelException {

@@ -23,12 +23,15 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.artifactory.repo.RepoPath;
@@ -41,6 +44,8 @@ import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.AffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.BlackDuckNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyStatusNotification;
@@ -65,8 +70,7 @@ public class ArtifactNotificationService {
     private final InspectionPropertyService inspectionPropertyService;
 
     public ArtifactNotificationService(final NotificationRetrievalService notificationRetrievalService, final BlackDuckService blackDuckService, final NotificationService notificationService,
-        final ArtifactSearchService artifactSearchService,
-        final InspectionPropertyService inspectionPropertyService) {
+        final ArtifactSearchService artifactSearchService, final InspectionPropertyService inspectionPropertyService) {
         this.notificationRetrievalService = notificationRetrievalService;
         this.blackDuckService = blackDuckService;
         this.notificationService = notificationService;
@@ -74,24 +78,42 @@ public class ArtifactNotificationService {
         this.inspectionPropertyService = inspectionPropertyService;
     }
 
-    public Optional<Date> updateMetadataFromNotifications(final List<String> repoKeys, final Date startDate, final Date endDate) throws IntegrationException {
+    public void updateMetadataFromNotifications(final List<RepoPath> repoKeyPaths, final Date startDate, final Date endDate) throws IntegrationException {
         final UserView currentUser = blackDuckService.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
         final List<NotificationUserView> notificationUserViews = notificationService.getAllUserNotifications(currentUser, startDate, endDate);
         final Map<String, PolicyVulnerabilityAggregate.Builder> artifactMetadataAggregateMap = new HashMap<>();
         final List<VulnerabilityNotification> vulnerabilityNotifications = notificationRetrievalService.getVulnerabilityNotifications(notificationUserViews);
         final List<PolicyStatusNotification> policyStatusNotifications = notificationRetrievalService.getPolicyStatusNotifications(notificationUserViews);
 
+        final List<String> repoKeys = repoKeyPaths.stream().map(RepoPath::getRepoKey).collect(Collectors.toList());
         processVulnerabilityNotifications(repoKeys, vulnerabilityNotifications, artifactMetadataAggregateMap);
         processPolicyStatusNotifications(repoKeys, policyStatusNotifications, artifactMetadataAggregateMap);
 
+        final Set<String> updatedRepoKeys = new HashSet<>();
         for (final Map.Entry<String, PolicyVulnerabilityAggregate.Builder> entry : artifactMetadataAggregateMap.entrySet()) {
             final RepoPath repoPath = RepoPathFactory.create(entry.getKey());
             final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = entry.getValue().build();
 
-            inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
+            inspectionPropertyService.updatePolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
+            updatedRepoKeys.add(repoPath.getRepoKey());
         }
 
-        return getLatestNotificationCreatedAtDate(notificationUserViews);
+        final Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(notificationUserViews);
+
+        updatedRepoKeys.stream().map(RepoPathFactory::create).forEach(repoKeyPath -> {
+            inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
+            // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
+            inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
+            final String repoKey = repoKeyPath.getRepoKey();
+            final String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
+            final String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+            try {
+                inspectionPropertyService.updateUIUrl(repoKeyPath, repoProjectName, repoProjectVersionName);
+            } catch (final IntegrationException e) {
+                logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoKey));
+            }
+        });
+
     }
 
     private Optional<Date> getLatestNotificationCreatedAtDate(final List<NotificationUserView> notificationUserViews) {
@@ -145,24 +167,23 @@ public class ArtifactNotificationService {
     }
 
     private <T extends BlackDuckNotification> List<AffectedArtifact<T>> findAffectedArtifacts(final List<String> repoKeys, final T notification) {
-        final List<AffectedArtifact<T>> affectedArtifacts = new ArrayList<>();
-
+        List<AffectedArtifact<T>> affectedArtifacts = Collections.emptyList();
         try {
             final List<NameVersion> affectedProjectVersions = notification.getAffectedProjectVersions();
             final String[] affectedRepoKeys = determineAffectedRepos(repoKeys, affectedProjectVersions).toArray(new String[0]);
-            final ComponentVersionView componentVersionView = notification.getComponentVersionView();
-            final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
 
-            for (final OriginView originView : originViews) {
-                final String forge = originView.getOriginName();
-                final String originId = originView.getOriginId();
-                final List<AffectedArtifact<T>> artifactsWithOriginId = artifactSearchService.findArtifactsWithOriginId(forge, originId, affectedRepoKeys).stream()
-                                                                            .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
-                                                                            .collect(Collectors.toList());
-                affectedArtifacts.addAll(artifactsWithOriginId);
+            if (affectedRepoKeys.length != 0) {
+                final ComponentVersionView componentVersionView = notification.getComponentVersionView();
+                final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
+
+                affectedArtifacts = originViews.stream()
+                                        .filter(originView -> originView.getOriginId() != null)
+                                        .filter(originView -> originView.getOriginName() != null)
+                                        .map(originView -> artifactSearchService.findArtifactsWithOriginId(originView.getOriginName(), originView.getOriginId(), affectedRepoKeys))
+                                        .flatMap(List::stream)
+                                        .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
+                                        .collect(Collectors.toList());
             }
-
-            return affectedArtifacts;
         } catch (final IntegrationException e) {
             logger.error(String.format("Failed to get origins for: %s", notification.getComponentVersionView().getHref().orElse("Unknown")), e);
         }

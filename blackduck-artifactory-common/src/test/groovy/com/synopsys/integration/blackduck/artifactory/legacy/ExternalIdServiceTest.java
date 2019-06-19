@@ -51,11 +51,9 @@ import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.BlackDuckPropertiesExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
 // TODO: Add composer test. Might be tricky.
 public class ExternalIdServiceTest {
@@ -96,6 +94,15 @@ public class ExternalIdServiceTest {
     }
 
     @Test
+    void createMultipleSeparatorExternalId() {
+        final Map<String, String> propertiesMap = new HashMap<>();
+        propertiesMap.put("npm.name", "component/name");
+        propertiesMap.put("npm.version", "version");
+
+        testNameVersionExternalIdCreation(propertiesMap, SupportedPackageType.NPM);
+    }
+
+    @Test
     public void createMavenExternalId() {
         testMavenDependencyCreation(SupportedPackageType.MAVEN);
     }
@@ -112,14 +119,13 @@ public class ExternalIdServiceTest {
         final MockRepoPath repoPathMissingFileLayoutAndProperties = createRepoPathMissingFileLayoutAndProperties(repoPath);
 
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
-        final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
-        when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
-        final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdExtractor = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, new ExternalIdFactory());
+
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, new ExternalIdFactory());
         final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
-        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor,
             composerExternalIdExtractor);
 
         Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);
@@ -142,15 +148,14 @@ public class ExternalIdServiceTest {
     private void testMavenDependencyCreation(final SupportedPackageType supportedPackageType) {
         final MockRepoPath repoPath = createValidRepoPath(new HashMap<>(), supportedPackageType);
         final MockRepoPath repoPathMissingFileLayout = createRepoPathMissingFileLayout(repoPath);
-        final InspectionPropertyService inspectionPropertyService = mock(InspectionPropertyService.class);
-        when(inspectionPropertyService.hasExternalIdProperties(repoPath)).thenReturn(false);
+
         final ArtifactoryPAPIService artifactoryPAPIService = createArtifactoryPAPIService(repoPath);
-        final BlackDuckPropertiesExternalIdExtractor blackDuckPropertiesExternalIdExtractor = new BlackDuckPropertiesExternalIdExtractor(inspectionPropertyService, new ExternalIdFactory());
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, new ExternalIdFactory());
         final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
-        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, blackDuckPropertiesExternalIdExtractor, artifactoryInfoExternalIdExtractor,
+
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor,
             composerExternalIdExtractor);
 
         Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);
@@ -401,12 +406,11 @@ public class ExternalIdServiceTest {
     }
 
     protected class MockRepoPath implements RepoPath {
-        private final String key = "test";
-        private final String path;
-
         public final FileLayoutInfo fileLayoutInfo;
         public final Properties properties;
         public final SupportedPackageType supportedPackageType;
+        private final String key = "test";
+        private final String path;
 
         public MockRepoPath(final String path, final FileLayoutInfo fileLayoutInfo, final Properties properties, final SupportedPackageType supportedPackageType) {
             this.fileLayoutInfo = fileLayoutInfo;

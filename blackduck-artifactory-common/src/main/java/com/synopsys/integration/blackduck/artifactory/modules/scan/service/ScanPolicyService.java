@@ -71,27 +71,20 @@ public class ScanPolicyService {
 
         logger.info(String.format("Attempting to update policy status of %d repoPaths", repoPaths.size()));
         for (final RepoPath repoPath : repoPaths) {
-            final Optional<ProjectVersionWrapper> projectVersionWrapperOptional = resolveProjectVersionWrapper(repoPath);
-
-            if (projectVersionWrapperOptional.isPresent()) {
-                final ProjectVersionWrapper projectVersionWrapper = projectVersionWrapperOptional.get();
+            try {
+                final ProjectVersionWrapper projectVersionWrapper = resolveProjectVersionWrapper(repoPath);
                 final Optional<String> projectVersionUIUrl = projectVersionWrapper.getProjectVersionView().getHref();
-
                 projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
-            } else {
-                final Exception exception = new IntegrationException(String.format("Properties %s and %s were not found on %s. Cannot update policy",
-                    BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(),
-                    BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName(),
-                    repoPath.getPath()
-                ));
+            } catch (final IntegrationException e) {
+                final Exception exception = new IntegrationException(String.format("Failed to get project version for artifact. Scan may not be finished. Cannot update policy: %s", repoPath.getPath()));
                 failPolicyStatusUpdate(repoPath, exception);
                 problemRetrievingPolicyStatus = true;
             }
         }
 
         if (problemRetrievingPolicyStatus) {
-            logger.warn("There was a problem retrieving policy status for one or more repos. This is expected if you do not have policy management.");
+            logger.warn("There was a problem retrieving policy status for one or more artifacts. This is expected if you do not have policy management.");
         }
     }
 
@@ -136,21 +129,20 @@ public class ScanPolicyService {
         }
     }
 
-    private Optional<ProjectVersionWrapper> resolveProjectVersionWrapper(final RepoPath repoPath) {
+    private ProjectVersionWrapper resolveProjectVersionWrapper(final RepoPath repoPath) throws IntegrationException {
         final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
 
-        ProjectVersionWrapper projectVersionViewWrapper = null;
         if (nameVersion.isPresent()) {
             final String projectName = nameVersion.get().getName();
             final String projectVersionName = nameVersion.get().getVersion();
+            final String failureMessage = String.format("Failed to find Black Duck project version with name '%s' and version '%s'.", projectName, projectVersionName);
             try {
-                projectVersionViewWrapper = projectService.getProjectVersion(projectName, projectVersionName).orElse(null);
+                return projectService.getProjectVersion(projectName, projectVersionName).orElseThrow(() -> new IntegrationException(failureMessage));
             } catch (final IntegrationException e) {
-                logger.error(String.format("Failed to find Black Duck project version with name '%s' and version '%s'", projectName, projectVersionName));
-                logger.debug(e.getMessage(), e);
+                throw new IntegrationException(failureMessage, e);
             }
+        } else {
+            throw new IntegrationException("Failed to extract project name and project vesion from properties.");
         }
-
-        return Optional.ofNullable(projectVersionViewWrapper);
     }
 }

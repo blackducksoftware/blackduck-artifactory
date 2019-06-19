@@ -94,7 +94,10 @@ class ConfigurationPropertyManagerTest {
 
     @Test
     void getIntegerProperty() {
-        assertEquals(new Integer(120), configurationPropertyManager.getIntegerProperty(timeoutProperty));
+        // TODO: Look into why assertEquals cannot take integer values
+        final Integer expectedTimeout = 120;
+        final Integer actualTimeout = configurationPropertyManager.getIntegerProperty(timeoutProperty);
+        assertEquals(String.valueOf(expectedTimeout), String.valueOf(actualTimeout));
     }
 
     @Test
