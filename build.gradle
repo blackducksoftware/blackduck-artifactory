@@ -5,7 +5,7 @@ buildscript {
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.65'
+        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
         classpath 'org.apache.commons:commons-configuration2:2.2'
     }
 }
@@ -14,7 +14,7 @@ plugins {
     id 'groovy'
 }
 
-version = '7.0.0'
+version = '7.0.1-SNAPSHOT'
 final String parentVersion = project.version
 
 final String artifactoryMinimumVersion = '5.6.2'
