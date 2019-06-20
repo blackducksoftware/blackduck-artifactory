@@ -33,7 +33,8 @@ class Application(
     blackDuckTrustCert: Boolean,
     manageArtifactory: Boolean,
     pluginZipFile: File,
-    pluginLoggingLevel: String
+    pluginLoggingLevel: String,
+    private val fuelManager: FuelManager = FuelManager()
 ) {
     private val logger: IntLogger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
@@ -53,7 +54,6 @@ class Application(
         }
 
         val artifactoryUrl = "$artifactoryBaseUrl:$artifactoryPort/artifactory"
-        val fuelManager = FuelManager()
         fuelManager.basePath = artifactoryUrl
         fuelManager.addRequestInterceptor { { it.authentication().basic(artifactoryUsername, artifactoryPassword) } }
 
