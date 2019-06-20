@@ -1,23 +1,26 @@
 package com.synopsys.integration.blackduck.artifactory.automation
 
-class ConfigManager {
-    fun get(config: Config): String? {
-        return System.getenv(config.name)
+import org.springframework.core.env.ConfigurableEnvironment
+
+class ConfigManager(private val configurableEnvironment: ConfigurableEnvironment) {
+
+    fun get(property: ConfigProperty): String? {
+        return configurableEnvironment.getProperty(property.propertyKey).ifBlank { null }
     }
 
-    fun getOrDefault(config: Config, default: String): String {
-        return get(config) ?: default
+    fun getOrDefault(property: ConfigProperty, default: String): String {
+        return configurableEnvironment.getProperty(property.propertyKey, default)
     }
 
-    fun getOrThrow(
-        config: Config,
-        throwable: Throwable = IllegalArgumentException("Failed to find valid configuration for property '${config.name}'")
+    fun getRequired(
+        property: ConfigProperty,
+        throwable: Throwable = IllegalArgumentException("Failed to find valid configuration for property '${property.propertyKey}'")
     ): String {
-        return get(config) ?: throw throwable
+        return get(property) ?: throw throwable
     }
 }
 
-enum class Config {
+enum class ConfigProperty {
     ARTIFACTORY_BASEURL,
     ARTIFACTORY_PORT,
     ARTIFACTORY_USERNAME,
@@ -30,5 +33,7 @@ enum class Config {
     BLACKDUCK_TRUST_CERT,
     MANAGE_ARTIFACTORY,
     PLUGIN_ZIP_PATH,
-    PLUGIN_LOGGING_LEVEL
+    PLUGIN_LOGGING_LEVEL;
+
+    val propertyKey = "automation.${this.name.toLowerCase().replace("_", ".")}"
 }

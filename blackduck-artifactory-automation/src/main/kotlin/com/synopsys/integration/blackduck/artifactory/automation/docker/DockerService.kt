@@ -30,42 +30,42 @@ class DockerService {
     }
 
     fun installArtifactory(version: String): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "pull", "docker.bintray.io/jfrog/artifactory-pro:$version")
+        return runCommand("docker", "pull", "docker.bintray.io/jfrog/artifactory-pro:$version")
     }
 
     fun initializeArtifactory(version: String, artifactoryPort: String, inheritIO: Boolean = true): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "run", "--name", "artifactory-automation-$version", "-d", "-p",
+        return runCommand("docker", "run", "--name", "artifactory-automation-$version", "-d", "-p",
             "$artifactoryPort:$artifactoryPort", "docker.bintray.io/jfrog/artifactory-pro:$version", inheritIO = inheritIO)
     }
 
     fun startArtifactory(containerHash: String): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "start", containerHash)
+        return runCommand("docker", "start", containerHash)
     }
 
     fun stopArtifactory(containerHash: String): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "stop", containerHash)
+        return runCommand("docker", "stop", containerHash)
     }
 
     fun getArtifactoryLogs(containerHash: String): InputStream {
-        val process = runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "logs", containerHash)
+        val process = runCommand("docker", "logs", containerHash)
         process.waitFor()
         return process.inputStream
     }
 
     fun uploadFile(containerHash: String, file: File, location: String): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "cp", file.canonicalPath, "$containerHash:$location")
+        return runCommand("docker", "cp", file.canonicalPath, "$containerHash:$location")
     }
 
     fun downloadFile(containerHash: String, outputFile: File, location: String): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "cp", "$containerHash:$location", outputFile.canonicalPath)
+        return runCommand("docker", "cp", "$containerHash:$location", outputFile.canonicalPath)
     }
 
     fun chownFile(containerHash: String, owner: String, group: String, filePath: String): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "exec", "--user=root", containerHash, "chown", "-R", "$owner:$group", filePath)
+        return runCommand("docker", "exec", "--user=root", containerHash, "chown", "-R", "$owner:$group", filePath)
     }
 
     fun chmodFile(containerHash: String, permissions: String, filePath: String): Process {
-        return runCommand("com/synopsys/integration/blackduck/artifactory/automation/dockernopsys/integration/blackduck/artifactory/automation/docker", "exec", "--user=root", containerHash, "chmod", "-R", permissions, filePath)
+        return runCommand("docker", "exec", "--user=root", containerHash, "chmod", "-R", permissions, filePath)
     }
 
     private fun runCommand(vararg command: String, inheritIO: Boolean = true): Process {

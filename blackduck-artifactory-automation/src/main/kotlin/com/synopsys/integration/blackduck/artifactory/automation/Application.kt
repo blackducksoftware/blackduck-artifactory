@@ -13,44 +13,11 @@ import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
-import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.SpringBootApplication
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-
-fun main(args: Array<String>) {
-    SpringApplication.run(Application::class.java, *args)
-}
-
-fun main() {
-    val dockerService = DockerService()
-    val configManager = ConfigManager()
-
-    Application(
-        dockerService,
-        configManager.getOrDefault(Config.ARTIFACTORY_BASEURL, "http://localhost"),
-        configManager.getOrDefault(Config.ARTIFACTORY_PORT, "8081"),
-        configManager.getOrDefault(Config.ARTIFACTORY_USERNAME, "admin"),
-        configManager.getOrDefault(Config.ARTIFACTORY_PASSWORD, "password"),
-        configManager.getOrDefault(Config.ARTIFACTORY_VERSION, "latest"),
-        File(configManager.getOrDefault(Config.ARTIFACTORY_LICENSE_PATH, "")),
-        configManager.getOrThrow(Config.BLACKDUCK_URL),
-        configManager.getOrDefault(Config.BLACKDUCK_USERNAME, "sysadmin"),
-        configManager.getOrDefault(Config.BLACKDUCK_PASSWORD, "blackduck"),
-        configManager.getOrDefault(Config.BLACKDUCK_TRUST_CERT, "true").toBoolean(),
-        configManager.getOrDefault(Config.MANAGE_ARTIFACTORY, "true").toBoolean(),
-        File(configManager.getOrThrow(Config.PLUGIN_ZIP_PATH)),
-        configManager.getOrDefault(Config.PLUGIN_LOGGING_LEVEL, "DEBUG")
-    )
-}
-
-@SpringBootApplication
-class SpringApplication {
-
-}
 
 class Application(
     dockerService: DockerService,
@@ -70,6 +37,8 @@ class Application(
 ) {
     private val logger: IntLogger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
+    lateinit var containerHash: String
+
     init {
         logger.info("Verifying Black Duck server config.")
         val blackDuckServerConfig = BlackDuckServerConfigBuilder()
@@ -78,6 +47,7 @@ class Application(
             .setPassword(blackDuckPassword)
             .setTrustCert(blackDuckTrustCert)
             .build()
+
         if (!blackDuckServerConfig.canConnect(logger)) {
             throw IntegrationException("Failed to connect the Black Duck server at $blackduckUrl.")
         }
@@ -105,7 +75,7 @@ class Application(
             }
 
             logger.info("Installing and starting Artifactory version: $artifactoryVersion")
-            val containerHash = dockerService.installAndStartArtifactory(artifactoryVersion, artifactoryPort)
+            containerHash = dockerService.installAndStartArtifactory(artifactoryVersion, artifactoryPort)
             logger.info("Artifactory container: $containerHash")
 
             logger.info("Waiting for Artifactory startup.")
