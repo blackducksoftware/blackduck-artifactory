@@ -3,13 +3,8 @@ package com.synopsys.integration.blackduck.artifactory.automation
 import org.springframework.core.env.ConfigurableEnvironment
 
 class ConfigManager(private val configurableEnvironment: ConfigurableEnvironment) {
-
     fun get(property: ConfigProperty): String? {
         return configurableEnvironment.getProperty(property.propertyKey).ifBlank { null }
-    }
-
-    fun getOrDefault(property: ConfigProperty, default: String): String {
-        return configurableEnvironment.getProperty(property.propertyKey, default)
     }
 
     fun getRequired(

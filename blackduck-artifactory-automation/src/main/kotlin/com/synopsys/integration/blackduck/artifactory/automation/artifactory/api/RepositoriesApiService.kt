@@ -4,8 +4,6 @@ import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
-import com.github.kittinunf.fuel.httpGet
-import com.github.kittinunf.fuel.httpPut
 import com.github.kittinunf.result.failure
 import com.github.kittinunf.result.success
 import com.google.gson.annotations.SerializedName
@@ -23,7 +21,7 @@ class RepositoriesApiService(fuelManager: FuelManager) : ArtifactoryApiService(f
     }
 
     fun createRepository(repositoryConfiguration: RepositoryConfiguration): Response {
-        return "/api/repositories/${repositoryConfiguration.key}".httpPut()
+        return fuelManager.put("/api/repositories/${repositoryConfiguration.key}")
             .jsonBody(repositoryConfiguration)
             .response { response ->
                 response.failure { logger.warn(it.exception.message) }
@@ -34,7 +32,7 @@ class RepositoriesApiService(fuelManager: FuelManager) : ArtifactoryApiService(f
     }
 
     fun getRepository(repositoryKey: String): RepositoryConfiguration {
-        return "/api/repositories/$repositoryKey".httpGet()
+        return fuelManager.get("/api/repositories/$repositoryKey")
             .responseObject<RepositoryConfiguration>()
             .third.get()
     }

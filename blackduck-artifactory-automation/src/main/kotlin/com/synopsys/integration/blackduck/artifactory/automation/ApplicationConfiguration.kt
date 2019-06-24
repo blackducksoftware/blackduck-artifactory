@@ -1,6 +1,19 @@
 package com.synopsys.integration.blackduck.artifactory.automation
 
+import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.extensions.authentication
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PropertiesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoriesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.SystemApiService
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
+import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginApiService
+import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager
+import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginService
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder
+import com.synopsys.integration.log.Slf4jIntLogger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringBootConfiguration
 import org.springframework.context.annotation.Bean
@@ -9,8 +22,7 @@ import java.io.File
 
 @SpringBootConfiguration
 class ApplicationConfiguration {
-    @Autowired
-    lateinit var environement: ConfigurableEnvironment
+    private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
 
     @Bean
     fun dockerService(): DockerService {
@@ -18,25 +30,120 @@ class ApplicationConfiguration {
     }
 
     @Bean
-    fun application(): Application {
-        val dockerService = dockerService()
-        val configManager = ConfigManager(environement)
+    fun blackDuckPluginService(@Autowired dockerService: DockerService): BlackDuckPluginService {
+        return BlackDuckPluginService(dockerService)
+    }
 
+    @Bean
+    fun configManager(@Autowired environment: ConfigurableEnvironment): ConfigManager {
+        return ConfigManager(environment)
+    }
+
+    @Bean
+    fun blackDuckServerConfig(@Autowired configManager: ConfigManager): BlackDuckServerConfig {
+        logger.info("Verifying Black Duck server config.")
+        return BlackDuckServerConfigBuilder()
+            .setUrl(configManager.getRequired(ConfigProperty.BLACKDUCK_URL))
+            .setUsername(configManager.getRequired(ConfigProperty.BLACKDUCK_USERNAME))
+            .setPassword(configManager.getRequired(ConfigProperty.BLACKDUCK_PASSWORD))
+            .setTrustCert(configManager.getRequired(ConfigProperty.BLACKDUCK_TRUST_CERT))
+            .build()
+    }
+
+    @Bean
+    fun artifactoryConfiguration(@Autowired configManager: ConfigManager): ArtifactoryConfiguration {
+        val artifactoryBaseUrl = configManager.getRequired(ConfigProperty.ARTIFACTORY_BASEURL)
+        val artifactoryPort = configManager.getRequired(ConfigProperty.ARTIFACTORY_PORT)
+        val artifactoryUrl = "$artifactoryBaseUrl:$artifactoryPort/artifactory"
+        val artifactoryUsername = configManager.getRequired(ConfigProperty.ARTIFACTORY_USERNAME)
+        val artifactoryPassword = configManager.getRequired(ConfigProperty.ARTIFACTORY_PASSWORD)
+        val artifactoryVersion = configManager.getRequired(ConfigProperty.ARTIFACTORY_VERSION)
+        val manageArtifactory = configManager.getRequired(ConfigProperty.MANAGE_ARTIFACTORY).toBoolean()
+        val licenseFile = File(configManager.getRequired(ConfigProperty.ARTIFACTORY_LICENSE_PATH))
+        val pluginZipFile = File(configManager.getRequired(ConfigProperty.PLUGIN_ZIP_PATH))
+        val pluginLoggingLevel = configManager.getRequired(ConfigProperty.PLUGIN_LOGGING_LEVEL)
+
+        return ArtifactoryConfiguration(artifactoryUrl, artifactoryPort, artifactoryUsername, artifactoryPassword, artifactoryVersion, manageArtifactory, licenseFile, pluginZipFile, pluginLoggingLevel)
+    }
+
+    @Bean
+    fun fuelManager(@Autowired artifactoryConfiguration: ArtifactoryConfiguration): FuelManager {
+        val fuelManager = FuelManager()
+        fuelManager.basePath = artifactoryConfiguration.url
+        fuelManager.addRequestInterceptor { { it.authentication().basic(artifactoryConfiguration.username, artifactoryConfiguration.password) } }
+
+        return fuelManager
+    }
+
+    @Bean
+    fun systemApiService(@Autowired fuelManager: FuelManager): SystemApiService {
+        return SystemApiService(fuelManager)
+    }
+
+    @Bean
+    fun blackDuckPluginApiService(@Autowired fuelManager: FuelManager): BlackDuckPluginApiService {
+        return BlackDuckPluginApiService(fuelManager)
+    }
+
+    @Bean
+    fun repositoriesApiService(@Autowired fuelManager: FuelManager): RepositoriesApiService {
+        return RepositoriesApiService(fuelManager)
+    }
+
+    @Bean
+    fun propertiesApiService(@Autowired fuelManager: FuelManager): PropertiesApiService {
+        return PropertiesApiService(fuelManager)
+    }
+
+    @Bean
+    fun repositoryManager(@Autowired repositoriesApiService: RepositoriesApiService, @Autowired blackDuckPluginManager: BlackDuckPluginManager): RepositoryManager {
+        return RepositoryManager(repositoriesApiService, blackDuckPluginManager)
+    }
+
+    @Bean
+    fun blackDuckPluginManager(
+        @Autowired artifactoryConfiguration: ArtifactoryConfiguration,
+        @Autowired blackDuckServerConfig: BlackDuckServerConfig,
+        @Autowired blackDuckPluginService: BlackDuckPluginService,
+        @Autowired blackDuckPluginApiService: BlackDuckPluginApiService,
+        @Autowired dockerService: DockerService
+    ): BlackDuckPluginManager {
+        return BlackDuckPluginManager(
+            artifactoryConfiguration,
+            blackDuckServerConfig,
+            blackDuckPluginService,
+            blackDuckPluginApiService,
+            dockerService
+        )
+    }
+
+    @Bean
+    fun application(
+        @Autowired configManager: ConfigManager,
+        @Autowired dockerService: DockerService,
+        @Autowired blackDuckServerConfig: BlackDuckServerConfig,
+        @Autowired artifactoryConfiguration: ArtifactoryConfiguration,
+        @Autowired blackDuckPluginManager: BlackDuckPluginManager,
+        @Autowired systemApiService: SystemApiService
+    ): Application {
         return Application(
             dockerService,
-            configManager.getOrDefault(ConfigProperty.ARTIFACTORY_BASEURL, "http://localhost"),
-            configManager.getOrDefault(ConfigProperty.ARTIFACTORY_PORT, "8081"),
-            configManager.getRequired(ConfigProperty.ARTIFACTORY_USERNAME),
-            configManager.getRequired(ConfigProperty.ARTIFACTORY_PASSWORD),
-            configManager.getOrDefault(ConfigProperty.ARTIFACTORY_VERSION, "latest"),
-            File(configManager.getOrDefault(ConfigProperty.ARTIFACTORY_LICENSE_PATH, "")),
-            configManager.getRequired(ConfigProperty.BLACKDUCK_URL),
-            configManager.getRequired(ConfigProperty.BLACKDUCK_USERNAME),
-            configManager.getRequired(ConfigProperty.BLACKDUCK_PASSWORD),
-            configManager.getOrDefault(ConfigProperty.BLACKDUCK_TRUST_CERT, "true").toBoolean(),
-            configManager.getOrDefault(ConfigProperty.MANAGE_ARTIFACTORY, "true").toBoolean(),
-            File(configManager.getRequired(ConfigProperty.PLUGIN_ZIP_PATH)),
-            configManager.getOrDefault(ConfigProperty.PLUGIN_LOGGING_LEVEL, "DEBUG")
+            blackDuckServerConfig,
+            artifactoryConfiguration,
+            blackDuckPluginManager,
+            systemApiService
         )
     }
 }
+
+data class ArtifactoryConfiguration(
+    val url: String,
+    val port: String,
+    val username: String,
+    val password: String,
+    val version: String,
+    val manageArtifactory: Boolean,
+    val licenseFile: File,
+    val pluginZipFile: File,
+    val pluginLoggingLevel: String
+)

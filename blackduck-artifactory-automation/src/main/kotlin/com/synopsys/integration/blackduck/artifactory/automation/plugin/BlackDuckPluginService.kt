@@ -23,12 +23,12 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
     val artifactoryEtcDirectory = "/opt/jfrog/artifactory/etc"
     val dockerPluginsDirectory = "$artifactoryEtcDirectory/plugins"
 
-    fun installPlugin(containerHash: String, zipFile: File): File {
+    fun installPlugin(containerHash: String, zipFile: File, outputDirectory: File) {
         logger.info("Shutting down Artifactory container.")
         dockerService.stopArtifactory(containerHash).waitFor()
 
         logger.info("Unzipping plugin.")
-        val unzippedPluginDirectory = unzipFile(zipFile, File(zipFile.parentFile, "output"))
+        val unzippedPluginDirectory = unzipFile(zipFile, outputDirectory)
 
         logger.info("Uploading plugin files.")
         unzippedPluginDirectory.listFiles()
@@ -36,8 +36,6 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
             .forEach {
                 dockerService.uploadFile(containerHash, it, dockerPluginsDirectory).waitFor()
             }
-
-        return unzippedPluginDirectory
     }
 
     fun updateLogbackXml(xmlFile: File, loggingLevel: String) {
@@ -108,8 +106,7 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
 
     fun fixPermissions(containerHash: String, location: String, permission: String = "0755") {
         logger.info("Fixing permissions.")
-        dockerService.chownFile(containerHash, "com/synopsys/integration/blackduck/artifactory/automation/artifactorys/integration/blackduck/artifactory/automation/artifactory",
-            "com/synopsys/integration/blackduck/artifactory/automation/artifactorys/integration/blackduck/artifactory/automation/artifactory", location).waitFor()
+        dockerService.chownFile(containerHash, "artifactory", "artifactory", location).waitFor()
         dockerService.chmodFile(containerHash, permission, location).waitFor()
     }
 
