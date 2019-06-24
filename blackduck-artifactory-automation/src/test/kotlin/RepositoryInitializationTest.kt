@@ -31,7 +31,8 @@ class RepositoryInitializationTest : SpringTest() {
 
     @BeforeEach
     fun setup() {
-        repositoryConfiguration = repositoryManager.createRepository(application.containerHash, PackageType.Defaults.PYPI, RepositoryType.REMOTE)
+        repositoryConfiguration = repositoryManager.createRepository(PackageType.Defaults.PYPI, RepositoryType.REMOTE)
+        repositoryManager.addRepositoryToInspection(application.containerHash, repositoryConfiguration.key)
     }
 
     @Test

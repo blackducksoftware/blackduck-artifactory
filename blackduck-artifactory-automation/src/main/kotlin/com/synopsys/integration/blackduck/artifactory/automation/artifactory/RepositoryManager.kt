@@ -9,14 +9,20 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import kotlin.random.Random
 
 class RepositoryManager(private val repositoriesApiService: RepositoriesApiService, private val blackDuckPluginManager: BlackDuckPluginManager) {
-    fun createRepository(containerHash: String, packageType: PackageType, repositoryType: RepositoryType): RepositoryConfiguration {
+    fun createRepository(packageType: PackageType, repositoryType: RepositoryType): RepositoryConfiguration {
         val repositoryKey = "${packageType.packageType}-${Random.nextInt()}"
         repositoriesApiService.createRepository(repositoryKey, repositoryType, packageType)
 
-        val repositoryConfiguration = retrieveRepository(repositoryKey)
-        blackDuckPluginManager.updateProperties(containerHash, Pair(InspectionModuleProperty.REPOS, repositoryConfiguration.key))
+        var updatedKey = repositoryKey
+        if (repositoryType == RepositoryType.REMOTE) {
+            updatedKey += "-cache"
+        }
 
-        return repositoryConfiguration
+        return retrieveRepository(updatedKey)
+    }
+
+    fun addRepositoryToInspection(containerHash: String, repositoryKey: String) {
+        blackDuckPluginManager.updateProperties(containerHash, Pair(InspectionModuleProperty.REPOS, repositoryKey))
     }
 
     fun retrieveRepository(repositoryKey: String): RepositoryConfiguration {
