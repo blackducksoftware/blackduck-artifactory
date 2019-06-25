@@ -1,23 +1,16 @@
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.automation.Application
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PropertiesApiService
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoryConfiguration
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoryType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginApiService
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.annotation.Autowired
 
-@Tag("automation")
 class RepositoryInitializationTest : SpringTest() {
-    @Autowired
-    lateinit var application: Application
-
     @Autowired
     lateinit var repositoryManager: RepositoryManager
 
@@ -27,22 +20,18 @@ class RepositoryInitializationTest : SpringTest() {
     @Autowired
     lateinit var propertiesApiService: PropertiesApiService
 
-    lateinit var repositoryConfiguration: RepositoryConfiguration
+    @ParameterizedTest
+    @EnumSource(PackageType.Defaults::class)
+    fun emptyRepositoryInitialization(packageType: PackageType) {
+        val remoteRepository = repositoryManager.createRepository(packageType, RepositoryType.REMOTE)
+        repositoryManager.addRepositoryToInspection(application.containerHash, remoteRepository)
 
-    @BeforeEach
-    fun setup() {
-        repositoryConfiguration = repositoryManager.createRepository(PackageType.Defaults.PYPI, RepositoryType.REMOTE)
-        repositoryManager.addRepositoryToInspection(application.containerHash, repositoryConfiguration.key)
-    }
-
-    @Test
-    fun test() {
         blackDuckPluginApiService.blackDuckInitializeRepositories()
-        val itemProperties = propertiesApiService.getProperties(repositoryConfiguration.key)
+        val itemProperties = propertiesApiService.getProperties(remoteRepository.key)
 
         val propertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()
-        val inspectionStatus = itemProperties.properties[propertyKey]
-        Assertions.assertEquals(1, inspectionStatus?.size)
-        Assertions.assertEquals(InspectionStatus.SUCCESS.name, inspectionStatus!![0])
+        val inspectionStatuses = itemProperties.properties[propertyKey]
+        Assertions.assertEquals(1, inspectionStatuses?.size)
+        Assertions.assertEquals(InspectionStatus.SUCCESS.name, inspectionStatuses!![0])
     }
 }

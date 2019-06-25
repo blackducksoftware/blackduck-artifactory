@@ -4,8 +4,6 @@ import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
-import com.github.kittinunf.result.failure
-import com.github.kittinunf.result.success
 import com.google.gson.annotations.SerializedName
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
 import com.synopsys.integration.log.Slf4jIntLogger
@@ -23,12 +21,8 @@ class RepositoriesApiService(fuelManager: FuelManager) : ArtifactoryApiService(f
     fun createRepository(repositoryConfiguration: RepositoryConfiguration): Response {
         return fuelManager.put("/api/repositories/${repositoryConfiguration.key}")
             .jsonBody(repositoryConfiguration)
-            .response { response ->
-                response.failure { logger.warn(it.exception.message) }
-                response.success { logger.info("Successfully created repository '${repositoryConfiguration.key}") }
-            }
-            .join()
-            .validate()
+            .response()
+            .second.validate()
     }
 
     fun getRepository(repositoryKey: String): RepositoryConfiguration {

@@ -23,7 +23,7 @@ class Application(
 ) {
     private val logger: IntLogger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
-    lateinit var containerHash: String
+    var containerHash: String
 
     init {
         if (!blackDuckServerConfig.canConnect(logger)) {
@@ -63,6 +63,7 @@ class Application(
 
             logger.info("Installing plugin.")
             blackDuckPluginManager.installPlugin(containerHash)
+            systemApiService.waitForSuccessfulStartup()
 
             logger.info("Successfully installed the plugin.")
             println(dockerService.getArtifactoryLogs(containerHash).convertToString())
