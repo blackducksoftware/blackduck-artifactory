@@ -59,5 +59,15 @@ springBoot {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform() {
+        excludeTags 'automation'
+    }
+}
+
+task automation(type: Test) {
+    useJUnitPlatform {
+        includeTags 'automation'
+    }
+    check.dependsOn it
+    shouldRunAfter test
 }
