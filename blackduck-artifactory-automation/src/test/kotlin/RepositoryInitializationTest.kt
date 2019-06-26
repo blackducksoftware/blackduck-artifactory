@@ -1,5 +1,4 @@
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoryType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
@@ -12,9 +11,6 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.annotation.Autowired
 
 class RepositoryInitializationTest : SpringTest() {
-    @Autowired
-    lateinit var repositoryManager: RepositoryManager
-
     @Autowired
     lateinit var blackDuckPluginApiService: BlackDuckPluginApiService
 
@@ -43,7 +39,6 @@ class RepositoryInitializationTest : SpringTest() {
             Assertions.assertEquals(InspectionStatus.FAILURE.name, inspectionStatus)
         }
 
-        repositoryManager.deleteRepository(repository)
-        repositoryManager.removeRepositoryFromInspection(application.containerHash, repository)
+        cleanup(repository, supported)
     }
 }

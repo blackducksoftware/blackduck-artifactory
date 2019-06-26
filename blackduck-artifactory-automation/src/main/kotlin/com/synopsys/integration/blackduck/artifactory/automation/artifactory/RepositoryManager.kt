@@ -69,7 +69,7 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         }
     }
 
-    private fun determineRepositoryKey(repository: Repository): String {
+    fun determineRepositoryKey(repository: Repository): String {
         return when (repository.type) {
             RepositoryType.REMOTE -> "${repository.key}-cache"
             else -> repository.key

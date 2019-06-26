@@ -13,6 +13,7 @@ import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuc
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginService
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder
+import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -105,6 +106,12 @@ class ApplicationConfiguration {
     @Bean
     fun pluginsApiService(@Autowired fuelManager: FuelManager): PluginsApiService {
         return PluginsApiService(fuelManager)
+    }
+
+    @Bean
+    fun blackDuckServiceFactory(@Autowired blackDuckServerConfig: BlackDuckServerConfig): BlackDuckServicesFactory {
+        val logger = Slf4jIntLogger(LoggerFactory.getLogger("BlackDuckServicesFactory"))
+        return blackDuckServerConfig.createBlackDuckServicesFactory(logger)
     }
 
     @Bean
