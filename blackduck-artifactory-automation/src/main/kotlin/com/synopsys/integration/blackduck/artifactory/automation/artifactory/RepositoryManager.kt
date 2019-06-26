@@ -7,14 +7,35 @@ import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty
+import com.synopsys.integration.log.Slf4jIntLogger
+import org.slf4j.LoggerFactory
 import kotlin.random.Random
 
 class RepositoryManager(private val repositoriesApiService: RepositoriesApiService, private val blackDuckPluginManager: BlackDuckPluginManager) {
+    val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
+
     fun createRepository(packageType: PackageType, repositoryType: RepositoryType): Repository {
         val repositoryKey = generateRepostioryKey(packageType)
+        logger.info("Creating repository '$repositoryKey'")
         repositoriesApiService.createRepository(repositoryKey, repositoryType, packageType)
         val repositoryConfiguration = retrieveRepository(repositoryKey)
         return Repository(repositoryKey, repositoryConfiguration, repositoryType)
+    }
+
+    fun deleteRepository(repository: Repository?) {
+        if (repository != null) {
+            val keyToDelete = repository.key
+            logger.info("Deleting repository '$keyToDelete'")
+            repositoriesApiService.deleteRepository(keyToDelete)
+        }
+    }
+
+    private fun retrieveRepository(repositoryKey: String): RepositoryConfiguration {
+        return repositoriesApiService.getRepository(repositoryKey)
+    }
+
+    private fun generateRepostioryKey(packageType: PackageType): String {
+        return "${packageType.packageType}-${Random.nextInt(0, Int.MAX_VALUE)}"
     }
 
     fun addRepositoryToInspection(containerHash: String, repository: Repository) {
@@ -29,13 +50,6 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         blackDuckPluginManager.updateProperties(containerHash, Pair(ScanModuleProperty.REPOS, repository.key))
     }
 
-    private fun retrieveRepository(repositoryKey: String): RepositoryConfiguration {
-        return repositoriesApiService.getRepository(repositoryKey)
-    }
-
-    private fun generateRepostioryKey(packageType: PackageType): String {
-        return "${packageType.packageType}-${Random.nextInt(0, Int.MAX_VALUE)}"
-    }
 }
 
 data class Repository(

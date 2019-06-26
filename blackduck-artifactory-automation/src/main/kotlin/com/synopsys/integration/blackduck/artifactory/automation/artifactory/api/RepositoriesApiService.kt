@@ -25,6 +25,12 @@ class RepositoriesApiService(fuelManager: FuelManager) : ArtifactoryApiService(f
             .second.validate()
     }
 
+    fun deleteRepository(repositoryKey: String): Response {
+        return fuelManager.delete("/api/repositories/$repositoryKey")
+            .response()
+            .second.validate()
+    }
+
     fun getRepository(repositoryKey: String): RepositoryConfiguration {
         return fuelManager.get("/api/repositories/$repositoryKey")
             .responseObject<RepositoryConfiguration>()
