@@ -5,6 +5,7 @@ import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoryType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager
+import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty
 import com.synopsys.integration.log.Slf4jIntLogger
@@ -15,7 +16,7 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
     val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
 
     fun createRepository(packageType: PackageType, repositoryType: RepositoryType): Repository {
-        val repositoryKey = generateRepostioryKey(packageType)
+        val repositoryKey = generateRepositoryKey(packageType)
         logger.info("Creating repository '$repositoryKey'")
         repositoriesApiService.createRepository(repositoryKey, repositoryType, packageType)
         val repositoryConfiguration = retrieveRepository(repositoryKey)
@@ -34,15 +35,12 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         return repositoriesApiService.getRepository(repositoryKey)
     }
 
-    private fun generateRepostioryKey(packageType: PackageType): String {
+    private fun generateRepositoryKey(packageType: PackageType): String {
         return "${packageType.packageType}-${Random.nextInt(0, Int.MAX_VALUE)}"
     }
 
     fun addRepositoryToInspection(containerHash: String, repository: Repository) {
-        val key: String = when (repository.type) {
-            RepositoryType.REMOTE -> "${repository.key}-cache"
-            else -> repository.key
-        }
+        val key = determineRepositoryKey(repository)
         blackDuckPluginManager.updateProperties(containerHash, Pair(InspectionModuleProperty.REPOS, key))
     }
 
@@ -50,6 +48,33 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         blackDuckPluginManager.updateProperties(containerHash, Pair(ScanModuleProperty.REPOS, repository.key))
     }
 
+    fun removeRepositoryFromInspection(containerHash: String, repository: Repository) {
+        removeFromList(containerHash, repository, InspectionModuleProperty.REPOS)
+    }
+
+    fun removeRepositoryFromScanner(containerHash: String, repository: Repository) {
+        removeFromList(containerHash, repository, ScanModuleProperty.REPOS)
+    }
+
+    private fun removeFromList(containerHash: String, repository: Repository, configurationProperty: ConfigurationProperty) {
+        val key = determineRepositoryKey(repository)
+        val properties = blackDuckPluginManager.getProperties(containerHash)
+        val reposEntry: String? = properties.getProperty(configurationProperty.key)
+
+        if (reposEntry != null) {
+            val repos = reposEntry.split(",").map { it.trim() }.toMutableSet()
+            repos.remove(key)
+        } else {
+            logger.error("Attempted to remove repository from plugin configuration properties, but the configuration property ${configurationProperty.key} was missing.")
+        }
+    }
+
+    private fun determineRepositoryKey(repository: Repository): String {
+        return when (repository.type) {
+            RepositoryType.REMOTE -> "${repository.key}-cache"
+            else -> repository.key
+        }
+    }
 }
 
 data class Repository(

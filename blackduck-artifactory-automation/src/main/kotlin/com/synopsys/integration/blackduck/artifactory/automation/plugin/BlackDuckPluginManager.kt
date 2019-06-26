@@ -8,6 +8,8 @@ import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.FileOutputStream
+import java.util.*
 
 class BlackDuckPluginManager(
     private val artifactoryConfiguration: ArtifactoryConfiguration,
@@ -51,10 +53,36 @@ class BlackDuckPluginManager(
         blackDuckPluginService.fixPermissions(containerHash, logbackXmlLocation, "0644")
     }
 
-    fun updateProperties(containerHash: String, vararg propertyPairs: Pair<ConfigurationProperty, String>) {
-        blackDuckPluginService.updateProperties(containerHash, propertiesFile, *propertyPairs)
+    fun getProperties(containerHash: String): Properties {
+        val tempFile = createTempPropertiesFile()
+        dockerService.downloadFile(containerHash, tempFile, blackDuckPluginService.propertiesFile).waitFor()
+        val properties = Properties()
+        val propertiesInputStream = tempFile.inputStream()
+        properties.load(propertiesInputStream)
+        propertiesInputStream.close()
+
+        return properties
+    }
+
+    fun setProperties(containerHash: String, properties: Properties) {
+        val tempFile = createTempPropertiesFile()
+        val outputStream = FileOutputStream(tempFile)
+        properties.store(outputStream, "Generated properties file")
+        outputStream.close()
+        dockerService.uploadFile(containerHash, tempFile, blackDuckPluginService.propertiesFile).waitFor()
         blackDuckPluginService.fixPermissions(containerHash, blackDuckPluginService.dockerPluginsDirectory)
         blackDuckPluginApiService.reloadPlugin()
     }
 
+    fun updateProperties(containerHash: String, vararg propertyPairs: Pair<ConfigurationProperty, String>) {
+        val properties = getProperties(containerHash)
+        propertyPairs.forEach { pair ->
+            properties[pair.first.key] = pair.second
+        }
+        setProperties(containerHash, properties)
+    }
+
+    private fun createTempPropertiesFile(): File {
+        return File.createTempFile("artifactory-automation-", "-properties")
+    }
 }

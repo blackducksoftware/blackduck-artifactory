@@ -22,6 +22,8 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
 
     val artifactoryEtcDirectory = "/opt/jfrog/artifactory/etc"
     val dockerPluginsDirectory = "$artifactoryEtcDirectory/plugins"
+    val libDirectory = "$dockerPluginsDirectory/lib/"
+    val propertiesFile = "$libDirectory/blackDuckPlugin.properties"
 
     fun installPlugin(containerHash: String, zipFile: File, outputDirectory: File) {
         logger.info("Shutting down Artifactory container.")
@@ -101,7 +103,7 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
 
         properties.store(FileOutputStream(propertiesFile), "Modified automation properties")
 
-        dockerService.uploadFile(containerHash, propertiesFile, "$dockerPluginsDirectory/lib/").waitFor()
+        dockerService.uploadFile(containerHash, propertiesFile, libDirectory).waitFor()
     }
 
     fun fixPermissions(containerHash: String, location: String, permission: String = "0755") {

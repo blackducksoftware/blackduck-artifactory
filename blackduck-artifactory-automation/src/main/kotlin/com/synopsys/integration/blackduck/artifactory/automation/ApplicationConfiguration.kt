@@ -3,6 +3,7 @@ package com.synopsys.integration.blackduck.artifactory.automation
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.extensions.authentication
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PluginsApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoriesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.SystemApiService
@@ -70,7 +71,13 @@ class ApplicationConfiguration {
     fun fuelManager(@Autowired artifactoryConfiguration: ArtifactoryConfiguration): FuelManager {
         val fuelManager = FuelManager()
         fuelManager.basePath = artifactoryConfiguration.url
-        fuelManager.addRequestInterceptor { { it.authentication().basic(artifactoryConfiguration.username, artifactoryConfiguration.password) } }
+        fuelManager.addRequestInterceptor {
+            {
+                logger.info("Making request to ${it.url}")
+                it.authentication().basic(artifactoryConfiguration.username, artifactoryConfiguration.password)
+            }
+        }
+
 
         return fuelManager
     }
@@ -93,6 +100,11 @@ class ApplicationConfiguration {
     @Bean
     fun propertiesApiService(@Autowired fuelManager: FuelManager): PropertiesApiService {
         return PropertiesApiService(fuelManager)
+    }
+
+    @Bean
+    fun pluginsApiService(@Autowired fuelManager: FuelManager): PluginsApiService {
+        return PluginsApiService(fuelManager)
     }
 
     @Bean

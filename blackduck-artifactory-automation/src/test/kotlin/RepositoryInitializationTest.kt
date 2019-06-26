@@ -26,11 +26,11 @@ class RepositoryInitializationTest : SpringTest() {
     fun emptyRepositoryInitialization(packageType: PackageType) {
         val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
 
-        val remoteRepository = repositoryManager.createRepository(packageType, RepositoryType.REMOTE)
-        repositoryManager.addRepositoryToInspection(application.containerHash, remoteRepository)
+        val repository = repositoryManager.createRepository(packageType, RepositoryType.REMOTE)
+        repositoryManager.addRepositoryToInspection(application.containerHash, repository)
 
         blackDuckPluginApiService.blackDuckInitializeRepositories()
-        val itemProperties = propertiesApiService.getProperties(remoteRepository.key)
+        val itemProperties = propertiesApiService.getProperties(repository.key)
 
         val propertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()
         val inspectionStatuses = itemProperties.properties[propertyKey]
@@ -43,6 +43,7 @@ class RepositoryInitializationTest : SpringTest() {
             Assertions.assertEquals(InspectionStatus.FAILURE.name, inspectionStatus)
         }
 
-        repositoryManager.deleteRepository(remoteRepository)
+        repositoryManager.deleteRepository(repository)
+        repositoryManager.removeRepositoryFromInspection(application.containerHash, repository)
     }
 }

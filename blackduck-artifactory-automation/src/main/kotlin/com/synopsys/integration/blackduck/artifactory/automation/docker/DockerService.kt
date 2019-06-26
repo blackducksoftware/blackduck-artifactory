@@ -60,6 +60,10 @@ class DockerService {
         return runCommand("docker", "cp", "$containerHash:$location", outputFile.canonicalPath)
     }
 
+    fun deleteFile(containerHash: String, location: String): Process {
+        return runCommand("docker", "exec", "--user=root", containerHash, "rm", "-rf", location)
+    }
+
     fun chownFile(containerHash: String, owner: String, group: String, filePath: String): Process {
         return runCommand("docker", "exec", "--user=root", containerHash, "chown", "-R", "$owner:$group", filePath)
     }
