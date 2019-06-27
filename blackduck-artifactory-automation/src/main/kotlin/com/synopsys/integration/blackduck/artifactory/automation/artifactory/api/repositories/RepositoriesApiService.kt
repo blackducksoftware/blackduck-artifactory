@@ -1,11 +1,11 @@
-package com.synopsys.integration.blackduck.artifactory.automation.artifactory.api
+package com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories
 
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
 import com.google.gson.annotations.SerializedName
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.validate
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.slf4j.LoggerFactory

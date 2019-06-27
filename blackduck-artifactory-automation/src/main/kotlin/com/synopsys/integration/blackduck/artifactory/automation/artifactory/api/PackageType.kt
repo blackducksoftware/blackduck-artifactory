@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model
+package com.synopsys.integration.blackduck.artifactory.automation.artifactory.api
 
 interface PackageType {
     val packageType: String

@@ -1,7 +1,7 @@
 import com.synopsys.integration.blackduck.artifactory.automation.Application
 import com.synopsys.integration.blackduck.artifactory.automation.ApplicationConfiguration
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance

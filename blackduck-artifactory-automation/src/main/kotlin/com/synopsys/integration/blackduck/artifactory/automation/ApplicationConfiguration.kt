@@ -3,10 +3,10 @@ package com.synopsys.integration.blackduck.artifactory.automation
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.extensions.authentication
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PluginsApiService
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PropertiesApiService
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoriesApiService
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.SystemApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.plugins.PluginsApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoriesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.system.SystemApiService
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginApiService
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager

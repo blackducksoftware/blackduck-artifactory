@@ -1,9 +1,10 @@
 package com.synopsys.integration.blackduck.artifactory.automation.artifactory
 
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoriesApiService
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoryConfiguration
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoryType
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PackageType
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoriesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryConfiguration
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryType
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty
@@ -76,9 +77,3 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         }
     }
 }
-
-data class Repository(
-    val key: String,
-    val configuration: RepositoryConfiguration,
-    val type: RepositoryType
-)

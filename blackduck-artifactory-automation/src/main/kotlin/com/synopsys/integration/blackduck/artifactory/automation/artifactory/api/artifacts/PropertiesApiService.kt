@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.automation.artifactory.api
+package com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts
 
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.gson.responseObject

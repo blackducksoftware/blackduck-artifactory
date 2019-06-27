@@ -3,7 +3,7 @@ package com.synopsys.integration.blackduck.artifactory.automation
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.isClientError
 import com.github.kittinunf.fuel.core.isServerError
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.SystemApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.system.SystemApiService
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig

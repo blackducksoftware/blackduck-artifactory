@@ -2,9 +2,9 @@ package inspector
 
 import SpringTest
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PropertiesApiService
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.RepositoryType
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PackageType
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryType
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginApiService
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType
