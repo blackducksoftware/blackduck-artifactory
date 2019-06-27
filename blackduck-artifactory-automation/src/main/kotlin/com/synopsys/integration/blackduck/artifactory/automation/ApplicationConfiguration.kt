@@ -3,6 +3,8 @@ package com.synopsys.integration.blackduck.artifactory.automation
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.extensions.authentication
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.ArtifactDeploymentApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.ArtifactRetrievalApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.plugins.PluginsApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoriesApiService
@@ -106,6 +108,16 @@ class ApplicationConfiguration {
     @Bean
     fun pluginsApiService(@Autowired fuelManager: FuelManager): PluginsApiService {
         return PluginsApiService(fuelManager)
+    }
+
+    @Bean
+    fun artifactDeploymentApiService(@Autowired fuelManager: FuelManager): ArtifactDeploymentApiService {
+        return ArtifactDeploymentApiService(fuelManager)
+    }
+
+    @Bean
+    fun artifactRetrievalApiService(@Autowired fuelManager: FuelManager): ArtifactRetrievalApiService {
+        return ArtifactRetrievalApiService(fuelManager)
     }
 
     @Bean
