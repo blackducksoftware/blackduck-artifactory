@@ -1,5 +1,8 @@
 package com.synopsys.integration.blackduck.artifactory.automation
 
+import com.github.kittinunf.fuel.core.Response
+import com.github.kittinunf.fuel.core.isClientError
+import com.github.kittinunf.fuel.core.isServerError
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.SystemApiService
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager
@@ -75,3 +78,10 @@ class Application(
 }
 
 fun InputStream.convertToString(encoding: Charset = StandardCharsets.UTF_8): String = IOUtils.toString(this, encoding)
+
+fun Response.validate(): Response {
+    if (this.isClientError || this.isServerError || this.statusCode < 0) {
+        throw IntegrationException("Status Code: ${this.statusCode}, Content: ${this}")
+    }
+    return this
+}

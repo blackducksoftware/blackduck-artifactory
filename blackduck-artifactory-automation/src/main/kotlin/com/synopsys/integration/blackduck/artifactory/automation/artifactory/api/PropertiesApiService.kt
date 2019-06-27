@@ -3,8 +3,9 @@ package com.synopsys.integration.blackduck.artifactory.automation.artifactory.ap
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.gson.responseObject
 import com.google.gson.annotations.SerializedName
+import com.synopsys.integration.blackduck.artifactory.automation.validate
 
-class PropertiesApiService(fuelManager: FuelManager) : ArtifactoryApiService(fuelManager) {
+class PropertiesApiService(private val fuelManager: FuelManager) {
     fun getProperties(repoPath: String): ItemProperties {
         val responseResult = fuelManager.get("/api/storage/$repoPath?properties")
             .responseObject<ItemProperties>()

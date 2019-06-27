@@ -6,10 +6,11 @@ import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
 import com.google.gson.annotations.SerializedName
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.model.PackageType
+import com.synopsys.integration.blackduck.artifactory.automation.validate
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.slf4j.LoggerFactory
 
-class RepositoriesApiService(fuelManager: FuelManager) : ArtifactoryApiService(fuelManager) {
+class RepositoriesApiService(private val fuelManager: FuelManager) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(javaClass))
 
     fun createRepository(key: String, repositoryType: RepositoryType, packageType: PackageType, remoteUrl: String = packageType.remoteUrl, externalDependenciesEnabled: Boolean = false): Response {

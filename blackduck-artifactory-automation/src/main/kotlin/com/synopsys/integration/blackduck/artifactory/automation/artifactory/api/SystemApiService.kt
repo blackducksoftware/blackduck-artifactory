@@ -3,11 +3,12 @@ package com.synopsys.integration.blackduck.artifactory.automation.artifactory.ap
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.extensions.jsonBody
+import com.synopsys.integration.blackduck.artifactory.automation.validate
 import com.synopsys.integration.exception.IntegrationException
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.slf4j.LoggerFactory
 
-class SystemApiService(fuelManager: FuelManager) : ArtifactoryApiService(fuelManager) {
+class SystemApiService(private val fuelManager: FuelManager) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
     fun applyLicense(license: String): Response {
