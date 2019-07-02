@@ -12,6 +12,7 @@ import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.charset.Charset
@@ -74,6 +75,10 @@ class Application(
             containerHash = containerName
             logger.info("Skipping Artifactory installation.")
         }
+
+        val dockerFile = File(this.javaClass.getResource("/Dockerfile").toURI())
+        val workingDirectory = File("")
+        dockerService.buildDockerfile(dockerFile, workingDirectory).waitFor()
     }
 }
 

@@ -6,11 +6,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Update Ubuntu Software repository
 RUN apt-get update
 
-# Setup pip
-RUN apt-get install python3 -y
-RUN apt-get install python3-pip -y
-# Example pip command: pip3 install Cycler==0.10.0 --index-url=http://<server:port>/artifactory/api/pypi/<remote-repo-key>/simple
-
 # Setup npm
 RUN apt-get install npm -y
 RUN npm install -g npm
@@ -27,7 +22,6 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 RUN php -r "if (hash_file('sha384', 'composer-setup.php') === '48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
 RUN php composer-setup.php
 RUN php -r "unlink('composer-setup.php');"
-COPY composer.json /
 # Example composer command: php composer.phar install
 # Example composer (packages.json) file:
 #{
@@ -85,6 +79,13 @@ FROM microsoft/dotnet:2.2-sdk
 #
 # Install packages:
 # dotnet restore --source http://localhost:8081/artifactory/api/nuget/nuget-automation
+
+# Setup pip
+RUN apt-get update
+RUN apt-get install python3 -y
+RUN apt-get install python3-pip -y
+RUN pip3 --version
+# Example pip command: pip3 install Cycler==0.10.0 --index-url=http://<server:port>/artifactory/api/pypi/<remote-repo-key>/simple
 
 # Add user
 #RUN useradd -ms /bin/bash artifactory

@@ -59,7 +59,7 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
     private fun modifyList(containerHash: String, repository: Repository, configurationProperty: ConfigurationProperty, addToList: Boolean = true) {
         val properties = blackDuckPluginManager.getProperties(containerHash)
         val reposEntry: String? = properties.getProperty(configurationProperty.key)
-        val key = determineRepositoryKey(repository)
+        val key = Companion.determineRepositoryKey(repository)
 
         var repos = mutableSetOf<String>()
         if (reposEntry != null && reposEntry.isNotBlank()) {
@@ -76,10 +76,12 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         blackDuckPluginManager.setProperties(containerHash, properties)
     }
 
-    fun determineRepositoryKey(repository: Repository): String {
-        return when (repository.type) {
-            RepositoryType.REMOTE -> "${repository.key}-cache"
-            else -> repository.key
+    companion object {
+        fun determineRepositoryKey(repository: Repository): String {
+            return when (repository.type) {
+                RepositoryType.REMOTE -> "${repository.key}-cache"
+                else -> repository.key
+            }
         }
     }
 }

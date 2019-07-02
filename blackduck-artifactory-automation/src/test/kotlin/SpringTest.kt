@@ -24,13 +24,13 @@ abstract class SpringTest {
     lateinit var blackDuckServicesFactory: BlackDuckServicesFactory
 
     protected fun cleanup(repository: Repository, blackDuckProjectCreated: Boolean) {
-        repositoryManager.deleteRepository(repository)
+        repositoryManager.deleteRepositoryFromArtifactory(repository)
         repositoryManager.removeRepositoryFromInspection(application.containerHash, repository)
 
         if (blackDuckProjectCreated) {
             val projectService = blackDuckServicesFactory.createProjectService()
             val blackDuckService = blackDuckServicesFactory.createBlackDuckService()
-            val projectView = projectService.getProjectByName(repositoryManager.determineRepositoryKey(repository))
+            val projectView = projectService.getProjectByName(RepositoryManager.determineRepositoryKey(repository))
             blackDuckService.delete(projectView.get())
         }
     }

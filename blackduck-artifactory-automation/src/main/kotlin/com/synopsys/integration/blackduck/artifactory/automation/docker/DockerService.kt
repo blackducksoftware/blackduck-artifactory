@@ -3,7 +3,6 @@ package com.synopsys.integration.blackduck.artifactory.automation.docker
 import com.synopsys.integration.blackduck.artifactory.automation.convertToString
 import com.synopsys.integration.exception.IntegrationException
 import com.synopsys.integration.log.Slf4jIntLogger
-import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream
@@ -11,6 +10,8 @@ import java.util.concurrent.TimeUnit
 
 // TODO: Make DockerService more generic
 class DockerService {
+    val packageManagerDockerImageTag = "artifactory-automation-pm"
+
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(javaClass))
 
     fun installAndStartArtifactory(version: String, containerName: String, artifactoryPort: String): String {
@@ -72,8 +73,18 @@ class DockerService {
         return runCommand("docker", "exec", "--user=root", containerHash, "chmod", "-R", permissions, filePath)
     }
 
+    fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String = packageManagerDockerImageTag, cleanup: Boolean = true): Process {
+        val cleanupCommand = if (cleanup) "--rm" else ""
+        return runCommand("docker", "build", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath)
+    }
+
+    fun runDockerImage(vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, imageTag: String = packageManagerDockerImageTag): Process {
+        val cleanupCommand = if (cleanup) "--rm" else ""
+        return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO)
+    }
+
     private fun runCommand(vararg command: String, inheritIO: Boolean = true): Process {
-        logger.info("Running command: " + StringUtils.join(command, " "))
+        logger.info("Running command: ${command.joinToString(separator = " ")}")
         val processBuilder = ProcessBuilder(*command)
         if (inheritIO) {
             processBuilder.inheritIO()

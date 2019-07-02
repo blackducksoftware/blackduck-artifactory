@@ -2,6 +2,7 @@ package com.synopsys.integration.blackduck.artifactory.automation
 
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.extensions.authentication
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.ArtifactResolver
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.ArtifactDeploymentApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.ArtifactRetrievalApiService
@@ -81,7 +82,6 @@ class ApplicationConfiguration {
             }
         }
 
-
         return fuelManager
     }
 
@@ -129,6 +129,16 @@ class ApplicationConfiguration {
     @Bean
     fun repositoryManager(@Autowired repositoriesApiService: RepositoriesApiService, @Autowired blackDuckPluginManager: BlackDuckPluginManager): RepositoryManager {
         return RepositoryManager(repositoriesApiService, blackDuckPluginManager)
+    }
+
+    @Bean
+    fun artifactResolver(@Autowired artifactRetrievalApiService: ArtifactRetrievalApiService, @Autowired dockerService: DockerService, @Autowired artifactoryConfiguration: ArtifactoryConfiguration): ArtifactResolver {
+        return ArtifactResolver(artifactRetrievalApiService, dockerService, artifactoryConfiguration)
+    }
+
+    @Bean
+    fun blackDuckVerificationService(@Autowired blackDuckServicesFactory: BlackDuckServicesFactory): BlackDuckVerificationService {
+        return BlackDuckVerificationService(blackDuckServicesFactory)
     }
 
     @Bean
