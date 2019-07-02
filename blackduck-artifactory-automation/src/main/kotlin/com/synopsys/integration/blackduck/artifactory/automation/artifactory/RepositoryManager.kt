@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory
 import kotlin.random.Random
 
 class RepositoryManager(private val repositoriesApiService: RepositoriesApiService, private val blackDuckPluginManager: BlackDuckPluginManager) {
-    val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
+    private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
 
-    fun createRepository(packageType: PackageType, repositoryType: RepositoryType): Repository {
+    fun createRepositoryInArtifactory(packageType: PackageType, repositoryType: RepositoryType): Repository {
         val repositoryKey = generateRepositoryKey(packageType)
         logger.info("Creating repository '$repositoryKey'")
         repositoriesApiService.createRepository(repositoryKey, repositoryType, packageType)
@@ -24,7 +24,7 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         return Repository(repositoryKey, repositoryConfiguration, repositoryType)
     }
 
-    fun deleteRepository(repository: Repository?) {
+    fun deleteRepositoryFromArtifactory(repository: Repository?) {
         if (repository != null) {
             val keyToDelete = repository.key
             logger.info("Deleting repository '$keyToDelete'")
@@ -41,33 +41,39 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
     }
 
     fun addRepositoryToInspection(containerHash: String, repository: Repository) {
-        val key = determineRepositoryKey(repository)
-        blackDuckPluginManager.updateProperties(containerHash, Pair(InspectionModuleProperty.REPOS, key))
+        modifyList(containerHash, repository, InspectionModuleProperty.REPOS, addToList = true)
     }
 
     fun addRepositoryToScanner(containerHash: String, repository: Repository) {
-        blackDuckPluginManager.updateProperties(containerHash, Pair(ScanModuleProperty.REPOS, repository.key))
+        modifyList(containerHash, repository, ScanModuleProperty.REPOS, addToList = true)
     }
 
     fun removeRepositoryFromInspection(containerHash: String, repository: Repository) {
-        removeFromList(containerHash, repository, InspectionModuleProperty.REPOS)
+        modifyList(containerHash, repository, InspectionModuleProperty.REPOS, addToList = false)
     }
 
     fun removeRepositoryFromScanner(containerHash: String, repository: Repository) {
-        removeFromList(containerHash, repository, ScanModuleProperty.REPOS)
+        modifyList(containerHash, repository, ScanModuleProperty.REPOS, addToList = false)
     }
 
-    private fun removeFromList(containerHash: String, repository: Repository, configurationProperty: ConfigurationProperty) {
-        val key = determineRepositoryKey(repository)
+    private fun modifyList(containerHash: String, repository: Repository, configurationProperty: ConfigurationProperty, addToList: Boolean = true) {
         val properties = blackDuckPluginManager.getProperties(containerHash)
         val reposEntry: String? = properties.getProperty(configurationProperty.key)
+        val key = determineRepositoryKey(repository)
 
-        if (reposEntry != null) {
-            val repos = reposEntry.split(",").map { it.trim() }.toMutableSet()
-            repos.remove(key)
-        } else {
-            logger.error("Attempted to remove repository from plugin configuration properties, but the configuration property ${configurationProperty.key} was missing.")
+        var repos = mutableSetOf<String>()
+        if (reposEntry != null && reposEntry.isNotBlank()) {
+            repos = reposEntry.split(",").map { it.trim() }.toMutableSet()
         }
+
+        if (addToList) {
+            repos.add(key)
+        } else {
+            repos.remove(key)
+        }
+
+        properties.setProperty(configurationProperty.key, repos.joinToString(separator = ","))
+        blackDuckPluginManager.setProperties(containerHash, properties)
     }
 
     fun determineRepositoryKey(repository: Repository): String {
