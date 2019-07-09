@@ -2,7 +2,6 @@ package com.synopsys.integration.blackduck.artifactory.automation.plugin
 
 import com.synopsys.integration.blackduck.artifactory.automation.ArtifactoryConfiguration
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
-import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig
 import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.log.Slf4jIntLogger
@@ -39,7 +38,7 @@ class BlackDuckPluginManager(
         logger.info("Rewriting properties.")
         blackDuckPluginService.initializeProperties(containerHash, propertiesFile, blackDuckServerConfig)
 
-        logger.info("Updating logback.xml for logger purposes.")
+        logger.info("Updating logback.xml for logging purposes.")
 
         val logbackXmlLocation = "${blackDuckPluginService.artifactoryEtcDirectory}/logback.xml"
         dockerService.downloadFile(containerHash, logbackXmlFile, logbackXmlLocation).waitFor()
@@ -72,14 +71,6 @@ class BlackDuckPluginManager(
         dockerService.uploadFile(containerHash, tempFile, blackDuckPluginService.propertiesFile).waitFor()
         blackDuckPluginService.fixPermissions(containerHash, blackDuckPluginService.dockerPluginsDirectory)
         blackDuckPluginApiService.reloadPlugin()
-    }
-
-    fun updateProperties(containerHash: String, vararg propertyPairs: Pair<ConfigurationProperty, String>) {
-        val properties = getProperties(containerHash)
-        propertyPairs.forEach { pair ->
-            properties[pair.first.key] = pair.second
-        }
-        setProperties(containerHash, properties)
     }
 
     private fun createTempPropertiesFile(): File {
