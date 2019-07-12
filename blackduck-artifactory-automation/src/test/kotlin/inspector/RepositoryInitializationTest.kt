@@ -1,13 +1,13 @@
 package inspector
 
-import ArtifactsToTest
+import MissingSupportedPackageTypeException
 import SpringTest
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
 import com.synopsys.integration.blackduck.artifactory.automation.ComponentVerificationService
 import com.synopsys.integration.blackduck.artifactory.automation.NoPropertiesException
 import com.synopsys.integration.blackduck.artifactory.automation.TestablePackage
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.ArtifactResolver
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PackageType
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryType
@@ -15,7 +15,7 @@ import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuc
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -32,7 +32,7 @@ class RepositoryInitializationTest : SpringTest() {
     @Autowired
     lateinit var componentVerificationService: ComponentVerificationService
 
-    // @ParameterizedTest
+    @ParameterizedTest
     @EnumSource(PackageType.Defaults::class)
     fun emptyRepositoryInitialization(packageType: PackageType) {
         val repository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.REMOTE)
@@ -40,40 +40,30 @@ class RepositoryInitializationTest : SpringTest() {
         cleanup(repository, blackDuckProjectCreated)
     }
 
-    @Test
-    fun populatedRepositoryInitialization() {
-        val packageType = PackageType.Defaults.PYPI
+    @ParameterizedTest
+    @EnumSource(PackageType.Defaults::class)
+    fun populatedRepositoryInitialization(packageType: PackageType) {
         val repository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.REMOTE)
+        val resolver = packageType.resolver
 
-        when (packageType) {
-            PackageType.Defaults.BOWER -> TODO()
-            PackageType.Defaults.CHEF -> TODO()
-            PackageType.Defaults.COCOAPODS -> TODO()
-            PackageType.Defaults.COMPOSER -> TODO()
-            PackageType.Defaults.CONAN -> TODO()
-            PackageType.Defaults.CONDA -> TODO()
-            PackageType.Defaults.CRAN -> TODO()
-            PackageType.Defaults.DEBIAN -> TODO()
-            PackageType.Defaults.GEMS -> TODO()
-            PackageType.Defaults.GO -> TODO()
-            PackageType.Defaults.GRADLE -> TODO()
-            PackageType.Defaults.HELM -> TODO()
-            PackageType.Defaults.IVY -> TODO()
-            PackageType.Defaults.MAVEN -> TODO()
-            PackageType.Defaults.NPM -> TODO()
-            PackageType.Defaults.NUGET -> TODO()
-            PackageType.Defaults.PUPPET -> TODO()
-            PackageType.Defaults.PYPI -> ArtifactsToTest.PYPI_PACKAGES.forEach { artifactResolver.resolvePyPiArtifact(repository, it.externalId.name, it.externalId.version) }
-            PackageType.Defaults.RPM -> TODO()
-            PackageType.Defaults.SBT -> TODO()
-            PackageType.Defaults.VCS -> TODO()
+        if (resolver != null) {
+            val testablePackages = resolver.testablePackages
+            testablePackages.forEach { resolver.resolverFunction(artifactResolver, repository, it.externalId) }
+
+            val blackDuckProjectCreated = testRepository(repository, packageType)
+            verifyNameVersionPackages(repository, testablePackages)
+            cleanup(repository, blackDuckProjectCreated)
+        } else {
+            val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
+            if (supported && packageType.automated) {
+                throw MissingSupportedPackageTypeException(packageType)
+            } else if (supported && !packageType.automated) {
+                println("Skipping $packageType because it cannot be automated.")
+            } else {
+                println("Skipping $packageType because it is not supported by the plugin.")
+            }
+
         }
-
-        val blackDuckProjectCreated = testRepository(repository, packageType)
-
-        verifyNameVersionPackages(repository, ArtifactsToTest.PYPI_PACKAGES)
-
-        cleanup(repository, blackDuckProjectCreated)
     }
 
     private fun verifyNameVersionPackages(repository: Repository, testablePackages: List<TestablePackage>) {

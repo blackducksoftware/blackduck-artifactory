@@ -1,6 +1,5 @@
 package com.synopsys.integration.blackduck.artifactory.automation.artifactory
 
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoriesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryConfiguration
@@ -18,7 +17,7 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
 
     fun createRepositoryInArtifactory(packageType: PackageType, repositoryType: RepositoryType): Repository {
         val repositoryKey = generateRepositoryKey(packageType)
-        val requestedRepositoryConfiguration = RepositoryConfiguration(repositoryKey, repositoryType, packageType.packageType, packageType.remoteUrl, repositoryLayout = packageType.repoLayoutRef ?: "simple-layout")
+        val requestedRepositoryConfiguration = RepositoryConfiguration(repositoryKey, repositoryType, packageType.packageType, packageType.remoteUrl, repositoryLayout = packageType.repoLayoutRef ?: "simple-default")
 
         logger.info("Creating repository '$repositoryKey'")
         repositoriesApiService.createRepository(requestedRepositoryConfiguration)
