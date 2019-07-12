@@ -44,9 +44,7 @@ class ComponentVerificationService(private val blackDuckServicesFactory: BlackDu
                 when {
                     retryCount == maxRetryCount -> throw FailedInspectionException(repoPath)
                     retryCount >= maxRetryCount -> throw FailedInspectionException(repoPath, "Retry count exceeded maximum of $maxRetryCount on $repoPath.")
-                    currentRetryCount < maxRetryCount -> {
-                        retry()
-                    }
+                    currentRetryCount < maxRetryCount -> retry()
                 }
             }
         }
