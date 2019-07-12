@@ -90,3 +90,7 @@ fun Response.validate(): Response {
     }
     return this
 }
+
+fun Response.validateDontThrow(): Boolean {
+    return !(this.isClientError || this.isServerError || this.statusCode < 0)
+}

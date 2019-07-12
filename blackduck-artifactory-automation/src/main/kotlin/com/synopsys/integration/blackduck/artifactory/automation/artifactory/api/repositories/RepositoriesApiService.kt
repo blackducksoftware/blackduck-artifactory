@@ -5,19 +5,12 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
 import com.google.gson.annotations.SerializedName
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.validate
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.slf4j.LoggerFactory
 
 class RepositoriesApiService(private val fuelManager: FuelManager) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(javaClass))
-
-    fun createRepository(key: String, repositoryType: RepositoryType, packageType: PackageType, remoteUrl: String = packageType.remoteUrl, externalDependenciesEnabled: Boolean = false): Response {
-        val repositoryConfiguration = RepositoryConfiguration(key, repositoryType, packageType = packageType.packageType, remoteUrl = remoteUrl,
-            externalDependenciesEnabled = externalDependenciesEnabled)
-        return createRepository(repositoryConfiguration)
-    }
 
     fun createRepository(repositoryConfiguration: RepositoryConfiguration): Response {
         return fuelManager.put("/api/repositories/${repositoryConfiguration.key}")
@@ -58,5 +51,7 @@ data class RepositoryConfiguration(
     @SerializedName("url")
     val remoteUrl: String?,
     @SerializedName("externalDependenciesEnabled")
-    val externalDependenciesEnabled: Boolean = false
+    val externalDependenciesEnabled: Boolean = false,
+    @SerializedName("repoLayoutRef")
+    val repositoryLayout: String = "simple-default"
 )

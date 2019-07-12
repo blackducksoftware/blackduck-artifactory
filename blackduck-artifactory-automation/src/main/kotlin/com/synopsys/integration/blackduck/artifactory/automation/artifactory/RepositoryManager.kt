@@ -18,9 +18,12 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
 
     fun createRepositoryInArtifactory(packageType: PackageType, repositoryType: RepositoryType): Repository {
         val repositoryKey = generateRepositoryKey(packageType)
+        val requestedRepositoryConfiguration = RepositoryConfiguration(repositoryKey, repositoryType, packageType.packageType, packageType.remoteUrl, repositoryLayout = packageType.repoLayoutRef ?: "simple-layout")
+
         logger.info("Creating repository '$repositoryKey'")
-        repositoriesApiService.createRepository(repositoryKey, repositoryType, packageType)
+        repositoriesApiService.createRepository(requestedRepositoryConfiguration)
         val repositoryConfiguration = retrieveRepository(repositoryKey)
+
         return Repository(repositoryKey, repositoryConfiguration, repositoryType)
     }
 

@@ -4,8 +4,9 @@ interface PackageType {
     val packageType: String
     val remoteUrl: String
     val automated: Boolean
+    val repoLayoutRef: String?
 
-    enum class Defaults(override val packageType: String, override val remoteUrl: String, override val automated: Boolean = false) : PackageType {
+    enum class Defaults(override val packageType: String, override val remoteUrl: String, override val automated: Boolean = false, override val repoLayoutRef: String? = null) : PackageType {
         BOWER("bower", "https://github.com/", true),
         CHEF("chef", "https://supermarket.chef.io"),
         COCOAPODS("cocoapods", "https://github.com/"),
@@ -28,7 +29,7 @@ interface PackageType {
         // OPKG("opkg", ""), Needs a remote URL. This PackageType should be created manually.
         // P2("p2", ""), Needs a remote URL. This PackageType should be created manually.
         PUPPET("puppet", "https://forgeapi.puppetlabs.com/"),
-        PYPI("pypi", "https://files.pythonhosted.org", true),
+        PYPI("pypi", "https://files.pythonhosted.org", true, "python-automation"),
         RPM("rpm", "http://mirror.centos.org/centos/"),
         SBT("sbt", "https://jcenter.bintray.com"),
         // VAGRANT("vagrant", ""), In doc, but not creatable via UI as of Artifactory-6.10.3

@@ -137,8 +137,8 @@ class ApplicationConfiguration {
     }
 
     @Bean
-    fun blackDuckVerificationService(@Autowired blackDuckServicesFactory: BlackDuckServicesFactory): BlackDuckVerificationService {
-        return BlackDuckVerificationService(blackDuckServicesFactory)
+    fun blackDuckVerificationService(@Autowired blackDuckServicesFactory: BlackDuckServicesFactory, @Autowired propertiesApiService: PropertiesApiService): ComponentVerificationService {
+        return ComponentVerificationService(blackDuckServicesFactory, propertiesApiService)
     }
 
     @Bean
