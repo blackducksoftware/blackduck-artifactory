@@ -9,6 +9,7 @@ import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.plugins.PluginsApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoriesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.searches.ArtifactSearchesAPIService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.system.SystemApiService
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginApiService
@@ -121,6 +122,11 @@ class ApplicationConfiguration {
     }
 
     @Bean
+    fun artifactsSearchesAPIService(@Autowired fuelManager: FuelManager): ArtifactSearchesAPIService {
+        return ArtifactSearchesAPIService(fuelManager)
+    }
+
+    @Bean
     fun blackDuckServiceFactory(@Autowired blackDuckServerConfig: BlackDuckServerConfig): BlackDuckServicesFactory {
         val logger = Slf4jIntLogger(LoggerFactory.getLogger("BlackDuckServicesFactory"))
         return blackDuckServerConfig.createBlackDuckServicesFactory(logger)
@@ -137,8 +143,8 @@ class ApplicationConfiguration {
     }
 
     @Bean
-    fun blackDuckVerificationService(@Autowired blackDuckServicesFactory: BlackDuckServicesFactory, @Autowired propertiesApiService: PropertiesApiService): ComponentVerificationService {
-        return ComponentVerificationService(blackDuckServicesFactory, propertiesApiService)
+    fun blackDuckVerificationService(@Autowired blackDuckServicesFactory: BlackDuckServicesFactory, @Autowired propertiesApiService: PropertiesApiService, @Autowired artifactSearchesAPIService: ArtifactSearchesAPIService): ComponentVerificationService {
+        return ComponentVerificationService(blackDuckServicesFactory, propertiesApiService, artifactSearchesAPIService)
     }
 
     @Bean

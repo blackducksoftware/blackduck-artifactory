@@ -2,8 +2,10 @@ package com.synopsys.integration.blackduck.artifactory.automation
 
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.searches.ArtifactSearchesAPIService
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory
 import com.synopsys.integration.exception.IntegrationException
@@ -12,12 +14,14 @@ import org.junit.jupiter.api.Assertions
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
-class ComponentVerificationService(private val blackDuckServicesFactory: BlackDuckServicesFactory, private val propertiesApiService: PropertiesApiService) {
+class ComponentVerificationService(private val blackDuckServicesFactory: BlackDuckServicesFactory, private val propertiesApiService: PropertiesApiService, private val artifactSearchesAPIService: ArtifactSearchesAPIService) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
     fun waitForComponentInspection(repository: Repository, testablePackage: TestablePackage, expectedInspectionStatus: InspectionStatus = InspectionStatus.SUCCESS, maxRetryCount: Int = 5, waitTime: Long = 1,
         waitTimeUnit: TimeUnit = TimeUnit.MINUTES) {
-        waitForComponentInspection("${repository.key}/${testablePackage.expectedRepoPath}", expectedInspectionStatus, maxRetryCount, waitTime, waitTimeUnit, 0)
+        val repoKey = RepositoryManager.determineRepositoryKey(repository)
+        val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repoKey)
+        waitForComponentInspection(repository.key + artifact.path, expectedInspectionStatus, maxRetryCount, waitTime, waitTimeUnit, 0)
     }
 
     private fun waitForComponentInspection(repoPath: String, expectedInspectionStatus: InspectionStatus, maxRetryCount: Int, waitTime: Long, waitTimeUnit: TimeUnit, currentRetryCount: Int) {
@@ -57,10 +61,10 @@ class ComponentVerificationService(private val blackDuckServicesFactory: BlackDu
     fun verifyComponentsExistInBOM(projectVersionView: ProjectVersionView, testablePackages: List<TestablePackage>) {
         val projectBomService = blackDuckServicesFactory.createProjectBomService()
         val versionBomComponentViews = projectBomService.getComponentsForProjectVersion(projectVersionView)
-        val foundComponents = versionBomComponentViews.map { Component(it.componentName, it.componentVersionName) }
-        val expectedComponents = testablePackages.map { Component(it.externalId.name, it.externalId.version) }
+        val foundComponents = versionBomComponentViews.flatMap { it.origins }.map { it.externalId }
+        val expectedComponents = testablePackages.map { it.externalId.createExternalId() }
 
-        Assertions.assertEquals(expectedComponents, foundComponents)
+        Assertions.assertTrue(foundComponents.containsAll(expectedComponents), "Not all expected components were found. Expected: $expectedComponents Found: $foundComponents")
     }
 }
 

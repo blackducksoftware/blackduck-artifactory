@@ -22,10 +22,10 @@ object Resolvers {
     val PYPI_RESOLVER = Resolver(
         ArtifactResolver::resolvePyPiArtifact,
         listOf(
-            TestablePackage(
-                "f7/d2/e07d3ebb2bd7af696440ce7e754c59dd546ffe1bbe732c8ab68b9c834e61/cycler-0.10.0-py2.py3-none-any.whl",
-                externalIdFactory.createNameVersionExternalId(Forge.PYPI, "Cycler", "0.10.0")
-            )
+            TestablePackage("cycler-0.10.0-py2.py3-none-any.whl", externalIdFactory.createNameVersionExternalId(Forge.PYPI, "Cycler", "0.10.0")),
+            TestablePackage("Click-7.0-py2.py3-none-any.whl", externalIdFactory.createNameVersionExternalId(Forge.PYPI, "click", "7.0")),
+            TestablePackage("Flask-1.0.3-py2.py3-none-any.whl", externalIdFactory.createNameVersionExternalId(Forge.PYPI, "Flask", "1.0.3")),
+            TestablePackage("youtube_dl-2019.5.11-py2.py3-none-any.whl", externalIdFactory.createNameVersionExternalId(Forge.PYPI, "youtube_dl", "2019.5.11"))
         )
     )
 }
