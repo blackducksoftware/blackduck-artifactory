@@ -11,7 +11,7 @@ interface PackageType {
         BOWER("bower", "https://github.com/", "bower-default", Resolvers.BOWER_RESOLVER, "artifactory-automation-bower"),
         CHEF("chef", "https://supermarket.chef.io"),
         COCOAPODS("cocoapods", "https://github.com/"),
-        COMPOSER("composer", "https://github.com/"),
+        COMPOSER("composer", "https://github.com/", "composer-default", Resolvers.COMPOSER_RESOLVER, "artifactory-automation-composer"),
         CONAN("conan", "https://conan.bintray.com"),
         CONDA("conda", "https://repo.anaconda.com/pkgs/free"),
         CRAN("cran", "https://cran.r-project.org/"),

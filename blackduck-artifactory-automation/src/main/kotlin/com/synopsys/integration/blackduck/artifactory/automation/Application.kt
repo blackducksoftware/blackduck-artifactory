@@ -3,7 +3,6 @@ package com.synopsys.integration.blackduck.artifactory.automation
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.isClientError
 import com.github.kittinunf.fuel.core.isServerError
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.system.SystemApiService
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginManager
@@ -13,7 +12,6 @@ import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.charset.Charset
@@ -76,16 +74,6 @@ class Application(
             containerHash = containerName
             logger.info("Skipping Artifactory installation.")
         }
-
-        PackageType.Defaults.values()
-            .filter { it.dockerImageTag != null }
-            .forEach {
-                val resourcePath = "/${it.name.toLowerCase()}/Dockerfile"
-                val resourceUri = this.javaClass.getResource(resourcePath).toURI()
-                val dockerfile = File(resourceUri)
-                val workingDirectory = File(dockerfile.parent)
-                dockerService.buildDockerfile(dockerfile, workingDirectory, imageTag = it.dockerImageTag!!).waitFor()
-            }
     }
 }
 

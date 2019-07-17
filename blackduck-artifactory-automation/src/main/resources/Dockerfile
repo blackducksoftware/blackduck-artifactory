@@ -16,35 +16,6 @@ RUN npm install -g bower
 RUN npm install -g bower-art-resolver
 # Example bower command: bower install lodash --config.registry=http://<server:port>/artifactory/api/bower/<remote-repo-key>
 
-# Setup php-composer
-RUN apt-get install php-cli curl -y
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php -r "if (hash_file('sha384', 'composer-setup.php') === '48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-RUN php composer-setup.php
-RUN php -r "unlink('composer-setup.php');"
-# Example composer command: php composer.phar install
-# Example composer (packages.json) file:
-#{
-#  "name": "synopsys/blackduck-artifactory-automation",
-#  "description": "Test for blackduck-artifactory",
-#  "prefer-stable": true,
-#  "repositories": [
-#    {
-#      "type" : "composer",
-#      "url"  : "http://<server:port>/artifactory/api/composer/<remote-repo-key>"
-#    },
-#    {
-#      "packagist": false
-#    }
-#  ],
-#  "config": {
-#    "secure-http" : false
-#  },
-#  "require": {
-#    "psr/log": "1.1.0",
-#    "psr/http-message": "1.0.1"
-#  }
-#}
 
 # Setup CRAN (R)
 FROM r-base

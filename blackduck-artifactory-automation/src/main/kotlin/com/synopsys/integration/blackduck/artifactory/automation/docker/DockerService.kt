@@ -1,5 +1,6 @@
 package com.synopsys.integration.blackduck.artifactory.automation.docker
 
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.convertToString
 import com.synopsys.integration.exception.IntegrationException
 import com.synopsys.integration.log.Slf4jIntLogger
@@ -74,19 +75,30 @@ class DockerService {
         return runCommand("docker", "exec", "--user=root", containerHash, "chmod", "-R", permissions, filePath)
     }
 
-    fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String = packageManagerDockerImageTag, cleanup: Boolean = true): Process {
-        val cleanupCommand = if (cleanup) "--rm" else ""
-        return runCommand("docker", "build", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath)
+    fun buildTestDockerfile(packageType: PackageType, workingDirectory: File): String {
+        val resourcePath = "/${packageType.packageType.toLowerCase()}/Dockerfile"
+        val resourceUri = this.javaClass.getResource(resourcePath).toURI()
+        val dockerfile = File(resourceUri)
+        return buildDockerfile(dockerfile, workingDirectory, imageTag = packageType.dockerImageTag!!)
     }
 
-    fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true): Process {
+    fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String = packageManagerDockerImageTag, cleanup: Boolean = true): String {
         val cleanupCommand = if (cleanup) "--rm" else ""
-        return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO)
+        runCommand("docker", "build", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath).waitFor()
+        return imageTag
     }
 
-    private fun runCommand(vararg command: String, inheritIO: Boolean = true): Process {
+    fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, directory: File = File("")): Process {
+        val cleanupCommand = if (cleanup) "--rm" else ""
+        return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO, directory = directory)
+    }
+
+    private fun runCommand(vararg command: String, inheritIO: Boolean = true, directory: File? = null): Process {
         logger.info("Running command: ${command.joinToString(separator = " ")}")
         val processBuilder = ProcessBuilder(*command)
+        if (directory != null) {
+            processBuilder.directory(directory)
+        }
         if (inheritIO) {
             processBuilder.inheritIO()
         }
