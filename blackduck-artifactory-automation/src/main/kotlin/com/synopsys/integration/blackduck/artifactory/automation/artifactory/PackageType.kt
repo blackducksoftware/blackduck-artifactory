@@ -5,12 +5,12 @@ interface PackageType {
     val remoteUrl: String
     val repoLayoutRef: String?
     val resolver: Resolver?
-    val automated: Boolean
+    val dockerImageTag: String?
 
-    enum class Defaults(override val packageType: String, override val remoteUrl: String, override val repoLayoutRef: String? = null, override val resolver: Resolver? = null, override val automated: Boolean = true) : PackageType {
-        BOWER("bower", "https://github.com/"),
+    enum class Defaults(override val packageType: String, override val remoteUrl: String, override val repoLayoutRef: String? = null, override val resolver: Resolver? = null, override val dockerImageTag: String? = null) : PackageType {
+        BOWER("bower", "https://github.com/", "bower-default", Resolvers.BOWER_RESOLVER, "artifactory-automation-bower"),
         CHEF("chef", "https://supermarket.chef.io"),
-        COCOAPODS("cocoapods", "https://github.com/", automated = false),
+        COCOAPODS("cocoapods", "https://github.com/"),
         COMPOSER("composer", "https://github.com/"),
         CONAN("conan", "https://conan.bintray.com"),
         CONDA("conda", "https://repo.anaconda.com/pkgs/free"),
@@ -30,7 +30,7 @@ interface PackageType {
         // OPKG("opkg", ""), Needs a remote URL. This PackageType should be created manually.
         // P2("p2", ""), Needs a remote URL. This PackageType should be created manually.
         PUPPET("puppet", "https://forgeapi.puppetlabs.com/"),
-        PYPI("pypi", "https://files.pythonhosted.org", "python-automation", Resolvers.PYPI_RESOLVER),
+        PYPI("pypi", "https://files.pythonhosted.org", "pypi-automation", Resolvers.PYPI_RESOLVER, "artifactory-automation-pypi"),
         RPM("rpm", "http://mirror.centos.org/centos/"),
         SBT("sbt", "https://jcenter.bintray.com"),
         // VAGRANT("vagrant", ""), In doc, but not creatable via UI as of Artifactory-6.10.3

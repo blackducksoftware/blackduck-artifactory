@@ -55,9 +55,9 @@ class RepositoryInitializationTest : SpringTest() {
             cleanup(repository, blackDuckProjectCreated)
         } else {
             val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
-            if (supported && packageType.automated) {
+            if (supported && packageType.dockerImageTag != null) {
                 throw MissingSupportedPackageTypeException(packageType)
-            } else if (supported && !packageType.automated) {
+            } else if (supported && packageType.dockerImageTag == null) {
                 println("Skipping $packageType because it cannot be automated.")
             } else {
                 println("Skipping $packageType because it is not supported by the plugin.")

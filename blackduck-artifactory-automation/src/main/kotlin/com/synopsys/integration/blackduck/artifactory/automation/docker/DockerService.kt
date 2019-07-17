@@ -21,7 +21,7 @@ class DockerService {
             throw IntegrationException("Failed to install artifactory. Docker returned an exit code of ${artifactoryInstallProcess.exitValue()}")
         }
 
-        val startArtifactoryProcess = initializeArtifactory(version, containerName, artifactoryPort, false)
+        val startArtifactoryProcess = initializeArtifactory(version, containerName, artifactoryPort, inheritIO = false)
         startArtifactoryProcess.waitFor(3, TimeUnit.MINUTES)
         if (startArtifactoryProcess.exitValue() != 0) {
             throw IntegrationException("Failed to start artifactory. Docker returned an exit code of ${startArtifactoryProcess.exitValue()}")
@@ -34,9 +34,10 @@ class DockerService {
         return runCommand("docker", "pull", "docker.bintray.io/jfrog/artifactory-pro:$version")
     }
 
-    fun initializeArtifactory(version: String, containerName: String, artifactoryPort: String, inheritIO: Boolean = true): Process {
-        return runCommand("docker", "run", "--name", containerName, "-d", "-p",
-            "$artifactoryPort:$artifactoryPort", "docker.bintray.io/jfrog/artifactory-pro:$version", inheritIO = inheritIO)
+    fun initializeArtifactory(version: String, containerName: String, artifactoryPort: String, remoteDebuggingPort: String = "8091", inheritIO: Boolean = true): Process {
+        return runCommand("docker", "run", "--name", containerName, "-d", "-p", "$artifactoryPort:$artifactoryPort", "-p", "$remoteDebuggingPort:$remoteDebuggingPort", "-e",
+            "EXTRA_JAVA_OPTIONS=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$remoteDebuggingPort\"",
+            "docker.bintray.io/jfrog/artifactory-pro:$version", inheritIO = inheritIO)
     }
 
     fun startArtifactory(containerHash: String): Process {
@@ -78,7 +79,7 @@ class DockerService {
         return runCommand("docker", "build", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath)
     }
 
-    fun runDockerImage(vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, imageTag: String = packageManagerDockerImageTag): Process {
+    fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true): Process {
         val cleanupCommand = if (cleanup) "--rm" else ""
         return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO)
     }

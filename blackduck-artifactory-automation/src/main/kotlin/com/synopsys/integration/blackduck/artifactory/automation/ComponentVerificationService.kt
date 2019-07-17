@@ -43,7 +43,7 @@ class ComponentVerificationService(private val blackDuckServicesFactory: BlackDu
                 retry()
             } else if (inspectionStatus != expectedInspectionStatus.name) {
                 val retryCountPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT.getName()
-                val retryCount = itemProperties.properties[inspectionStatusPropertyKey]?.first()?.toInt() ?: throw MissingPropertyException(retryCountPropertyKey, repoPath)
+                val retryCount = itemProperties.properties[retryCountPropertyKey]?.first()?.toInt() ?: throw MissingPropertyException(retryCountPropertyKey, repoPath)
 
                 when {
                     retryCount == maxRetryCount -> throw FailedInspectionException(repoPath)
