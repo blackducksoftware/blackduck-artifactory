@@ -30,6 +30,16 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
 object Resolvers {
     private val externalIdFactory: ExternalIdFactory = ExternalIdFactory()
 
+    val BOWER_RESOLVER = Resolver(
+        ArtifactResolver::resolveBowerArtifact,
+        listOf(
+            // qtip2 currently does not match in the KB due to an uppercase T in the KB and lowercase from artifactory.
+            // TestablePackage("bower-v2.2.1.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.BOWER.forge, "qtip2", "2.2.1")),
+            TestablePackage("bower-angular-v1.7.8.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.BOWER.forge, "angular", "1.7.8")),
+            TestablePackage("angular-ui-router-bower-1.0.22.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.BOWER.forge, "angular-ui-router", "1.0.22"))
+        )
+    )
+
     val PYPI_RESOLVER = Resolver(
         ArtifactResolver::resolvePyPiArtifact,
         listOf(
@@ -37,15 +47,6 @@ object Resolvers {
             TestablePackage("Click-7.0-py2.py3-none-any.whl", externalIdFactory.createNameVersionExternalId(Forge.PYPI, "click", "7.0")),
             TestablePackage("Flask-1.0.3-py2.py3-none-any.whl", externalIdFactory.createNameVersionExternalId(Forge.PYPI, "Flask", "1.0.3")),
             TestablePackage("youtube_dl-2019.5.11-py2.py3-none-any.whl", externalIdFactory.createNameVersionExternalId(Forge.PYPI, "youtube_dl", "2019.5.11"))
-        )
-    )
-
-    val BOWER_RESOLVER = Resolver(
-        ArtifactResolver::resolveBowerArtifact,
-        listOf(
-            //            TestablePackage("bower-v2.2.1.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.BOWER.forge, "qtip2", "2.2.1")),
-            TestablePackage("bower-angular-v1.7.8.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.BOWER.forge, "angular", "1.7.8")),
-            TestablePackage("angular-ui-router-bower-1.0.22.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.BOWER.forge, "angular-ui-router", "1.0.22"))
         )
     )
 }
