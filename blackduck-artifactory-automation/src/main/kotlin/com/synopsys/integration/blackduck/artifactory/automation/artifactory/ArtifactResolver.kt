@@ -51,6 +51,13 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
             "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/${repository.key}')").waitFor()
     }
 
+    fun resolveGemsArtifact(repository: Repository, externalId: ExternalId) {
+        // gem install packaging --version '0.99.35' --source http://<server:port>/artifactory/api/gems/<remote-repo-key>
+        dockerService.buildTestDockerfile(PackageType.Defaults.GEMS)
+        dockerService.runDockerImage(PackageType.Defaults.GEMS.dockerImageTag!!, "gem", "install", externalId.name, "--version", externalId.version, "--clear-sources", "--source",
+            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V").waitFor()
+    }
+
     fun resolvePyPiArtifact(repository: Repository, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.PYPI)
         dockerService.runDockerImage(
@@ -85,6 +92,13 @@ object Resolvers {
         ArtifactResolver::resolveCranArtifact,
         listOf(
             TestablePackage("fortunes_1.5-4.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.CRAN.forge, "fortunes", "1.5-4"))
+        )
+    )
+
+    val GEMS_RESOLVER = Resolver(
+        ArtifactResolver::resolveGemsArtifact,
+        listOf(
+            TestablePackage("packaging-0.99.35.gem", externalIdFactory.createNameVersionExternalId(SupportedPackageType.GEMS.forge, "packaging", "0.99.35"))
         )
     )
 

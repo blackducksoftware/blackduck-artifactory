@@ -37,7 +37,7 @@ class DockerService {
 
     fun initializeArtifactory(version: String, containerName: String, artifactoryPort: String, remoteDebuggingPort: String = "8091", inheritIO: Boolean = true): Process {
         return runCommand("docker", "run", "--name", containerName, "-d", "-p", "$artifactoryPort:$artifactoryPort", "-p", "$remoteDebuggingPort:$remoteDebuggingPort", "-e",
-            "EXTRA_JAVA_OPTIONS=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$remoteDebuggingPort\"",
+            "EXTRA_JAVA_OPTIONS=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$remoteDebuggingPort\"",
             "docker.bintray.io/jfrog/artifactory-pro:$version", inheritIO = inheritIO)
     }
 

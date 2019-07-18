@@ -11,10 +11,6 @@ RUN apt-get install npm -y
 RUN npm install -g npm
 # Example npm command: npm install lodash --registry  http://<server:port>/artifactory/api/npm/<remote-repo-key>
 
-# Setup rubygems
-FROM ruby:2.6
-# Example gems command: gem install packaging --version '0.99.35' --source http://<server:port>/artifactory/api/gems/<remote-repo-key>
-
 # Setup Gradle
 # Gradle is only needed if we want to test with a project.
 # Gradle repositories can have artifacts requested directly through the REST API.

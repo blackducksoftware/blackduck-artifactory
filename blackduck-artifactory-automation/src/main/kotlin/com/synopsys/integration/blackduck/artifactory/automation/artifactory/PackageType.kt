@@ -17,7 +17,7 @@ interface PackageType {
         CRAN("cran", "https://cran.r-project.org/", "cran-automation", Resolvers.CRAN_RESOLVER, "artifactory-automation-cran"),
         DEBIAN("debian", "http://archive.ubuntu.com/ubuntu/"),
         // DOCKER("docker", "https://registry-1.docker.io/", false), Unsupported.
-        GEMS("gems", "https://rubygems.org/"),
+        GEMS("gems", "https://rubygems.org/", "gems-automation", Resolvers.GEMS_RESOLVER, "artifactory-automation-gems"),
         // GENERIC("generic", "" ), Needs a remote URL. This PackageType should be created manually.
         // GITLFS("gitlfs", ""), Needs a remote URL. This PackageType should be created manually.
         GO("go", "https://gocenter.io/"),
