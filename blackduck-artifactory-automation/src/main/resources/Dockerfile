@@ -11,12 +11,6 @@ RUN apt-get install npm -y
 RUN npm install -g npm
 # Example npm command: npm install lodash --registry  http://<server:port>/artifactory/api/npm/<remote-repo-key>
 
-# Setup bower
-RUN npm install -g bower
-RUN npm install -g bower-art-resolver
-# Example bower command: bower install lodash --config.registry=http://<server:port>/artifactory/api/bower/<remote-repo-key>
-
-
 # Setup CRAN (R)
 FROM r-base
 # Example cran command: r -e "install.packages('fortunes', repos = 'http://<server:port>/artifactory/<remote-repo-key>')"
