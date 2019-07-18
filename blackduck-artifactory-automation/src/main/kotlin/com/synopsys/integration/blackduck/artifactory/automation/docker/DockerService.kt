@@ -75,7 +75,7 @@ class DockerService {
         return runCommand("docker", "exec", "--user=root", containerHash, "chmod", "-R", permissions, filePath)
     }
 
-    fun buildTestDockerfile(packageType: PackageType, workingDirectory: File): String {
+    fun buildTestDockerfile(packageType: PackageType, workingDirectory: File = File("")): String {
         val resourcePath = "/${packageType.packageType.toLowerCase()}/Dockerfile"
         val resourceUri = this.javaClass.getResource(resourcePath).toURI()
         val dockerfile = File(resourceUri)
@@ -88,7 +88,7 @@ class DockerService {
         return imageTag
     }
 
-    fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, directory: File = File("")): Process {
+    fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, directory: File? = null): Process {
         val cleanupCommand = if (cleanup) "--rm" else ""
         return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO, directory = directory)
     }

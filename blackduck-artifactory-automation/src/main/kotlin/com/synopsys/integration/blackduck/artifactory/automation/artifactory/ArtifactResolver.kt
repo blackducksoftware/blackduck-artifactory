@@ -21,7 +21,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
     private val dependencyVersionReplacement = "<dependency-version>"
 
     fun resolveBowerArtifact(repository: Repository, externalId: ExternalId) {
-        dockerService.buildTestDockerfile(PackageType.Defaults.BOWER, File(""))
+        dockerService.buildTestDockerfile(PackageType.Defaults.BOWER)
         dockerService.runDockerImage(
             PackageType.Defaults.BOWER.dockerImageTag!!,
             "bower", "install", "${externalId.name}#${externalId.version}", "--allow-root", "--config.registry=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/bower/${repository.key}"
@@ -42,12 +42,17 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         println("composer.json: ${outputFile.absolutePath}")
 
         dockerService.buildTestDockerfile(PackageType.Defaults.COMPOSER, outputFile.parentFile)
-
         dockerService.runDockerImage(PackageType.Defaults.COMPOSER.dockerImageTag!!, "php", "composer.phar", "install", directory = outputFile.parentFile).waitFor()
     }
 
+    fun resolveCranArtifact(repository: Repository, externalId: ExternalId) {
+        dockerService.buildTestDockerfile(PackageType.Defaults.CRAN)
+        dockerService.runDockerImage(PackageType.Defaults.CRAN.dockerImageTag!!, "r", "-e",
+            "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/${repository.key}')").waitFor()
+    }
+
     fun resolvePyPiArtifact(repository: Repository, externalId: ExternalId) {
-        dockerService.buildTestDockerfile(PackageType.Defaults.PYPI, File(""))
+        dockerService.buildTestDockerfile(PackageType.Defaults.PYPI)
         dockerService.runDockerImage(
             PackageType.Defaults.PYPI.dockerImageTag!!,
             "pip3", "install", "${externalId.name}==${externalId.version}", "--index-url=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/pypi/${repository.key}/simple"
@@ -73,6 +78,13 @@ object Resolvers {
         listOf(
             TestablePackage("log-6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd.zip", externalIdFactory.createNameVersionExternalId(SupportedPackageType.COMPOSER.forge, "psr/log", "1.1.0")),
             TestablePackage("http-message-f6561bf28d520154e4b0ec72be95418abe6d9363.zip", externalIdFactory.createNameVersionExternalId(SupportedPackageType.COMPOSER.forge, "psr/http-message", "1.0.1"))
+        )
+    )
+
+    val CRAN_RESOLVER = Resolver(
+        ArtifactResolver::resolveCranArtifact,
+        listOf(
+            TestablePackage("fortunes_1.5-4.tar.gz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.CRAN.forge, "fortunes", "1.5-4"))
         )
     )
 

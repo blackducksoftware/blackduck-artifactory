@@ -14,7 +14,7 @@ interface PackageType {
         COMPOSER("composer", "https://github.com/", "composer-default", Resolvers.COMPOSER_RESOLVER, "artifactory-automation-composer"),
         CONAN("conan", "https://conan.bintray.com"),
         CONDA("conda", "https://repo.anaconda.com/pkgs/free"),
-        CRAN("cran", "https://cran.r-project.org/"),
+        CRAN("cran", "https://cran.r-project.org/", "cran-automation", Resolvers.CRAN_RESOLVER, "artifactory-automation-cran"),
         DEBIAN("debian", "http://archive.ubuntu.com/ubuntu/"),
         // DOCKER("docker", "https://registry-1.docker.io/", false), Unsupported.
         GEMS("gems", "https://rubygems.org/"),
