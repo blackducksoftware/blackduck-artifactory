@@ -25,7 +25,7 @@ interface PackageType {
         HELM("helm", "https://storage.googleapis.com/kubernetes-charts"),
         IVY("ivy", "https://jcenter.bintray.com"),
         MAVEN("maven", "https://jcenter.bintray.com"),
-        NPM("npm", "https://registry.npmjs.org"),
+        NPM("npm", "https://registry.npmjs.org", "npm-default", Resolvers.NPM_RESOLVER, "artifactory-automation-npm"),
         NUGET("nuget", "https://www.nuget.org/"),
         // OPKG("opkg", ""), Needs a remote URL. This PackageType should be created manually.
         // P2("p2", ""), Needs a remote URL. This PackageType should be created manually.

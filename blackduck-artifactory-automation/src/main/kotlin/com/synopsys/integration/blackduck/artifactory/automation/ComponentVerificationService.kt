@@ -62,7 +62,7 @@ class ComponentVerificationService(private val blackDuckServicesFactory: BlackDu
         val projectBomService = blackDuckServicesFactory.createProjectBomService()
         val versionBomComponentViews = projectBomService.getComponentsForProjectVersion(projectVersionView)
         val foundComponents = versionBomComponentViews.flatMap { it.origins }.map { it.externalId }
-        val expectedComponents = testablePackages.map { it.externalId.createExternalId() }
+        val expectedComponents = testablePackages.map { it.expectedExternalId }
 
         Assertions.assertTrue(foundComponents.containsAll(expectedComponents), "Not all expected components were found. Expected: $expectedComponents Found: $foundComponents")
     }

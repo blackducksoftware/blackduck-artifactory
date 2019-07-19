@@ -58,6 +58,12 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
             "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V").waitFor()
     }
 
+    fun resolveNpmArtifact(repository: Repository, externalId: ExternalId) {
+        dockerService.buildTestDockerfile(PackageType.Defaults.NPM)
+        dockerService.runDockerImage(PackageType.Defaults.NPM.dockerImageTag!!, "npm", "install", "${externalId.name}@${externalId.version}", "-g", "--registry",
+            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/${repository.key}")
+    }
+
     fun resolvePyPiArtifact(repository: Repository, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.PYPI)
         dockerService.runDockerImage(
@@ -99,6 +105,13 @@ object Resolvers {
         ArtifactResolver::resolveGemsArtifact,
         listOf(
             TestablePackage("packaging-0.99.35.gem", externalIdFactory.createNameVersionExternalId(SupportedPackageType.GEMS.forge, "packaging", "0.99.35"))
+        )
+    )
+
+    val NPM_RESOLVER = Resolver(
+        ArtifactResolver::resolveNpmArtifact,
+        listOf(
+            TestablePackage("lodash-4.17.15.tgz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.NPM.forge, "lodash", "4.17.15"), "lodash/lodash:4.17.15")
         )
     )
 
