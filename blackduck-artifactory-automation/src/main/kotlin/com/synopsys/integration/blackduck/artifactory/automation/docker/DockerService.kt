@@ -84,7 +84,7 @@ class DockerService {
 
     fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String = packageManagerDockerImageTag, cleanup: Boolean = true): String {
         val cleanupCommand = if (cleanup) "--rm" else ""
-        runCommand("docker", "build", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath).waitFor()
+        runCommand("docker", "build", "--network=host", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath).waitFor()
         return imageTag
     }
 

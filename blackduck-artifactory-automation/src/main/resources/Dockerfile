@@ -16,22 +16,6 @@ RUN apt-get update
 # Maven repositories can have artifacts requested directly through the REST API.
 #FROM maven:3.6-jdk-8
 
-# Setup Nuget
-FROM microsoft/dotnet:2.2-sdk
-# Example Nuget commands:
-#
-# Clear all local cache's:
-# dotnet nuget locals all -c
-#
-# Create empty project:
-# dotnet new console --no-restore
-#
-# Add package to project:
-# dotnet add package bootstrap -v 4.1.3 --source http://<server:port>/artifactory/api/nuget/<remote-repo-key> --no-restore
-#
-# Install packages:
-# dotnet restore --source http://localhost:8081/artifactory/api/nuget/nuget-automation
-
 # Setup pip
 RUN apt-get update
 RUN apt-get install python3 -y

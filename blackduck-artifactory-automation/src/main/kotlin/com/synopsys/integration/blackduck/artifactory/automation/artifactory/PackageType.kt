@@ -26,7 +26,7 @@ interface PackageType {
         IVY("ivy", "https://jcenter.bintray.com"),
         MAVEN("maven", "https://jcenter.bintray.com"),
         NPM("npm", "https://registry.npmjs.org", "npm-default", Resolvers.NPM_RESOLVER, "artifactory-automation-npm"),
-        NUGET("nuget", "https://www.nuget.org/"),
+        NUGET("nuget", "https://www.nuget.org/", "nuget-default", Resolvers.NUGET_RESOLVER, "artifactory-automation-nuget"),
         // OPKG("opkg", ""), Needs a remote URL. This PackageType should be created manually.
         // P2("p2", ""), Needs a remote URL. This PackageType should be created manually.
         PUPPET("puppet", "https://forgeapi.puppetlabs.com/"),

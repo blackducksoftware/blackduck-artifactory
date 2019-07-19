@@ -61,7 +61,25 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
     fun resolveNpmArtifact(repository: Repository, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.NPM)
         dockerService.runDockerImage(PackageType.Defaults.NPM.dockerImageTag!!, "npm", "install", "${externalId.name}@${externalId.version}", "-g", "--registry",
-            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/${repository.key}")
+            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/${repository.key}").waitFor()
+    }
+
+    fun resolveNugetArtifact(repository: Repository, externalId: ExternalId) {
+        // Nuget is special and cannot find all the executables it needs when run through a java process.
+        // The solution is to put the command in the Dockerfile and have them run during the build.
+        val packagesJsonResource = this.javaClass.getResourceAsStream("/nuget/Dockerfile") ?: throw FileNotFoundException("Failed to find nuget Dockerfile file in resources.")
+        val packageJsonText = packagesJsonResource.convertToString()
+            .replace(serverReplacement, "127.0.0.1:${artifactoryConfiguration.port}")
+            .replace(repoKeyReplacement, repository.key)
+            .replace(dependencyNameReplacement, externalId.name)
+            .replace(dependencyVersionReplacement, externalId.version)
+
+        val outputFile = File("/tmp/artifactory-automation/nuget/Dockerfile")
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText(packageJsonText)
+        println("Dockerfile: ${outputFile.absolutePath}")
+
+        dockerService.buildDockerfile(outputFile, outputFile.parentFile, PackageType.Defaults.NUGET.dockerImageTag!!)
     }
 
     fun resolvePyPiArtifact(repository: Repository, externalId: ExternalId) {
@@ -112,6 +130,13 @@ object Resolvers {
         ArtifactResolver::resolveNpmArtifact,
         listOf(
             TestablePackage("lodash-4.17.15.tgz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.NPM.forge, "lodash", "4.17.15"), "lodash/lodash:4.17.15")
+        )
+    )
+
+    val NUGET_RESOLVER = Resolver(
+        ArtifactResolver::resolveNugetArtifact,
+        listOf(
+            TestablePackage("bootstrap.4.1.3.nupkg", externalIdFactory.createNameVersionExternalId(SupportedPackageType.NPM.forge, "bootstrap", "4.1.3"))
         )
     )
 

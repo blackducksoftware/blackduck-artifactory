@@ -42,16 +42,16 @@ enum class RepositoryType {
 }
 
 data class RepositoryConfiguration(
-    @SerializedName("key")
     val key: String,
     @SerializedName("rclass")
     val repositoryType: RepositoryType,
-    @SerializedName("packageType")
     val packageType: String,
     @SerializedName("url")
     val remoteUrl: String?,
-    @SerializedName("externalDependenciesEnabled")
     val externalDependenciesEnabled: Boolean = false,
     @SerializedName("repoLayoutRef")
-    val repositoryLayout: String = "simple-default"
+    val repositoryLayout: String = "simple-default",
+    val feedContextPath: String = "api/v2",
+    val downloadContextPath: String = "api/v2/package",
+    val v3FeedUrl: String = "https://api.nuget.org/v3/index.json"
 )
