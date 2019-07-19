@@ -6,11 +6,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Update Ubuntu Software repository
 RUN apt-get update
 
-# Setup npm
-RUN apt-get install npm -y
-RUN npm install -g npm
-# Example npm command: npm install lodash --registry  http://<server:port>/artifactory/api/npm/<remote-repo-key>
-
 # Setup Gradle
 # Gradle is only needed if we want to test with a project.
 # Gradle repositories can have artifacts requested directly through the REST API.
