@@ -58,6 +58,13 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
             "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V").waitFor()
     }
 
+    fun resolveGradleArtifact(repository: Repository, externalId: ExternalId) {
+        val group = externalId.group.replace(".", "/")
+        val name = externalId.name
+        val version = externalId.version
+        artifactRetrievalApiService.retrieveArtifact(repository, "$group/$name/$version/$name-$version.jar")
+    }
+
     fun resolveNpmArtifact(repository: Repository, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.NPM)
         dockerService.runDockerImage(PackageType.Defaults.NPM.dockerImageTag!!, "npm", "install", "${externalId.name}@${externalId.version}", "-g", "--registry",
@@ -123,6 +130,13 @@ object Resolvers {
         ArtifactResolver::resolveGemsArtifact,
         listOf(
             TestablePackage("packaging-0.99.35.gem", externalIdFactory.createNameVersionExternalId(SupportedPackageType.GEMS.forge, "packaging", "0.99.35"))
+        )
+    )
+
+    val GRADLE_RESOLVER = Resolver(
+        ArtifactResolver::resolveGradleArtifact,
+        listOf(
+            TestablePackage("blackduck-common-43.0.0.jar", externalIdFactory.createMavenExternalId("com.blackducksoftware.integration", "blackduck-common", "43.0.0"))
         )
     )
 

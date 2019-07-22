@@ -6,11 +6,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Update Ubuntu Software repository
 RUN apt-get update
 
-# Setup Gradle
-# Gradle is only needed if we want to test with a project.
-# Gradle repositories can have artifacts requested directly through the REST API.
-# FROM gradle:5.4-jdk8
-
 # Setup Maven
 # Maven is only needed if we want to test with a project.
 # Maven repositories can have artifacts requested directly through the REST API.

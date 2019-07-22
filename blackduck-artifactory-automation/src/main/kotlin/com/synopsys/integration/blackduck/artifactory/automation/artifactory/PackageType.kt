@@ -21,7 +21,7 @@ interface PackageType {
         // GENERIC("generic", "" ), Needs a remote URL. This PackageType should be created manually.
         // GITLFS("gitlfs", ""), Needs a remote URL. This PackageType should be created manually.
         GO("go", "https://gocenter.io/"),
-        GRADLE("gradle", "https://jcenter.bintray.com"),
+        GRADLE("gradle", "https://jcenter.bintray.com", "maven-2-default", Resolvers.GRADLE_RESOLVER),
         HELM("helm", "https://storage.googleapis.com/kubernetes-charts"),
         IVY("ivy", "https://jcenter.bintray.com"),
         MAVEN("maven", "https://jcenter.bintray.com"),
