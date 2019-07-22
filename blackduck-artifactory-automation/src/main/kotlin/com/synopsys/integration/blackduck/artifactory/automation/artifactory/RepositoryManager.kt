@@ -42,24 +42,24 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         return "${packageType.packageType}-${Random.nextInt(0, Int.MAX_VALUE)}"
     }
 
-    fun addRepositoryToInspection(containerHash: String, repository: Repository) {
-        modifyList(containerHash, repository, InspectionModuleProperty.REPOS, addToList = true)
+    fun addRepositoryToInspection(repository: Repository) {
+        modifyList(repository, InspectionModuleProperty.REPOS, addToList = true)
     }
 
-    fun addRepositoryToScanner(containerHash: String, repository: Repository) {
-        modifyList(containerHash, repository, ScanModuleProperty.REPOS, addToList = true)
+    fun addRepositoryToScanner(repository: Repository) {
+        modifyList(repository, ScanModuleProperty.REPOS, addToList = true)
     }
 
-    fun removeRepositoryFromInspection(containerHash: String, repository: Repository) {
-        modifyList(containerHash, repository, InspectionModuleProperty.REPOS, addToList = false)
+    fun removeRepositoryFromInspection(repository: Repository) {
+        modifyList(repository, InspectionModuleProperty.REPOS, addToList = false)
     }
 
-    fun removeRepositoryFromScanner(containerHash: String, repository: Repository) {
-        modifyList(containerHash, repository, ScanModuleProperty.REPOS, addToList = false)
+    fun removeRepositoryFromScanner(repository: Repository) {
+        modifyList(repository, ScanModuleProperty.REPOS, addToList = false)
     }
 
-    private fun modifyList(containerHash: String, repository: Repository, configurationProperty: ConfigurationProperty, addToList: Boolean = true) {
-        val properties = blackDuckPluginManager.getProperties(containerHash)
+    private fun modifyList(repository: Repository, configurationProperty: ConfigurationProperty, addToList: Boolean = true) {
+        val properties = blackDuckPluginManager.getProperties()
         val reposEntry: String? = properties.getProperty(configurationProperty.key)
         val key = Companion.determineRepositoryKey(repository)
 
@@ -75,7 +75,7 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         }
 
         properties.setProperty(configurationProperty.key, repos.joinToString(separator = ","))
-        blackDuckPluginManager.setProperties(containerHash, properties)
+        blackDuckPluginManager.setProperties(properties)
     }
 
     companion object {

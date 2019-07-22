@@ -150,7 +150,7 @@ object Resolvers {
     val NPM_RESOLVER = Resolver(
         ArtifactResolver::resolveNpmArtifact,
         listOf(
-            TestablePackage("lodash-4.17.15.tgz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.NPM.forge, "lodash", "4.17.15"), "lodash/lodash:4.17.15")
+            TestablePackage("lodash-4.17.15.tgz", externalIdFactory.createNameVersionExternalId(SupportedPackageType.NPM.forge, "lodash", "4.17.15"))
         )
     )
 

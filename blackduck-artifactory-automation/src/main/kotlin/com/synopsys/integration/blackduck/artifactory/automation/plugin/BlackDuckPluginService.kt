@@ -25,18 +25,19 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
     val libDirectory = "$dockerPluginsDirectory/lib/"
     val propertiesFile = "$libDirectory/blackDuckPlugin.properties"
 
-    fun installPlugin(containerHash: String, zipFile: File, outputDirectory: File) {
+    fun installPlugin(zipFile: File, outputDirectory: File) {
         logger.info("Shutting down Artifactory container.")
-        dockerService.stopArtifactory(containerHash).waitFor()
+        dockerService.stopArtifactory().waitFor()
 
         logger.info("Unzipping plugin.")
         val unzippedPluginDirectory = unzipFile(zipFile, outputDirectory)
 
         logger.info("Uploading plugin files.")
         unzippedPluginDirectory.listFiles()
+            .filterNotNull()
             .filter { !it.startsWith(".") }
             .forEach {
-                dockerService.uploadFile(containerHash, it, dockerPluginsDirectory).waitFor()
+                dockerService.uploadFile(it, dockerPluginsDirectory).waitFor()
             }
     }
 
@@ -66,7 +67,7 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
         transformer.transform(DOMSource(document), StreamResult(xmlFile))
     }
 
-    fun initializeProperties(containerHash: String, propertiesFile: File, blackDuckServerConfig: BlackDuckServerConfig) {
+    fun initializeProperties(propertiesFile: File, blackDuckServerConfig: BlackDuckServerConfig) {
         val credentialsOptional = blackDuckServerConfig.credentials
         var username = ""
         var password = ""
@@ -76,7 +77,6 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
         }
 
         updateProperties(
-            containerHash,
             propertiesFile,
             Pair(GeneralProperty.URL, blackDuckServerConfig.blackDuckUrl.toString()),
             Pair(GeneralProperty.USERNAME, username),
@@ -91,7 +91,7 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
         )
     }
 
-    fun updateProperties(containerHash: String, propertiesFile: File, vararg propertyPairs: Pair<ConfigurationProperty, String>) {
+    fun updateProperties(propertiesFile: File, vararg propertyPairs: Pair<ConfigurationProperty, String>) {
         val properties = Properties()
         val propertiesInputStream = propertiesFile.inputStream()
         properties.load(propertiesInputStream)
@@ -103,13 +103,13 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
 
         properties.store(FileOutputStream(propertiesFile), "Modified automation properties")
 
-        dockerService.uploadFile(containerHash, propertiesFile, libDirectory).waitFor()
+        dockerService.uploadFile(propertiesFile, libDirectory).waitFor()
     }
 
-    fun fixPermissions(containerHash: String, location: String, permission: String = "0755") {
+    fun fixPermissions(location: String, permission: String = "0755") {
         logger.info("Fixing permissions.")
-        dockerService.chownFile(containerHash, "artifactory", "artifactory", location).waitFor()
-        dockerService.chmodFile(containerHash, permission, location).waitFor()
+        dockerService.chownFile("artifactory", "artifactory", location).waitFor()
+        dockerService.chmodFile(permission, location).waitFor()
     }
 
     private fun unzipFile(zipFile: File, outputDirectory: File): File {

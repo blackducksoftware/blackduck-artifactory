@@ -32,29 +32,29 @@ class BlackDuckPluginManager(
         logbackXmlFile = File(unzippedDirectory, "logback.xml")
     }
 
-    fun installPlugin(containerHash: String) {
-        blackDuckPluginService.installPlugin(containerHash, pluginZipFile, pluginOutputDirectory)
+    fun installPlugin() {
+        blackDuckPluginService.installPlugin(pluginZipFile, pluginOutputDirectory)
 
         logger.info("Rewriting properties.")
-        blackDuckPluginService.initializeProperties(containerHash, propertiesFile, blackDuckServerConfig)
+        blackDuckPluginService.initializeProperties(propertiesFile, blackDuckServerConfig)
 
         logger.info("Updating logback.xml for logging purposes.")
 
         val logbackXmlLocation = "${blackDuckPluginService.artifactoryEtcDirectory}/logback.xml"
-        dockerService.downloadFile(containerHash, logbackXmlFile, logbackXmlLocation).waitFor()
+        dockerService.downloadFile(logbackXmlFile, logbackXmlLocation).waitFor()
         blackDuckPluginService.updateLogbackXml(logbackXmlFile, artifactoryConfiguration.pluginLoggingLevel)
-        dockerService.uploadFile(containerHash, logbackXmlFile, logbackXmlLocation).waitFor()
+        dockerService.uploadFile(logbackXmlFile, logbackXmlLocation).waitFor()
 
         logger.info("Starting Artifactory container.")
-        dockerService.startArtifactory(containerHash).waitFor()
+        dockerService.startArtifactory().waitFor()
 
-        blackDuckPluginService.fixPermissions(containerHash, blackDuckPluginService.dockerPluginsDirectory)
-        blackDuckPluginService.fixPermissions(containerHash, logbackXmlLocation, "0644")
+        blackDuckPluginService.fixPermissions(blackDuckPluginService.dockerPluginsDirectory)
+        blackDuckPluginService.fixPermissions(logbackXmlLocation, "0644")
     }
 
-    fun getProperties(containerHash: String): Properties {
+    fun getProperties(): Properties {
         val tempFile = createTempPropertiesFile()
-        dockerService.downloadFile(containerHash, tempFile, blackDuckPluginService.propertiesFile).waitFor()
+        dockerService.downloadFile(tempFile, blackDuckPluginService.propertiesFile).waitFor()
         val properties = Properties()
         val propertiesInputStream = tempFile.inputStream()
         properties.load(propertiesInputStream)
@@ -63,13 +63,13 @@ class BlackDuckPluginManager(
         return properties
     }
 
-    fun setProperties(containerHash: String, properties: Properties) {
+    fun setProperties(properties: Properties) {
         val tempFile = createTempPropertiesFile()
         val outputStream = FileOutputStream(tempFile)
         properties.store(outputStream, "Generated properties file")
         outputStream.close()
-        dockerService.uploadFile(containerHash, tempFile, blackDuckPluginService.propertiesFile).waitFor()
-        blackDuckPluginService.fixPermissions(containerHash, blackDuckPluginService.dockerPluginsDirectory)
+        dockerService.uploadFile(tempFile, blackDuckPluginService.propertiesFile).waitFor()
+        blackDuckPluginService.fixPermissions(blackDuckPluginService.dockerPluginsDirectory)
         blackDuckPluginApiService.reloadPlugin()
     }
 

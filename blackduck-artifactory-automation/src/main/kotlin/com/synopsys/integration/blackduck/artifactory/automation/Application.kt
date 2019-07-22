@@ -26,14 +26,14 @@ class Application(
 ) {
     private val logger: IntLogger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
-    var containerHash: String
+    var containerId: String
 
     init {
         if (!blackDuckServerConfig.canConnect(logger)) {
             throw IntegrationException("Failed to connect the Black Duck server at ${blackDuckServerConfig.blackDuckUrl}.")
         }
 
-        val containerName = "artifactory-automation-${artifactoryConfiguration.version}"
+        val imageTag = "artifactory-automation-${artifactoryConfiguration.version}"
         if (artifactoryConfiguration.manageArtifactory) {
             logger.info("Loading Artifactory license.")
             val artifactoryLicenseFile = artifactoryConfiguration.licenseFile
@@ -55,8 +55,8 @@ class Application(
 
             val artifactoryVersion = artifactoryConfiguration.version
             logger.info("Installing and starting Artifactory version: $artifactoryVersion")
-            containerHash = dockerService.installAndStartArtifactory(artifactoryVersion, containerName, artifactoryConfiguration.port)
-            logger.info("Artifactory container: $containerHash")
+            containerId = dockerService.installAndStartArtifactory(artifactoryVersion, artifactoryConfiguration.port)
+            logger.info("Artifactory container: $containerId")
 
             logger.info("Waiting for Artifactory startup.")
             systemApiService.waitForSuccessfulStartup()
@@ -65,13 +65,13 @@ class Application(
             systemApiService.applyLicense(licenseText)
 
             logger.info("Installing plugin.")
-            blackDuckPluginManager.installPlugin(containerHash)
+            blackDuckPluginManager.installPlugin()
             systemApiService.waitForSuccessfulStartup()
 
             logger.info("Successfully installed the plugin.")
-            println(dockerService.getArtifactoryLogs(containerHash).convertToString())
+            println(dockerService.getArtifactoryLogs().convertToString())
         } else {
-            containerHash = containerName
+            containerId = imageTag
             logger.info("Skipping Artifactory installation.")
         }
     }

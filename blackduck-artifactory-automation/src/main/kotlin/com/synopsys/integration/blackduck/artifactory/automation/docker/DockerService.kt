@@ -7,20 +7,20 @@ import com.synopsys.integration.log.Slf4jIntLogger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream
+import java.util.*
 import java.util.concurrent.TimeUnit
 
-// TODO: Make DockerService more generic
-class DockerService {
+class DockerService(private val imageTag: String) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(javaClass))
 
-    fun installAndStartArtifactory(version: String, containerName: String, artifactoryPort: String): String {
+    fun installAndStartArtifactory(version: String, artifactoryPort: String, imageTag: String = this.imageTag): String {
         val artifactoryInstallProcess = installArtifactory(version)
         artifactoryInstallProcess.waitFor(5, TimeUnit.MINUTES)
         if (artifactoryInstallProcess.exitValue() != 0) {
             throw IntegrationException("Failed to install artifactory. Docker returned an exit code of ${artifactoryInstallProcess.exitValue()}")
         }
 
-        val startArtifactoryProcess = initializeArtifactory(version, containerName, artifactoryPort, inheritIO = false)
+        val startArtifactoryProcess = initializeArtifactory(version, artifactoryPort, inheritIO = false, containerId = imageTag)
         startArtifactoryProcess.waitFor(3, TimeUnit.MINUTES)
         if (startArtifactoryProcess.exitValue() != 0) {
             throw IntegrationException("Failed to start artifactory. Docker returned an exit code of ${startArtifactoryProcess.exitValue()}")
@@ -29,55 +29,57 @@ class DockerService {
         return startArtifactoryProcess.inputStream.convertToString().trim()
     }
 
-    fun installArtifactory(version: String): Process {
+    private fun installArtifactory(version: String): Process {
         return runCommand("docker", "pull", "docker.bintray.io/jfrog/artifactory-pro:$version")
     }
 
-    fun initializeArtifactory(version: String, containerName: String, artifactoryPort: String, remoteDebuggingPort: String = "8091", inheritIO: Boolean = true): Process {
-        return runCommand("docker", "run", "--name", containerName, "-d", "-p", "$artifactoryPort:$artifactoryPort", "-p", "$remoteDebuggingPort:$remoteDebuggingPort", "-e",
+    private fun initializeArtifactory(version: String, artifactoryPort: String, remoteDebuggingPort: String = "8091", inheritIO: Boolean = true, containerId: String = this.imageTag): Process {
+        return runCommand("docker", "run", "--name", containerId, "-d", "-p", "$artifactoryPort:$artifactoryPort", "-p", "$remoteDebuggingPort:$remoteDebuggingPort", "-e",
             "EXTRA_JAVA_OPTIONS=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$remoteDebuggingPort\"",
             "docker.bintray.io/jfrog/artifactory-pro:$version", inheritIO = inheritIO)
     }
 
-    fun startArtifactory(containerHash: String): Process {
-        return runCommand("docker", "start", containerHash)
+    fun startArtifactory(containerId: String = this.imageTag): Process {
+        return runCommand("docker", "start", containerId)
     }
 
-    fun stopArtifactory(containerHash: String): Process {
-        return runCommand("docker", "stop", containerHash)
+    fun stopArtifactory(containerId: String = this.imageTag): Process {
+        return runCommand("docker", "stop", containerId)
     }
 
-    fun getArtifactoryLogs(containerHash: String): InputStream {
-        val process = runCommand("docker", "logs", containerHash)
+    fun getArtifactoryLogs(containerId: String = this.imageTag): InputStream {
+        val process = runCommand("docker", "logs", containerId)
         process.waitFor()
         return process.inputStream
     }
 
-    fun uploadFile(containerHash: String, file: File, location: String): Process {
-        return runCommand("docker", "cp", file.canonicalPath, "$containerHash:$location")
+    fun uploadFile(file: File, location: String, containerId: String = this.imageTag): Process {
+        return runCommand("docker", "cp", file.canonicalPath, "$containerId:$location")
     }
 
-    fun downloadFile(containerHash: String, outputFile: File, location: String): Process {
-        return runCommand("docker", "cp", "$containerHash:$location", outputFile.canonicalPath)
+    fun downloadFile(outputFile: File, location: String, containerId: String = this.imageTag): Process {
+        return runCommand("docker", "cp", "$containerId:$location", outputFile.canonicalPath)
     }
 
-    fun deleteFile(containerHash: String, location: String): Process {
-        return runCommand("docker", "exec", "--user=root", containerHash, "rm", "-rf", location)
+    fun deleteFile(location: String, containerId: String = this.imageTag): Process {
+        return runCommand("docker", "exec", "--user=root", containerId, "rm", "-rf", location)
     }
 
-    fun chownFile(containerHash: String, owner: String, group: String, filePath: String): Process {
-        return runCommand("docker", "exec", "--user=root", containerHash, "chown", "-R", "$owner:$group", filePath)
+    fun chownFile(owner: String, group: String, filePath: String, containerId: String = this.imageTag): Process {
+        return runCommand("docker", "exec", "--user=root", containerId, "chown", "-R", "$owner:$group", filePath)
     }
 
-    fun chmodFile(containerHash: String, permissions: String, filePath: String): Process {
-        return runCommand("docker", "exec", "--user=root", containerHash, "chmod", "-R", permissions, filePath)
+    fun chmodFile(permissions: String, filePath: String, containerId: String = this.imageTag): Process {
+        return runCommand("docker", "exec", "--user=root", containerId, "chmod", "-R", permissions, filePath)
     }
 
-    fun buildTestDockerfile(packageType: PackageType, workingDirectory: File = File("")): String {
+    fun buildTestDockerfile(packageType: PackageType, workingDirectory: File? = null): String {
         val resourcePath = "/${packageType.packageType.toLowerCase()}/Dockerfile"
-        val resourceUri = this.javaClass.getResource(resourcePath).toURI()
+        val resourceUri = this.javaClass.getResource(resourcePath)?.toURI() ?: throw MissingResourceException("Missing resource $resourcePath", this.javaClass.name, resourcePath)
         val dockerfile = File(resourceUri)
-        return buildDockerfile(dockerfile, workingDirectory, imageTag = packageType.dockerImageTag!!)
+        var actualWorkingDirectory = workingDirectory ?: dockerfile.parentFile
+
+        return buildDockerfile(dockerfile, actualWorkingDirectory, imageTag = packageType.dockerImageTag!!)
     }
 
     fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String, cleanup: Boolean = true): String {

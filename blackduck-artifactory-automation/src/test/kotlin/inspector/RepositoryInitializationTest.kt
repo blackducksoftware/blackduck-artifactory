@@ -43,10 +43,10 @@ class RepositoryInitializationTest : SpringTest() {
     @ParameterizedTest
     @EnumSource(PackageType.Defaults::class)
     fun populatedRepositoryInitialization(packageType: PackageType) {
-        val repository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.REMOTE)
         val resolver = packageType.resolver
 
         if (resolver != null) {
+            val repository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.REMOTE)
             val testablePackages = resolver.testablePackages
             testablePackages.forEach { resolver.resolverFunction(artifactResolver, repository, it.externalId) }
 
@@ -62,7 +62,6 @@ class RepositoryInitializationTest : SpringTest() {
             } else {
                 println("Skipping $packageType because it is not supported by the plugin.")
             }
-
         }
     }
 
@@ -93,7 +92,7 @@ class RepositoryInitializationTest : SpringTest() {
     private fun testRepository(repository: Repository, packageType: PackageType): Boolean {
         val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
 
-        repositoryManager.addRepositoryToInspection(application.containerHash, repository)
+        repositoryManager.addRepositoryToInspection(repository)
 
         blackDuckPluginApiService.blackDuckInitializeRepositories()
         val itemProperties = propertiesApiService.getProperties(repository.key) ?: throw NoPropertiesException(repository.key)

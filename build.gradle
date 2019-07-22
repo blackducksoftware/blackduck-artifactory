@@ -129,6 +129,6 @@ configure(subprojects) { project ->
 
 subprojects {
     tasks.withType(Test) {
-        maxParallelForks = 1 // Do not allow parrallel forks otherwise the automation tests may attempt to spin up multiple Artifactory instances.
+        maxParallelForks = 4 // Do not allow parrallel forks otherwise the automation tests may attempt to spin up multiple Artifactory instances.
     }
 }

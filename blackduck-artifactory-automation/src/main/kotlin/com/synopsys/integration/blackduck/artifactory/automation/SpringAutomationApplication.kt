@@ -16,6 +16,6 @@ class SpringAutomationApplication : ApplicationRunner {
     lateinit var application: Application
 
     override fun run(args: ApplicationArguments?) {
-        println(application.containerHash)
+        println(application.containerId)
     }
 }

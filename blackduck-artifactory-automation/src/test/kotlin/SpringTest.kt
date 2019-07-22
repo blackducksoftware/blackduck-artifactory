@@ -25,7 +25,7 @@ abstract class SpringTest {
 
     protected fun cleanup(repository: Repository, blackDuckProjectCreated: Boolean) {
         repositoryManager.deleteRepositoryFromArtifactory(repository)
-        repositoryManager.removeRepositoryFromInspection(application.containerHash, repository)
+        repositoryManager.removeRepositoryFromInspection(repository)
 
         if (blackDuckProjectCreated) {
             val projectService = blackDuckServicesFactory.createProjectService()
