@@ -3,9 +3,11 @@ import com.synopsys.integration.blackduck.artifactory.automation.Application
 import com.synopsys.integration.blackduck.artifactory.automation.ApplicationConfiguration
 import com.synopsys.integration.blackduck.artifactory.automation.ComponentVerificationService
 import com.synopsys.integration.blackduck.artifactory.automation.TestablePackage
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Tag
@@ -64,6 +66,17 @@ abstract class SpringTest {
         testablePackages.forEach { testablePackage ->
             componentVerificationService.waitForComponentInspection(repository, testablePackage)
             componentVerificationService.verifyComponentExistsInBOM(projectVersionView.get().projectVersionView, testablePackage)
+        }
+    }
+
+    protected fun verifyTestSupport(packageType: PackageType) {
+        val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
+        if (supported && packageType.dockerImageTag != null) {
+            throw MissingSupportedPackageTypeException(packageType)
+        } else if (supported && packageType.dockerImageTag == null) {
+            println("Skipping $packageType because it cannot be automated.")
+        } else {
+            println("Skipping $packageType because it is not supported by the plugin.")
         }
     }
 }

@@ -1,6 +1,5 @@
 package inspector
 
-import MissingSupportedPackageTypeException
 import SpringTest
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
 import com.synopsys.integration.blackduck.artifactory.automation.NoPropertiesException
@@ -27,7 +26,7 @@ class RepositoryInitializationTest : SpringTest() {
     @EnumSource(PackageType.Defaults::class)
     fun emptyRepositoryInitialization(packageType: PackageType) {
         val repository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.REMOTE)
-        val blackDuckProjectCreated = testRepository(repository, packageType)
+        val blackDuckProjectCreated = checkSuccessfulInitialization(repository, packageType)
         cleanup(repository, blackDuckProjectCreated)
     }
 
@@ -41,24 +40,17 @@ class RepositoryInitializationTest : SpringTest() {
             val testablePackages = resolver.testablePackages
             testablePackages.forEach { resolver.resolverFunction(artifactResolver, repository, it.externalId) }
 
-            val blackDuckProjectCreated = testRepository(repository, packageType)
+            val blackDuckProjectCreated = checkSuccessfulInitialization(repository, packageType)
             cleanup(repository, blackDuckProjectCreated)
         } else {
-            val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
-            if (supported && packageType.dockerImageTag != null) {
-                throw MissingSupportedPackageTypeException(packageType)
-            } else if (supported && packageType.dockerImageTag == null) {
-                println("Skipping $packageType because it cannot be automated.")
-            } else {
-                println("Skipping $packageType because it is not supported by the plugin.")
-            }
+            verifyTestSupport(packageType)
         }
     }
 
     /**
      * @return true if a project was created in Black Duck.
      */
-    private fun testRepository(repository: Repository, packageType: PackageType): Boolean {
+    private fun checkSuccessfulInitialization(repository: Repository, packageType: PackageType): Boolean {
         val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
 
         repositoryManager.addRepositoryToInspection(repository)
