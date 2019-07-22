@@ -39,12 +39,12 @@ class DockerService(private val imageTag: String) {
             "docker.bintray.io/jfrog/artifactory-pro:$version", inheritIO = inheritIO)
     }
 
-    fun startArtifactory(containerId: String = this.imageTag): Process {
-        return runCommand("docker", "start", containerId)
+    fun startArtifactory(containerId: String = this.imageTag): Int {
+        return runCommand("docker", "start", containerId).waitFor()
     }
 
-    fun stopArtifactory(containerId: String = this.imageTag): Process {
-        return runCommand("docker", "stop", containerId)
+    fun stopArtifactory(containerId: String = this.imageTag): Int {
+        return runCommand("docker", "stop", containerId).waitFor()
     }
 
     fun getArtifactoryLogs(containerId: String = this.imageTag): InputStream {
@@ -53,24 +53,24 @@ class DockerService(private val imageTag: String) {
         return process.inputStream
     }
 
-    fun uploadFile(file: File, location: String, containerId: String = this.imageTag): Process {
-        return runCommand("docker", "cp", file.canonicalPath, "$containerId:$location")
+    fun uploadFile(file: File, location: String, containerId: String = this.imageTag): Int {
+        return runCommand("docker", "cp", file.canonicalPath, "$containerId:$location").waitFor()
     }
 
-    fun downloadFile(outputFile: File, location: String, containerId: String = this.imageTag): Process {
-        return runCommand("docker", "cp", "$containerId:$location", outputFile.canonicalPath)
+    fun downloadFile(outputFile: File, location: String, containerId: String = this.imageTag): Int {
+        return runCommand("docker", "cp", "$containerId:$location", outputFile.canonicalPath).waitFor()
     }
 
-    fun deleteFile(location: String, containerId: String = this.imageTag): Process {
-        return runCommand("docker", "exec", "--user=root", containerId, "rm", "-rf", location)
+    fun deleteFile(location: String, containerId: String = this.imageTag): Int {
+        return runCommand("docker", "exec", "--user=root", containerId, "rm", "-rf", location).waitFor()
     }
 
-    fun chownFile(owner: String, group: String, filePath: String, containerId: String = this.imageTag): Process {
-        return runCommand("docker", "exec", "--user=root", containerId, "chown", "-R", "$owner:$group", filePath)
+    fun chownFile(owner: String, group: String, filePath: String, containerId: String = this.imageTag): Int {
+        return runCommand("docker", "exec", "--user=root", containerId, "chown", "-R", "$owner:$group", filePath).waitFor()
     }
 
-    fun chmodFile(permissions: String, filePath: String, containerId: String = this.imageTag): Process {
-        return runCommand("docker", "exec", "--user=root", containerId, "chmod", "-R", permissions, filePath)
+    fun chmodFile(permissions: String, filePath: String, containerId: String = this.imageTag): Int {
+        return runCommand("docker", "exec", "--user=root", containerId, "chmod", "-R", permissions, filePath).waitFor()
     }
 
     fun buildTestDockerfile(packageType: PackageType, workingDirectory: File? = null): String {
@@ -88,9 +88,9 @@ class DockerService(private val imageTag: String) {
         return imageTag
     }
 
-    fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, directory: File? = null): Process {
+    fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, directory: File? = null): Int {
         val cleanupCommand = if (cleanup) "--rm" else ""
-        return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO, directory = directory)
+        return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO, directory = directory).waitFor()
     }
 
     private fun runCommand(vararg command: String, inheritIO: Boolean = true, directory: File? = null): Process {

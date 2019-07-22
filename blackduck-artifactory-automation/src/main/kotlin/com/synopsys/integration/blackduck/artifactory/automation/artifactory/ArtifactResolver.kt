@@ -25,7 +25,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         dockerService.runDockerImage(
             PackageType.Defaults.BOWER.dockerImageTag!!,
             "bower", "install", "${externalId.name}#${externalId.version}", "--allow-root", "--config.registry=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/bower/${repository.key}"
-        ).waitFor()
+        )
     }
 
     fun resolveComposerArtifact(repository: Repository, externalId: ExternalId) {
@@ -42,20 +42,20 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         println("composer.json: ${outputFile.absolutePath}")
 
         dockerService.buildTestDockerfile(PackageType.Defaults.COMPOSER, outputFile.parentFile)
-        dockerService.runDockerImage(PackageType.Defaults.COMPOSER.dockerImageTag!!, "php", "composer.phar", "install", directory = outputFile.parentFile).waitFor()
+        dockerService.runDockerImage(PackageType.Defaults.COMPOSER.dockerImageTag!!, "php", "composer.phar", "install", directory = outputFile.parentFile)
     }
 
     fun resolveCranArtifact(repository: Repository, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.CRAN)
         dockerService.runDockerImage(PackageType.Defaults.CRAN.dockerImageTag!!, "r", "-e",
-            "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/${repository.key}')").waitFor()
+            "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/${repository.key}')")
     }
 
     fun resolveGemsArtifact(repository: Repository, externalId: ExternalId) {
         // gem install packaging --version '0.99.35' --source http://<server:port>/artifactory/api/gems/<remote-repo-key>
         dockerService.buildTestDockerfile(PackageType.Defaults.GEMS)
         dockerService.runDockerImage(PackageType.Defaults.GEMS.dockerImageTag!!, "gem", "install", externalId.name, "--version", externalId.version, "--clear-sources", "--source",
-            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V").waitFor()
+            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V")
     }
 
     fun resolveMavenGradleArtifact(repository: Repository, externalId: ExternalId) {
@@ -68,7 +68,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
     fun resolveNpmArtifact(repository: Repository, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.NPM)
         dockerService.runDockerImage(PackageType.Defaults.NPM.dockerImageTag!!, "npm", "install", "${externalId.name}@${externalId.version}", "-g", "--registry",
-            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/${repository.key}").waitFor()
+            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/${repository.key}")
     }
 
     fun resolveNugetArtifact(repository: Repository, externalId: ExternalId) {
@@ -94,7 +94,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         dockerService.runDockerImage(
             PackageType.Defaults.PYPI.dockerImageTag!!,
             "pip3", "install", "${externalId.name}==${externalId.version}", "--index-url=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/pypi/${repository.key}/simple"
-        ).waitFor()
+        )
     }
 }
 

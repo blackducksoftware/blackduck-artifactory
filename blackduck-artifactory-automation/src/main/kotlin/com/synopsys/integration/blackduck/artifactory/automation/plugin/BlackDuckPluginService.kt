@@ -27,7 +27,7 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
 
     fun installPlugin(zipFile: File, outputDirectory: File) {
         logger.info("Shutting down Artifactory container.")
-        dockerService.stopArtifactory().waitFor()
+        dockerService.stopArtifactory()
 
         logger.info("Unzipping plugin.")
         val unzippedPluginDirectory = unzipFile(zipFile, outputDirectory)
@@ -37,7 +37,7 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
             .filterNotNull()
             .filter { !it.startsWith(".") }
             .forEach {
-                dockerService.uploadFile(it, dockerPluginsDirectory).waitFor()
+                dockerService.uploadFile(it, dockerPluginsDirectory)
             }
     }
 
@@ -103,13 +103,13 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
 
         properties.store(FileOutputStream(propertiesFile), "Modified automation properties")
 
-        dockerService.uploadFile(propertiesFile, libDirectory).waitFor()
+        dockerService.uploadFile(propertiesFile, libDirectory)
     }
 
     fun fixPermissions(location: String, permission: String = "0755") {
         logger.info("Fixing permissions.")
-        dockerService.chownFile("artifactory", "artifactory", location).waitFor()
-        dockerService.chmodFile(permission, location).waitFor()
+        dockerService.chownFile("artifactory", "artifactory", location)
+        dockerService.chmodFile(permission, location)
     }
 
     private fun unzipFile(zipFile: File, outputDirectory: File): File {
