@@ -3,13 +3,10 @@ package inspector
 import MissingSupportedPackageTypeException
 import SpringTest
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.automation.ComponentVerificationService
 import com.synopsys.integration.blackduck.artifactory.automation.NoPropertiesException
-import com.synopsys.integration.blackduck.artifactory.automation.TestablePackage
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.ArtifactResolver
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryType
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginApiService
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
@@ -24,13 +21,7 @@ class RepositoryInitializationTest : SpringTest() {
     lateinit var blackDuckPluginApiService: BlackDuckPluginApiService
 
     @Autowired
-    lateinit var propertiesApiService: PropertiesApiService
-
-    @Autowired
     lateinit var artifactResolver: ArtifactResolver
-
-    @Autowired
-    lateinit var componentVerificationService: ComponentVerificationService
 
     @ParameterizedTest
     @EnumSource(PackageType.Defaults::class)
@@ -65,27 +56,6 @@ class RepositoryInitializationTest : SpringTest() {
         }
     }
 
-    private fun verifyNameVersionPackages(repository: Repository, testablePackages: List<TestablePackage>) {
-        val itemProperties = propertiesApiService.getProperties(repository)
-        Assertions.assertNotNull(itemProperties)
-        println(itemProperties!!)
-
-        val projectName = itemProperties.properties[BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName()]?.first()
-        val projectVersionName = itemProperties.properties[BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName()]?.first()
-        val projectService = blackDuckServicesFactory.createProjectService()
-
-        Assertions.assertNotNull(projectName)
-        Assertions.assertNotNull(projectVersionName)
-
-        val projectVersionView = projectService.getProjectVersion(projectName, projectVersionName)
-        Assertions.assertTrue(projectVersionView.isPresent)
-
-        testablePackages.forEach { testablePackage ->
-            componentVerificationService.waitForComponentInspection(repository, testablePackage)
-            componentVerificationService.verifyComponentExistsInBOM(projectVersionView.get().projectVersionView, testablePackage)
-        }
-    }
-
     /**
      * @return true if a project was created in Black Duck.
      */
@@ -93,7 +63,6 @@ class RepositoryInitializationTest : SpringTest() {
         val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
 
         repositoryManager.addRepositoryToInspection(repository)
-
         blackDuckPluginApiService.blackDuckInitializeRepositories()
         val itemProperties = propertiesApiService.getProperties(repository.key) ?: throw NoPropertiesException(repository.key)
 
