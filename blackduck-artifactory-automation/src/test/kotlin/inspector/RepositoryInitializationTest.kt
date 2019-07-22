@@ -42,7 +42,6 @@ class RepositoryInitializationTest : SpringTest() {
             testablePackages.forEach { resolver.resolverFunction(artifactResolver, repository, it.externalId) }
 
             val blackDuckProjectCreated = testRepository(repository, packageType)
-            verifyNameVersionPackages(repository, testablePackages)
             cleanup(repository, blackDuckProjectCreated)
         } else {
             val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
