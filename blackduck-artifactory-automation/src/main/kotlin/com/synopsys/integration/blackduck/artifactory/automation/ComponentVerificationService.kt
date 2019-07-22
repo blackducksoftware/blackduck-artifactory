@@ -83,5 +83,3 @@ class MissingPropertyException(
     private val repoPath: String,
     override val message: String = "Failed to find the property $propertyKey at $repoPath."
 ) : IntegrationException()
-
-data class Component(val name: String, val version: String) 

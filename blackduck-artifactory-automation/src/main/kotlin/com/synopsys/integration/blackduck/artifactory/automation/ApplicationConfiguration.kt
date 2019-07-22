@@ -31,11 +31,6 @@ class ApplicationConfiguration {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
 
     @Bean
-    fun blackDuckPluginService(@Autowired dockerService: DockerService): BlackDuckPluginService {
-        return BlackDuckPluginService(dockerService)
-    }
-
-    @Bean
     fun configManager(@Autowired environment: ConfigurableEnvironment): ConfigManager {
         return ConfigManager(environment)
     }
@@ -71,6 +66,11 @@ class ApplicationConfiguration {
     fun dockerService(@Autowired artifactoryConfiguration: ArtifactoryConfiguration): DockerService {
         val imageTag = "artifactory-automation-${artifactoryConfiguration.version}"
         return DockerService(imageTag)
+    }
+
+    @Bean
+    fun blackDuckPluginService(@Autowired dockerService: DockerService): BlackDuckPluginService {
+        return BlackDuckPluginService(dockerService)
     }
 
     @Bean

@@ -2,7 +2,6 @@ package inspector
 
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
 import com.synopsys.integration.blackduck.artifactory.automation.NoPropertiesException
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.ArtifactResolver
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryType
@@ -11,12 +10,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.S
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
-import org.springframework.beans.factory.annotation.Autowired
 
 class RepositoryInitializationTest : InspectionTest() {
-    @Autowired
-    lateinit var artifactResolver: ArtifactResolver
-
     @ParameterizedTest
     @EnumSource(PackageType.Defaults::class)
     fun emptyRepositoryInitialization(packageType: PackageType) {
