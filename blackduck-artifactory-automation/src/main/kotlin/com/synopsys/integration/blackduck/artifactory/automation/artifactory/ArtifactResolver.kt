@@ -58,7 +58,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
             "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V").waitFor()
     }
 
-    fun resolveGradleArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveMavenGradleArtifact(repository: Repository, externalId: ExternalId) {
         val group = externalId.group.replace(".", "/")
         val name = externalId.name
         val version = externalId.version
@@ -134,7 +134,14 @@ object Resolvers {
     )
 
     val GRADLE_RESOLVER = Resolver(
-        ArtifactResolver::resolveGradleArtifact,
+        ArtifactResolver::resolveMavenGradleArtifact,
+        listOf(
+            TestablePackage("blackduck-common-43.0.0.jar", externalIdFactory.createMavenExternalId("com.blackducksoftware.integration", "blackduck-common", "43.0.0"))
+        )
+    )
+
+    val MAVEN_RESOLVER = Resolver(
+        ArtifactResolver::resolveMavenGradleArtifact,
         listOf(
             TestablePackage("blackduck-common-43.0.0.jar", externalIdFactory.createMavenExternalId("com.blackducksoftware.integration", "blackduck-common", "43.0.0"))
         )

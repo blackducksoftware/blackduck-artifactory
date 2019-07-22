@@ -24,7 +24,7 @@ interface PackageType {
         GRADLE("gradle", "https://jcenter.bintray.com", "maven-2-default", Resolvers.GRADLE_RESOLVER),
         HELM("helm", "https://storage.googleapis.com/kubernetes-charts"),
         IVY("ivy", "https://jcenter.bintray.com"),
-        MAVEN("maven", "https://jcenter.bintray.com"),
+        MAVEN("maven", "https://jcenter.bintray.com", "maven-2-default", Resolvers.MAVEN_RESOLVER),
         NPM("npm", "https://registry.npmjs.org", "npm-default", Resolvers.NPM_RESOLVER, "artifactory-automation-npm"),
         NUGET("nuget", "https://www.nuget.org/", "nuget-default", Resolvers.NUGET_RESOLVER, "artifactory-automation-nuget"),
         // OPKG("opkg", ""), Needs a remote URL. This PackageType should be created manually.

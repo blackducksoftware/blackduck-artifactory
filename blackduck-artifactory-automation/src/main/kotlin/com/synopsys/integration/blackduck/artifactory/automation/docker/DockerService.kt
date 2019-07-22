@@ -11,8 +11,6 @@ import java.util.concurrent.TimeUnit
 
 // TODO: Make DockerService more generic
 class DockerService {
-    val packageManagerDockerImageTag = "artifactory-automation-pm"
-
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(javaClass))
 
     fun installAndStartArtifactory(version: String, containerName: String, artifactoryPort: String): String {
@@ -82,7 +80,7 @@ class DockerService {
         return buildDockerfile(dockerfile, workingDirectory, imageTag = packageType.dockerImageTag!!)
     }
 
-    fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String = packageManagerDockerImageTag, cleanup: Boolean = true): String {
+    fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String, cleanup: Boolean = true): String {
         val cleanupCommand = if (cleanup) "--rm" else ""
         runCommand("docker", "build", "--network=host", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath).waitFor()
         return imageTag
