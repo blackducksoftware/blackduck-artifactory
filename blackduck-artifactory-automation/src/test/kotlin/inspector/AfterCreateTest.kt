@@ -6,6 +6,7 @@ import com.synopsys.integration.blackduck.artifactory.automation.NoPropertiesExc
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.searches.ArtifactSearchesAPIService
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,12 +29,20 @@ class AfterCreateTest : InspectionTest() {
                 val repoKey = RepositoryManager.determineRepositoryKey(repository)
                 val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repoKey)
                 val repoPath = repository.key + artifact.path
-                val properties = propertiesApiService.getProperties(repoPath) ?: throw NoPropertiesException(repoPath)
+                val itemProperties = propertiesApiService.getProperties(repoPath) ?: throw NoPropertiesException(repoPath)
 
                 val inspectionStatusPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()
 
                 // If the inspection status property is missing, the after create event was not triggered.
-                properties.properties[inspectionStatusPropertyKey]?.first() ?: throw MissingPropertyException(inspectionStatusPropertyKey, repoPath)
+                val inspectionStatus = itemProperties.properties[inspectionStatusPropertyKey]?.first() ?: throw MissingPropertyException(inspectionStatusPropertyKey, repoPath)
+
+                // TODO: Add wait for success
+                if (inspectionStatus == InspectionStatus.SUCCESS.name) {
+                    assertSuccess(itemProperties)
+                } else {
+                    assertFailure(itemProperties)
+                    throw Exception("afterCreate failed and properly appied properties, but the inspection should not have failed.")
+                }
             }
 
             return@resolverRequiredTest true
