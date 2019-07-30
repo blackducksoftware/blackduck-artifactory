@@ -1,0 +1,20 @@
+{
+  "name": "synopsys/blackduck-artifactory-automation",
+  "description": "Test for blackduck-artifactory",
+  "prefer-stable": true,
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "http://<server>/artifactory/api/composer/<repo-key>"
+    },
+    {
+      "packagist": false
+    }
+  ],
+  "config": {
+    "secure-http": false
+  },
+  "require": {
+    "<dependency-name>": "<dependency-version>"
+  }
+}
