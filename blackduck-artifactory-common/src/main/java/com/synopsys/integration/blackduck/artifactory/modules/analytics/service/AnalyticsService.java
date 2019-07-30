@@ -43,6 +43,7 @@ import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
+import com.synopsys.integration.util.NoThreadExecutorService;
 
 public class AnalyticsService {
 
@@ -108,7 +109,7 @@ public class AnalyticsService {
 
             final Map<String, String> metadata = new HashMap<>(metadataMap);
             metadata.put("third.party.version", thirdPartyVersion);
-            final BlackDuckPhoneHomeHelper phoneHomeHelper = BlackDuckPhoneHomeHelper.createPhoneHomeHelper(blackDuckServicesFactory);
+            final BlackDuckPhoneHomeHelper phoneHomeHelper = BlackDuckPhoneHomeHelper.createAsynchronousPhoneHomeHelper(blackDuckServicesFactory, new NoThreadExecutorService());
             final PhoneHomeResponse phoneHomeResponse = phoneHomeHelper.handlePhoneHome("blackduck-artifactory", pluginVersion, metadata);
 
             return phoneHomeResponse.getImmediateResult();

@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -52,14 +53,16 @@ import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatc
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanCommandOutput;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanTarget;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
+import com.synopsys.integration.blackduck.rest.BlackDuckHttpClient;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuess;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuesser;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.HostNameHelper;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 import com.synopsys.integration.util.NameVersion;
-import com.synopsys.integration.util.ResourceUtil;
+import com.synopsys.integration.util.NoThreadExecutorService;
 
 public class ArtifactScanService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
@@ -112,17 +115,13 @@ public class ArtifactScanService {
         final FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
 
         try (final ResourceStreamHandle resourceStream = artifactoryPAPIService.getContent(repoPath)) {
-            InputStream inputStream = null;
-            FileOutputStream fileOutputStream = null;
-            try {
-                inputStream = resourceStream.getInputStream();
-                fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, repoPath.getName()));
+            try (
+                final InputStream inputStream = resourceStream.getInputStream();
+                final FileOutputStream fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, repoPath.getName()))
+            ) {
                 IOUtils.copy(inputStream, fileOutputStream);
             } catch (final IOException e) {
                 logger.error(String.format("There was an error getting %s", repoPath.getName()), e);
-            } finally {
-                ResourceUtil.closeQuietly(inputStream);
-                ResourceUtil.closeQuietly(fileOutputStream);
             }
         }
 
@@ -133,7 +132,9 @@ public class ArtifactScanService {
         final int scanMemory = scanModuleConfig.getMemory();
         final boolean dryRun = scanModuleConfig.getDryRun();
         final boolean useRepoPathAsCodeLocationName = scanModuleConfig.getRepoPathCodelocation();
-        final ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(LoggerFactory.getLogger("SignatureScanner")), blackDuckServerConfig);
+        final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
+        final BlackDuckHttpClient blackDuckHttpClient = blackDuckServerConfig.createBlackDuckHttpClient(logger);
+        final ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(LoggerFactory.getLogger("SignatureScanner")), blackDuckHttpClient, intEnvironmentVariables, new NoThreadExecutorService());
         final ScanBatchBuilder scanJobBuilder = new ScanBatchBuilder()
                                                     .fromBlackDuckServerConfig(blackDuckServerConfig)
                                                     .scanMemoryInMegabytes(scanMemory)
@@ -221,8 +222,8 @@ public class ArtifactScanService {
 
     private void deletePathArtifact(final String fileName) {
         try {
-            final boolean deleteOk = new File(blackDuckDirectory, fileName).delete();
-            logger.info(String.format("Successfully deleted temporary %s: %s", fileName, Boolean.toString(deleteOk)));
+            Files.delete(new File(blackDuckDirectory, fileName).toPath());
+            logger.info(String.format("Successfully deleted temporary file %s", fileName));
         } catch (final Exception e) {
             logger.error(String.format("Exception deleting %s", fileName), e);
         }
