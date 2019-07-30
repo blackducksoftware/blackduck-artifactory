@@ -24,7 +24,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.extern
 
 import com.google.gson.annotations.SerializedName;
 
-public class Version {
+public class ComposerVersion {
     @SerializedName("name")
     public String name;
 

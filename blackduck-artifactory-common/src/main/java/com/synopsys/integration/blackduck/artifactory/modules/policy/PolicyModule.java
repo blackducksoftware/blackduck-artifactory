@@ -47,7 +47,7 @@ public class PolicyModule implements Module {
         this.featureAnalyticsCollector = featureAnalyticsCollector;
     }
 
-    public void handleBeforeDownloadEvent(final RepoPath repoPath) throws CancelException {
+    public void handleBeforeDownloadEvent(final RepoPath repoPath) {
         String reason = null;
         BlockReason blockReason = BlockReason.NO_BLOCK;
         if (shouldCancelOnPolicyViolation(repoPath)) {

@@ -46,9 +46,9 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class ConfigValidationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
-    private final int LINE_CHARACTER_LIMIT = 100;
-    private final String LINE_SEPARATOR = System.lineSeparator();
-    private final String BLOCK_SEPARATOR = LINE_SEPARATOR + StringUtils.repeat("-", LINE_CHARACTER_LIMIT) + LINE_SEPARATOR;
+    private static final int LINE_CHARACTER_LIMIT = 100;
+    private static final String LINE_SEPARATOR = System.lineSeparator();
+    private static final String BLOCK_SEPARATOR = LINE_SEPARATOR + StringUtils.repeat("-", LINE_CHARACTER_LIMIT) + LINE_SEPARATOR;
 
     private final ModuleManager moduleManager;
     private final PluginConfig pluginConfig;
@@ -121,7 +121,7 @@ public class ConfigValidationService {
         }
 
         if (!propertyGroupReport.getBuilderStatus().isValid()) {
-            final String otherMessages = wrapLine("Other Messages: " + propertyGroupReport.getBuilderStatus().getFullErrorMessage());
+            final String otherMessages = wrapLine(String.format("Other Messages: %s", propertyGroupReport.getBuilderStatus().getFullErrorMessage()));
             statusCheckMessage.append(otherMessages).append(LINE_SEPARATOR);
         }
     }

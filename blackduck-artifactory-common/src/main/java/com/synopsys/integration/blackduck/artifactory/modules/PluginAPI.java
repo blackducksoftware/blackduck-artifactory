@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.artifactory.exception.CancelException;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
@@ -96,10 +95,11 @@ public class PluginAPI implements Analyzable {
     }
 
     public void setModuleState(final TriggerType triggerType, final Map<String, List<String>> params) {
-        LogUtil.start(logger, "setModuleState", triggerType);
+        final String funtionName = "setModuleState";
+        LogUtil.start(logger, funtionName, triggerType);
         moduleManager.setModulesState(params);
-        featureAnalyticsCollector.logFeatureHit(ModuleManager.class.getName(), "setModuleState");
-        LogUtil.finish(logger, "setModuleState", triggerType);
+        featureAnalyticsCollector.logFeatureHit(ModuleManager.class.getName(), funtionName);
+        LogUtil.finish(logger, funtionName, triggerType);
     }
 
     public void triggerScan(final TriggerType triggerType) {
@@ -170,11 +170,11 @@ public class PluginAPI implements Analyzable {
         return inspectionModuleConfig.getReinspectCron();
     }
 
-    public void handleBeforeDownloadEventInspection(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {
+    public void handleBeforeDownloadEventInspection(final TriggerType triggerType, final RepoPath repoPath) {
         runMethod(inspectionModuleConfig, triggerType, repoPath, inspectionModule::handleBeforeDownloadEvent);
     }
 
-    public void handleBeforeDownloadEventPolicy(final TriggerType triggerType, final RepoPath repoPath) throws CancelException {
+    public void handleBeforeDownloadEventPolicy(final TriggerType triggerType, final RepoPath repoPath) {
         runMethod(policyModuleConfig, triggerType, repoPath, policyModule::handleBeforeDownloadEvent);
     }
 

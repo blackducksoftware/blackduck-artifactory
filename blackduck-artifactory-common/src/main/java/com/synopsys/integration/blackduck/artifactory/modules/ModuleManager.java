@@ -50,7 +50,7 @@ public class ModuleManager {
 
     public void setModulesState(final Map<String, List<String>> params) {
         for (final Map.Entry<String, List<String>> entry : params.entrySet()) {
-            if (entry.getValue().size() > 0) {
+            if (!entry.getValue().isEmpty()) {
                 final String moduleStateRaw = entry.getValue().get(0);
                 final boolean moduleState = BooleanUtils.toBoolean(moduleStateRaw);
                 final String moduleName = entry.getKey();

@@ -157,13 +157,13 @@ public class PluginService {
 
     private File setUpBlackDuckDirectory() throws IOException, IntegrationException {
         try {
-            final File blackDuckDirectory = determineBlackDuckDirectory();
+            final File directory = determineBlackDuckDirectory();
 
-            if (!blackDuckDirectory.exists() && !blackDuckDirectory.mkdir()) {
-                throw new IntegrationException(String.format("Failed to create the BlackDuck directory: %s", blackDuckDirectory.getCanonicalPath()));
+            if (!directory.exists() && !directory.mkdir()) {
+                throw new IntegrationException(String.format("Failed to create the BlackDuck directory: %s", directory.getCanonicalPath()));
             }
 
-            return blackDuckDirectory;
+            return directory;
         } catch (final IOException | IntegrationException e) {
             logger.error(String.format("Exception while setting up the Black Duck directory %s", blackDuckDirectory), e);
             throw e;
@@ -171,15 +171,15 @@ public class PluginService {
     }
 
     private File determineBlackDuckDirectory() {
-        final File blackDuckDirectory;
+        final File directory;
         final String scanBinariesDirectory = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
         if (StringUtils.isNotEmpty(scanBinariesDirectory)) {
-            blackDuckDirectory = new File(directoryConfig.getHomeDirectory(), scanBinariesDirectory);
+            directory = new File(directoryConfig.getHomeDirectory(), scanBinariesDirectory);
         } else {
-            blackDuckDirectory = new File(directoryConfig.getEtcDirectory(), "blackducksoftware");
+            directory = new File(directoryConfig.getEtcDirectory(), "blackducksoftware");
         }
 
-        return blackDuckDirectory;
+        return directory;
     }
 
     private File getPropertiesFile() {

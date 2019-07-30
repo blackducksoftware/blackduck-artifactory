@@ -165,7 +165,7 @@ public class InspectionModule implements Module {
         // updateAnalytics();
     }
 
-    public void handleBeforeDownloadEvent(final RepoPath repoPath) throws CancelException {
+    public void handleBeforeDownloadEvent(final RepoPath repoPath) {
         final Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
         final boolean shouldCancelDownload = inspectionModuleConfig.isMetadataBlockEnabled()
                                                  && (!inspectionStatus.isPresent() || inspectionStatus.get().equals(InspectionStatus.PENDING))

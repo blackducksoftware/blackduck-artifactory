@@ -43,7 +43,7 @@ import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.Version;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.ComposerVersion;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 
 public class ComposerExternalIdExtractor {
@@ -66,15 +66,15 @@ public class ComposerExternalIdExtractor {
 
         ExternalId externalId = null;
         for (final RepoPath jsonFileRepoPath : jsonFileRepoPaths) {
-            final List<Version> versions = parseJson(jsonFileRepoPath);
+            final List<ComposerVersion> composerVersions = parseJson(jsonFileRepoPath);
             final List<ExternalId> externalIds = new ArrayList<>();
 
-            for (final Version version : versions) {
-                final String referenceHash = version.getVersionSource().getReference();
+            for (final ComposerVersion composerVersion : composerVersions) {
+                final String referenceHash = composerVersion.getVersionSource().getReference();
                 final String artifactHash = fileNamePieces.getHash();
                 if (referenceHash.equals(artifactHash)) {
                     final Forge forge = supportedPackageType.getForge();
-                    final ExternalId foundExternalId = externalIdFactory.createNameVersionExternalId(forge, version.getName(), version.getVersion());
+                    final ExternalId foundExternalId = externalIdFactory.createNameVersionExternalId(forge, composerVersion.getName(), composerVersion.getVersion());
                     externalIds.add(foundExternalId);
                 }
             }
@@ -99,26 +99,26 @@ public class ComposerExternalIdExtractor {
         return Optional.ofNullable(externalId);
     }
 
-    private List<Version> parseJson(final RepoPath repoPath) {
+    private List<ComposerVersion> parseJson(final RepoPath repoPath) {
         try (final ResourceStreamHandle resourceStreamHandle = artifactoryPAPIService.getArtifactContent(repoPath)) {
             final InputStream inputStream = resourceStreamHandle.getInputStream();
             final InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
             final JsonElement root = new JsonParser().parse(inputStreamReader);
             final Set<Map.Entry<String, JsonElement>> rootEntries = root.getAsJsonObject().get("packages").getAsJsonObject().entrySet();
-            final List<Version> versions = new ArrayList<>();
+            final List<ComposerVersion> composerVersions = new ArrayList<>();
             for (final Map.Entry<String, JsonElement> rootEntry : rootEntries) {
                 final String groupModuleName = rootEntry.getKey().toLowerCase();
                 if (groupModuleName.contains(groupModuleName)) {
                     final Set<Map.Entry<String, JsonElement>> versionJsonElements = rootEntry.getValue().getAsJsonObject().entrySet();
 
                     for (final Map.Entry<String, JsonElement> versionJsonElement : versionJsonElements) {
-                        final Version version = gson.fromJson(versionJsonElement.getValue(), Version.class);
-                        versions.add(version);
+                        final ComposerVersion composerVersion = gson.fromJson(versionJsonElement.getValue(), ComposerVersion.class);
+                        composerVersions.add(composerVersion);
                     }
                 }
             }
 
-            return versions;
+            return composerVersions;
         }
     }
 

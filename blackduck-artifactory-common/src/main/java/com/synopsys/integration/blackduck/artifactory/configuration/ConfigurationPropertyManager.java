@@ -35,12 +35,18 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
+
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 /**
  * Gets configuration properties and coerces them.
  * Should only be consumed by configs with validation
  */
 public class ConfigurationPropertyManager {
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+
     private final Properties properties;
 
     public ConfigurationPropertyManager(final Properties properties) {
@@ -104,8 +110,8 @@ public class ConfigurationPropertyManager {
 
         try {
             value = Integer.valueOf(getProperty(propertyKey));
-        } catch (final NumberFormatException ignored) {
-
+        } catch (final NumberFormatException e) {
+            logger.debug(String.format("Failed to parse integer for property: %s", propertyKey), e);
         }
 
         return value;
