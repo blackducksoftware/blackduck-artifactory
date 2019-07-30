@@ -32,6 +32,7 @@ import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.WordUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.model.ConfigValidationReport;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
@@ -39,8 +40,12 @@ import com.synopsys.integration.blackduck.artifactory.configuration.model.Proper
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
 import com.synopsys.integration.builder.BuilderStatus;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class ConfigValidationService {
+    private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+
     private final int LINE_CHARACTER_LIMIT = 100;
     private final String LINE_SEPARATOR = System.lineSeparator();
     private final String BLOCK_SEPARATOR = LINE_SEPARATOR + StringUtils.repeat("-", LINE_CHARACTER_LIMIT) + LINE_SEPARATOR;
@@ -130,7 +135,7 @@ public class ConfigValidationService {
         try {
             version = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
         } catch (final IOException e) {
-            e.printStackTrace();
+            logger.debug("Failed to load plugin version.", e);
         }
 
         return version;
