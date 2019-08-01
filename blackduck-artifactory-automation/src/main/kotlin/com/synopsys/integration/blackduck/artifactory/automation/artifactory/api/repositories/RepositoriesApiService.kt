@@ -53,5 +53,6 @@ data class RepositoryConfiguration(
     val repositoryLayout: String = "simple-default",
     val feedContextPath: String = "api/v2",
     val downloadContextPath: String = "api/v2/package",
-    val v3FeedUrl: String = "https://api.nuget.org/v3/index.json"
+    val v3FeedUrl: String = "https://api.nuget.org/v3/index.json",
+    val repositories: List<String> = emptyList()
 )

@@ -36,8 +36,7 @@ public enum SupportedPackageType {
     COMPOSER("composer", Forge.PACKAGIST, InspectionModuleProperty.PATTERNS_COMPOSER),
     CRAN("cran", Forge.CRAN, "cran.name", "cran.version", InspectionModuleProperty.PATTERNS_CRAN),
     GEMS("gems", Forge.RUBYGEMS, "gem.name", "gem.version", InspectionModuleProperty.PATTERNS_RUBYGEMS),
-    // TODO: Implement in 7.1.0
-    // GO("go", Forge.GOLANG, "go.name", "go.version", InspectionModuleProperty.PATTERNS_GO),
+    GO("go", Forge.GOLANG, "go.name", "go.version", InspectionModuleProperty.PATTERNS_GO),
     GRADLE("gradle", Forge.MAVEN, InspectionModuleProperty.PATTERNS_GRADLE),
     MAVEN("maven", Forge.MAVEN, InspectionModuleProperty.PATTERNS_MAVEN),
     NPM("npm", Forge.NPMJS, "npm.name", "npm.version", InspectionModuleProperty.PATTERNS_NPM),

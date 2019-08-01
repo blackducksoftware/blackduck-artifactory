@@ -32,9 +32,17 @@ abstract class InspectionTest : SpringTest() {
         val resolver = packageType.resolver
 
         if (resolver != null) {
-            val repository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.REMOTE)
-            val blackDuckProjectCreated = testFunction(repository, resolver)
-            cleanup(repository, blackDuckProjectCreated)
+            val remoteRepository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.REMOTE)
+
+            if (packageType.requiresVirtual) {
+                val virtualRepository = repositoryManager.createRepositoryInArtifactory(packageType, RepositoryType.VIRTUAL, listOf(remoteRepository))
+                val blackDuckProjectCreated = testFunction(virtualRepository, resolver)
+                cleanup(virtualRepository, blackDuckProjectCreated)
+                cleanup(remoteRepository, false)
+            } else {
+                val blackDuckProjectCreated = testFunction(remoteRepository, resolver)
+                cleanup(remoteRepository, blackDuckProjectCreated)
+            }
         } else {
             verifyTestSupport(packageType)
         }
@@ -51,7 +59,7 @@ abstract class InspectionTest : SpringTest() {
 
     fun assertSuccess(itemProperties: ItemProperties) {
         val properties: Map<String, String> = itemProperties.properties.mapValues { it.value.first() }
-        
+
         Assertions.assertEquals(properties[BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()], InspectionStatus.SUCCESS.name, "Inspection status should be ${InspectionStatus.FAILURE.name}. ${itemProperties.uri}")
         assertNull(BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, properties, itemProperties.uri, true)
         assertNull(BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, properties, itemProperties.uri, true)

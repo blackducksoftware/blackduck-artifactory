@@ -6,8 +6,10 @@ interface PackageType {
     val repoLayoutRef: String?
     val resolver: Resolver?
     val dockerImageTag: String?
+    val requiresVirtual: Boolean
 
-    enum class Defaults(override val packageType: String, override val remoteUrl: String, override val repoLayoutRef: String? = null, override val resolver: Resolver? = null, override val dockerImageTag: String? = null) : PackageType {
+    enum class Defaults(override val packageType: String, override val remoteUrl: String, override val repoLayoutRef: String? = null, override val resolver: Resolver? = null, override val dockerImageTag: String? = null,
+        override val requiresVirtual: Boolean = false) : PackageType {
         BOWER("bower", "https://github.com/", "bower-default", Resolvers.BOWER_RESOLVER, "artifactory-automation-bower"),
         CHEF("chef", "https://supermarket.chef.io"),
         COCOAPODS("cocoapods", "https://github.com/"),
@@ -20,7 +22,7 @@ interface PackageType {
         GEMS("gems", "https://rubygems.org/", "gems-automation", Resolvers.GEMS_RESOLVER, "artifactory-automation-gems"),
         // GENERIC("generic", "" ), Needs a remote URL. This PackageType should be created manually.
         // GITLFS("gitlfs", ""), Needs a remote URL. This PackageType should be created manually.
-        GO("go", "https://gocenter.io/"),
+        GO("go", "https://gocenter.io/", "go-default", Resolvers.GO_RESOLVER, "artifactory-automation-go", requiresVirtual = true),
         GRADLE("gradle", "https://jcenter.bintray.com", "maven-2-default", Resolvers.GRADLE_RESOLVER),
         HELM("helm", "https://storage.googleapis.com/kubernetes-charts"),
         IVY("ivy", "https://jcenter.bintray.com"),

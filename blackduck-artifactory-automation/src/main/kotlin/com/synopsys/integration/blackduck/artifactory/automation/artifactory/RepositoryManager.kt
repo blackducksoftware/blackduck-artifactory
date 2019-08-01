@@ -15,9 +15,17 @@ import kotlin.random.Random
 class RepositoryManager(private val repositoriesApiService: RepositoriesApiService, private val blackDuckPluginManager: BlackDuckPluginManager) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
 
-    fun createRepositoryInArtifactory(packageType: PackageType, repositoryType: RepositoryType): Repository {
+    fun createRepositoryInArtifactory(packageType: PackageType, repositoryType: RepositoryType, repositories: List<Repository> = emptyList()): Repository {
         val repositoryKey = generateRepositoryKey(packageType)
-        val requestedRepositoryConfiguration = RepositoryConfiguration(repositoryKey, repositoryType, packageType.packageType, packageType.remoteUrl, repositoryLayout = packageType.repoLayoutRef ?: "simple-default")
+        val repositoryKeys = repositories.map { it.key }
+        val requestedRepositoryConfiguration = RepositoryConfiguration(
+            repositoryKey,
+            repositoryType,
+            packageType.packageType,
+            packageType.remoteUrl,
+            repositoryLayout = packageType.repoLayoutRef ?: "simple-default",
+            repositories = repositoryKeys
+        )
 
         logger.info("Creating repository '$repositoryKey'")
         repositoriesApiService.createRepository(requestedRepositoryConfiguration)

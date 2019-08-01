@@ -15,6 +15,8 @@ import java.io.FileNotFoundException
 import kotlin.reflect.KFunction3
 
 class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrievalApiService, private val dockerService: DockerService, private val artifactoryConfiguration: ArtifactoryConfiguration) {
+    private val usernameReplacement = "<username>"
+    private val passwordReplacement = "<password>"
     private val serverReplacement = "<server>"
     private val repoKeyReplacement = "<repo-key>"
     private val dependencyNameReplacement = "<dependency-name>"
@@ -30,11 +32,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
 
     fun resolveComposerArtifact(repository: Repository, externalId: ExternalId) {
         val packagesJsonResource = this.javaClass.getResourceAsStream("/composer/composer.json") ?: throw FileNotFoundException("Failed to find composer.json file in resources.")
-        val packageJsonText = packagesJsonResource.convertToString()
-            .replace(serverReplacement, "127.0.0.1:${artifactoryConfiguration.port}")
-            .replace(repoKeyReplacement, repository.key)
-            .replace(dependencyNameReplacement, externalId.name)
-            .replace(dependencyVersionReplacement, externalId.version)
+        val packageJsonText = packagesJsonResource.convertToString().replaceArtifactoryData(repository, externalId)
 
         val outputFile = File("/tmp/artifactory-automation/composer/composer.json")
         outputFile.parentFile.mkdirs()
@@ -58,6 +56,32 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
             "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V")
     }
 
+    fun resolveGoArtifact(repository: Repository, externalId: ExternalId) {
+        val outputDirectory = File("/tmp/artifactory-automation/go")
+        outputDirectory.mkdirs()
+
+        val goDockerfileResource = this.javaClass.getResourceAsStream("/go/Dockerfile") ?: throw FileNotFoundException("Failed to find go Dockerfile file in resources.")
+        val goDockerfileText = goDockerfileResource.convertToString().replaceArtifactoryData(repository, externalId)
+
+        val dockerfile = File(outputDirectory, "Dockerfile")
+        dockerfile.writeText(goDockerfileText)
+        println("Dockerfile: ${dockerfile.absolutePath}")
+
+        val goModResource = this.javaClass.getResourceAsStream("/go/go.mod") ?: throw FileNotFoundException("Failed to find go.mod file in resources.")
+        val goModText = goModResource.convertToString().replaceArtifactoryData(repository, externalId)
+
+        val goModFile = File(outputDirectory, "go.mod")
+        goModFile.writeText(goModText)
+        println("composer.json: ${goModFile.absolutePath}")
+
+        val helloGoResource = this.javaClass.getResourceAsStream("/go/hello.go") ?: throw FileNotFoundException("Failed to find go.mod file in resources.")
+        val helloGoText = helloGoResource.convertToString()
+        val helloGoFile = File(outputDirectory, "hello.go")
+        helloGoFile.writeText(helloGoText)
+
+        dockerService.buildDockerfile(dockerfile, outputDirectory, PackageType.Defaults.GO.dockerImageTag!!)
+    }
+
     fun resolveMavenGradleArtifact(repository: Repository, externalId: ExternalId) {
         val group = externalId.group.replace(".", "/")
         val name = externalId.name
@@ -75,11 +99,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         // Nuget is special and cannot find all the executables it needs when run through a java process.
         // The solution is to put the command in the Dockerfile and have them run during the build.
         val packagesJsonResource = this.javaClass.getResourceAsStream("/nuget/Dockerfile") ?: throw FileNotFoundException("Failed to find nuget Dockerfile file in resources.")
-        val packageJsonText = packagesJsonResource.convertToString()
-            .replace(serverReplacement, "127.0.0.1:${artifactoryConfiguration.port}")
-            .replace(repoKeyReplacement, repository.key)
-            .replace(dependencyNameReplacement, externalId.name)
-            .replace(dependencyVersionReplacement, externalId.version)
+        val packageJsonText = packagesJsonResource.convertToString().replaceArtifactoryData(repository, externalId)
 
         val outputFile = File("/tmp/artifactory-automation/nuget/Dockerfile")
         outputFile.parentFile.mkdirs()
@@ -95,6 +115,16 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
             PackageType.Defaults.PYPI.dockerImageTag!!,
             "pip3", "install", "${externalId.name}==${externalId.version}", "--index-url=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/pypi/${repository.key}/simple"
         )
+    }
+
+    private fun String.replaceArtifactoryData(repository: Repository, externalId: ExternalId): String {
+        return this
+            .replace(usernameReplacement, artifactoryConfiguration.username)
+            .replace(passwordReplacement, artifactoryConfiguration.password)
+            .replace(serverReplacement, "127.0.0.1:${artifactoryConfiguration.port}")
+            .replace(repoKeyReplacement, repository.key)
+            .replace(dependencyNameReplacement, externalId.name)
+            .replace(dependencyVersionReplacement, externalId.version)
     }
 }
 
@@ -130,6 +160,14 @@ object Resolvers {
         ArtifactResolver::resolveGemsArtifact,
         listOf(
             TestablePackage("packaging-0.99.35.gem", externalIdFactory.createNameVersionExternalId(SupportedPackageType.GEMS.forge, "packaging", "0.99.35"))
+        )
+    )
+
+    val GO_RESOLVER = Resolver(
+        ArtifactResolver::resolveGoArtifact,
+        listOf(
+            TestablePackage("v1.3.0.zip", externalIdFactory.createNameVersionExternalId(SupportedPackageType.GO.forge, "rsc.io/sampler", "v1.3.0")),
+            TestablePackage("v1.5.2.zip", externalIdFactory.createNameVersionExternalId(SupportedPackageType.GO.forge, "rsc.io/quote", "v1.5.2"))
         )
     )
 
