@@ -28,10 +28,11 @@ class AfterCreateTest : InspectionTest() {
 
             val testablePackages = resolver.testablePackages
             testablePackages.forEach { testablePackage ->
-                resolver.resolverFunction(artifactResolver, resolverRepositoryKey, testablePackage.externalId)
+                println("Testing package: ${testablePackage.externalId.createExternalId()}")
 
+                resolver.resolverFunction(artifactResolver, resolverRepositoryKey, testablePackage.externalId)
                 componentVerificationService.waitForComponentInspection(repositoryKey, testablePackage)
-                
+
                 val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repositoryKey)
                 val repoPath = repositoryKey + artifact.path
                 val itemProperties = propertiesApiService.getProperties(repoPath) ?: throw NoPropertiesException(repoPath)

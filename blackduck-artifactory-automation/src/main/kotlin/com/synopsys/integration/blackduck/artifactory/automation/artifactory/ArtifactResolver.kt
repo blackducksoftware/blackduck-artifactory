@@ -143,7 +143,6 @@ object Resolvers {
     val COMPOSER_RESOLVER = Resolver(
         ArtifactResolver::resolveComposerArtifact,
         listOf(
-            TestablePackage("log-6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd.zip", externalIdFactory.createNameVersionExternalId(SupportedPackageType.COMPOSER.forge, "psr/log", "1.1.0")),
             TestablePackage("http-message-f6561bf28d520154e4b0ec72be95418abe6d9363.zip", externalIdFactory.createNameVersionExternalId(SupportedPackageType.COMPOSER.forge, "psr/http-message", "1.0.1"))
         )
     )

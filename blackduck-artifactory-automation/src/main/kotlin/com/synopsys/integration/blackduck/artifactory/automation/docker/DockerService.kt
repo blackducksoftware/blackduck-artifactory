@@ -77,9 +77,9 @@ class DockerService(private val imageTag: String) {
         val resourcePath = "/${packageType.packageType.toLowerCase()}/Dockerfile"
         val resourceUri = this.javaClass.getResource(resourcePath)?.toURI() ?: throw MissingResourceException("Missing resource $resourcePath", this.javaClass.name, resourcePath)
         val dockerfile = File(resourceUri)
-        var actualWorkingDirectory = workingDirectory ?: dockerfile.parentFile
+        val actualWorkingDirectory = workingDirectory ?: dockerfile.parentFile
 
-        return buildDockerfile(dockerfile, actualWorkingDirectory, imageTag = packageType.dockerImageTag!!)
+        return buildDockerfile(dockerfile, actualWorkingDirectory, imageTag = packageType.dockerImageTag!!, noCache = true)
     }
 
     fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String, cleanup: Boolean = true, noCache: Boolean = false): String {
@@ -87,13 +87,17 @@ class DockerService(private val imageTag: String) {
         if (cleanup) command.add("--rm")
         if (noCache) command.add("--no-cache")
         command.addAll(listOf("--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath))
-        runCommand().waitFor()
+
+        runCommand(*command.toTypedArray()).waitFor()
         return imageTag
     }
 
     fun runDockerImage(imageTag: String, vararg command: String, cleanup: Boolean = true, inheritIO: Boolean = true, directory: File? = null): Int {
-        val cleanupCommand = if (cleanup) "--rm" else ""
-        return runCommand("docker", "run", "--network=host", cleanupCommand, imageTag, *command, inheritIO = inheritIO, directory = directory).waitFor()
+        val dockerCommand = mutableListOf("docker", "run", "--network=host")
+        if (cleanup) dockerCommand.add("--rm")
+        dockerCommand.addAll(listOf(imageTag, *command))
+
+        return runCommand(*dockerCommand.toTypedArray(), inheritIO = inheritIO, directory = directory).waitFor()
     }
 
     private fun runCommand(vararg command: String, inheritIO: Boolean = true, directory: File? = null): Process {
