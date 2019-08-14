@@ -82,9 +82,12 @@ class DockerService(private val imageTag: String) {
         return buildDockerfile(dockerfile, actualWorkingDirectory, imageTag = packageType.dockerImageTag!!)
     }
 
-    fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String, cleanup: Boolean = true): String {
-        val cleanupCommand = if (cleanup) "--rm" else ""
-        runCommand("docker", "build", "--network=host", cleanupCommand, "--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath).waitFor()
+    fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String, cleanup: Boolean = true, noCache: Boolean = false): String {
+        val command = mutableListOf("docker", "build", "--network=host")
+        if (cleanup) command.add("--rm")
+        if (noCache) command.add("--no-cache")
+        command.addAll(listOf("--tag", imageTag, "--file", dockerFile.absolutePath, workingDirectory.absolutePath))
+        runCommand().waitFor()
         return imageTag
     }
 
