@@ -1,6 +1,5 @@
 package com.synopsys.integration.blackduck.artifactory.automation.artifactory
 
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoriesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryConfiguration
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoryType
@@ -15,61 +14,41 @@ import kotlin.random.Random
 class RepositoryManager(private val repositoriesApiService: RepositoriesApiService, private val blackDuckPluginManager: BlackDuckPluginManager) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this::class.java))
 
-    fun createRepositoryInArtifactory(packageType: PackageType, repositoryType: RepositoryType, repositories: List<Repository> = emptyList()): Repository {
-        val repositoryKey = generateRepositoryKey(packageType)
-        val repositoryKeys = repositories.map { it.key }
-        val requestedRepositoryConfiguration = RepositoryConfiguration(
-            repositoryKey,
-            repositoryType,
-            packageType.packageType,
-            packageType.remoteUrl,
-            repositoryLayout = packageType.repoLayoutRef ?: "simple-default",
-            repositories = repositoryKeys
-        )
-
-        logger.info("Creating repository '$repositoryKey'")
-        repositoriesApiService.createRepository(requestedRepositoryConfiguration)
-        val repositoryConfiguration = retrieveRepository(repositoryKey)
-
-        return Repository(repositoryKey, repositoryConfiguration, repositoryType)
-    }
-
-    fun deleteRepositoryFromArtifactory(repository: Repository?) {
-        if (repository != null) {
-            val keyToDelete = repository.key
-            logger.info("Deleting repository '$keyToDelete'")
-            repositoriesApiService.deleteRepository(keyToDelete)
-        }
+    fun getRepository(packageType: PackageType, repositoryType: RepositoryType, repositoryKey: String = getRepositoryKey(packageType, repositoryType)): RepositoryConfiguration {
+        return retrieveRepository(repositoryKey)
     }
 
     private fun retrieveRepository(repositoryKey: String): RepositoryConfiguration {
         return repositoriesApiService.getRepository(repositoryKey)
     }
 
+    private fun getRepositoryKey(packageType: PackageType, repositoryType: RepositoryType): String {
+        return "${packageType.packageType}-${repositoryType.name.toLowerCase()}"
+    }
+
     private fun generateRepositoryKey(packageType: PackageType): String {
         return "${packageType.packageType}-${Random.nextInt(0, Int.MAX_VALUE)}"
     }
 
-    fun addRepositoryToInspection(repository: Repository) {
-        modifyList(repository, InspectionModuleProperty.REPOS, addToList = true)
+    fun addRepositoryToInspection(repositoryKey: String) {
+        modifyList(repositoryKey, InspectionModuleProperty.REPOS, addToList = true)
     }
 
-    fun addRepositoryToScanner(repository: Repository) {
-        modifyList(repository, ScanModuleProperty.REPOS, addToList = true)
+    fun addRepositoryToScanner(repositoryKey: String) {
+        modifyList(repositoryKey, ScanModuleProperty.REPOS, addToList = true)
     }
 
-    fun removeRepositoryFromInspection(repository: Repository) {
-        modifyList(repository, InspectionModuleProperty.REPOS, addToList = false)
+    fun removeRepositoryFromInspection(repositoryKey: String) {
+        modifyList(repositoryKey, InspectionModuleProperty.REPOS, addToList = false)
     }
 
-    fun removeRepositoryFromScanner(repository: Repository) {
-        modifyList(repository, ScanModuleProperty.REPOS, addToList = false)
+    fun removeRepositoryFromScanner(repositoryKey: String) {
+        modifyList(repositoryKey, ScanModuleProperty.REPOS, addToList = false)
     }
 
-    private fun modifyList(repository: Repository, configurationProperty: ConfigurationProperty, addToList: Boolean = true) {
+    private fun modifyList(repositoryKey: String, configurationProperty: ConfigurationProperty, addToList: Boolean = true) {
         val properties = blackDuckPluginManager.getProperties()
         val reposEntry: String? = properties.getProperty(configurationProperty.key)
-        val key = Companion.determineRepositoryKey(repository)
 
         var repos = mutableSetOf<String>()
         if (reposEntry != null && reposEntry.isNotBlank()) {
@@ -77,21 +56,12 @@ class RepositoryManager(private val repositoriesApiService: RepositoriesApiServi
         }
 
         if (addToList) {
-            repos.add(key)
+            repos.add(repositoryKey)
         } else {
-            repos.remove(key)
+            repos.remove(repositoryKey)
         }
 
         properties.setProperty(configurationProperty.key, repos.joinToString(separator = ","))
         blackDuckPluginManager.setProperties(properties)
-    }
-
-    companion object {
-        fun determineRepositoryKey(repository: Repository): String {
-            return when (repository.type) {
-                RepositoryType.REMOTE -> "${repository.key}-cache"
-                else -> repository.key
-            }
-        }
     }
 }

@@ -3,6 +3,7 @@ package com.synopsys.integration.blackduck.artifactory.automation
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.extensions.authentication
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.ArtifactResolver
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.ArtifactoryConfigurationService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.ArtifactDeploymentApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.ArtifactRetrievalApiService
@@ -10,6 +11,7 @@ import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.plugins.PluginsApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.repositories.RepositoriesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.searches.ArtifactSearchesAPIService
+import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.system.ImportExportApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.system.SystemApiService
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
 import com.synopsys.integration.blackduck.artifactory.automation.plugin.BlackDuckPluginApiService
@@ -58,8 +60,9 @@ class ApplicationConfiguration {
         val licenseFile = File(configManager.getRequired(ConfigProperty.ARTIFACTORY_LICENSE_PATH))
         val pluginZipFile = File(configManager.getRequired(ConfigProperty.PLUGIN_ZIP_PATH))
         val pluginLoggingLevel = configManager.getRequired(ConfigProperty.PLUGIN_LOGGING_LEVEL)
+        val configImportDirectory = configManager.getRequired(ConfigProperty.CONFIG_IMPORT_DIRECTORY)
 
-        return ArtifactoryConfiguration(artifactoryUrl, artifactoryPort, artifactoryUsername, artifactoryPassword, artifactoryVersion, manageArtifactory, licenseFile, pluginZipFile, pluginLoggingLevel)
+        return ArtifactoryConfiguration(artifactoryUrl, artifactoryPort, artifactoryUsername, artifactoryPassword, artifactoryVersion, manageArtifactory, licenseFile, pluginZipFile, pluginLoggingLevel, configImportDirectory)
     }
 
     @Bean
@@ -79,7 +82,7 @@ class ApplicationConfiguration {
         fuelManager.basePath = artifactoryConfiguration.url
         fuelManager.addRequestInterceptor {
             {
-                logger.info("Making request to ${it.url}")
+                logger.info("Making ${it.method} request to ${it.url}")
                 it.authentication().basic(artifactoryConfiguration.username, artifactoryConfiguration.password)
             }
         }
@@ -125,6 +128,16 @@ class ApplicationConfiguration {
     @Bean
     fun artifactsSearchesAPIService(@Autowired fuelManager: FuelManager): ArtifactSearchesAPIService {
         return ArtifactSearchesAPIService(fuelManager)
+    }
+
+    @Bean
+    fun importExportAPIService(@Autowired fuelManager: FuelManager): ImportExportApiService {
+        return ImportExportApiService(fuelManager)
+    }
+
+    @Bean
+    fun artifactoryConfigurationService(@Autowired artifactoryConfiguration: ArtifactoryConfiguration, @Autowired importExportApiService: ImportExportApiService, @Autowired dockerService: DockerService): ArtifactoryConfigurationService {
+        return ArtifactoryConfigurationService(artifactoryConfiguration, importExportApiService, dockerService)
     }
 
     @Bean
@@ -193,5 +206,6 @@ data class ArtifactoryConfiguration(
     val manageArtifactory: Boolean,
     val licenseFile: File,
     val pluginZipFile: File,
-    val pluginLoggingLevel: String
+    val pluginLoggingLevel: String,
+    val configImportDirectory: String
 )

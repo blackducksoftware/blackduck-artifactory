@@ -5,7 +5,6 @@ import com.synopsys.integration.blackduck.artifactory.automation.ComponentVerifi
 import com.synopsys.integration.blackduck.artifactory.automation.TestablePackage
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory
@@ -36,19 +35,15 @@ abstract class SpringTest {
     @Autowired
     lateinit var componentVerificationService: ComponentVerificationService
 
-    protected fun cleanup(repository: Repository, blackDuckProjectCreated: Boolean) {
-        repositoryManager.deleteRepositoryFromArtifactory(repository)
-
-        if (blackDuckProjectCreated) {
-            val projectService = blackDuckServicesFactory.createProjectService()
-            val blackDuckService = blackDuckServicesFactory.createBlackDuckService()
-            val projectView = projectService.getProjectByName(RepositoryManager.determineRepositoryKey(repository))
-            blackDuckService.delete(projectView.get())
-        }
+    protected fun cleanupBlackDuck(repositoryKey: String) {
+        val projectService = blackDuckServicesFactory.createProjectService()
+        val blackDuckService = blackDuckServicesFactory.createBlackDuckService()
+        val projectView = projectService.getProjectByName(repositoryKey)
+        blackDuckService.delete(projectView.get())
     }
 
-    protected fun verifyNameVersionPackages(repository: Repository, testablePackages: List<TestablePackage>) {
-        val itemProperties = propertiesApiService.getProperties(repository)
+    protected fun verifyNameVersionPackages(repositoryKey: String, testablePackages: List<TestablePackage>) {
+        val itemProperties = propertiesApiService.getProperties(repositoryKey)
         Assertions.assertNotNull(itemProperties)
         println(itemProperties!!)
 
@@ -63,7 +58,7 @@ abstract class SpringTest {
         Assertions.assertTrue(projectVersionView.isPresent)
 
         testablePackages.forEach { testablePackage ->
-            componentVerificationService.waitForComponentInspection(repository, testablePackage)
+            componentVerificationService.waitForComponentInspection(repositoryKey, testablePackage)
             componentVerificationService.verifyComponentExistsInBOM(projectVersionView.get().projectVersionView, testablePackage)
         }
     }

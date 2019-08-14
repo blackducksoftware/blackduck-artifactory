@@ -2,8 +2,6 @@ package com.synopsys.integration.blackduck.artifactory.automation
 
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.PropertiesApiService
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.searches.ArtifactSearchesAPIService
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
@@ -17,11 +15,10 @@ import java.util.concurrent.TimeUnit
 class ComponentVerificationService(private val blackDuckServicesFactory: BlackDuckServicesFactory, private val propertiesApiService: PropertiesApiService, private val artifactSearchesAPIService: ArtifactSearchesAPIService) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
-    fun waitForComponentInspection(repository: Repository, testablePackage: TestablePackage, expectedInspectionStatus: InspectionStatus = InspectionStatus.SUCCESS, maxRetryCount: Int = 5, waitTime: Long = 1,
+    fun waitForComponentInspection(repositoryKey: String, testablePackage: TestablePackage, expectedInspectionStatus: InspectionStatus = InspectionStatus.SUCCESS, maxRetryCount: Int = 5, waitTime: Long = 1,
         waitTimeUnit: TimeUnit = TimeUnit.MINUTES) {
-        val repoKey = RepositoryManager.determineRepositoryKey(repository)
-        val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repoKey)
-        waitForComponentInspection(repository.key + artifact.path, expectedInspectionStatus, maxRetryCount, waitTime, waitTimeUnit, 0)
+        val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repositoryKey)
+        waitForComponentInspection(repositoryKey + artifact.path, expectedInspectionStatus, maxRetryCount, waitTime, waitTimeUnit, 0)
     }
 
     private fun waitForComponentInspection(repoPath: String, expectedInspectionStatus: InspectionStatus, maxRetryCount: Int, waitTime: Long, waitTimeUnit: TimeUnit, currentRetryCount: Int) {

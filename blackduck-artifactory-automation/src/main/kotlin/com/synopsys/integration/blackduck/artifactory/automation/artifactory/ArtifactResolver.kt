@@ -5,7 +5,6 @@ import com.synopsys.integration.bdio.model.externalid.ExternalId
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory
 import com.synopsys.integration.blackduck.artifactory.automation.ArtifactoryConfiguration
 import com.synopsys.integration.blackduck.artifactory.automation.TestablePackage
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.Repository
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.artifacts.ArtifactRetrievalApiService
 import com.synopsys.integration.blackduck.artifactory.automation.convertToString
 import com.synopsys.integration.blackduck.artifactory.automation.docker.DockerService
@@ -22,17 +21,17 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
     private val dependencyNameReplacement = "<dependency-name>"
     private val dependencyVersionReplacement = "<dependency-version>"
 
-    fun resolveBowerArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveBowerArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.BOWER)
         dockerService.runDockerImage(
             PackageType.Defaults.BOWER.dockerImageTag!!,
-            "bower", "install", "${externalId.name}#${externalId.version}", "--allow-root", "--config.registry=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/bower/${repository.key}"
+            "bower", "install", "${externalId.name}#${externalId.version}", "--allow-root", "--config.registry=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/bower/${repositoryKey}"
         )
     }
 
-    fun resolveComposerArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveComposerArtifact(repositoryKey: String, externalId: ExternalId) {
         val packagesJsonResource = this.javaClass.getResourceAsStream("/composer/composer.json") ?: throw FileNotFoundException("Failed to find composer.json file in resources.")
-        val packageJsonText = packagesJsonResource.convertToString().replaceArtifactoryData(repository, externalId)
+        val packageJsonText = packagesJsonResource.convertToString().replaceArtifactoryData(repositoryKey, externalId)
 
         val outputFile = File("/tmp/artifactory-automation/composer/composer.json")
         outputFile.parentFile.mkdirs()
@@ -43,32 +42,32 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         dockerService.runDockerImage(PackageType.Defaults.COMPOSER.dockerImageTag!!, "php", "composer.phar", "install", directory = outputFile.parentFile)
     }
 
-    fun resolveCranArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveCranArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.CRAN)
         dockerService.runDockerImage(PackageType.Defaults.CRAN.dockerImageTag!!, "r", "-e",
-            "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/${repository.key}')")
+            "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/${repositoryKey}')")
     }
 
-    fun resolveGemsArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveGemsArtifact(repositoryKey: String, externalId: ExternalId) {
         // gem install packaging --version '0.99.35' --source http://<server:port>/artifactory/api/gems/<remote-repo-key>
         dockerService.buildTestDockerfile(PackageType.Defaults.GEMS)
         dockerService.runDockerImage(PackageType.Defaults.GEMS.dockerImageTag!!, "gem", "install", externalId.name, "--version", externalId.version, "--clear-sources", "--source",
-            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repository.key}", "-V")
+            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repositoryKey}", "-V")
     }
 
-    fun resolveGoArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveGoArtifact(repositoryKey: String, externalId: ExternalId) {
         val outputDirectory = File("/tmp/artifactory-automation/go")
         outputDirectory.mkdirs()
 
         val goDockerfileResource = this.javaClass.getResourceAsStream("/go/Dockerfile") ?: throw FileNotFoundException("Failed to find go Dockerfile file in resources.")
-        val goDockerfileText = goDockerfileResource.convertToString().replaceArtifactoryData(repository, externalId)
+        val goDockerfileText = goDockerfileResource.convertToString().replaceArtifactoryData(repositoryKey, externalId)
 
         val dockerfile = File(outputDirectory, "Dockerfile")
         dockerfile.writeText(goDockerfileText)
         println("Dockerfile: ${dockerfile.absolutePath}")
 
         val goModResource = this.javaClass.getResourceAsStream("/go/go.mod") ?: throw FileNotFoundException("Failed to find go.mod file in resources.")
-        val goModText = goModResource.convertToString().replaceArtifactoryData(repository, externalId)
+        val goModText = goModResource.convertToString().replaceArtifactoryData(repositoryKey, externalId)
 
         val goModFile = File(outputDirectory, "go.mod")
         goModFile.writeText(goModText)
@@ -82,24 +81,24 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         dockerService.buildDockerfile(dockerfile, outputDirectory, PackageType.Defaults.GO.dockerImageTag!!)
     }
 
-    fun resolveMavenGradleArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveMavenGradleArtifact(repositoryKey: String, externalId: ExternalId) {
         val group = externalId.group.replace(".", "/")
         val name = externalId.name
         val version = externalId.version
-        artifactRetrievalApiService.retrieveArtifact(repository, "$group/$name/$version/$name-$version.jar")
+        artifactRetrievalApiService.retrieveArtifact(repositoryKey, "$group/$name/$version/$name-$version.jar")
     }
 
-    fun resolveNpmArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveNpmArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.NPM)
         dockerService.runDockerImage(PackageType.Defaults.NPM.dockerImageTag!!, "npm", "install", "${externalId.name}@${externalId.version}", "-g", "--registry",
-            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/${repository.key}")
+            "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/$repositoryKey")
     }
 
-    fun resolveNugetArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolveNugetArtifact(repositoryKey: String, externalId: ExternalId) {
         // Nuget is special and cannot find all the executables it needs when run through a java process.
         // The solution is to put the command in the Dockerfile and have them run during the build.
         val packagesJsonResource = this.javaClass.getResourceAsStream("/nuget/Dockerfile") ?: throw FileNotFoundException("Failed to find nuget Dockerfile file in resources.")
-        val packageJsonText = packagesJsonResource.convertToString().replaceArtifactoryData(repository, externalId)
+        val packageJsonText = packagesJsonResource.convertToString().replaceArtifactoryData(repositoryKey, externalId)
 
         val outputFile = File("/tmp/artifactory-automation/nuget/Dockerfile")
         outputFile.parentFile.mkdirs()
@@ -109,20 +108,20 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         dockerService.buildDockerfile(outputFile, outputFile.parentFile, PackageType.Defaults.NUGET.dockerImageTag!!)
     }
 
-    fun resolvePyPiArtifact(repository: Repository, externalId: ExternalId) {
+    fun resolvePyPiArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.PYPI)
         dockerService.runDockerImage(
             PackageType.Defaults.PYPI.dockerImageTag!!,
-            "pip3", "install", "${externalId.name}==${externalId.version}", "--index-url=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/pypi/${repository.key}/simple"
+            "pip3", "install", "${externalId.name}==${externalId.version}", "--index-url=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/pypi/$repositoryKey/simple"
         )
     }
 
-    private fun String.replaceArtifactoryData(repository: Repository, externalId: ExternalId): String {
+    private fun String.replaceArtifactoryData(repositoryKey: String, externalId: ExternalId): String {
         return this
             .replace(usernameReplacement, artifactoryConfiguration.username)
             .replace(passwordReplacement, artifactoryConfiguration.password)
             .replace(serverReplacement, "127.0.0.1:${artifactoryConfiguration.port}")
-            .replace(repoKeyReplacement, repository.key)
+            .replace(repoKeyReplacement, repositoryKey)
             .replace(dependencyNameReplacement, externalId.name)
             .replace(dependencyVersionReplacement, externalId.version)
     }
@@ -210,4 +209,4 @@ object Resolvers {
     )
 }
 
-data class Resolver(val resolverFunction: KFunction3<ArtifactResolver, Repository, ExternalId, Unit>, val testablePackages: List<TestablePackage>)
+data class Resolver(val resolverFunction: KFunction3<ArtifactResolver, String, ExternalId, Unit>, val testablePackages: List<TestablePackage>)

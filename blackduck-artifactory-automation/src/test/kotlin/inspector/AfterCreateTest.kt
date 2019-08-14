@@ -4,7 +4,6 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProper
 import com.synopsys.integration.blackduck.artifactory.automation.MissingPropertyException
 import com.synopsys.integration.blackduck.artifactory.automation.NoPropertiesException
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.PackageType
-import com.synopsys.integration.blackduck.artifactory.automation.artifactory.RepositoryManager
 import com.synopsys.integration.blackduck.artifactory.automation.artifactory.api.searches.ArtifactSearchesAPIService
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import org.junit.jupiter.params.ParameterizedTest
@@ -18,17 +17,16 @@ class AfterCreateTest : InspectionTest() {
     @ParameterizedTest
     @EnumSource(PackageType.Defaults::class)
     fun afterCreateTest(packageType: PackageType) {
-        resolverRequiredTest(packageType) { repository, resolver ->
-            repositoryManager.addRepositoryToInspection(repository)
+        resolverRequiredTest(packageType) { resolver, repositoryKey, resolverRepositoryKey ->
+            repositoryManager.addRepositoryToInspection(repositoryKey)
             blackDuckPluginApiService.blackDuckInitializeRepositories()
 
             val testablePackages = resolver.testablePackages
             testablePackages.forEach { testablePackage ->
-                resolver.resolverFunction(artifactResolver, repository, testablePackage.externalId)
+                resolver.resolverFunction(artifactResolver, resolverRepositoryKey, testablePackage.externalId)
 
-                val repoKey = RepositoryManager.determineRepositoryKey(repository)
-                val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repoKey)
-                val repoPath = repository.key + artifact.path
+                val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repositoryKey)
+                val repoPath = repositoryKey + artifact.path
                 val itemProperties = propertiesApiService.getProperties(repoPath) ?: throw NoPropertiesException(repoPath)
 
                 val inspectionStatusPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()
