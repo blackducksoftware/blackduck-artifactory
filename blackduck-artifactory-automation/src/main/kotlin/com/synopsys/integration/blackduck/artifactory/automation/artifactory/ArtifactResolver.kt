@@ -78,7 +78,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         val helloGoFile = File(outputDirectory, "hello.go")
         helloGoFile.writeText(helloGoText)
 
-        dockerService.buildDockerfile(dockerfile, outputDirectory, PackageType.Defaults.GO.dockerImageTag!!)
+        dockerService.buildDockerfile(dockerfile, outputDirectory, PackageType.Defaults.GO.dockerImageTag!!, noCache = true)
     }
 
     fun resolveMavenGradleArtifact(repositoryKey: String, externalId: ExternalId) {
@@ -105,7 +105,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         outputFile.writeText(packageJsonText)
         println("Dockerfile: ${outputFile.absolutePath}")
 
-        dockerService.buildDockerfile(outputFile, outputFile.parentFile, PackageType.Defaults.NUGET.dockerImageTag!!)
+        dockerService.buildDockerfile(outputFile, outputFile.parentFile, PackageType.Defaults.NUGET.dockerImageTag!!, noCache = true)
     }
 
     fun resolvePyPiArtifact(repositoryKey: String, externalId: ExternalId) {
