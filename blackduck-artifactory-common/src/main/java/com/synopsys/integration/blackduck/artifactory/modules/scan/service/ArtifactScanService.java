@@ -132,6 +132,7 @@ public class ArtifactScanService {
         final int scanMemory = scanModuleConfig.getMemory();
         final boolean dryRun = scanModuleConfig.getDryRun();
         final boolean useRepoPathAsCodeLocationName = scanModuleConfig.getRepoPathCodelocation();
+        final boolean useHostnameInCodeLocationName = scanModuleConfig.getCodelocationIncludeHostname();
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
         final BlackDuckHttpClient blackDuckHttpClient = blackDuckServerConfig.createBlackDuckHttpClient(logger);
         final ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(LoggerFactory.getLogger("SignatureScanner")), blackDuckHttpClient, intEnvironmentVariables, new NoThreadExecutorService());
@@ -148,8 +149,12 @@ public class ArtifactScanService {
 
         String codeLocationName = null;
         if (useRepoPathAsCodeLocationName) {
-            final String hostName = HostNameHelper.getMyHostName("UNKNOWN_HOST");
-            codeLocationName = String.format("%s#%s", hostName, repoPath.toPath());
+            if (useHostnameInCodeLocationName) {
+                final String hostName = HostNameHelper.getMyHostName("UNKNOWN_HOST");
+                codeLocationName = String.format("%s#%s", hostName, repoPath.toPath());
+            } else {
+                codeLocationName = repoPath.toPath();
+            }
         }
 
         final ScanTarget scanTarget = ScanTarget.createBasicTarget(scanTargetPath, null, codeLocationName);

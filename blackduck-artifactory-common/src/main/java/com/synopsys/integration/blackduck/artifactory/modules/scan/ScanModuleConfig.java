@@ -42,13 +42,14 @@ public class ScanModuleConfig extends ModuleConfig {
     private final Integer memory;
     private final Boolean repoPathCodelocation;
     private final List<String> repos;
+    private final Boolean codelocationIncludeHostname;
 
     private final File cliDirectory;
 
     private final DateTimeManager dateTimeManager;
 
     public ScanModuleConfig(final Boolean enabled, final String cron, final String binariesDirectoryPath, final String artifactCutoffDate, final Boolean dryRun, final List<String> namePatterns, final Integer memory,
-        final Boolean repoPathCodelocation, final List<String> repos, final File cliDirectory, final DateTimeManager dateTimeManager) {
+        final Boolean repoPathCodelocation, final List<String> repos, final Boolean codelocationIncludeHostname, final File cliDirectory, final DateTimeManager dateTimeManager) {
         super(ScanModule.class.getSimpleName(), enabled);
         this.cron = cron;
         this.binariesDirectoryPath = binariesDirectoryPath;
@@ -58,6 +59,7 @@ public class ScanModuleConfig extends ModuleConfig {
         this.memory = memory;
         this.repoPathCodelocation = repoPathCodelocation;
         this.repos = repos;
+        this.codelocationIncludeHostname = codelocationIncludeHostname;
         this.cliDirectory = cliDirectory;
         this.dateTimeManager = dateTimeManager;
     }
@@ -75,8 +77,9 @@ public class ScanModuleConfig extends ModuleConfig {
         final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
+        final Boolean codelocationIncludeHostname = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.CODELOCATION_INCLUDE_HOSTNAME);
 
-        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, cliDirectory, dateTimeManager);
+        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, codelocationIncludeHostname, cliDirectory, dateTimeManager);
     }
 
     @Override
@@ -127,5 +130,9 @@ public class ScanModuleConfig extends ModuleConfig {
 
     public File getCliDirectory() {
         return cliDirectory;
+    }
+
+    public Boolean getCodelocationIncludeHostname() {
+        return codelocationIncludeHostname;
     }
 }

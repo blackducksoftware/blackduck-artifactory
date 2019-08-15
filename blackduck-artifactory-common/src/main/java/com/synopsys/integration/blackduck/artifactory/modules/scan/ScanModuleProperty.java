@@ -34,7 +34,8 @@ public enum ScanModuleProperty implements ConfigurationProperty {
     MEMORY("memory"),
     REPO_PATH_CODELOCATION("repo.path.codelocation"),
     REPOS("repos"),
-    REPOS_CSV_PATH("repos.csv.path");
+    REPOS_CSV_PATH("repos.csv.path"),
+    CODELOCATION_INCLUDE_HOSTNAME("codelocation.include.hostname");
 
     private final String key;
 
