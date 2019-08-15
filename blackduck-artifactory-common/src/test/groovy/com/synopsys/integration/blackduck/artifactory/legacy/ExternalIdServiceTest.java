@@ -53,6 +53,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 
 // TODO: Add composer test. Might be tricky.
@@ -112,6 +113,12 @@ public class ExternalIdServiceTest {
         testMavenDependencyCreation(SupportedPackageType.GRADLE);
     }
 
+    @Test
+    public void createCondaExternalId() {
+        // TODO: Add conda test
+        //        throw new NotImplementedException();
+    }
+
     private void testNameVersionExternalIdCreation(final Map<String, String> propertiesMap, final SupportedPackageType supportedPackageType) {
         final MockRepoPath repoPath = createValidRepoPath(propertiesMap, supportedPackageType);
         final MockRepoPath repoPathMissingFileLayout = createRepoPathMissingFileLayout(repoPath);
@@ -124,9 +131,12 @@ public class ExternalIdServiceTest {
         final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
+        final CondaExternalIdExtractor condaExternalIdExtractor = mock(CondaExternalIdExtractor.class);
+        when(condaExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
+            .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
 
         final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor,
-            composerExternalIdExtractor);
+            composerExternalIdExtractor, condaExternalIdExtractor);
 
         Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);
 
@@ -154,9 +164,11 @@ public class ExternalIdServiceTest {
         final ComposerExternalIdExtractor composerExternalIdExtractor = mock(ComposerExternalIdExtractor.class);
         when(composerExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
             .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
+        final CondaExternalIdExtractor condaExternalIdExtractor = mock(CondaExternalIdExtractor.class);
+        when(condaExternalIdExtractor.extractExternalId(supportedPackageType, repoPath))
+            .then((Answer<Optional<ExternalId>>) invocation -> Optional.empty());
 
-        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor,
-            composerExternalIdExtractor);
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor, condaExternalIdExtractor);
 
         Optional<ExternalId> externalId = externalIdService.extractExternalId(repoPath);
         assertTrue(externalId.isPresent());

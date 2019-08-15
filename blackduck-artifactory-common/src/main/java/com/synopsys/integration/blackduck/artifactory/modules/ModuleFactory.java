@@ -42,6 +42,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRetrievalService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
@@ -118,7 +119,8 @@ public class ModuleFactory {
 
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
         final ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
-        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor);
+        final CondaExternalIdExtractor condaExternalIdExtractor = new CondaExternalIdExtractor(externalIdFactory);
+        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor, condaExternalIdExtractor);
         final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, inspectionModuleConfig, inspectionPropertyService, projectService, componentService,
             externalIdService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);

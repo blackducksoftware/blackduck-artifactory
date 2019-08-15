@@ -32,6 +32,7 @@ public enum InspectionModuleProperty implements ConfigurationProperty {
     PATTERNS_BOWER("patterns.bower"),
     PATTERNS_COCOAPODS("patterns.cocoapods"),
     PATTERNS_COMPOSER("patterns.composer"),
+    PATTERNS_CONDA("patterns.conda"),
     PATTERNS_CRAN("patterns.cran"),
     PATTERNS_RUBYGEMS("patterns.rubygems"),
     PATTERNS_MAVEN("patterns.maven"),

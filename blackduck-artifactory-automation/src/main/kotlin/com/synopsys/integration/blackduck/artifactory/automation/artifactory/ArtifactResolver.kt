@@ -42,10 +42,16 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         dockerService.runDockerImage(PackageType.Defaults.COMPOSER.dockerImageTag!!, "php", "composer.phar", "install", directory = outputFile.parentFile)
     }
 
+    fun resolveCondaArtifact(repositoryKey: String, externalId: ExternalId) {
+        dockerService.buildTestDockerfile(PackageType.Defaults.CONDA)
+        dockerService.runDockerImage(PackageType.Defaults.CONDA.dockerImageTag!!, "conda", "install", "--override-channels", "--channel", "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/conda/$repositoryKey",
+            "${externalId.name}=${externalId.version}")
+    }
+
     fun resolveCranArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.CRAN)
         dockerService.runDockerImage(PackageType.Defaults.CRAN.dockerImageTag!!, "r", "-e",
-            "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/${repositoryKey}')")
+            "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/$repositoryKey')")
     }
 
     fun resolveGemsArtifact(repositoryKey: String, externalId: ExternalId) {
@@ -144,6 +150,13 @@ object Resolvers {
         ArtifactResolver::resolveComposerArtifact,
         listOf(
             TestablePackage("http-message-f6561bf28d520154e4b0ec72be95418abe6d9363.zip", externalIdFactory.createNameVersionExternalId(SupportedPackageType.COMPOSER.forge, "psr/http-message", "1.0.1"))
+        )
+    )
+
+    val CONDA_RESOLVER = Resolver(
+        ArtifactResolver::resolveCondaArtifact,
+        listOf(
+            TestablePackage("numpy-1.13.1-py27_0.tar.bz2", externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "numpy", "numpy-1.13.1-py27_0-linux-64"))
         )
     )
 

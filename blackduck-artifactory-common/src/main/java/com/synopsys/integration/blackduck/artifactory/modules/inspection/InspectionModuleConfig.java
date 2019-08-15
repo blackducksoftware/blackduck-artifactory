@@ -111,7 +111,7 @@ public class InspectionModuleConfig extends ModuleConfig {
                    .orElse(Collections.emptyList());
     }
 
-    private List<String> getPatternsForPackageType(final SupportedPackageType packageType) {
+    public List<String> getPatternsForPackageType(final SupportedPackageType packageType) {
         return patternMap.get(packageType);
     }
 }

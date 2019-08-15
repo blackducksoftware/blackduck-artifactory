@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -40,11 +41,14 @@ public class ExternalIdService {
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor;
     private final ComposerExternalIdExtractor composerExternalIdFactory;
+    private final CondaExternalIdExtractor condaExternalIdExtractor;
 
-    public ExternalIdService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor, final ComposerExternalIdExtractor composerExternalIdFactory) {
+    public ExternalIdService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor, final ComposerExternalIdExtractor composerExternalIdFactory,
+        final CondaExternalIdExtractor condaExternalIdExtractor) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactoryInfoExternalIdExtractor = artifactoryInfoExternalIdExtractor;
         this.composerExternalIdFactory = composerExternalIdFactory;
+        this.condaExternalIdExtractor = condaExternalIdExtractor;
     }
 
     public Optional<ExternalId> extractExternalId(final RepoPath repoPath) {
@@ -58,6 +62,8 @@ public class ExternalIdService {
 
             if (supportedPackageType.equals(SupportedPackageType.COMPOSER)) {
                 externalId = composerExternalIdFactory.extractExternalId(supportedPackageType, repoPath).orElse(null);
+            } else if (supportedPackageType.equals(SupportedPackageType.CONDA)) {
+                externalId = condaExternalIdExtractor.extractExternalId(supportedPackageType, repoPath).orElse(null);
             }
 
             if (externalId == null) {
