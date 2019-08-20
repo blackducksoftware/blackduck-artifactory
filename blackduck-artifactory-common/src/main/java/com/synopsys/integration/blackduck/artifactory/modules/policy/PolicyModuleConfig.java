@@ -22,23 +22,38 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class PolicyModuleConfig extends ModuleConfig {
-    public PolicyModuleConfig(final Boolean enabled) {
+    private final List<PolicySeverityType> policySeverityTypes;
+
+    public PolicyModuleConfig(final Boolean enabled, final List<PolicySeverityType> policySeverityTypes) {
         super(PolicyModule.class.getSimpleName(), enabled);
+        this.policySeverityTypes = policySeverityTypes;
     }
 
     public static PolicyModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
         final Boolean enabled = configurationPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
+        final List<PolicySeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(PolicyModuleProperty.SEVERITY_TYPES).stream()
+                                                                 .map(PolicySeverityType::valueOf)
+                                                                 .collect(Collectors.toList());
 
-        return new PolicyModuleConfig(enabled);
+        return new PolicyModuleConfig(enabled, policySeverityTypes);
     }
 
     @Override
     public void validate(final PropertyGroupReport propertyGroupReport) {
         validateBoolean(propertyGroupReport, PolicyModuleProperty.ENABLED, isEnabledUnverified());
+        validateList(propertyGroupReport, PolicyModuleProperty.SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
+    }
+
+    public List<PolicySeverityType> getPolicySeverityTypes() {
+        return policySeverityTypes;
     }
 }

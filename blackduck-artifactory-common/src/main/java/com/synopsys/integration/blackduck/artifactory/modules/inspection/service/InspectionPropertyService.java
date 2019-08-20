@@ -40,7 +40,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
@@ -75,25 +76,20 @@ public class InspectionPropertyService {
         return !hasInspectionStatus(repoPath) || (assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < inspectionModuleConfig.getRetryCount());
     }
 
-    public void setPolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
-        this.populatePolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate, true);
+    public void setVulnerabilityProperties(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate) {
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getHighSeverityCount()), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getMediumSeverityCount()), logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getLowSeverityCount()), logger);
     }
 
-    public void updatePolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate) {
-        this.populatePolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate, false);
+    public void setPolicyProperties(final RepoPath repoPath, final PolicyStatusReport policyStatusReport) {
+        final String policySeverityTypes = StringUtils.join(policyStatusReport.getPolicySeverityTypes(), ",");
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusReport.getPolicySummaryStatusType().name(), logger);
     }
 
-    private void populatePolicyAndVulnerabilityProperties(final RepoPath repoPath, final PolicyVulnerabilityAggregate policyVulnerabilityAggregate, final boolean overrideValues) {
-        if (overrideValues || policyVulnerabilityAggregate.hasVulnerabilityData()) {
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, policyVulnerabilityAggregate.getHighVulnerabilities(), logger);
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, policyVulnerabilityAggregate.getMediumVulnerabilities(), logger);
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, policyVulnerabilityAggregate.getLowVulnerabilities(), logger);
-        }
-        if (overrideValues || policyVulnerabilityAggregate.hasPolicyData()) {
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyVulnerabilityAggregate.getPolicySummaryStatusType(), logger);
-        }
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, policyVulnerabilityAggregate.getComponentVersionUrl(), logger);
-        setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
+    public void setComponentVersionUrl(final RepoPath repoPath, final String componentVersionUrl) {
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, componentVersionUrl, logger);
     }
 
     public void failInspection(final FailedInspectionException failedInspectionException) {
@@ -180,16 +176,16 @@ public class InspectionPropertyService {
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionName, logger);
     }
 
-    public void updateUIUrl(final RepoPath repoPath, final String projectName, final String projectVersion) throws IntegrationException {
+    public void updateProjectUIUrl(final RepoPath repoPath, final String projectName, final String projectVersion) throws IntegrationException {
         final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersion);
 
         if (projectVersionWrapper.isPresent()) {
             final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
-            updateUIUrl(repoPath, projectVersionView);
+            updateProjectUIUrl(repoPath, projectVersionView);
         }
     }
 
-    public void updateUIUrl(final RepoPath repoPath, final ProjectVersionView projectVersionView) {
+    public void updateProjectUIUrl(final RepoPath repoPath, final ProjectVersionView projectVersionView) {
         projectVersionView.getHref().ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
     }
 

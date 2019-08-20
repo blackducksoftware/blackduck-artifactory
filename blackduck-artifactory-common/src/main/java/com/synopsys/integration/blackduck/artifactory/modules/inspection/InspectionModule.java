@@ -37,17 +37,32 @@ import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableSetMultimap;
+import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyRuleView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
+import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
+import com.synopsys.integration.blackduck.service.BlackDuckService;
+import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -62,10 +77,14 @@ public class InspectionModule implements Module {
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
     private final RepositoryInitializationService repositoryInitializationService;
     private final ArtifactInspectionService artifactInspectionService;
+    private final ProjectService projectService;
+    private final BlackDuckBOMService blackDuckBOMService;
+    private final BlackDuckService blackDuckService;
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactoryPAPIService artifactoryPAPIService, final MetaDataUpdateService metaDataUpdateService,
         final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
-        final RepositoryInitializationService repositoryInitializationService, final ArtifactInspectionService artifactInspectionService) {
+        final RepositoryInitializationService repositoryInitializationService, final ArtifactInspectionService artifactInspectionService, final ProjectService projectService,
+        final BlackDuckBOMService blackDuckBOMService, final BlackDuckService blackDuckService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataUpdateService = metaDataUpdateService;
@@ -74,11 +93,64 @@ public class InspectionModule implements Module {
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
         this.repositoryInitializationService = repositoryInitializationService;
         this.artifactInspectionService = artifactInspectionService;
+        this.projectService = projectService;
+        this.blackDuckBOMService = blackDuckBOMService;
+        this.blackDuckService = blackDuckService;
     }
 
     @Override
     public InspectionModuleConfig getModuleConfig() {
         return inspectionModuleConfig;
+    }
+
+    // TODO: Remove in 9.0.0
+    public void performPolicySeverityUpgrade() {
+        for (final String repoKey : inspectionModuleConfig.getRepos()) {
+            final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
+            final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+            try {
+                final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
+                if (projectVersionWrapper.isPresent()) {
+                    final List<RepoPath> severityUpdateRepoPaths = artifactoryPAPIService.itemsByProperties(
+                        ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.SUCCESS.name()),
+                        repoKey
+                    );
+
+                    for (final RepoPath repoPath : severityUpdateRepoPaths) {
+                        if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES)) {
+                            final String componentVersionUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL)
+                                                                   .orElseThrow(() -> new FailedInspectionException(repoPath, "Failed to perform policy severity upgrade due to missing component version url."));
+                            final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionWrapper.get().getProjectVersionView());
+                            final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
+                            final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
+                            final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
+                            final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
+                                                                                     .map(VersionBomPolicyRuleView::getSeverity)
+                                                                                     .map(PolicySeverityType::valueOf)
+                                                                                     .collect(Collectors.toList());
+                            final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policyStatus, policySeverityTypes);
+                            inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
+                        }
+                    }
+                } else {
+                    logger.warn("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.");
+                }
+            } catch (final IntegrationException e) {
+                logger.error(String.format("Failed to perform the policy severity upgrade for repo '%s'. The %s may not work as expected.", repoKey, PolicyModule.class.getSimpleName()), e);
+            }
+        }
+    }
+
+    // TODO: Remove in 9.0.0
+    public void performNpmForgeUpgrade() {
+        final List<RepoPath> repoPaths = artifactoryPAPIService.itemsByProperties(
+            ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), "npm"),
+            inspectionModuleConfig.getRepos().toArray(new String[0])
+        );
+        for (final RepoPath repoPath : repoPaths) {
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, SupportedPackageType.NPM.getForge().getName(), logger);
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
+        }
     }
 
     //////////////////////// New cron jobs ////////////////////////

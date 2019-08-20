@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.component.VersionBomOriginView;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -46,7 +45,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.ProjectService;
@@ -154,10 +152,11 @@ public class ArtifactInspectionService {
         try {
             final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
             final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+
             projectVersionView = projectService.getProjectVersion(projectName, projectVersionName)
                                      .map(ProjectVersionWrapper::getProjectVersionView)
                                      .orElseThrow(() -> new IntegrationException(String.format("Project '%s' and version '%s' could not be found.", projectName, projectVersionName)));
-            inspectionPropertyService.updateUIUrl(repoKeyPath, projectVersionView);
+            inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
         } catch (final IntegrationException e) {
             logger.debug("An error occurred when attempting to get the project version from Black Duck.", e);
             throw new FailedInspectionException(repoKeyPath, String.format("Failed to get project version from Black Duck: %s", e.getMessage()));
@@ -183,12 +182,11 @@ public class ArtifactInspectionService {
 
         if (versionBomOriginView.isPresent()) {
             final ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
-            final PolicySummaryStatusType policySummaryStatusType = componentViewWrapper.getVersionBomComponentView().getPolicyStatus();
             final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
             final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
-            final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = new PolicyVulnerabilityAggregate(vulnerabilityAggregate, policySummaryStatusType, componentVersionView.getHref().orElse(null));
 
-            inspectionPropertyService.setPolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
+            inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
+            componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentVersionUrl));
             inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
             final String forge = versionBomOriginView.get().getExternalNamespace();
             final String originId = versionBomOriginView.get().getExternalId();
@@ -196,7 +194,6 @@ public class ArtifactInspectionService {
         } else {
             throw new FailedInspectionException(repoPath, "No OriginViews were found for component.");
         }
-
     }
 
     private boolean shouldPerformDeltaAnalysis(final RepoPath repoPath) {

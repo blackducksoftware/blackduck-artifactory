@@ -26,17 +26,24 @@ import java.util.List;
 
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.PolicyStatusView;
+import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.util.NameVersion;
 
 public class PolicyStatusNotification extends BlackDuckNotification {
     private final PolicyStatusView policyStatusView;
+    private final List<PolicyInfo> policyInfos;
 
-    public PolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final ComponentVersionView componentVersionView, final PolicyStatusView policyStatusView) {
+    public PolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final ComponentVersionView componentVersionView, final PolicyStatusView policyStatusView, final List<PolicyInfo> policyInfos) {
         super(affectedProjectVersions, componentVersionView);
         this.policyStatusView = policyStatusView;
+        this.policyInfos = policyInfos;
     }
 
     public PolicyStatusView getPolicyStatusView() {
         return policyStatusView;
+    }
+
+    public List<PolicyInfo> getPolicyInfos() {
+        return policyInfos;
     }
 }

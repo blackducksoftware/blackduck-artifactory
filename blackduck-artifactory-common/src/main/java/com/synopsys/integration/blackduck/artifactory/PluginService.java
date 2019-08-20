@@ -25,17 +25,14 @@ package com.synopsys.integration.blackduck.artifactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.Repositories;
 import org.artifactory.search.Searches;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigValidationService;
@@ -50,8 +47,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleProperty;
@@ -122,15 +117,9 @@ public class PluginService {
         final PluginAPI pluginAPI = PluginAPI.createFromModules(moduleManager, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
         analyticsService.registerAnalyzable(pluginAPI);
 
-        // TODO: Remove in 9.0.0
-        final List<RepoPath> repoPaths = artifactoryPAPIService.itemsByProperties(
-            ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), "npm"),
-            inspectionModule.getModuleConfig().getRepos().toArray(new String[0])
-        );
-        for (final RepoPath repoPath : repoPaths) {
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, SupportedPackageType.NPM.getForge().getName(), logger);
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
-        }
+        // TODO: Remove upgrades in 9.0.0
+        inspectionModule.performNpmForgeUpgrade();
+        inspectionModule.performPolicySeverityUpgrade();
 
         logger.info("...blackDuckPlugin initialized.");
         return pluginAPI;

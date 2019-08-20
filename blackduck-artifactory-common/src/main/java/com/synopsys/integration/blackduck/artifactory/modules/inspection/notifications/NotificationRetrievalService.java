@@ -35,6 +35,7 @@ import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionVie
 import com.synopsys.integration.blackduck.api.generated.view.PolicyStatusView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionStatus;
+import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationClearedNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationNotificationContent;
@@ -77,19 +78,20 @@ public class NotificationRetrievalService {
                 final RuleViolationNotificationUserView ruleViolationNotificationView = (RuleViolationNotificationUserView) notificationUserView;
                 final RuleViolationNotificationContent content = ruleViolationNotificationView.getContent();
                 final List<ComponentVersionStatus> componentVersionStatuses = content.getComponentVersionStatuses();
-                final List<PolicyStatusNotification> notifications = createPolicyStatusNotifications(componentVersionStatuses, content.getProjectName(), content.getProjectVersionName());
+                final List<PolicyStatusNotification> notifications = createPolicyStatusNotifications(componentVersionStatuses, content.getProjectName(), content.getProjectVersionName(), content.getPolicyInfos());
                 policyStatusNotifications.addAll(notifications);
             } else if (notificationUserView instanceof RuleViolationClearedNotificationUserView) {
                 final RuleViolationClearedNotificationUserView ruleViolationClearedNotificationUserView = (RuleViolationClearedNotificationUserView) notificationUserView;
                 final RuleViolationClearedNotificationContent content = ruleViolationClearedNotificationUserView.getContent();
                 final List<ComponentVersionStatus> componentVersionStatuses = content.getComponentVersionStatuses();
-                final List<PolicyStatusNotification> notifications = createPolicyStatusNotifications(componentVersionStatuses, content.getProjectName(), content.getProjectVersionName());
+                final List<PolicyStatusNotification> notifications = createPolicyStatusNotifications(componentVersionStatuses, content.getProjectName(), content.getProjectVersionName(), content.getPolicyInfos());
                 policyStatusNotifications.addAll(notifications);
             } else if (notificationUserView instanceof PolicyOverrideNotificationUserView) {
                 final PolicyOverrideNotificationUserView policyOverrideNotificationUserView = (PolicyOverrideNotificationUserView) notificationUserView;
                 final PolicyOverrideNotificationContent content = policyOverrideNotificationUserView.getContent();
                 final NameVersion affectedProjectVersion = new NameVersion(content.getProjectName(), content.getProjectVersionName());
-                final PolicyStatusNotification policyStatusNotification = createPolicyStatusNotification(Collections.singletonList(affectedProjectVersion), content.getComponentVersion(), content.getBomComponentVersionPolicyStatus());
+                final PolicyStatusNotification policyStatusNotification = createPolicyStatusNotification(Collections.singletonList(affectedProjectVersion), content.getComponentVersion(), content.getBomComponentVersionPolicyStatus(),
+                    content.getPolicyInfos());
                 policyStatusNotifications.add(policyStatusNotification);
             }
         } catch (final IntegrationException e) {
@@ -99,25 +101,28 @@ public class NotificationRetrievalService {
         return policyStatusNotifications;
     }
 
-    private List<PolicyStatusNotification> createPolicyStatusNotifications(final List<ComponentVersionStatus> componentVersionStatuses, final String projectName, final String projectVersionName) throws IntegrationException {
+    private List<PolicyStatusNotification> createPolicyStatusNotifications(final List<ComponentVersionStatus> componentVersionStatuses, final String projectName, final String projectVersionName,
+        final List<PolicyInfo> policyInfos) throws IntegrationException {
         final NameVersion affectedProjectVersion = new NameVersion(projectName, projectVersionName);
         final List<NameVersion> affectedProjectVersions = Collections.singletonList(affectedProjectVersion);
         final List<PolicyStatusNotification> policyStatusNotifications = new ArrayList<>();
         for (final ComponentVersionStatus componentVersionStatus : componentVersionStatuses) {
-            final PolicyStatusNotification policyStatusNotification = createPolicyStatusNotification(affectedProjectVersions, componentVersionStatus.getComponentVersion(), componentVersionStatus.getBomComponentVersionPolicyStatus());
+            final PolicyStatusNotification policyStatusNotification = createPolicyStatusNotification(affectedProjectVersions, componentVersionStatus.getComponentVersion(), componentVersionStatus.getBomComponentVersionPolicyStatus(),
+                policyInfos);
             policyStatusNotifications.add(policyStatusNotification);
         }
 
         return policyStatusNotifications;
     }
 
-    private PolicyStatusNotification createPolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final String componentVersionUrl, final String policyStatusUrl) throws IntegrationException {
+    private PolicyStatusNotification createPolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final String componentVersionUrl, final String policyStatusUrl,
+        final List<PolicyInfo> policyInfos) throws IntegrationException {
         final UriSingleResponse<ComponentVersionView> componentVersionViewUriSingleResponse = new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class);
         final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUriSingleResponse);
         final UriSingleResponse<PolicyStatusView> policyStatusViewUriSingleResponse = new UriSingleResponse<>(policyStatusUrl, PolicyStatusView.class);
         final PolicyStatusView policyStatus = blackDuckService.getResponse(policyStatusViewUriSingleResponse);
 
-        return new PolicyStatusNotification(affectedProjectVersions, componentVersionView, policyStatus);
+        return new PolicyStatusNotification(affectedProjectVersions, componentVersionView, policyStatus, policyInfos);
     }
 
     public List<VulnerabilityNotification> getVulnerabilityNotifications(final List<NotificationUserView> notificationUserViews) {

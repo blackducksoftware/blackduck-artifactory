@@ -118,7 +118,7 @@ public class RepositoryInitializationService {
                 projectVersionView = projectVersionWrapper.get().getProjectVersionView();
             }
 
-            inspectionPropertyService.updateUIUrl(repoKeyPath, projectVersionView);
+            inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
         } catch (final IntegrationException e) {
             final String message = String.format("Failed to create project and version in Black Duck for repository '%s'", repoKey);

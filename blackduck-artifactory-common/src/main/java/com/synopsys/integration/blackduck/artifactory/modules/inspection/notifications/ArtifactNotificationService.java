@@ -38,18 +38,21 @@ import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
 import com.synopsys.integration.blackduck.api.generated.discovery.ApiDiscovery;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
+import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.AffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.BlackDuckNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyStatusNotification;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyVulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
@@ -81,20 +84,38 @@ public class ArtifactNotificationService {
     public void updateMetadataFromNotifications(final List<RepoPath> repoKeyPaths, final Date startDate, final Date endDate) throws IntegrationException {
         final UserView currentUser = blackDuckService.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
         final List<NotificationUserView> notificationUserViews = notificationService.getAllUserNotifications(currentUser, startDate, endDate);
-        final Map<String, PolicyVulnerabilityAggregate.Builder> artifactMetadataAggregateMap = new HashMap<>();
         final List<VulnerabilityNotification> vulnerabilityNotifications = notificationRetrievalService.getVulnerabilityNotifications(notificationUserViews);
         final List<PolicyStatusNotification> policyStatusNotifications = notificationRetrievalService.getPolicyStatusNotifications(notificationUserViews);
 
         final List<String> repoKeys = repoKeyPaths.stream().map(RepoPath::getRepoKey).collect(Collectors.toList());
-        processVulnerabilityNotifications(repoKeys, vulnerabilityNotifications, artifactMetadataAggregateMap);
-        processPolicyStatusNotifications(repoKeys, policyStatusNotifications, artifactMetadataAggregateMap);
-
         final Set<String> updatedRepoKeys = new HashSet<>();
-        for (final Map.Entry<String, PolicyVulnerabilityAggregate.Builder> entry : artifactMetadataAggregateMap.entrySet()) {
-            final RepoPath repoPath = RepoPathFactory.create(entry.getKey());
-            final PolicyVulnerabilityAggregate policyVulnerabilityAggregate = entry.getValue().build();
 
-            inspectionPropertyService.updatePolicyAndVulnerabilityProperties(repoPath, policyVulnerabilityAggregate);
+        final List<AffectedArtifact<VulnerabilityNotification>> vulnerabilityArtifacts = processVulnerabilityNotifications(repoKeys, vulnerabilityNotifications);
+        for (final AffectedArtifact<VulnerabilityNotification> vulnerableArtifact : vulnerabilityArtifacts) {
+            final RepoPath repoPath = vulnerableArtifact.getRepoPath();
+            final VulnerabilityAggregate vulnerabilityAggregate = vulnerableArtifact.getBlackDuckNotification().getVulnerabilityAggregate();
+            final Optional<String> componentVersionUrl = vulnerableArtifact.getBlackDuckNotification().getComponentVersionView().getHref();
+            inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
+            componentVersionUrl.ifPresent(it -> inspectionPropertyService.setComponentVersionUrl(repoPath, it));
+            updatedRepoKeys.add(repoPath.getRepoKey());
+        }
+
+        final List<AffectedArtifact<PolicyStatusNotification>> policyArtifacts = processPolicyStatusNotifications(repoKeys, policyStatusNotifications);
+        for (final AffectedArtifact<PolicyStatusNotification> policyArtifact : policyArtifacts) {
+            final RepoPath repoPath = policyArtifact.getRepoPath();
+            final PolicyStatusNotification policyStatusNotification = policyArtifact.getBlackDuckNotification();
+            final Optional<String> componentVersionUrl = policyStatusNotification.getComponentVersionView().getHref();
+
+            final String policyApprovalStatus = policyStatusNotification.getPolicyStatusView().getApprovalStatus().name();
+            final PolicySummaryStatusType policySummaryStatusType = PolicySummaryStatusType.valueOf(policyApprovalStatus);
+            final List<PolicySeverityType> policySeverityTypes = policyStatusNotification.getPolicyInfos().stream()
+                                                                     .map(PolicyInfo::getSeverity)
+                                                                     .map(PolicySeverityType::valueOf)
+                                                                     .collect(Collectors.toList());
+            final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
+
+            inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
+            componentVersionUrl.ifPresent(it -> inspectionPropertyService.setComponentVersionUrl(repoPath, it));
             updatedRepoKeys.add(repoPath.getRepoKey());
         }
 
@@ -108,7 +129,7 @@ public class ArtifactNotificationService {
             final String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
             final String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
             try {
-                inspectionPropertyService.updateUIUrl(repoKeyPath, repoProjectName, repoProjectVersionName);
+                inspectionPropertyService.updateProjectUIUrl(repoKeyPath, repoProjectName, repoProjectVersionName);
             } catch (final IntegrationException e) {
                 logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoKey));
             }
@@ -122,48 +143,18 @@ public class ArtifactNotificationService {
                    .map(NotificationUserView::getCreatedAt);
     }
 
-    private void processVulnerabilityNotifications(final List<String> repoKeys, final List<VulnerabilityNotification> vulnerabilityNotifications, final Map<String, PolicyVulnerabilityAggregate.Builder> artifactMetadataAggregateMap) {
-        final List<AffectedArtifact<VulnerabilityNotification>> affectedArtifacts = vulnerabilityNotifications.stream()
-                                                                                        .map(notification -> findAffectedArtifacts(repoKeys, notification))
-                                                                                        .flatMap(List::stream)
-                                                                                        .collect(Collectors.toList());
-
-        for (final AffectedArtifact<VulnerabilityNotification> affectedArtifact : affectedArtifacts) {
-            final VulnerabilityNotification vulnerabilityNotification = affectedArtifact.getBlackDuckNotification();
-            final VulnerabilityAggregate vulnerabilityAggregate = vulnerabilityNotification.getVulnerabilityAggregate();
-            final Optional<String> href = affectedArtifact.getBlackDuckNotification().getComponentVersionView().getHref();
-            final PolicyVulnerabilityAggregate.Builder builder = getPolicyVulnerabilityAggregateBuilder(affectedArtifact, artifactMetadataAggregateMap);
-            builder.setVulnerabilityAggregate(vulnerabilityAggregate);
-            builder.setComponentVersionUrl(href.orElse(null));
-        }
+    private List<AffectedArtifact<VulnerabilityNotification>> processVulnerabilityNotifications(final List<String> repoKeys, final List<VulnerabilityNotification> vulnerabilityNotifications) {
+        return vulnerabilityNotifications.stream()
+                   .map(notification -> findAffectedArtifacts(repoKeys, notification))
+                   .flatMap(List::stream)
+                   .collect(Collectors.toList());
     }
 
-    private void processPolicyStatusNotifications(final List<String> repoKeys, final List<PolicyStatusNotification> policyStatusNotifications, final Map<String, PolicyVulnerabilityAggregate.Builder> artifactMetadataAggregateMap) {
-        final List<AffectedArtifact<PolicyStatusNotification>> affectedArtifacts = policyStatusNotifications.stream()
-                                                                                       .map(notification -> findAffectedArtifacts(repoKeys, notification))
-                                                                                       .flatMap(List::stream)
-                                                                                       .collect(Collectors.toList());
-
-        for (final AffectedArtifact<PolicyStatusNotification> affectedArtifact : affectedArtifacts) {
-            final PolicyStatusNotification policyStatusNotification = affectedArtifact.getBlackDuckNotification();
-            final PolicyVulnerabilityAggregate.Builder builder = getPolicyVulnerabilityAggregateBuilder(affectedArtifact, artifactMetadataAggregateMap);
-
-            builder.setPolicySummaryStatusType(policyStatusNotification.getPolicyStatusView().getApprovalStatus());
-            builder.setComponentVersionUrl(policyStatusNotification.getComponentVersionView().getHref().orElse(null));
-        }
-    }
-
-    private PolicyVulnerabilityAggregate.Builder getPolicyVulnerabilityAggregateBuilder(final AffectedArtifact affectedArtifact, final Map<String, PolicyVulnerabilityAggregate.Builder> artifactMetadataAggregateMap) {
-        final String key = affectedArtifact.getRepoPath().getId().replaceFirst(":", "/");
-        final PolicyVulnerabilityAggregate.Builder builder;
-        if (artifactMetadataAggregateMap.containsKey(key)) {
-            builder = artifactMetadataAggregateMap.get(key);
-        } else {
-            builder = new PolicyVulnerabilityAggregate.Builder();
-            artifactMetadataAggregateMap.put(key, builder);
-        }
-
-        return builder;
+    private List<AffectedArtifact<PolicyStatusNotification>> processPolicyStatusNotifications(final List<String> repoKeys, final List<PolicyStatusNotification> policyStatusNotifications) {
+        return policyStatusNotifications.stream()
+                   .map(notification -> findAffectedArtifacts(repoKeys, notification))
+                   .flatMap(List::stream)
+                   .collect(Collectors.toList());
     }
 
     private <T extends BlackDuckNotification> List<AffectedArtifact<T>> findAffectedArtifacts(final List<String> repoKeys, final T notification) {

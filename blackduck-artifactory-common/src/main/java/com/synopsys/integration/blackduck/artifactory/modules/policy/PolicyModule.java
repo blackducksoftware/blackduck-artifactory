@@ -22,13 +22,16 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.artifactory.exception.CancelException;
 import org.artifactory.repo.RepoPath;
 
+import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
@@ -49,13 +52,12 @@ public class PolicyModule implements Module {
 
     public void handleBeforeDownloadEvent(final RepoPath repoPath) {
         String reason = null;
-        BlockReason blockReason = BlockReason.NO_BLOCK;
+        final boolean shouldBlock = false;
         if (shouldCancelOnPolicyViolation(repoPath)) {
             reason = "because it violates a policy in Black Duck.";
-            blockReason = BlockReason.IN_VIOLATION;
         }
 
-        featureAnalyticsCollector.logFeatureHit("handleBeforeDownloadEvent", blockReason.toString());
+        featureAnalyticsCollector.logFeatureHit("handleBeforeDownloadEvent", String.format("blocked:%s", Boolean.toString(shouldBlock)));
 
         if (reason != null) {
             throw new CancelException(String.format("The Black Duck %s has prevented the download of %s %s", PolicyModule.class.getSimpleName(), repoPath.toPath(), reason), 403);
@@ -73,15 +75,33 @@ public class PolicyModule implements Module {
     }
 
     private boolean shouldCancelOnPolicyViolation(final RepoPath repoPath) {
-        final Optional<String> policyStatusProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
+        if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)) {
+            // TODO: Fix in 8.0.0
+            // Currently scanned artifacts are not supported because POLICY_STATUS and OVERALL_POLICY_STATUS is used in scans and there is overlap
+            // with inspection using just POLICY_STATUS. Additional work will need to be done to sync these values and a use case for blocking
+            // scanned artifacts has yet to present itself. JM - 08/2019
+            return false;
+        }
 
-        return policyStatusProperty
-                   .filter(policyStatus -> policyStatus.equalsIgnoreCase(PolicySummaryStatusType.IN_VIOLATION.name()))
-                   .isPresent();
-    }
+        final Optional<PolicySummaryStatusType> inViolationProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS)
+                                                                          .map(PolicySummaryStatusType::valueOf)
+                                                                          .filter(it -> it.equals(PolicySummaryStatusType.IN_VIOLATION));
 
-    private enum BlockReason {
-        IN_VIOLATION,
-        NO_BLOCK
+        if (inViolationProperty.isPresent()) {
+            final Optional<String> severityTypes = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES);
+            if (severityTypes.isPresent()) {
+                final List<PolicySeverityType> severityTypesToBlock = policyModuleConfig.getPolicySeverityTypes();
+                final List<PolicySeverityType> matchingSeverityTypes = Arrays.stream(severityTypes.get().split(","))
+                                                                           .map(PolicySeverityType::valueOf)
+                                                                           .filter(severityTypesToBlock::contains)
+                                                                           .collect(Collectors.toList());
+                return !matchingSeverityTypes.isEmpty();
+            } else {
+                // The plugin should populate the severity types on artifacts automatically. But if an artifact is somehow missed, we want to be on the safe side.
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 }
