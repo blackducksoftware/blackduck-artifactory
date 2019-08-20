@@ -22,19 +22,16 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
-import com.synopsys.integration.blackduck.api.generated.view.ComponentSearchResultView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 
 public class ComponentViewWrapper {
     private final VersionBomComponentView versionBomComponentView;
     private final ComponentVersionView componentVersionView;
-    private final ComponentSearchResultView componentSearchResultView;
 
-    public ComponentViewWrapper(final VersionBomComponentView versionBomComponentView, final ComponentVersionView componentVersionView, final ComponentSearchResultView componentSearchResultView) {
+    public ComponentViewWrapper(final VersionBomComponentView versionBomComponentView, final ComponentVersionView componentVersionView) {
         this.versionBomComponentView = versionBomComponentView;
         this.componentVersionView = componentVersionView;
-        this.componentSearchResultView = componentSearchResultView;
     }
 
     public VersionBomComponentView getVersionBomComponentView() {
@@ -43,9 +40,5 @@ public class ComponentViewWrapper {
 
     public ComponentVersionView getComponentVersionView() {
         return componentVersionView;
-    }
-
-    public ComponentSearchResultView getComponentSearchResultView() {
-        return componentSearchResultView;
     }
 }
