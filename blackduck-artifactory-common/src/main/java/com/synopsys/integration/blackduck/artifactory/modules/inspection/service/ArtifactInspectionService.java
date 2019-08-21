@@ -45,7 +45,9 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
+import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.ComponentService;
 import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
@@ -64,9 +66,11 @@ public class ArtifactInspectionService {
     private final ProjectService projectService;
     private final ComponentService componentService;
     private final ExternalIdService externalIdService;
+    private final BlackDuckService blackDuckService;
 
     public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService, final InspectionModuleConfig inspectionModuleConfig,
-        final InspectionPropertyService inspectionPropertyService, final ProjectService projectService, final ComponentService componentService, final ExternalIdService externalIdService) {
+        final InspectionPropertyService inspectionPropertyService, final ProjectService projectService, final ComponentService componentService, final ExternalIdService externalIdService,
+        final BlackDuckService blackDuckService) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.inspectionModuleConfig = inspectionModuleConfig;
@@ -74,6 +78,7 @@ public class ArtifactInspectionService {
         this.projectService = projectService;
         this.componentService = componentService;
         this.externalIdService = externalIdService;
+        this.blackDuckService = blackDuckService;
     }
 
     public boolean shouldInspectArtifact(final RepoPath repoPath) {
@@ -184,7 +189,9 @@ public class ArtifactInspectionService {
             final ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
             final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
             final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
+            final PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getVersionBomComponentView(), blackDuckService);
 
+            inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
             componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentVersionUrl));
             inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);

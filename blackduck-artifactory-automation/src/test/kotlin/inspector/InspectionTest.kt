@@ -72,23 +72,24 @@ abstract class InspectionTest : SpringTest() {
         val properties: Map<String, String> = itemProperties.properties.mapValues { it.value.first() }
 
         Assertions.assertEquals(properties[BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()], InspectionStatus.SUCCESS.name, "Inspection status should be ${InspectionStatus.FAILURE.name}. ${itemProperties.uri}")
-        assertNull(BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, properties, itemProperties.uri, true)
-        assertNull(BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.LAST_INSPECTION, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.POLICY_STATUS, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, properties, itemProperties.uri, true)
-        assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, properties, itemProperties.uri, true)
+        assertNull(BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, properties, itemProperties.uri)
+        assertNull(BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.LAST_INSPECTION, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.POLICY_STATUS, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, properties, itemProperties.uri);
     }
 
-    private fun assertNull(property: BlackDuckArtifactoryProperty, properties: Map<String, String>, uri: String, success: Boolean = false) {
+    private fun assertNull(property: BlackDuckArtifactoryProperty, properties: Map<String, String>, uri: String, success: Boolean = true) {
         Assertions.assertNull(properties[property.getName()], "An artifact marked as ${if (success) "success" else "failure"} should not have a ${property.getName()} property. $uri")
     }
 
-    private fun assertNotNull(property: BlackDuckArtifactoryProperty, properties: Map<String, String>, uri: String, success: Boolean = false) {
+    private fun assertNotNull(property: BlackDuckArtifactoryProperty, properties: Map<String, String>, uri: String, success: Boolean = true) {
         Assertions.assertNotNull(properties[property.getName()], "An artifact marked as ${if (success) "success" else "failure"} should have a ${property.getName()} property. $uri")
     }
 }

@@ -107,8 +107,6 @@ public class BlackDuckBOMService {
         final Optional<String> componentVersionUrl = searchForComponent(componentExternalId);
         final ComponentViewWrapper componentViewWrapper;
         if (componentVersionUrl.isPresent()) {
-            componentViewWrapper = getComponentViewWrapper(componentVersionUrl.get(), projectVersionView);
-
             try {
                 projectBomService.addComponentToProjectVersion("application/json", projectVersionComponentsUrl, componentVersionUrl.get());
             } catch (final IntegrationRestException e) {
@@ -116,6 +114,7 @@ public class BlackDuckBOMService {
             } catch (final BlackDuckApiException e) {
                 handleIntegrationRestException(repoPath, e.getOriginalIntegrationRestException());
             }
+            componentViewWrapper = getComponentViewWrapper(componentVersionUrl.get(), projectVersionView);
         } else {
             throw new FailedInspectionException(repoPath, "Failed to add component match.");
         }
@@ -154,8 +153,14 @@ public class BlackDuckBOMService {
         // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
         if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
             final String apiComponentsLinkPrefix = "/api/components/";
-            final int apiComponentsStart = componentVersionViewHref.get().indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
-            final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentVersionViewHref.get().substring(apiComponentsStart);
+            final String componentHref = componentVersionViewHref.get();
+            final int apiComponentsStart = componentHref.indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
+            int endingIndex = componentHref.length() - 1;
+            final String originsLinkPrefix = "/origins/";
+            if (componentHref.contains(originsLinkPrefix)) {
+                endingIndex = componentHref.indexOf(originsLinkPrefix);
+            }
+            final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentHref.substring(apiComponentsStart, endingIndex);
             final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
             final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
 
