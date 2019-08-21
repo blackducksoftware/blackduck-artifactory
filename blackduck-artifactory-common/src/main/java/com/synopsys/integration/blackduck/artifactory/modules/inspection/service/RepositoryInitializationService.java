@@ -34,13 +34,13 @@ import com.synopsys.integration.blackduck.api.generated.component.ProjectVersion
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionDistributionType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionPhaseType;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.service.ProjectService;
-import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -98,24 +98,36 @@ public class RepositoryInitializationService {
             throw new FailedInspectionException(repoKeyPath, message);
         }
 
+        initializeBlackDuckProjectVersion(repoKeyPath);
+    }
+
+    private void initializeBlackDuckProjectVersion(final RepoPath repoKeyPath) throws FailedInspectionException {
+        final String repoKey = repoKeyPath.getRepoKey();
         final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
         final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
         inspectionPropertyService.setRepoProjectNameProperties(repoKey, projectName, projectVersionName);
 
         try {
-            final ProjectVersionView projectVersionView;
-            final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
-            if (!projectVersionWrapper.isPresent()) {
+            final Optional<ProjectView> projectViewOptional = projectService.getProjectByName(projectName);
+            final ProjectView projectView;
+            if (projectViewOptional.isPresent()) {
+                projectView = projectViewOptional.get();
+            } else {
                 final ProjectRequest projectRequest = new ProjectRequest();
                 projectRequest.setName(projectName);
+                projectView = projectService.createProject(projectRequest).getProjectView();
+            }
+
+            final Optional<ProjectVersionView> projectVersionViewOptional = projectService.getProjectVersion(projectView, projectVersionName);
+            final ProjectVersionView projectVersionView;
+            if (projectVersionViewOptional.isPresent()) {
+                projectVersionView = projectVersionViewOptional.get();
+            } else {
                 final ProjectVersionRequest projectVersionRequest = new ProjectVersionRequest();
                 projectVersionRequest.setVersionName(projectVersionName);
                 projectVersionRequest.setPhase(ProjectVersionPhaseType.RELEASED);
                 projectVersionRequest.setDistribution(ProjectVersionDistributionType.INTERNAL);
-                projectRequest.setVersionRequest(projectVersionRequest);
-                projectVersionView = projectService.createProject(projectRequest).getProjectVersionView();
-            } else {
-                projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+                projectVersionView = projectService.createProjectVersion(projectView, projectVersionRequest);
             }
 
             inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
