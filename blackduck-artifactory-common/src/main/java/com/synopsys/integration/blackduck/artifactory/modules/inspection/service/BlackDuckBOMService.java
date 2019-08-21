@@ -87,7 +87,7 @@ public class BlackDuckBOMService {
         return componentViewWrapper;
     }
 
-    public Optional<String> searchForComponent(final ExternalId componentExternalId, final ProjectVersionView projectVersionView) throws IntegrationException {
+    public Optional<String> searchForComponent(final ExternalId componentExternalId) throws IntegrationException {
         final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getFirstOrEmptyResult(componentExternalId);
         String componentVersionUrl = null;
         if (componentSearchResultView.isPresent()) {
@@ -104,7 +104,7 @@ public class BlackDuckBOMService {
     // Mostly copied from the ProjectBomService in blackduck-common. Made tweaks so the component that was attempting to be added is always returned.
     private ComponentViewWrapper addComponentToProjectVersion(final RepoPath repoPath, final ExternalId componentExternalId, final ProjectVersionView projectVersionView) throws IntegrationException {
         final String projectVersionComponentsUrl = projectVersionView.getFirstLink(ProjectVersionView.COMPONENTS_LINK).orElse(null);
-        final Optional<String> componentVersionUrl = searchForComponent(componentExternalId, projectVersionView);
+        final Optional<String> componentVersionUrl = searchForComponent(componentExternalId);
         final ComponentViewWrapper componentViewWrapper;
         if (componentVersionUrl.isPresent()) {
             componentViewWrapper = getComponentViewWrapper(componentVersionUrl.get(), projectVersionView);
@@ -146,7 +146,7 @@ public class BlackDuckBOMService {
         return getComponentViewWrapper(componentVersionView, projectVersionView);
     }
 
-    public ComponentViewWrapper getComponentViewWrapper(final ComponentVersionView componentVersionView, final ProjectVersionView projectVersionView) throws IntegrationException {
+    private ComponentViewWrapper getComponentViewWrapper(final ComponentVersionView componentVersionView, final ProjectVersionView projectVersionView) throws IntegrationException {
         final Optional<String> projectVersionViewHref = projectVersionView.getHref();
         final Optional<String> componentVersionViewHref = componentVersionView.getHref();
 
