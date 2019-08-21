@@ -33,9 +33,9 @@ class DockerService(private val imageTag: String) {
         return runCommand("docker", "pull", "docker.bintray.io/jfrog/artifactory-pro:$version")
     }
 
-    private fun initializeArtifactory(version: String, artifactoryPort: String, remoteDebuggingPort: String = "8091", inheritIO: Boolean = true, containerId: String = this.imageTag): Process {
+    private fun initializeArtifactory(version: String, artifactoryPort: String, remoteDebuggingPort: String = "5005", inheritIO: Boolean = true, containerId: String = this.imageTag): Process {
         return runCommand("docker", "run", "--name", containerId, "-d", "-p", "$artifactoryPort:$artifactoryPort", "-p", "$remoteDebuggingPort:$remoteDebuggingPort", "-e",
-            "EXTRA_JAVA_OPTIONS=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$remoteDebuggingPort\"",
+            "EXTRA_JAVA_OPTIONS=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$remoteDebuggingPort\"",
             "docker.bintray.io/jfrog/artifactory-pro:$version", inheritIO = inheritIO)
     }
 
