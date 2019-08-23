@@ -110,6 +110,10 @@ public class PluginAPI implements Analyzable {
         runMethod(scanModuleConfig, triggerType, scanModule::addPolicyStatus);
     }
 
+    public void performPostScanActions(final TriggerType triggerType) {
+        runMethod(scanModuleConfig, triggerType, scanModule::performPostScanActions);
+    }
+
     public void deleteScanProperties(final TriggerType triggerType, final Map<String, List<String>> params) {
         runMethod(scanModuleConfig, triggerType, () -> scanModule.deleteScanProperties(params));
     }

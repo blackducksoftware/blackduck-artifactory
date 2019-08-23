@@ -15,6 +15,7 @@ plugins {
 }
 
 apply plugin: 'com.blackducksoftware.integration.simple'
+apply plugin: 'kotlin'
 
 jar.finalizedBy shadowJar
 
@@ -28,6 +29,7 @@ dependencies {
     testImplementation 'org.codehaus.groovy:groovy-all:2.4.12'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
     testImplementation 'org.mockito:mockito-core:2.+'
+    testImplementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }
 
 license {

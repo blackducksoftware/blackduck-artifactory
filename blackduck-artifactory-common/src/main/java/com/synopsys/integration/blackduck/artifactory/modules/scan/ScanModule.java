@@ -42,6 +42,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ArtifactScanService;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.service.PostScanActionsService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.RepositoryIdentificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ScanPolicyService;
 import com.synopsys.integration.blackduck.codelocation.Result;
@@ -60,9 +61,11 @@ public class ScanModule implements Module {
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
     private final ScanPolicyService scanPolicyService;
+    private final PostScanActionsService postScanActionsService;
 
     public ScanModule(final ScanModuleConfig scanModuleConfig, final RepositoryIdentificationService repositoryIdentificationService, final ArtifactScanService artifactScanService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ScanPolicyService scanPolicyService) {
+        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ScanPolicyService scanPolicyService,
+        final PostScanActionsService postScanActionsService) {
         this.scanModuleConfig = scanModuleConfig;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactScanService = artifactScanService;
@@ -70,6 +73,7 @@ public class ScanModule implements Module {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
         this.scanPolicyService = scanPolicyService;
+        this.postScanActionsService = postScanActionsService;
     }
 
     public static File setUpCliDuckDirectory(final File blackDuckDirectory) throws IOException, IntegrationException {
@@ -95,6 +99,11 @@ public class ScanModule implements Module {
     public void addPolicyStatus() {
         final Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths();
         scanPolicyService.populatePolicyStatuses(repoPaths);
+        updateAnalyticsData();
+    }
+
+    public void performPostScanActions() {
+        postScanActionsService.performPostScanActions(scanModuleConfig.getRepos());
         updateAnalyticsData();
     }
 

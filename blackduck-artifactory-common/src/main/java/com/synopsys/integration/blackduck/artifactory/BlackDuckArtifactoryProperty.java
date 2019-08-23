@@ -43,6 +43,8 @@ public enum BlackDuckArtifactoryProperty {
     SCAN_TIME("scanTime"),
     SCAN_RESULT("scanResult"),
     SCAN_RESULT_MESSAGE("scanResultMessage"),
+    POST_SCAN_ACTION_STATUS("postScanActionStatus"),
+    POST_SCAN_PHASE("postScanPhase"),
     INSPECTION_RETRY_COUNT("inspectionRetryCount");
 
     public static final String PROPERTY_PREFIX = "blackduck.";

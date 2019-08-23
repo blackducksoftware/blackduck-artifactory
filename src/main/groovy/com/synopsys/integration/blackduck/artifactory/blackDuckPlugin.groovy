@@ -151,6 +151,10 @@ executions {
         pluginAPI.addScanPolicyStatus(TriggerType.REST_REQUEST)
     }
 
+    blackDuckPerformPostScanActions(httpMethod: 'POST') { params ->
+        pluginAPI.performPostScanActions(TriggerType.REST_REQUEST)
+    }
+
     /**
      * This will search your Artifactory repositories defined with the "blackduck.artifactory.scan.repos" property for the filename patterns designated in the "blackduck.artifactory.scan.name.patterns" property
      * It will then remove any and all blackduck properties from the artifact.
@@ -325,6 +329,10 @@ jobs {
 
     blackDuckAddScanPolicyStatus(cron: pluginAPI.getScanCron()) {
         pluginAPI.addScanPolicyStatus(TriggerType.CRON_JOB)
+    }
+
+    blackDuckPerformPostScanActions(cron: pluginAPI.getScanCron()) {
+        pluginAPI.performPostScanActions(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// INSPECTION JOBS ////////////////////////////////////////////////

@@ -55,6 +55,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModul
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ArtifactScanService;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.service.PostScanActionsService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.RepositoryIdentificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ScanPolicyService;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
@@ -92,12 +93,15 @@ public class ModuleFactory {
         final File cliDirectory = ScanModule.setUpCliDuckDirectory(blackDuckDirectory);
         final ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
         final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
+        final ProjectService projectService = blackDuckServicesFactory.createProjectService();
 
         final RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
-        final ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService);
+        final ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService
+        );
         final ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckServerConfig, artifactoryPropertyService);
+        final PostScanActionsService postScanActionsService = new PostScanActionsService(artifactoryPropertyService, projectService);
 
-        return new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPropertyService, artifactoryPAPIService, simpleAnalyticsCollector, scanPolicyService);
+        return new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPropertyService, artifactoryPAPIService, simpleAnalyticsCollector, scanPolicyService, postScanActionsService);
     }
 
     public InspectionModule createInspectionModule() throws IOException {

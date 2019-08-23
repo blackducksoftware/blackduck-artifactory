@@ -135,14 +135,10 @@ public class ScanPolicyService {
         if (nameVersion.isPresent()) {
             final String projectName = nameVersion.get().getName();
             final String projectVersionName = nameVersion.get().getVersion();
-            final String failureMessage = String.format("Failed to find Black Duck project version with name '%s' and version '%s'.", projectName, projectVersionName);
-            try {
-                return projectService.getProjectVersion(projectName, projectVersionName).orElseThrow(() -> new IntegrationException(failureMessage));
-            } catch (final IntegrationException e) {
-                throw new IntegrationException(failureMessage, e);
-            }
+            return projectService.getProjectVersion(projectName, projectVersionName)
+                       .orElseThrow(() -> new IntegrationException(String.format("Failed to find Black Duck project version with name '%s' and version '%s'.", projectName, projectVersionName)));
         } else {
-            throw new IntegrationException("Failed to extract project name and project vesion from properties.");
+            throw new IntegrationException("Failed to extract project name and project version from properties.");
         }
     }
 }

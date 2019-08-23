@@ -99,7 +99,9 @@ public class ArtifactScanService {
             try {
                 artifactoryPropertyService.setPropertyFromDate(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME, new Date(), logger);
                 final NameVersion projectNameVersion = determineProjectNameVersion(repoPath);
+
                 final ScanBatchOutput scanBatchOutput = scanArtifact(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion());
+
                 writeScanProperties(repoPath, projectNameVersion.getName(), projectNameVersion.getVersion(), scanBatchOutput);
             } catch (final Exception e) {
                 logger.error(String.format("Please investigate the scan logs for details - the Black Duck Scan did not complete successfully on %s", repoPath.getName()), e);
@@ -213,6 +215,7 @@ public class ArtifactScanService {
         artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT_MESSAGE, logger);
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectName, logger);
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectNameVersion, logger);
+        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POST_SCAN_ACTION_STATUS, PostScanActionStatus.PENDING.name(), logger);
     }
 
     private Optional<ScanCommandOutput> getFirstScanCommandOutput(final ScanBatchOutput scanBatchOutput) {
