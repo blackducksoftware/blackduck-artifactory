@@ -83,8 +83,8 @@ public class InspectionModule implements Module {
 
     public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactoryPAPIService artifactoryPAPIService, final MetaDataUpdateService metaDataUpdateService,
         final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
-        final RepositoryInitializationService repositoryInitializationService, final ArtifactInspectionService artifactInspectionService, final ProjectService projectService,
-        final BlackDuckBOMService blackDuckBOMService, final BlackDuckService blackDuckService) {
+        final RepositoryInitializationService repositoryInitializationService, final ArtifactInspectionService artifactInspectionService, final ProjectService projectService, final BlackDuckBOMService blackDuckBOMService,
+        final BlackDuckService blackDuckService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataUpdateService = metaDataUpdateService;
@@ -156,9 +156,6 @@ public class InspectionModule implements Module {
     //////////////////////// New cron jobs ////////////////////////
     public void initializeRepositories() {
         inspectionModuleConfig.getRepos().forEach(repositoryInitializationService::initializeRepository);
-
-        // TODO: Implement in 7.1.0
-        // updateAnalytics();
     }
 
     public void reinspectFromFailures() {
@@ -171,9 +168,6 @@ public class InspectionModule implements Module {
 
     public void inspectAllUnknownArtifacts() {
         inspectionModuleConfig.getRepos().forEach(artifactInspectionService::inspectAllUnknownArtifacts);
-
-        // TODO: Implement in 7.1.0
-        // updateAnalytics();
     }
 
     public void updateMetadata() {
@@ -181,9 +175,6 @@ public class InspectionModule implements Module {
                                                 .map(RepoPathFactory::create)
                                                 .collect(Collectors.toList());
         metaDataUpdateService.updateMetadata(repoKeyPaths);
-
-        // TODO: Implement in 7.1.0
-        // updateAnalytics();
     }
 
     //////////////////////// Endpoints ////////////////////////
@@ -191,9 +182,6 @@ public class InspectionModule implements Module {
     public void deleteInspectionProperties(final Map<String, List<String>> params) {
         inspectionModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
-
-        // TODO: Implement in 7.1.0
-        // updateAnalytics();
     }
 
     public void reinspectFromFailures(final Map<String, List<String>> params) {
@@ -205,9 +193,6 @@ public class InspectionModule implements Module {
         repoPaths.stream()
             .filter(artifactInspectionService::shouldInspectArtifact)
             .forEach(artifactInspectionService::inspectSingleArtifact);
-
-        // TODO: Implement in 7.1.0
-        // updateAnalytics();
     }
 
     //////////////////////// Event Listeners ////////////////////////
@@ -232,9 +217,6 @@ public class InspectionModule implements Module {
         } else {
             logger.debug(String.format("Artifact at '%s' is not existent, the repo is not configured to be inspected, or the artifact doesn't have a matching pattern", repoPath.toPath()));
         }
-
-        // TODO: Implement in 7.1.0
-        // updateAnalytics();
     }
 
     public void handleBeforeDownloadEvent(final RepoPath repoPath) {
@@ -250,6 +232,7 @@ public class InspectionModule implements Module {
 
     @Override
     public List<AnalyticsCollector> getAnalyticsCollectors() {
+        updateAnalytics();
         return Collections.singletonList(simpleAnalyticsCollector);
     }
 
