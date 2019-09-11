@@ -73,13 +73,13 @@ class DockerService(private val imageTag: String) {
         return runCommand("docker", "exec", "--user=root", containerId, "chmod", "-R", permissions, filePath).waitFor()
     }
 
-    fun buildTestDockerfile(packageType: PackageType, workingDirectory: File? = null): String {
+    fun buildTestDockerfile(packageType: PackageType, workingDirectory: File? = null, noCache: Boolean = true): String {
         val resourcePath = "/${packageType.packageType.toLowerCase()}/Dockerfile"
         val resourceUri = this.javaClass.getResource(resourcePath)?.toURI() ?: throw MissingResourceException("Missing resource $resourcePath", this.javaClass.name, resourcePath)
         val dockerfile = File(resourceUri)
         val actualWorkingDirectory = workingDirectory ?: dockerfile.parentFile
 
-        return buildDockerfile(dockerfile, actualWorkingDirectory, imageTag = packageType.dockerImageTag!!, noCache = true)
+        return buildDockerfile(dockerfile, actualWorkingDirectory, imageTag = packageType.dockerImageTag!!, noCache = noCache)
     }
 
     fun buildDockerfile(dockerFile: File, workingDirectory: File, imageTag: String, cleanup: Boolean = true, noCache: Boolean = false): String {
