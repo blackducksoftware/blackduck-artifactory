@@ -50,6 +50,7 @@ import com.google.common.collect.Multiset;
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
@@ -391,7 +392,7 @@ public class ExternalIdServiceTest {
         private final Map<String, MockRepoPath> mockRepoPathMap = new HashMap<>();
 
         public MockArtifactoryPAPIService() {
-            super(null, null);
+            super(new PluginRepoPathFactory(false), null, null);
         }
 
         public void addMockRepoPath(final MockRepoPath mockRepoPath) {
