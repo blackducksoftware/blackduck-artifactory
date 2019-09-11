@@ -115,7 +115,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
     }
 
     fun resolvePyPiArtifact(repositoryKey: String, externalId: ExternalId) {
-        dockerService.buildTestDockerfile(PackageType.Defaults.PYPI)
+        dockerService.buildTestDockerfile(PackageType.Defaults.PYPI, noCache = false)
         dockerService.runDockerImage(
             PackageType.Defaults.PYPI.dockerImageTag!!,
             "pip3", "install", "${externalId.name}==${externalId.version}", "--index-url=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/pypi/$repositoryKey/simple"
