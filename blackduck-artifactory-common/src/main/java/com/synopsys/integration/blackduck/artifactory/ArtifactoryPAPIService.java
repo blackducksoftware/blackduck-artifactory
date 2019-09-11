@@ -45,10 +45,12 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class ArtifactoryPAPIService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
+    private final PluginRepoPathFactory pluginRepoPathFactory;
     private final Repositories repositories;
     private final Searches searches;
 
-    public ArtifactoryPAPIService(final Repositories repositories, final Searches searches) {
+    public ArtifactoryPAPIService(final PluginRepoPathFactory pluginRepoPathFactory, final Repositories repositories, final Searches searches) {
+        this.pluginRepoPathFactory = pluginRepoPathFactory;
         this.repositories = repositories;
         this.searches = searches;
     }
@@ -64,7 +66,7 @@ public class ArtifactoryPAPIService {
 
     public Long getArtifactCount(final List<String> repoKeys) {
         return repoKeys.stream()
-                   .map(RepoPathFactory::create)
+                   .map(pluginRepoPathFactory::create)
                    .map(repositories::getArtifactsCount)
                    .mapToLong(Long::longValue)
                    .sum();

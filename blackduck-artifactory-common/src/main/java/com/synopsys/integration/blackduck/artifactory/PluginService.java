@@ -87,7 +87,8 @@ public class PluginService {
         this.blackDuckDirectory = setUpBlackDuckDirectory();
 
         final DateTimeManager dateTimeManager = new DateTimeManager(pluginConfig.getDateTimePattern(), pluginConfig.getDateTimeZone());
-        final ArtifactoryPAPIService artifactoryPAPIService = new ArtifactoryPAPIService(repositories, searches);
+        final PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
+        final ArtifactoryPAPIService artifactoryPAPIService = new ArtifactoryPAPIService(pluginRepoPathFactory, repositories, searches);
         final ArtifactoryPropertyService artifactoryPropertyService = new ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager);
         final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPAPIService, artifactoryPropertyService);
         final AnalyticsService analyticsService = AnalyticsService.createFromBlackDuckServerConfig(directoryConfig, blackDuckServerConfig);
