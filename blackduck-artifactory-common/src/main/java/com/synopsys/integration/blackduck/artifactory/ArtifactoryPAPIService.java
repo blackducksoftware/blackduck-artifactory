@@ -54,10 +54,6 @@ public class ArtifactoryPAPIService {
         this.searches = searches;
     }
 
-    private Optional<RepositoryConfiguration> getRepositoryConfiguration(final String repoKey) {
-        return Optional.ofNullable(repositories.getRepositoryConfiguration(repoKey));
-    }
-
     public Optional<String> getPackageType(final String repoKey) {
         return getRepositoryConfiguration(repoKey)
                    .map(RepositoryConfiguration::getPackageType);
@@ -69,10 +65,6 @@ public class ArtifactoryPAPIService {
                    .map(repositories::getArtifactsCount)
                    .mapToLong(Long::longValue)
                    .sum();
-    }
-
-    public ItemInfo getItemInfo(final RepoPath repoPath) {
-        return repositories.getItemInfo(repoPath);
     }
 
     public boolean isValidRepository(final String repoKey) {
@@ -108,9 +100,17 @@ public class ArtifactoryPAPIService {
         return repoPaths;
     }
 
+    private Optional<RepositoryConfiguration> getRepositoryConfiguration(final String repoKey) {
+        return Optional.ofNullable(repositories.getRepositoryConfiguration(repoKey));
+    }
+
     /*
     Methods below provide low level access to the Artifactory PAPI. No additional verification should be performed.
      */
+
+    public ItemInfo getItemInfo(final RepoPath repoPath) {
+        return repositories.getItemInfo(repoPath);
+    }
 
     public FileLayoutInfo getLayoutInfo(final RepoPath repoPath) {
         return repositories.getLayoutInfo(repoPath);
