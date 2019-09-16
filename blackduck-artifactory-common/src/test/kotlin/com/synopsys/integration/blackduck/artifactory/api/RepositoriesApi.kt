@@ -2,6 +2,10 @@ package com.synopsys.integration.blackduck.artifactory.api
 
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.gson.responseObject
+import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
+import com.synopsys.integration.blackduck.artifactory.api.model.ItemInfoData
+import com.synopsys.integration.blackduck.artifactory.api.model.StorageInfoSummary
+import com.synopsys.integration.blackduck.artifactory.api.model.TestItemInfo
 import org.artifactory.common.StatusHolder
 import org.artifactory.fs.FileInfo
 import org.artifactory.fs.FileLayoutInfo
@@ -14,7 +18,7 @@ import org.artifactory.repo.RepositoryConfiguration
 import org.artifactory.resource.ResourceStreamHandle
 import java.io.InputStream
 
-class RepositoriesApi(private val fuelManager: FuelManager) : Repositories {
+class RepositoriesApi(private val pluginRepoPathFactory: PluginRepoPathFactory, private val fuelManager: FuelManager) : Repositories {
     override fun getPropertyValues(repoPath: RepoPath?, propertyName: String?): MutableSet<String> {
         TODO("not implemented")
     }
@@ -85,8 +89,10 @@ class RepositoriesApi(private val fuelManager: FuelManager) : Repositories {
             .third.get()
     }
 
-    override fun getItemInfo(repoPath: RepoPath?): ItemInfo {
-        TODO("not implemented")
+    override fun getItemInfo(repoPath: RepoPath): ItemInfo {
+        val itemInfoData = fuelManager.get("/api/storage/${repoPath.toPath()}")
+            .responseObject<ItemInfoData>().third.get()
+        return TestItemInfo(pluginRepoPathFactory, itemInfoData)
     }
 
     override fun deploy(repoPath: RepoPath?, inputStream: InputStream?): StatusHolder {
@@ -170,7 +176,11 @@ class RepositoriesApi(private val fuelManager: FuelManager) : Repositories {
     }
 
     override fun exists(repoPath: RepoPath?): Boolean {
-        TODO("not implemented")
+        val repositories = fuelManager.get("/api/repositories")
+            .responseObject<List<Repository>>()
+            .third.get()
+
+        return repositories.map { it.key }.find { it == repoPath?.repoKey } != null
     }
 
     override fun getFileInfo(repoPath: RepoPath?): FileInfo {
@@ -178,5 +188,4 @@ class RepositoriesApi(private val fuelManager: FuelManager) : Repositories {
     }
 }
 
-data class RepositorySummary(val repoKey: String, val repoType: String, val foldersCount: Long, val filesCount: Long, val usedSpace: String, val itemsCount: Long, val packageType: String, val percentage: String)
-data class StorageInfoSummary(val repositoriesSummaryList: List<RepositorySummary>)
+data class Repository(val key: String, val type: String, val description: String, val url: String, val packageType: String)

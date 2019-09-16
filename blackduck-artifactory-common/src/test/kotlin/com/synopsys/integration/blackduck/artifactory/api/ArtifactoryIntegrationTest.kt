@@ -2,15 +2,16 @@ package com.synopsys.integration.blackduck.artifactory.api
 
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.extensions.authentication
+import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
 import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.artifactory.repo.Repositories
 import org.artifactory.search.Searches
 import org.junit.jupiter.api.Tag
+import java.text.SimpleDateFormat
 
 @Tag("integration")
 open class ArtifactoryIntegrationTest {
-
     private val logger: IntLogger = Slf4jIntLogger(org.slf4j.LoggerFactory.getLogger(this.javaClass))
 
     val searches: Searches
@@ -26,13 +27,15 @@ open class ArtifactoryIntegrationTest {
             }
         }
 
+        val pluginRepoPathFactory = PluginRepoPathFactory(false)
         searches = SearchesApi(fuelManager)
-        repositories = RepositoriesApi(fuelManager)
+        repositories = RepositoriesApi(pluginRepoPathFactory, fuelManager)
     }
 
     companion object {
         const val ARTIFACTORY_ENVIRONMENT_PRESENT: String = "systemEnvironment.get('AUTOMATION_ARTIFACTORY_BASE_URL') != null" +
             " && systemEnvironment.get('AUTOMATION_ARTIFACTORY_USERNAME') != null" +
             " && systemEnvironment.get('AUTOMATION_ARTIFACTORY_PASSWORD') != null"
+        val ARTIFACTORY_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     }
 }

@@ -31,7 +31,6 @@ import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.md.Properties;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.RepoPathFactory;
 import org.artifactory.repo.Repositories;
 import org.artifactory.repo.RepositoryConfiguration;
 import org.artifactory.resource.ResourceStreamHandle;
@@ -82,7 +81,7 @@ public class ArtifactoryPAPIService {
             return false;
         }
 
-        final RepoPath repoPath = RepoPathFactory.create(repoKey);
+        final RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
         final boolean isValid = repositories.exists(repoPath) && getRepositoryConfiguration(repoKey).isPresent();
 
         if (!isValid) {

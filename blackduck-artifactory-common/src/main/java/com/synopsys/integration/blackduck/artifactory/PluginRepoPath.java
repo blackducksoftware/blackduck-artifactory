@@ -15,8 +15,12 @@ public class PluginRepoPath implements RepoPath {
     private final String repoPath;
 
     public PluginRepoPath(final String key, final String path) {
-        this.repoKey = key;
-        this.repoPath = path;
+        this.repoKey = key.replace("/", "");
+        if (!path.startsWith("/") && !path.isEmpty()) {
+            this.repoPath = "/" + path;
+        } else {
+            this.repoPath = path;
+        }
     }
 
     @Nonnull
@@ -37,7 +41,7 @@ public class PluginRepoPath implements RepoPath {
 
     @Override
     public String toPath() {
-        return repoKey + "/" + repoPath;
+        return repoKey + repoPath;
     }
 
     @Override
