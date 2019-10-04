@@ -95,9 +95,7 @@ public class ArtifactNotificationService {
         for (final AffectedArtifact<VulnerabilityNotification> vulnerableArtifact : vulnerabilityArtifacts) {
             final RepoPath repoPath = vulnerableArtifact.getRepoPath();
             final VulnerabilityAggregate vulnerabilityAggregate = vulnerableArtifact.getBlackDuckNotification().getVulnerabilityAggregate();
-            final Optional<String> componentVersionUrl = vulnerableArtifact.getBlackDuckNotification().getComponentVersionView().getHref();
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
-            componentVersionUrl.ifPresent(it -> inspectionPropertyService.setComponentVersionUrl(repoPath, it));
             updatedRepoKeys.add(repoPath.getRepoKey());
         }
 
@@ -105,7 +103,6 @@ public class ArtifactNotificationService {
         for (final AffectedArtifact<PolicyStatusNotification> policyArtifact : policyArtifacts) {
             final RepoPath repoPath = policyArtifact.getRepoPath();
             final PolicyStatusNotification policyStatusNotification = policyArtifact.getBlackDuckNotification();
-            final Optional<String> componentVersionUrl = policyStatusNotification.getComponentVersionView().getHref();
 
             final String policyApprovalStatus = policyStatusNotification.getPolicyStatusView().getApprovalStatus().name();
             final PolicySummaryStatusType policySummaryStatusType = PolicySummaryStatusType.valueOf(policyApprovalStatus);
@@ -122,7 +119,6 @@ public class ArtifactNotificationService {
             final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
-            componentVersionUrl.ifPresent(it -> inspectionPropertyService.setComponentVersionUrl(repoPath, it));
             updatedRepoKeys.add(repoPath.getRepoKey());
         }
 
