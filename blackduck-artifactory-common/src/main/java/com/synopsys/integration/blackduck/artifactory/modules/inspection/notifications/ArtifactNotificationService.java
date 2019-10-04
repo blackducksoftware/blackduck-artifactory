@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
@@ -110,7 +111,13 @@ public class ArtifactNotificationService {
             final PolicySummaryStatusType policySummaryStatusType = PolicySummaryStatusType.valueOf(policyApprovalStatus);
             final List<PolicySeverityType> policySeverityTypes = policyStatusNotification.getPolicyInfos().stream()
                                                                      .map(PolicyInfo::getSeverity)
-                                                                     .map(PolicySeverityType::valueOf)
+                                                                     .map(severity -> {
+                                                                         if (StringUtils.isBlank(severity)) {
+                                                                             return PolicySeverityType.UNSPECIFIED;
+                                                                         } else {
+                                                                             return PolicySeverityType.valueOf(severity);
+                                                                         }
+                                                                     })
                                                                      .collect(Collectors.toList());
             final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
