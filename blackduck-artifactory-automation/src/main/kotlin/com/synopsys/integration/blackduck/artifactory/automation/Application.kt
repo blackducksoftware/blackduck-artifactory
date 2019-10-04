@@ -18,11 +18,11 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
 class Application(
-    dockerService: DockerService,
-    blackDuckServerConfig: BlackDuckServerConfig,
-    artifactoryConfiguration: ArtifactoryConfiguration,
-    blackDuckPluginManager: BlackDuckPluginManager,
-    systemApiService: SystemApiService
+        dockerService: DockerService,
+        blackDuckServerConfig: BlackDuckServerConfig,
+        artifactoryConfiguration: ArtifactoryConfiguration,
+        blackDuckPluginManager: BlackDuckPluginManager,
+        systemApiService: SystemApiService
 ) {
     private val logger: IntLogger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
@@ -41,9 +41,9 @@ class Application(
                 throw IntegrationException("You have chosen to let automation manage Artifactory, but a the ARTIFACTORY_LICENSE_PATH supplied at ${artifactoryLicenseFile.absolutePath} does not exist.")
             }
             val licenseText = FileInputStream(artifactoryLicenseFile)
-                .convertToString()
-                .replace("\n", "")
-                .replace(" ", "")
+                    .convertToString()
+                    .replace("\n", "")
+                    .replace(" ", "")
 
             logger.info("Validating plugin zip file.")
             val pluginZipFile = artifactoryConfiguration.pluginZipFile
