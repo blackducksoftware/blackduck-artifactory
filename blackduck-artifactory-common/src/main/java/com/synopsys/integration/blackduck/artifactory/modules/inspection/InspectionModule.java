@@ -111,10 +111,10 @@ public class InspectionModule implements Module {
             try {
                 final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
                 if (projectVersionWrapper.isPresent()) {
-                    final List<RepoPath> severityUpdateRepoPaths = artifactoryPAPIService.itemsByProperties(
-                        ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.SUCCESS.name()),
-                        repoKey
-                    );
+                    final List<RepoPath> severityUpdateRepoPaths = artifactoryPAPIService.itemsByProperties(ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.SUCCESS.name()), repoKey)
+                                                                       .stream()
+                                                                       .filter(repoPath -> !repoPath.isRoot())
+                                                                       .collect(Collectors.toList());
 
                     for (final RepoPath repoPath : severityUpdateRepoPaths) {
                         if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES)) {
