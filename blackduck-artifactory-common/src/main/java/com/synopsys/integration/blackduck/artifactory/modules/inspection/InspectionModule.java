@@ -133,7 +133,7 @@ public class InspectionModule implements Module {
                         }
                     }
                 } else {
-                    logger.warn("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.");
+                    logger.warn(String.format("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.", repoKey));
                 }
             } catch (final IntegrationException e) {
                 logger.error(String.format("Failed to perform the policy severity upgrade for repo '%s'. The %s may not work as expected.", repoKey, PolicyModule.class.getSimpleName()), e);
