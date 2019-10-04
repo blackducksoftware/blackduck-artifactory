@@ -13,17 +13,17 @@ class SystemApiService(private val fuelManager: FuelManager) {
 
     fun applyLicense(license: String): Response {
         return fuelManager.post("/api/system/licenses")
-            .jsonBody("{ \"licenseKey\": \"$license\" }")
-            .response()
-            .second
-            .validate()
+                .jsonBody("{ \"licenseKey\": \"$license\" }")
+                .response()
+                .second
+                .validate()
     }
 
     fun pingArtifactory(): Response {
         return fuelManager.get("/api/system/ping")
-            .response()
-            .second
-            .validate()
+                .response()
+                .second
+                .validate()
     }
 
     fun waitForSuccessfulStartup() {

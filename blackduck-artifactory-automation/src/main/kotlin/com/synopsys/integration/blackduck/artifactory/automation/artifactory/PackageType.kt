@@ -9,7 +9,7 @@ interface PackageType {
     val requiresVirtual: Boolean
 
     enum class Defaults(override val packageType: String, override val remoteUrl: String, override val repoLayoutRef: String = "simple-default", override val resolver: Resolver? = null, override val dockerImageTag: String? = null,
-        override val requiresVirtual: Boolean = false) : PackageType {
+                        override val requiresVirtual: Boolean = false) : PackageType {
         BOWER("bower", "https://github.com/", "bower-default", Resolvers.BOWER_RESOLVER, "artifactory-automation-bower"),
         CHEF("chef", "https://supermarket.chef.io"),
         COCOAPODS("cocoapods", "https://github.com/"),

@@ -41,11 +41,11 @@ class ApplicationConfiguration {
     fun blackDuckServerConfig(@Autowired configManager: ConfigManager): BlackDuckServerConfig {
         logger.info("Verifying Black Duck server config.")
         return BlackDuckServerConfigBuilder()
-            .setUrl(configManager.getRequired(ConfigProperty.BLACKDUCK_URL))
-            .setUsername(configManager.getRequired(ConfigProperty.BLACKDUCK_USERNAME))
-            .setPassword(configManager.getRequired(ConfigProperty.BLACKDUCK_PASSWORD))
-            .setTrustCert(configManager.getRequired(ConfigProperty.BLACKDUCK_TRUST_CERT))
-            .build()
+                .setUrl(configManager.getRequired(ConfigProperty.BLACKDUCK_URL))
+                .setUsername(configManager.getRequired(ConfigProperty.BLACKDUCK_USERNAME))
+                .setPassword(configManager.getRequired(ConfigProperty.BLACKDUCK_PASSWORD))
+                .setTrustCert(configManager.getRequired(ConfigProperty.BLACKDUCK_TRUST_CERT))
+                .build()
     }
 
     @Bean
@@ -163,49 +163,49 @@ class ApplicationConfiguration {
 
     @Bean
     fun blackDuckPluginManager(
-        @Autowired artifactoryConfiguration: ArtifactoryConfiguration,
-        @Autowired blackDuckServerConfig: BlackDuckServerConfig,
-        @Autowired blackDuckPluginService: BlackDuckPluginService,
-        @Autowired blackDuckPluginApiService: BlackDuckPluginApiService,
-        @Autowired dockerService: DockerService
+            @Autowired artifactoryConfiguration: ArtifactoryConfiguration,
+            @Autowired blackDuckServerConfig: BlackDuckServerConfig,
+            @Autowired blackDuckPluginService: BlackDuckPluginService,
+            @Autowired blackDuckPluginApiService: BlackDuckPluginApiService,
+            @Autowired dockerService: DockerService
     ): BlackDuckPluginManager {
         return BlackDuckPluginManager(
-            artifactoryConfiguration,
-            blackDuckServerConfig,
-            blackDuckPluginService,
-            blackDuckPluginApiService,
-            dockerService
+                artifactoryConfiguration,
+                blackDuckServerConfig,
+                blackDuckPluginService,
+                blackDuckPluginApiService,
+                dockerService
         )
     }
 
     @Bean
     fun application(
-        @Autowired configManager: ConfigManager,
-        @Autowired dockerService: DockerService,
-        @Autowired blackDuckServerConfig: BlackDuckServerConfig,
-        @Autowired artifactoryConfiguration: ArtifactoryConfiguration,
-        @Autowired blackDuckPluginManager: BlackDuckPluginManager,
-        @Autowired systemApiService: SystemApiService
+            @Autowired configManager: ConfigManager,
+            @Autowired dockerService: DockerService,
+            @Autowired blackDuckServerConfig: BlackDuckServerConfig,
+            @Autowired artifactoryConfiguration: ArtifactoryConfiguration,
+            @Autowired blackDuckPluginManager: BlackDuckPluginManager,
+            @Autowired systemApiService: SystemApiService
     ): Application {
         return Application(
-            dockerService,
-            blackDuckServerConfig,
-            artifactoryConfiguration,
-            blackDuckPluginManager,
-            systemApiService
+                dockerService,
+                blackDuckServerConfig,
+                artifactoryConfiguration,
+                blackDuckPluginManager,
+                systemApiService
         )
     }
 }
 
 data class ArtifactoryConfiguration(
-    val url: String,
-    val port: String,
-    val username: String,
-    val password: String,
-    val version: String,
-    val manageArtifactory: Boolean,
-    val licenseFile: File,
-    val pluginZipFile: File,
-    val pluginLoggingLevel: String,
-    val configImportDirectory: String
+        val url: String,
+        val port: String,
+        val username: String,
+        val password: String,
+        val version: String,
+        val manageArtifactory: Boolean,
+        val licenseFile: File,
+        val pluginZipFile: File,
+        val pluginLoggingLevel: String,
+        val configImportDirectory: String
 )

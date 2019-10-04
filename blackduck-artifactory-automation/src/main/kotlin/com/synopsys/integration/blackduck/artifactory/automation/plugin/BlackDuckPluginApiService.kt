@@ -12,33 +12,33 @@ class BlackDuckPluginApiService(private val fuelManager: FuelManager) {
 
     fun reloadPlugin(): Response {
         return fuelManager.post("$pluginsApiPrefix/blackDuckReload")
-            .response()
-            .second
-            .validate()
+                .response()
+                .second
+                .validate()
     }
 
     fun blackDuckInitializeRepositories(): Response {
         return fuelManager.post("$pluginsApiPrefix/blackDuckInitializeRepositories")
-            .response()
-            .second
-            .validate()
+                .response()
+                .second
+                .validate()
     }
 
     fun setModuleState(module: String, enabled: Boolean): Response {
         val request = fuelManager.post("$pluginsApiPrefix/blackDuckSetModuleState")
         request.parameters = listOf(
-            Pair("params", "$module=$enabled")
+                Pair("params", "$module=$enabled")
         )
         return request
-            .response()
-            .second
-            .validate()
+                .response()
+                .second
+                .validate()
     }
 
     fun deleteInspectionProperties(): Response {
         return fuelManager.post("$pluginsApiPrefix/blackDuckDeleteInspectionProperties")
-            .response()
-            .second
-            .validate()
+                .response()
+                .second
+                .validate()
     }
 }

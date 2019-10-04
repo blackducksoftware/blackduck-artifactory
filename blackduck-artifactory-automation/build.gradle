@@ -1,6 +1,6 @@
 buildscript {
     ext.spring_boot_version = '2.1.0.RELEASE'
-    
+
     repositories {
         mavenCentral()
         jcenter()

@@ -16,7 +16,7 @@ class ComponentVerificationService(private val blackDuckServicesFactory: BlackDu
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
     fun waitForComponentInspection(repositoryKey: String, testablePackage: TestablePackage, expectedInspectionStatus: InspectionStatus = InspectionStatus.SUCCESS, maxRetryCount: Int = 5, waitTime: Long = 1,
-        waitTimeUnit: TimeUnit = TimeUnit.MINUTES) {
+                                   waitTimeUnit: TimeUnit = TimeUnit.MINUTES) {
         val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repositoryKey)
         waitForComponentInspection(repositoryKey + artifact.path, expectedInspectionStatus, maxRetryCount, waitTime, waitTimeUnit, 0)
     }
@@ -66,17 +66,17 @@ class ComponentVerificationService(private val blackDuckServicesFactory: BlackDu
 }
 
 class FailedInspectionException(
-    private val repoPath: String,
-    override val message: String = "The plugin failed to inspect $repoPath."
+        private val repoPath: String,
+        override val message: String = "The plugin failed to inspect $repoPath."
 ) : IntegrationException()
 
 class NoPropertiesException(
-    private val repoPath: String,
-    override var message: String = "Failed to find any properties on $repoPath."
+        private val repoPath: String,
+        override var message: String = "Failed to find any properties on $repoPath."
 ) : IntegrationException()
 
 class MissingPropertyException(
-    private val propertyKey: String,
-    private val repoPath: String,
-    override val message: String = "Failed to find the property $propertyKey at $repoPath."
+        private val propertyKey: String,
+        private val repoPath: String,
+        override val message: String = "Failed to find the property $propertyKey at $repoPath."
 ) : IntegrationException()

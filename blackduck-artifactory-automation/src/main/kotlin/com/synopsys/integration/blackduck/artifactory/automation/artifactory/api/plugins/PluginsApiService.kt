@@ -13,11 +13,11 @@ class PluginsApiService(private val fuelManager: FuelManager) {
 
     fun reloadPlugins(): Response {
         return fuelManager.post("/api/plugins/reload")
-            .response { response ->
-                response.failure { logger.warn(it.exception.message) }
-                response.success { logger.info("Artifactory successfully reloaded plugins.") }
-            }
-            .join()
-            .validate()
+                .response { response ->
+                    response.failure { logger.warn(it.exception.message) }
+                    response.success { logger.info("Artifactory successfully reloaded plugins.") }
+                }
+                .join()
+                .validate()
     }
 }

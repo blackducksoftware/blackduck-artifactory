@@ -34,11 +34,11 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
 
         logger.info("Uploading plugin files.")
         unzippedPluginDirectory.listFiles()
-            .filterNotNull()
-            .filter { !it.startsWith(".") }
-            .forEach {
-                dockerService.uploadFile(it, dockerPluginsDirectory)
-            }
+                .filterNotNull()
+                .filter { !it.startsWith(".") }
+                .forEach {
+                    dockerService.uploadFile(it, dockerPluginsDirectory)
+                }
     }
 
     fun updateLogbackXml(xmlFile: File, loggingLevel: String) {
@@ -77,17 +77,17 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
         }
 
         updateProperties(
-            propertiesFile,
-            Pair(GeneralProperty.URL, blackDuckServerConfig.blackDuckUrl.toString()),
-            Pair(GeneralProperty.USERNAME, username),
-            Pair(GeneralProperty.PASSWORD, password),
-            Pair(GeneralProperty.API_TOKEN, blackDuckServerConfig.apiToken.orElse("")),
-            Pair(GeneralProperty.TIMEOUT, blackDuckServerConfig.timeout.toString()),
-            Pair(GeneralProperty.PROXY_HOST, blackDuckServerConfig.proxyInfo.host.orElse("")),
-            Pair(GeneralProperty.PROXY_PORT, blackDuckServerConfig.proxyInfo.port.toString()),
-            Pair(GeneralProperty.PROXY_USERNAME, blackDuckServerConfig.proxyInfo.username.orElse("")),
-            Pair(GeneralProperty.PROXY_PASSWORD, blackDuckServerConfig.proxyInfo.password.orElse("")),
-            Pair(GeneralProperty.TRUST_CERT, blackDuckServerConfig.isAlwaysTrustServerCertificate.toString())
+                propertiesFile,
+                Pair(GeneralProperty.URL, blackDuckServerConfig.blackDuckUrl.toString()),
+                Pair(GeneralProperty.USERNAME, username),
+                Pair(GeneralProperty.PASSWORD, password),
+                Pair(GeneralProperty.API_TOKEN, blackDuckServerConfig.apiToken.orElse("")),
+                Pair(GeneralProperty.TIMEOUT, blackDuckServerConfig.timeout.toString()),
+                Pair(GeneralProperty.PROXY_HOST, blackDuckServerConfig.proxyInfo.host.orElse("")),
+                Pair(GeneralProperty.PROXY_PORT, blackDuckServerConfig.proxyInfo.port.toString()),
+                Pair(GeneralProperty.PROXY_USERNAME, blackDuckServerConfig.proxyInfo.username.orElse("")),
+                Pair(GeneralProperty.PROXY_PASSWORD, blackDuckServerConfig.proxyInfo.password.orElse("")),
+                Pair(GeneralProperty.TRUST_CERT, blackDuckServerConfig.isAlwaysTrustServerCertificate.toString())
         )
     }
 
@@ -115,9 +115,9 @@ class BlackDuckPluginService(private val dockerService: DockerService) {
     private fun unzipFile(zipFile: File, outputDirectory: File): File {
         outputDirectory.deleteRecursively()
         val process = ProcessBuilder()
-            .command("unzip", "-o", zipFile.canonicalPath, "-d", outputDirectory.canonicalPath)
-            .inheritIO()
-            .start()
+                .command("unzip", "-o", zipFile.canonicalPath, "-d", outputDirectory.canonicalPath)
+                .inheritIO()
+                .start()
 
         val exitCode = process.waitFor()
         if (exitCode != 0) {

@@ -14,21 +14,21 @@ class RepositoriesApiService(private val fuelManager: FuelManager) {
 
     fun createRepository(repositoryConfiguration: RepositoryConfiguration): Response {
         return fuelManager.put("/api/repositories/${repositoryConfiguration.key}")
-            .jsonBody(repositoryConfiguration)
-            .response()
-            .second.validate()
+                .jsonBody(repositoryConfiguration)
+                .response()
+                .second.validate()
     }
 
     fun deleteRepository(repositoryKey: String): Response {
         return fuelManager.delete("/api/repositories/$repositoryKey")
-            .response()
-            .second.validate()
+                .response()
+                .second.validate()
     }
 
     fun getRepository(repositoryKey: String): RepositoryConfiguration {
         return fuelManager.get("/api/repositories/$repositoryKey")
-            .responseObject<RepositoryConfiguration>()
-            .third.get()
+                .responseObject<RepositoryConfiguration>()
+                .third.get()
     }
 }
 
@@ -42,17 +42,17 @@ enum class RepositoryType {
 }
 
 data class RepositoryConfiguration(
-    val key: String,
-    @SerializedName("rclass")
-    val repositoryType: RepositoryType,
-    val packageType: String,
-    @SerializedName("url")
-    val remoteUrl: String?,
-    val externalDependenciesEnabled: Boolean = false,
-    @SerializedName("repoLayoutRef")
-    val repositoryLayout: String = "simple-default",
-    val feedContextPath: String = "api/v2",
-    val downloadContextPath: String = "api/v2/package",
-    val v3FeedUrl: String = "https://api.nuget.org/v3/index.json",
-    val repositories: List<String> = emptyList()
+        val key: String,
+        @SerializedName("rclass")
+        val repositoryType: RepositoryType,
+        val packageType: String,
+        @SerializedName("url")
+        val remoteUrl: String?,
+        val externalDependenciesEnabled: Boolean = false,
+        @SerializedName("repoLayoutRef")
+        val repositoryLayout: String = "simple-default",
+        val feedContextPath: String = "api/v2",
+        val downloadContextPath: String = "api/v2/package",
+        val v3FeedUrl: String = "https://api.nuget.org/v3/index.json",
+        val repositories: List<String> = emptyList()
 )

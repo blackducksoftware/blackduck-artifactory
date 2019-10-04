@@ -11,11 +11,11 @@ import java.io.FileOutputStream
 import java.util.*
 
 class BlackDuckPluginManager(
-    private val artifactoryConfiguration: ArtifactoryConfiguration,
-    private val blackDuckServerConfig: BlackDuckServerConfig,
-    private val blackDuckPluginService: BlackDuckPluginService,
-    private val blackDuckPluginApiService: BlackDuckPluginApiService,
-    private val dockerService: DockerService
+        private val artifactoryConfiguration: ArtifactoryConfiguration,
+        private val blackDuckServerConfig: BlackDuckServerConfig,
+        private val blackDuckPluginService: BlackDuckPluginService,
+        private val blackDuckPluginApiService: BlackDuckPluginApiService,
+        private val dockerService: DockerService
 ) {
     private val logger: IntLogger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 

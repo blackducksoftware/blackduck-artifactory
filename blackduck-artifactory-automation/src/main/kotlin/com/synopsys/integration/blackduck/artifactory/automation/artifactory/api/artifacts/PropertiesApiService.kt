@@ -8,7 +8,7 @@ import com.synopsys.integration.blackduck.artifactory.automation.validateDontThr
 class PropertiesApiService(private val fuelManager: FuelManager) {
     fun getProperties(repoPath: String): ItemProperties? {
         val responseResult = fuelManager.get("/api/storage/$repoPath?properties")
-            .responseObject<ItemProperties>()
+                .responseObject<ItemProperties>()
 
         return if (responseResult.second.validateDontThrow()) {
             responseResult.third.get()
@@ -19,8 +19,8 @@ class PropertiesApiService(private val fuelManager: FuelManager) {
 }
 
 data class ItemProperties(
-    @SerializedName("uri")
-    val uri: String,
-    @SerializedName("properties")
-    val properties: Map<String, List<String>>
+        @SerializedName("uri")
+        val uri: String,
+        @SerializedName("properties")
+        val properties: Map<String, List<String>>
 )

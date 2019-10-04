@@ -9,8 +9,8 @@ import java.io.File
 class ArtifactDeploymentApiService(private val fuelManager: FuelManager) {
     fun deployArtifact(repositoryKey: String, file: File, path: String = file.path) {
         fuelManager.upload("$repositoryKey/$path/${file.name}", Method.PUT)
-            .add(FileDataPart(file))
-            .response()
-            .second.validate()
+                .add(FileDataPart(file))
+                .response()
+                .second.validate()
     }
 }
