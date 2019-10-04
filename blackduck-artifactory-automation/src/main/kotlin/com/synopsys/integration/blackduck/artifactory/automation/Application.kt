@@ -73,6 +73,10 @@ class Application(
         } else {
             containerId = imageTag
             logger.info("Skipping Artifactory installation.")
+
+            logger.info("Installing plugin.")
+            blackDuckPluginManager.installPlugin()
+            systemApiService.waitForSuccessfulStartup()
         }
     }
 }
