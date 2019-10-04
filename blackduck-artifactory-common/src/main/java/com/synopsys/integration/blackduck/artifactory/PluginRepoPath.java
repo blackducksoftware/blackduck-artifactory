@@ -28,9 +28,8 @@ import java.nio.file.Path;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.artifactory.repo.RepoPath;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class PluginRepoPath implements RepoPath {
     private final String repoKey;
@@ -89,11 +88,11 @@ public class PluginRepoPath implements RepoPath {
 
     @Override
     public boolean isFile() {
-        throw new NotImplementedException();
+        throw new NotImplementedException("PluginRepoPath::isFile is not implemented.");
     }
 
     @Override
     public boolean isFolder() {
-        throw new NotImplementedException();
+        throw new NotImplementedException("PluginRepoPath::isFolder is not implemented.");
     }
 }
