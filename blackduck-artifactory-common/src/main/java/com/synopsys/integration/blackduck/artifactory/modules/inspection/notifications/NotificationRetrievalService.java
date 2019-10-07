@@ -95,28 +95,33 @@ public class NotificationRetrievalService {
                 policyStatusNotifications.add(policyStatusNotification);
             }
         } catch (final IntegrationException e) {
-            logger.error("Failed to extract policy data from notifications.", e);
+            logger.debug("Failed to extract policy data from notification.", e);
         }
 
         return policyStatusNotifications;
     }
 
-    private List<PolicyStatusNotification> createPolicyStatusNotifications(final List<ComponentVersionStatus> componentVersionStatuses, final String projectName, final String projectVersionName,
-        final List<PolicyInfo> policyInfos) throws IntegrationException {
+    private List<PolicyStatusNotification> createPolicyStatusNotifications(final List<ComponentVersionStatus> componentVersionStatuses, final String projectName, final String projectVersionName, final List<PolicyInfo> policyInfos) {
         final NameVersion affectedProjectVersion = new NameVersion(projectName, projectVersionName);
         final List<NameVersion> affectedProjectVersions = Collections.singletonList(affectedProjectVersion);
         final List<PolicyStatusNotification> policyStatusNotifications = new ArrayList<>();
         for (final ComponentVersionStatus componentVersionStatus : componentVersionStatuses) {
-            final PolicyStatusNotification policyStatusNotification = createPolicyStatusNotification(affectedProjectVersions, componentVersionStatus.getComponentVersion(), componentVersionStatus.getBomComponentVersionPolicyStatus(),
-                policyInfos);
-            policyStatusNotifications.add(policyStatusNotification);
+            try {
+                final PolicyStatusNotification policyStatusNotification = createPolicyStatusNotification(affectedProjectVersions, componentVersionStatus.getComponentVersion(), componentVersionStatus.getBomComponentVersionPolicyStatus(),
+                    policyInfos);
+                policyStatusNotifications.add(policyStatusNotification);
+            } catch (final IntegrationException e) {
+                logger.debug(String.format("Failed to get policy status for component '%s==%s' in project '%s' version '%s' from notification. The project version might not exist.", componentVersionStatus.getComponentName(),
+                    componentVersionStatus.getComponentVersion(), projectName,
+                    projectVersionName));
+            }
         }
 
         return policyStatusNotifications;
     }
 
-    private PolicyStatusNotification createPolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final String componentVersionUrl, final String policyStatusUrl,
-        final List<PolicyInfo> policyInfos) throws IntegrationException {
+    private PolicyStatusNotification createPolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final String componentVersionUrl, final String policyStatusUrl, final List<PolicyInfo> policyInfos)
+        throws IntegrationException {
         final UriSingleResponse<ComponentVersionView> componentVersionViewUriSingleResponse = new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class);
         final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUriSingleResponse);
         final UriSingleResponse<PolicyStatusView> policyStatusViewUriSingleResponse = new UriSingleResponse<>(policyStatusUrl, PolicyStatusView.class);

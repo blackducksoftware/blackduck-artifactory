@@ -50,6 +50,7 @@ import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.AffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.BlackDuckNotification;
@@ -126,6 +127,7 @@ public class ArtifactNotificationService {
 
         updatedRepoKeys.stream().map(RepoPathFactory::create).forEach(repoKeyPath -> {
             inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
             inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
             final String repoKey = repoKeyPath.getRepoKey();
