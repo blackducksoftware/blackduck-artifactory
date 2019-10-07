@@ -27,16 +27,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
-import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
@@ -90,14 +87,12 @@ public class ArtifactNotificationService {
         final List<PolicyStatusNotification> policyStatusNotifications = notificationRetrievalService.getPolicyStatusNotifications(notificationUserViews);
 
         final List<String> repoKeys = repoKeyPaths.stream().map(RepoPath::getRepoKey).collect(Collectors.toList());
-        final Set<String> updatedRepoKeys = new HashSet<>();
 
         final List<AffectedArtifact<VulnerabilityNotification>> vulnerabilityArtifacts = processVulnerabilityNotifications(repoKeys, vulnerabilityNotifications);
         for (final AffectedArtifact<VulnerabilityNotification> vulnerableArtifact : vulnerabilityArtifacts) {
             final RepoPath repoPath = vulnerableArtifact.getRepoPath();
             final VulnerabilityAggregate vulnerabilityAggregate = vulnerableArtifact.getBlackDuckNotification().getVulnerabilityAggregate();
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
-            updatedRepoKeys.add(repoPath.getRepoKey());
         }
 
         final List<AffectedArtifact<PolicyStatusNotification>> policyArtifacts = processPolicyStatusNotifications(repoKeys, policyStatusNotifications);
@@ -120,12 +115,11 @@ public class ArtifactNotificationService {
             final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
-            updatedRepoKeys.add(repoPath.getRepoKey());
         }
 
         final Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(notificationUserViews);
 
-        updatedRepoKeys.stream().map(RepoPathFactory::create).forEach(repoKeyPath -> {
+        repoKeyPaths.forEach(repoKeyPath -> {
             inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
@@ -139,7 +133,6 @@ public class ArtifactNotificationService {
                 logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoKey));
             }
         });
-
     }
 
     private Optional<Date> getLatestNotificationCreatedAtDate(final List<NotificationUserView> notificationUserViews) {
