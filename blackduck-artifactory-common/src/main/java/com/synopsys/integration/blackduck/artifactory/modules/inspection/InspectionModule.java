@@ -119,7 +119,8 @@ public class InspectionModule implements Module {
                     for (final RepoPath repoPath : severityUpdateRepoPaths) {
                         if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES)) {
                             final String componentVersionUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL)
-                                                                   .orElseThrow(() -> new FailedInspectionException(repoPath, "Failed to perform policy severity upgrade due to missing component version url."));
+                                                                   .orElseThrow(() -> new FailedInspectionException(repoPath,
+                                                                       String.format("Failed to perform policy severity upgrade due to missing component version url on artifact: %s", repoPath.toPath())));
                             final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionWrapper.get().getProjectVersionView());
                             final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
                             final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
