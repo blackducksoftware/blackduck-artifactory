@@ -38,8 +38,10 @@ import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyRuleView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -48,7 +50,6 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProper
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
@@ -111,33 +112,44 @@ public class InspectionModule implements Module {
             try {
                 final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
                 if (projectVersionWrapper.isPresent()) {
-                    final List<RepoPath> severityUpdateRepoPaths = artifactoryPAPIService.itemsByProperties(ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.SUCCESS.name()), repoKey)
-                                                                       .stream()
+                    final SetMultimap<String, String> propertyMap = new ImmutableSetMultimap.Builder<String, String>()
+                                                                        .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.SUCCESS.name())
+                                                                        .build();
+                    final List<RepoPath> severityUpdateRepoPaths = artifactoryPAPIService.itemsByProperties(propertyMap, repoKey).stream()
                                                                        .filter(repoPath -> !repoPath.isRoot())
+                                                                       .filter(repoPath -> !"./".equals(repoPath.getPath()))
                                                                        .collect(Collectors.toList());
-
-                    for (final RepoPath repoPath : severityUpdateRepoPaths) {
-                        if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES)) {
-                            final String componentVersionUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL)
-                                                                   .orElseThrow(() -> new FailedInspectionException(repoPath,
-                                                                       String.format("Failed to perform policy severity upgrade due to missing component version url on artifact: %s", repoPath.toPath())));
-                            final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionWrapper.get().getProjectVersionView());
-                            final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
-                            final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
-                            final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
-                            final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
-                                                                                     .map(VersionBomPolicyRuleView::getSeverity)
-                                                                                     .map(PolicySeverityType::valueOf)
-                                                                                     .collect(Collectors.toList());
-                            final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policyStatus, policySeverityTypes);
-                            inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
-                        }
-                    }
+                    upgradeSeverityForRepoPaths(projectVersionWrapper.get().getProjectVersionView(), severityUpdateRepoPaths);
                 } else {
                     logger.warn(String.format("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.", repoKey));
                 }
             } catch (final IntegrationException e) {
                 logger.error(String.format("Failed to perform the policy severity upgrade for repo '%s'. The %s may not work as expected.", repoKey, PolicyModule.class.getSimpleName()), e);
+            }
+        }
+    }
+
+    private void upgradeSeverityForRepoPaths(final ProjectVersionView projectVersionView, final List<RepoPath> repoPaths) {
+        for (final RepoPath repoPath : repoPaths) {
+            try {
+                if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES)) {
+                    final String componentVersionUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL)
+                                                           .orElseThrow(() -> new IntegrationException("Missing component version url."));
+                    final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionView);
+                    final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
+                    final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews;
+                    versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
+
+                    final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
+                    final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
+                                                                             .map(VersionBomPolicyRuleView::getSeverity)
+                                                                             .map(PolicySeverityType::valueOf)
+                                                                             .collect(Collectors.toList());
+                    final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policyStatus, policySeverityTypes);
+                    inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
+                }
+            } catch (final IntegrationException e) {
+                logger.error(String.format("Failed to perform policy upgrade on %s. %s", repoPath.toPath(), e.getMessage()));
             }
         }
     }
