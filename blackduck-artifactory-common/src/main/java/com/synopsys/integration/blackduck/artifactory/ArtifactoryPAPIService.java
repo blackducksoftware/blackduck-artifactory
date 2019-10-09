@@ -140,6 +140,7 @@ public class ArtifactoryPAPIService {
         repositories.deleteProperty(repoPath, propertyName);
     }
 
+    // TODO: Stop using ArtifactoryPAPIService for this. Use InspectionPropertyService
     public List<RepoPath> itemsByProperties(final SetMultimap<String, String> properties, final String... repoKeys) {
         return searches.itemsByProperties(properties, repoKeys);
     }
