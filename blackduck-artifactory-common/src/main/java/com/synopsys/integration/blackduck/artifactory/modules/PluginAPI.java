@@ -162,6 +162,10 @@ public class PluginAPI implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.reinspectFromFailures(params));
     }
 
+    public void performPolicySeverityUpdate(final TriggerType triggerType) {
+        runMethod(inspectionModuleConfig, triggerType, inspectionModule::performPolicySeverityUpdate);
+    }
+
     public void initializeRepositories(final TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::initializeRepositories);
     }

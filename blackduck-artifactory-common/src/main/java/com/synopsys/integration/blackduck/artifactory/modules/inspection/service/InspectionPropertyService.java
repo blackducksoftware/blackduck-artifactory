@@ -83,8 +83,12 @@ public class InspectionPropertyService {
     }
 
     public void setPolicyProperties(final RepoPath repoPath, final PolicyStatusReport policyStatusReport) {
-        final String policySeverityTypes = StringUtils.join(policyStatusReport.getPolicySeverityTypes(), ",");
-        artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, logger);
+        if (policyStatusReport.getPolicySeverityTypes().isEmpty() && artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES)) {
+            artifactoryPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, logger);
+        } else {
+            final String policySeverityTypes = StringUtils.join(policyStatusReport.getPolicySeverityTypes(), ",");
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, logger);
+        }
         artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusReport.getPolicySummaryStatusType().name(), logger);
     }
 

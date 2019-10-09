@@ -49,6 +49,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
@@ -130,9 +131,10 @@ public class ModuleFactory {
             externalIdService, blackDuckService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
+        final PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPAPIService,artifactoryPropertyService,inspectionPropertyService,blackDuckService,blackDuckBOMService,projectService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
-            simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, projectService, blackDuckBOMService, blackDuckService);
+            simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, policySeverityService);
     }
 
     public PolicyModule createPolicyModule() {

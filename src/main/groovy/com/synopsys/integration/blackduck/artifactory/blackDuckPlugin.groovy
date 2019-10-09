@@ -304,6 +304,26 @@ executions {
         pluginAPI.updateMetadata(TriggerType.REST_REQUEST)
     }
 
+    /**
+     * Manual execution of the Update PerformPolicySeverityUpdate cron job.
+     * Will update the blackduck.policySeverityTypes property on all artifacts within inspected repos with the following properties:
+     *
+     * blackduck.inspectionStatus = SUCCESS
+     * blackduck.policyStatus = IN_VIOLATION
+     * OR
+     * blackduck.inspectionStatus = SUCCESS
+     * blackduck.policyStatus = IN_VIOLATION_OVERRIDDEN
+     *
+     * Note: The blackduck.policySeverityTypes property can fall out of date if the severity of a policy is changed.
+     * There is a cron job which runs at the same interval as the blackduck.artifactory.inspect.reinspect.cron cron config property.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPerformPolicySeverityUpdate"
+     **/
+    blackDuckManuallyPerformPolicySeverityUpdate(httpMethod: 'POST') { params ->
+        pluginAPI.performPolicySeverityUpdate(TriggerType.REST_REQUEST)
+    }
+
     //////////////////////////////////////////////// ANALYTICS EXECUTIONS ////////////////////////////////////////////////
 
     /**
@@ -360,6 +380,13 @@ jobs {
      */
     blackDuckReinspectFromFailures(cron: pluginAPI.getReinspectCron()) {
         pluginAPI.reinspectFromFailures(TriggerType.CRON_JOB)
+    }
+
+    /**
+     * The functionality is described above the blackDuckManuallyPerformPolicySeverityUpdate execution
+     */
+    blackDuckPerformPolicySeverityUpdate(cron: pluginAPI.getReinspectCron()) {
+        pluginAPI.performPolicySeverityUpdate(TriggerType.CRON_JOB)
     }
 
     //////////////////////////////////////////////// ANALYTICS JOBS ////////////////////////////////////////////////
