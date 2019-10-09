@@ -48,8 +48,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReload"
      **/
-    blackDuckReload(httpMethod: 'POST') { params ->
-        initialize(TriggerType.REST_REQUEST)
+    blackDuckReload(httpMethod: 'POST') { params -> initialize(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -58,8 +57,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
      **/
-    blackDuckReloadDirectory() { params ->
-        pluginService.reloadBlackDuckDirectory(TriggerType.REST_REQUEST)
+    blackDuckReloadDirectory() { params -> pluginService.reloadBlackDuckDirectory(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -84,8 +82,7 @@ executions {
      * This can be triggered with the following curl command for disabling multiple propertyReports (ScanModule and the PolicyModule):
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
      **/
-    blackDuckSetModuleState() { params ->
-        pluginAPI.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    blackDuckSetModuleState() { params -> pluginAPI.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -94,8 +91,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X GET -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckTestConfig"
      **/
-    blackDuckTestConfig(httpMethod: 'GET') { params ->
-        message = pluginService.logStatusCheckMessage(TriggerType.REST_REQUEST)
+    blackDuckTestConfig(httpMethod: 'GET') { params -> message = pluginService.logStatusCheckMessage(TriggerType.REST_REQUEST)
     }
 
     //////////////////////////////////////////////// SCAN EXECUTIONS ////////////////////////////////////////////////
@@ -121,8 +117,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckScan"
      **/
-    blackDuckScan(httpMethod: 'POST') { params ->
-        pluginAPI.triggerScan(TriggerType.REST_REQUEST)
+    blackDuckScan(httpMethod: 'POST') { params -> pluginAPI.triggerScan(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -147,12 +142,10 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckAddScanPolicyStatus"
      **/
-    blackDuckAddScanPolicyStatus(httpMethod: 'POST') { params ->
-        pluginAPI.addScanPolicyStatus(TriggerType.REST_REQUEST)
+    blackDuckAddScanPolicyStatus(httpMethod: 'POST') { params -> pluginAPI.addScanPolicyStatus(TriggerType.REST_REQUEST)
     }
 
-    blackDuckPerformPostScanActions(httpMethod: 'POST') { params ->
-        pluginAPI.performPostScanActions(TriggerType.REST_REQUEST)
+    blackDuckPerformPostScanActions(httpMethod: 'POST') { params -> pluginAPI.performPostScanActions(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -171,8 +164,7 @@ executions {
      * To delete properties with property exclusions use the following curl command (the properties "blackduck.projectName" and "blackduck.projectVersionName" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanProperties?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
-    blackDuckDeleteScanProperties() { params ->
-        pluginAPI.deleteScanProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    blackDuckDeleteScanProperties() { params -> pluginAPI.deleteScanProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -191,8 +183,7 @@ executions {
      * To delete properties with property exclusions use the following curl command (the properties "blackduck.projectName" and "blackduck.projectVersionName" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromFailures?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
-    blackDuckDeleteScanPropertiesFromFailures() { params ->
-        pluginAPI.deleteScanPropertiesFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    blackDuckDeleteScanPropertiesFromFailures() { params -> pluginAPI.deleteScanPropertiesFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -211,8 +202,7 @@ executions {
      * To delete properties with property exclusions use the following curl command (the properties "blackduck.projectName" and "blackduck.projectVersionName" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanPropertiesFromOutOfDate?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
-    blackDuckDeleteScanPropertiesFromOutOfDate() { params ->
-        pluginAPI.deleteScanPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    blackDuckDeleteScanPropertiesFromOutOfDate() { params -> pluginAPI.deleteScanPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
@@ -223,8 +213,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckInitializeRepositories"
      **/
-    blackDuckInitializeRepositories() { params ->
-        pluginAPI.initializeRepositories(TriggerType.REST_REQUEST)
+    blackDuckInitializeRepositories() { params -> pluginAPI.initializeRepositories(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -236,8 +225,19 @@ executions {
      * To delete properties with property exclusions use the following curl command (the property "blackduck.inspectionStatus" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionProperties?params=properties=blackduck.inspectionStatus"
      **/
-    blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params ->
-        pluginAPI.deleteInspectionProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    blackDuckDeleteInspectionProperties(httpMethod: 'POST') { params -> pluginAPI.deleteInspectionProperties(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    }
+
+    /**
+     * Removes all properties that were populated by the inspector plugin on the repositories and artifacts that it was configured to inspect where the blackduck.updateStatus=OUT_OF_DATE.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionPropertiesFromOutOfDate"
+     *
+     * To delete properties with property exclusions use the following curl command (the property "blackduck.inspectionStatus" will not be removed from the artifact)
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteInspectionPropertiesFromOutOfDate?params=properties=blackduck.inspectionStatus"
+     **/
+    blackDuckDeleteInspectionPropertiesFromOutOfDate() { params -> pluginAPI.deleteInspectionPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -250,8 +250,7 @@ executions {
      * To delete properties with property exclusions use the following curl command (the property "blackduck.originId" will not be removed from the artifact)
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReinspectFromFailures?params=properties=blackduck.projectName,blackduck.projectVersionName"
      **/
-    blackDuckReinspectFromFailures() { params ->
-        pluginAPI.reinspectFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    blackDuckReinspectFromFailures() { params -> pluginAPI.reinspectFromFailures(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
 
     /**
@@ -277,8 +276,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyInspectAllUnknownArtifacts"
      **/
-    blackDuckManuallyInspectAllUnknownArtifacts(httpMethod: 'POST') { params ->
-        pluginAPI.inspectAllUnknownArtifacts(TriggerType.REST_REQUEST)
+    blackDuckManuallyInspectAllUnknownArtifacts(httpMethod: 'POST') { params -> pluginAPI.inspectAllUnknownArtifacts(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -300,8 +298,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyUpdateMetadata"
      **/
-    blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params ->
-        pluginAPI.updateMetadata(TriggerType.REST_REQUEST)
+    blackDuckManuallyUpdateMetadata(httpMethod: 'POST') { params -> pluginAPI.updateMetadata(TriggerType.REST_REQUEST)
     }
 
     /**
@@ -320,8 +317,7 @@ executions {
      * This can be triggered with the following curl command:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckManuallyPerformPolicySeverityUpdate"
      **/
-    blackDuckManuallyPerformPolicySeverityUpdate(httpMethod: 'POST') { params ->
-        pluginAPI.performPolicySeverityUpdate(TriggerType.REST_REQUEST)
+    blackDuckManuallyPerformPolicySeverityUpdate(httpMethod: 'POST') { params -> pluginAPI.performPolicySeverityUpdate(TriggerType.REST_REQUEST)
     }
 
     //////////////////////////////////////////////// ANALYTICS EXECUTIONS ////////////////////////////////////////////////
@@ -330,10 +326,8 @@ executions {
      * Submits usage analytics. This endpoint is intended for developer use only
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSubmitAnalytics"
-     */
-    blackDuckSubmitAnalytics(httpMethod: 'POST') { params ->
-        message = pluginAPI.submitAnalytics(TriggerType.REST_REQUEST)
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSubmitAnalytics"*/
+    blackDuckSubmitAnalytics(httpMethod: 'POST') { params -> message = pluginAPI.submitAnalytics(TriggerType.REST_REQUEST)
     }
 }
 
@@ -376,15 +370,13 @@ jobs {
     }
 
     /**
-     * The functionality is described above the blackDuckReinspectFromFailures execution
-     */
+     * The functionality is described above the blackDuckReinspectFromFailures execution*/
     blackDuckReinspectFromFailures(cron: pluginAPI.getReinspectCron()) {
         pluginAPI.reinspectFromFailures(TriggerType.CRON_JOB)
     }
 
     /**
-     * The functionality is described above the blackDuckManuallyPerformPolicySeverityUpdate execution
-     */
+     * The functionality is described above the blackDuckManuallyPerformPolicySeverityUpdate execution*/
     blackDuckPerformPolicySeverityUpdate(cron: pluginAPI.getReinspectCron()) {
         pluginAPI.performPolicySeverityUpdate(TriggerType.CRON_JOB)
     }
@@ -406,10 +398,8 @@ storage {
      * Handle after create events.
      *
      * Closure parameters:
-     * item (org.artifactory.fs.ItemInfo) - the original item being created.
-     */
-    afterCreate { ItemInfo item ->
-        pluginAPI.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
+     * item (org.artifactory.fs.ItemInfo) - the original item being created.*/
+    afterCreate { ItemInfo item -> pluginAPI.handleAfterCreateEvent(item, TriggerType.STORAGE_AFTER_CREATE)
     }
 
     /**
@@ -417,10 +407,8 @@ storage {
      *
      * Closure parameters:
      * item (org.artifactory.fs.ItemInfo) - the source item copied.
-     * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the copy.
-     */
-    afterCopy { ItemInfo item, RepoPath targetRepoPath, properties ->
-        pluginAPI.handleAfterCopyEvent(targetRepoPath, TriggerType.STORAGE_AFTER_COPY)
+     * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the copy.*/
+    afterCopy { ItemInfo item, RepoPath targetRepoPath, properties -> pluginAPI.handleAfterCopyEvent(targetRepoPath, TriggerType.STORAGE_AFTER_COPY)
     }
 
     /**
@@ -428,10 +416,8 @@ storage {
      *
      * Closure parameters:
      * item (org.artifactory.fs.ItemInfo) - the source item moved.
-     * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the move.
-     */
-    afterMove { ItemInfo item, RepoPath targetRepoPath, properties ->
-        pluginAPI.handleAfterMoveEvent(targetRepoPath, TriggerType.STORAGE_AFTER_MOVE)
+     * targetRepoPath (org.artifactory.repo.RepoPath) - the target repoPath for the move.*/
+    afterMove { ItemInfo item, RepoPath targetRepoPath, properties -> pluginAPI.handleAfterMoveEvent(targetRepoPath, TriggerType.STORAGE_AFTER_MOVE)
     }
 }
 

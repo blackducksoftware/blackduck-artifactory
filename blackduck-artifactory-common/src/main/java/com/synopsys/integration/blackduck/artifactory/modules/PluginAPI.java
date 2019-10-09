@@ -154,6 +154,10 @@ public class PluginAPI implements Analyzable {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.deleteInspectionProperties(params));
     }
 
+    public void deleteInspectionPropertiesFromOutOfDate(final TriggerType triggerType, final Map<String, List<String>> params) {
+        runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.deleteInspectionPropertiesFromOutOfDate(params));
+    }
+
     public void reinspectFromFailures(final TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, (Runnable) inspectionModule::reinspectFromFailures);
     }

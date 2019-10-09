@@ -38,10 +38,12 @@ import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
+import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
@@ -132,6 +134,16 @@ public class InspectionModule implements Module {
     public void deleteInspectionProperties(final Map<String, List<String>> params) {
         inspectionModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
+    }
+
+    public void deleteInspectionPropertiesFromOutOfDate(final Map<String, List<String>> params) {
+        inspectionModuleConfig.getRepos()
+            .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
+
+        final SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), UpdateStatus.OUT_OF_DATE.name());
+        final String[] repoKeys = inspectionModuleConfig.getRepos().toArray(new String[0]);
+        final List<RepoPath> repoPaths = artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(propertyMap, repoKeys);
+        repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
     }
 
     public void reinspectFromFailures(final Map<String, List<String>> params) {
