@@ -38,6 +38,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.RepoPathFactory;
 import org.artifactory.resource.ResourceStreamHandle;
 import org.slf4j.LoggerFactory;
 
@@ -191,7 +192,16 @@ public class ArtifactScanService {
             }
         }
 
-        return new NameVersion(project, version);
+        final RepoPath repoKeyPath = RepoPathFactory.create(repoPath.getRepoKey());
+        final Optional<String> projectName = artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
+        String finalProjectName = project;
+        String finalProjectVersion = version;
+        if (projectName.isPresent()) {
+            finalProjectName = projectName.get();
+            finalProjectVersion = String.format("%s-%s", project, version);
+        }
+
+        return new NameVersion(finalProjectName, finalProjectVersion);
     }
 
     private void writeScanProperties(final RepoPath repoPath, final String projectName, final String projectNameVersion, final ScanBatchOutput scanBatchOutput) {
