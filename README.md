@@ -17,4 +17,4 @@ The PolicyModule  in the blackDuckPlugin, can be configured to stop downloads of
 Download the latest from release page: https://github.com/blackducksoftware/blackduck-artifactory/releases
 
 ## Documentation ##
-All documentation for blackduck-artifactory can be found on our public [Confluence](https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/622799/Black+Duck+Artifactory+Plugin)
+All documentation for blackduck-artifactory can be found on our public [Confluence](https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/109609008/Black+Duck+Artifactory+Plugin)
