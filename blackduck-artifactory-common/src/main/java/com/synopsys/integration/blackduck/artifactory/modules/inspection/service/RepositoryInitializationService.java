@@ -109,25 +109,22 @@ public class RepositoryInitializationService {
 
         try {
             final Optional<ProjectView> projectViewOptional = projectService.getProjectByName(projectName);
-            final ProjectView projectView;
+            final ProjectVersionView projectVersionView;
+
             if (projectViewOptional.isPresent()) {
-                projectView = projectViewOptional.get();
+                final ProjectView projectView = projectViewOptional.get();
+                final Optional<ProjectVersionView> projectVersionViewOptional = projectService.getProjectVersion(projectView, projectVersionName);
+                if (projectVersionViewOptional.isPresent()) {
+                    projectVersionView = projectVersionViewOptional.get();
+                } else {
+                    final ProjectVersionRequest projectVersionRequest = createProjectVersionRequest(projectVersionName);
+                    projectVersionView = projectService.createProjectVersion(projectView, projectVersionRequest);
+                }
             } else {
                 final ProjectRequest projectRequest = new ProjectRequest();
                 projectRequest.setName(projectName);
-                projectView = projectService.createProject(projectRequest).getProjectView();
-            }
-
-            final Optional<ProjectVersionView> projectVersionViewOptional = projectService.getProjectVersion(projectView, projectVersionName);
-            final ProjectVersionView projectVersionView;
-            if (projectVersionViewOptional.isPresent()) {
-                projectVersionView = projectVersionViewOptional.get();
-            } else {
-                final ProjectVersionRequest projectVersionRequest = new ProjectVersionRequest();
-                projectVersionRequest.setVersionName(projectVersionName);
-                projectVersionRequest.setPhase(ProjectVersionPhaseType.RELEASED);
-                projectVersionRequest.setDistribution(ProjectVersionDistributionType.INTERNAL);
-                projectVersionView = projectService.createProjectVersion(projectView, projectVersionRequest);
+                projectRequest.setVersionRequest(createProjectVersionRequest(projectVersionName));
+                projectVersionView = projectService.createProject(projectRequest).getProjectVersionView();
             }
 
             inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
@@ -137,5 +134,14 @@ public class RepositoryInitializationService {
             logger.debug(message, e);
             throw new FailedInspectionException(repoKeyPath, message);
         }
+    }
+
+    private ProjectVersionRequest createProjectVersionRequest(final String projectVersionName) {
+        final ProjectVersionRequest projectVersionRequest = new ProjectVersionRequest();
+        projectVersionRequest.setVersionName(projectVersionName);
+        projectVersionRequest.setPhase(ProjectVersionPhaseType.RELEASED);
+        projectVersionRequest.setDistribution(ProjectVersionDistributionType.INTERNAL);
+
+        return projectVersionRequest;
     }
 }
