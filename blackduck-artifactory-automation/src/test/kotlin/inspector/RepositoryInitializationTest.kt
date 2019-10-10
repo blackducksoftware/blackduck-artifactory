@@ -46,7 +46,7 @@ class RepositoryInitializationTest : InspectionTest() {
 
         val itemProperties = propertiesApiService.getProperties(repositoryKey) ?: throw NoPropertiesException(repositoryKey)
 
-        val propertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()
+        val propertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName
         val inspectionStatuses = itemProperties.properties[propertyKey]
         Assertions.assertEquals(1, inspectionStatuses?.size)
 

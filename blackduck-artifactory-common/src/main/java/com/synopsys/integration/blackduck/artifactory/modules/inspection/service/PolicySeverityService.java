@@ -75,12 +75,12 @@ public class PolicySeverityService {
             final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
             if (projectVersionWrapper.isPresent()) {
                 final SetMultimap<String, String> inViolationPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
-                                                                               .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.SUCCESS.name())
-                                                                               .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), PolicySummaryStatusType.IN_VIOLATION.name())
+                                                                               .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
+                                                                               .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicySummaryStatusType.IN_VIOLATION.name())
                                                                                .build();
                 final SetMultimap<String, String> overriddenPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
-                                                                              .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), InspectionStatus.SUCCESS.name())
-                                                                              .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), PolicySummaryStatusType.IN_VIOLATION_OVERRIDDEN.name())
+                                                                              .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
+                                                                              .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicySummaryStatusType.IN_VIOLATION_OVERRIDDEN.name())
                                                                               .build();
                 final List<RepoPath> repoPathsFound = new ArrayList<>();
                 repoPathsFound.addAll(artifactoryPropertyService.getItemsContainingPropertiesAndValues(inViolationPropertyMap, repoKey));

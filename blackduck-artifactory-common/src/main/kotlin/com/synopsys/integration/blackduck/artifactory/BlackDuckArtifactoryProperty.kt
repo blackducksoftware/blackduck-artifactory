@@ -20,9 +20,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory
 
-public enum BlackDuckArtifactoryProperty {
+enum class BlackDuckArtifactoryProperty(suffix: String) {
     BLACKDUCK_ORIGIN_ID("originId"),
     BLACKDUCK_FORGE("forge"),
     BLACKDUCK_PROJECT_NAME("projectName"),
@@ -47,19 +47,6 @@ public enum BlackDuckArtifactoryProperty {
     POST_SCAN_PHASE("postScanPhase"),
     INSPECTION_RETRY_COUNT("inspectionRetryCount");
 
-    public static final String PROPERTY_PREFIX = "blackduck.";
-
-    private final String name;
-
-    BlackDuckArtifactoryProperty(final String name) {
-        this.name = PROPERTY_PREFIX + name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getTimeName() {
-        return name + ".converted";
-    }
+    val propertyName: String = "blackduck.$suffix"
+    val timeName: String = "$propertyName.converted"
 }

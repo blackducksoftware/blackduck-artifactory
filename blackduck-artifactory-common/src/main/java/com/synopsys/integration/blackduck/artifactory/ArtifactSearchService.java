@@ -41,8 +41,8 @@ public class ArtifactSearchService {
 
     public List<RepoPath> findArtifactsWithOriginId(final String forge, final String originId, final String... repoKeys) {
         final SetMultimap<String, String> setMultimap = HashMultimap.create();
-        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), forge);
-        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getName(), originId);
+        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), forge);
+        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getPropertyName(), originId);
 
         return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys);
     }

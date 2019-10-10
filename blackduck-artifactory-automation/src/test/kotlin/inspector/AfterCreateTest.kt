@@ -36,7 +36,7 @@ class AfterCreateTest : InspectionTest() {
                 val artifact = artifactSearchesAPIService.exactArtifactSearch(testablePackage.artifactoryFileName, repositoryKey)
                 val repoPath = repositoryKey + artifact.path
                 val itemProperties = propertiesApiService.getProperties(repoPath) ?: throw NoPropertiesException(repoPath)
-                val inspectionStatusPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()
+                val inspectionStatusPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName
                 // If the inspection status property is missing, the after create event was not triggered.
                 val inspectionStatus = itemProperties.properties[inspectionStatusPropertyKey]?.first() ?: throw MissingPropertyException(inspectionStatusPropertyKey, repoPath)
 

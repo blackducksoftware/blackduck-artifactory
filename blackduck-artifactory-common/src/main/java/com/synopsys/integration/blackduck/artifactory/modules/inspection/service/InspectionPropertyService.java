@@ -150,7 +150,7 @@ public class InspectionPropertyService {
 
     public List<RepoPath> getAllArtifactsInRepoWithInspectionStatus(final String repoKey, final InspectionStatus inspectionStatus) {
         final SetMultimap<String, String> propertyMap = HashMultimap.create();
-        propertyMap.put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName(), inspectionStatus.name());
+        propertyMap.put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), inspectionStatus.name());
         return artifactoryPropertyService.getItemsContainingPropertiesAndValues(propertyMap, repoKey);
     }
 

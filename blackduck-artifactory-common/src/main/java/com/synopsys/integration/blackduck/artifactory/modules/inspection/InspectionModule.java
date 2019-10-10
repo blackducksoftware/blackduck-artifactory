@@ -92,7 +92,7 @@ public class InspectionModule implements Module {
     // TODO: Remove in 9.0.0
     public void performNpmForgeUpgrade() {
         final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(
-            ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), "npm"),
+            ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "npm"),
             inspectionModuleConfig.getRepos().toArray(new String[0])
         );
         for (final RepoPath repoPath : repoPaths) {
@@ -108,7 +108,7 @@ public class InspectionModule implements Module {
 
     public void reinspectFromFailures() {
         final Map<String, List<String>> params = new HashMap<>();
-        params.put("properties", Arrays.asList(BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName(), BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName()));
+        params.put("properties", Arrays.asList(BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getPropertyName(), BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getPropertyName()));
         reinspectFromFailures(params);
     }
 
@@ -140,7 +140,7 @@ public class InspectionModule implements Module {
         inspectionModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
 
-        final SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), UpdateStatus.OUT_OF_DATE.name());
+        final SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getPropertyName(), UpdateStatus.OUT_OF_DATE.name());
         final String[] repoKeys = inspectionModuleConfig.getRepos().toArray(new String[0]);
         final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(propertyMap, repoKeys);
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));

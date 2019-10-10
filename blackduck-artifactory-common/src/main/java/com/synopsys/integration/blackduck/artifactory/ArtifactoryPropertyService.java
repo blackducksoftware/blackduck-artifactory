@@ -47,11 +47,11 @@ public class ArtifactoryPropertyService {
     }
 
     public boolean hasProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
-        return artifactoryPAPIService.hasProperty(repoPath, property.getName());
+        return artifactoryPAPIService.hasProperty(repoPath, property.getPropertyName());
     }
 
     public Optional<String> getProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
-        return getProperty(repoPath, property.getName());
+        return getProperty(repoPath, property.getPropertyName());
     }
 
     private Optional<String> getProperty(final RepoPath repoPath, final String propertyKey) {
@@ -72,7 +72,7 @@ public class ArtifactoryPropertyService {
     }
 
     public void setProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final String value, final IntLogger logger) {
-        setProperty(repoPath, property.getName(), value, logger);
+        setProperty(repoPath, property.getPropertyName(), value, logger);
     }
 
     private void setProperty(final RepoPath repoPath, final String property, final String value, final IntLogger logger) {
@@ -89,7 +89,7 @@ public class ArtifactoryPropertyService {
     }
 
     public void deleteProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
-        deleteProperty(repoPath, property.getName(), logger);
+        deleteProperty(repoPath, property.getPropertyName(), logger);
         deleteProperty(repoPath, property.getTimeName(), logger);
     }
 
@@ -129,13 +129,13 @@ public class ArtifactoryPropertyService {
                    .filter(stringListEntry -> stringListEntry.getKey().equals("properties"))
                    .map(Map.Entry::getValue)
                    .flatMap(List::stream)
-                   .anyMatch(paramValue -> paramValue.equals(blackDuckArtifactoryProperty.getName()));
+                   .anyMatch(paramValue -> paramValue.equals(blackDuckArtifactoryProperty.getPropertyName()));
     }
 
     public List<RepoPath> getItemsContainingProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
         final SetMultimap<String, String> setMultimap = Arrays.stream(properties)
-                                                            .filter(property -> property.getName() != null)
-                                                            .collect(HashMultimap::create, (multimap, property) -> multimap.put(property.getName(), "*"), (self, other) -> self.putAll(other));
+                                                            .filter(property -> property.getPropertyName() != null)
+                                                            .collect(HashMultimap::create, (multimap, property) -> multimap.put(property.getPropertyName(), "*"), (self, other) -> self.putAll(other));
 
         return getItemsContainingPropertiesAndValues(setMultimap, repoKey);
     }

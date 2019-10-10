@@ -130,7 +130,7 @@ public class ArtifactNotificationService {
             try {
                 inspectionPropertyService.updateProjectUIUrl(repoKeyPath, repoProjectName, repoProjectVersionName);
             } catch (final IntegrationException e) {
-                logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getName(), repoKey));
+                logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getPropertyName(), repoKey));
             }
         });
     }

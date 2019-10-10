@@ -33,13 +33,13 @@ class ComponentVerificationService(private val blackDuckServicesFactory: BlackDu
         if (itemProperties == null && currentRetryCount < maxRetryCount) {
             retry()
         } else {
-            val inspectionStatusPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()
+            val inspectionStatusPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName
             val inspectionStatus = itemProperties?.properties?.get(inspectionStatusPropertyKey)?.first()
 
             if (inspectionStatus == null) {
                 retry()
             } else if (inspectionStatus != expectedInspectionStatus.name) {
-                val retryCountPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT.getName()
+                val retryCountPropertyKey = BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT.propertyName
                 val retryCount = itemProperties.properties[retryCountPropertyKey]?.first()?.toInt() ?: throw MissingPropertyException(retryCountPropertyKey, repoPath)
 
                 when {

@@ -57,8 +57,8 @@ public class PostScanActionsService {
 
     public void performPostScanActions(final List<String> repoKeys) {
         final SetMultimap<String, String> setMultimap = HashMultimap.create();
-        setMultimap.put(BlackDuckArtifactoryProperty.SCAN_RESULT.getName(), Result.SUCCESS.name());
-        setMultimap.put(BlackDuckArtifactoryProperty.POST_SCAN_ACTION_STATUS.getName(), PostScanActionStatus.PENDING.name());
+        setMultimap.put(BlackDuckArtifactoryProperty.SCAN_RESULT.getPropertyName(), Result.SUCCESS.name());
+        setMultimap.put(BlackDuckArtifactoryProperty.POST_SCAN_ACTION_STATUS.getPropertyName(), PostScanActionStatus.PENDING.name());
 
         for (final String repoKey : repoKeys) {
             final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);

@@ -62,7 +62,7 @@ abstract class InspectionTest : SpringTest() {
     fun assertFailure(itemProperties: ItemProperties) {
         val properties: Map<String, String> = itemProperties.properties.mapValues { it.value.first() }
 
-        Assertions.assertEquals(properties[BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()], InspectionStatus.FAILURE.name, "Inspection status should be ${InspectionStatus.FAILURE.name}. ${itemProperties.uri}")
+        Assertions.assertEquals(properties[BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName], InspectionStatus.FAILURE.name, "Inspection status should be ${InspectionStatus.FAILURE.name}. ${itemProperties.uri}")
         assertNotNull(BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, properties, itemProperties.uri, false)
         assertNotNull(BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, properties, itemProperties.uri, false)
         assertNotNull(BlackDuckArtifactoryProperty.LAST_INSPECTION, properties, itemProperties.uri, false)
@@ -71,7 +71,7 @@ abstract class InspectionTest : SpringTest() {
     fun assertSuccess(itemProperties: ItemProperties) {
         val properties: Map<String, String> = itemProperties.properties.mapValues { it.value.first() }
 
-        Assertions.assertEquals(properties[BlackDuckArtifactoryProperty.INSPECTION_STATUS.getName()], InspectionStatus.SUCCESS.name, "Inspection status should be ${InspectionStatus.FAILURE.name}. ${itemProperties.uri}")
+        Assertions.assertEquals(properties[BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName], InspectionStatus.SUCCESS.name, "Inspection status should be ${InspectionStatus.FAILURE.name}. ${itemProperties.uri}")
         assertNull(BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT, properties, itemProperties.uri)
         assertNull(BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, properties, itemProperties.uri)
         assertNotNull(BlackDuckArtifactoryProperty.LAST_INSPECTION, properties, itemProperties.uri)
@@ -86,10 +86,10 @@ abstract class InspectionTest : SpringTest() {
     }
 
     private fun assertNull(property: BlackDuckArtifactoryProperty, properties: Map<String, String>, uri: String, success: Boolean = true) {
-        Assertions.assertNull(properties[property.getName()], "An artifact marked as ${if (success) "success" else "failure"} should not have a ${property.getName()} property. $uri")
+        Assertions.assertNull(properties[property.propertyName], "An artifact marked as ${if (success) "success" else "failure"} should not have a ${property.propertyName} property. $uri")
     }
 
     private fun assertNotNull(property: BlackDuckArtifactoryProperty, properties: Map<String, String>, uri: String, success: Boolean = true) {
-        Assertions.assertNotNull(properties[property.getName()], "An artifact marked as ${if (success) "success" else "failure"} should have a ${property.getName()} property. $uri")
+        Assertions.assertNotNull(properties[property.propertyName], "An artifact marked as ${if (success) "success" else "failure"} should have a ${property.propertyName} property. $uri")
     }
 }

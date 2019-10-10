@@ -47,8 +47,8 @@ abstract class SpringTest {
         Assertions.assertNotNull(itemProperties)
         println(itemProperties!!)
 
-        val projectName = itemProperties.properties[BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getName()]?.first()
-        val projectVersionName = itemProperties.properties[BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getName()]?.first()
+        val projectName = itemProperties.properties[BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.propertyName]?.first()
+        val projectVersionName = itemProperties.properties[BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.propertyName]?.first()
         val projectService = blackDuckServicesFactory.createProjectService()
 
         Assertions.assertNotNull(projectName)
