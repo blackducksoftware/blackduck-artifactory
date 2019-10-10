@@ -65,13 +65,12 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
 
         return isValid
     }
-
-    // TODO: Only accept one repo at a time
-    fun searchForArtifactsByPatterns(repoKeys: List<String>, patterns: List<String>): List<RepoPath> {
+    
+    fun searchForArtifactsByPatterns(repoKey: String, patterns: List<String>): List<RepoPath> {
         val repoPaths = ArrayList<RepoPath>()
 
         for (pattern in patterns) {
-            val foundRepoPaths = searches.artifactsByName(pattern, *repoKeys.toTypedArray())
+            val foundRepoPaths = searches.artifactsByName(pattern, repoKey)
             if (foundRepoPaths.isNotEmpty()) {
                 repoPaths.addAll(foundRepoPaths)
                 logger.debug(String.format("Found %d artifacts matching pattern [%s]", foundRepoPaths.size, pattern))

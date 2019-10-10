@@ -23,7 +23,6 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.service;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -167,7 +166,7 @@ public class ArtifactInspectionService {
             throw new FailedInspectionException(repoKeyPath, String.format("Failed to get project version from Black Duck: %s", e.getMessage()));
         }
 
-        final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(Collections.singletonList(repoKey), patterns).stream()
+        final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(repoKey, patterns).stream()
                                              .filter(this::shouldPerformDeltaAnalysis)
                                              .map(this::identifyArtifact)
                                              .collect(Collectors.toList());

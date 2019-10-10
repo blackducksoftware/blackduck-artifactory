@@ -125,7 +125,7 @@ internal class ArtifactoryPAPIServiceTest {
         mockWhen(searches.artifactsByName("*.tar.gz", "maven-local")).thenReturn(listOf(artifact2))
 
         val artifactoryPAPIService = ArtifactoryPAPIService(pluginRepoPathFactory, repositories, searches)
-        val artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(listOf("maven-local"), listOf("*.jar", "*.tar.gz"))
+        val artifacts = artifactoryPAPIService.searchForArtifactsByPatterns("maven-local", listOf("*.jar", "*.tar.gz"))
 
         Assertions.assertEquals(2, artifacts.size)
     }

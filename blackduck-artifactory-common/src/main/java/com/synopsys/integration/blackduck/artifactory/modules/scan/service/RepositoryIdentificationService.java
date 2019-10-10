@@ -63,7 +63,9 @@ public class RepositoryIdentificationService {
         final List<RepoPath> repoPaths = new ArrayList<>();
 
         if (!repoKeysToScan.isEmpty()) {
-            repoPaths.addAll(artifactoryPAPIService.searchForArtifactsByPatterns(repoKeysToScan, patternsToScan));
+            repoKeysToScan.stream()
+                .map(repoKey -> artifactoryPAPIService.searchForArtifactsByPatterns(repoKey, patternsToScan))
+                .forEach(repoPaths::addAll);
         } else {
             logger.info(String.format("Please specify valid repos to scan or disable the %s", ScanModule.class.getSimpleName()));
         }
