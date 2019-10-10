@@ -115,7 +115,7 @@ public class ScanModule implements Module {
 
     public void deleteScanPropertiesFromFailures(final Map<String, List<String>> params) {
         final List<RepoPath> repoPathsWithFailures = scanModuleConfig.getRepos().stream()
-                                                         .map(repoKey -> artifactoryPropertyService.getAllItemsInRepoWithProperties(repoKey, BlackDuckArtifactoryProperty.SCAN_RESULT))
+                                                         .map(repoKey -> artifactoryPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.SCAN_RESULT))
                                                          .flatMap(List::stream)
                                                          .filter(repoPath -> artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT).equals(Optional.of(Result.FAILURE.toString())))
                                                          .collect(Collectors.toList());
@@ -126,7 +126,7 @@ public class ScanModule implements Module {
 
     public void deleteScanPropertiesFromOutOfDate(final Map<String, List<String>> params) {
         final List<RepoPath> repoPathsOutOfDate = scanModuleConfig.getRepos().stream()
-                                                      .map(repoKey -> artifactoryPropertyService.getAllItemsInRepoWithProperties(repoKey, BlackDuckArtifactoryProperty.UPDATE_STATUS))
+                                                      .map(repoKey -> artifactoryPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.UPDATE_STATUS))
                                                       .flatMap(List::stream)
                                                       .filter(repoPath -> artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS).equals(Optional.of(UpdateStatus.OUT_OF_DATE.toString())))
                                                       .collect(Collectors.toList());

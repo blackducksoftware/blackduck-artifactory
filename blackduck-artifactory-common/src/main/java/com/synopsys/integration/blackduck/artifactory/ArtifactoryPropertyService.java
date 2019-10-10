@@ -88,6 +88,11 @@ public class ArtifactoryPropertyService {
         dateTimeAsStringConverted.ifPresent(converted -> setProperty(repoPath, property.getTimeName(), converted, logger));
     }
 
+    public void deleteProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
+        deleteProperty(repoPath, property.getName(), logger);
+        deleteProperty(repoPath, property.getTimeName(), logger);
+    }
+
     private void deleteProperty(final RepoPath repoPath, final String propertyName, final IntLogger logger) {
         if (artifactoryPAPIService.hasProperty(repoPath, propertyName)) {
             artifactoryPAPIService.deleteProperty(repoPath, propertyName);
@@ -95,18 +100,20 @@ public class ArtifactoryPropertyService {
         }
     }
 
-    public void deleteProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
-        deleteProperty(repoPath, property.getName(), logger);
-        deleteProperty(repoPath, property.getTimeName(), logger);
-    }
-
     public void deleteAllBlackDuckPropertiesFromRepo(final String repoKey, final Map<String, List<String>> params, final IntLogger logger) {
         final List<RepoPath> repoPaths = Arrays.stream(BlackDuckArtifactoryProperty.values())
-                                             .map(artifactoryProperty -> getAllItemsInRepoWithAnyProperties(repoKey, artifactoryProperty))
+                                             .map(artifactoryProperty -> getItemsContainingAnyProperties(repoKey, artifactoryProperty))
                                              .flatMap(List::stream)
                                              .collect(Collectors.toList());
 
         repoPaths.forEach(repoPath -> deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
+    }
+
+    private List<RepoPath> getItemsContainingAnyProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
+        return Arrays.stream(properties)
+                   .map(property -> getItemsContainingProperties(repoKey, property))
+                   .flatMap(List::stream)
+                   .collect(Collectors.toList());
     }
 
     public void deleteAllBlackDuckPropertiesFromRepoPath(final RepoPath repoPath, final Map<String, List<String>> params, final IntLogger logger) {
@@ -125,22 +132,15 @@ public class ArtifactoryPropertyService {
                    .anyMatch(paramValue -> paramValue.equals(blackDuckArtifactoryProperty.getName()));
     }
 
-    public List<RepoPath> getAllItemsInRepoWithProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
+    public List<RepoPath> getItemsContainingProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
         final SetMultimap<String, String> setMultimap = Arrays.stream(properties)
                                                             .filter(property -> property.getName() != null)
                                                             .collect(HashMultimap::create, (multimap, property) -> multimap.put(property.getName(), "*"), (self, other) -> self.putAll(other));
 
-        return getAllItemsInRepoWithPropertiesAndValues(setMultimap, repoKey);
+        return getItemsContainingPropertiesAndValues(setMultimap, repoKey);
     }
 
-    public List<RepoPath> getAllItemsInRepoWithAnyProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
-        return Arrays.stream(properties)
-                   .map(property -> getAllItemsInRepoWithProperties(repoKey, property))
-                   .flatMap(List::stream)
-                   .collect(Collectors.toList());
-    }
-
-    public List<RepoPath> getAllItemsInRepoWithPropertiesAndValues(final SetMultimap<String, String> setMultimap, final String... repoKeys) {
+    public List<RepoPath> getItemsContainingPropertiesAndValues(final SetMultimap<String, String> setMultimap, final String... repoKeys) {
         return artifactoryPAPIService.itemsByProperties(setMultimap, repoKeys);
     }
 

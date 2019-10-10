@@ -64,7 +64,7 @@ public class PostScanActionsService {
             final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
             final Optional<ProjectVersionPhaseType> postScanPhase = artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.POST_SCAN_PHASE)
                                                                         .map(ProjectVersionPhaseType::valueOf);
-            final List<RepoPath> repoPaths = artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(setMultimap, repoKey);
+            final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKey);
             if (postScanPhase.isPresent()) {
                 setProjectPhase(repoPaths, postScanPhase.get());
             } else {

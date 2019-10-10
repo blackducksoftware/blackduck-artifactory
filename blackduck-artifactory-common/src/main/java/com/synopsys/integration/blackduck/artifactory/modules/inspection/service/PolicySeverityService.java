@@ -37,7 +37,6 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummar
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyRuleView;
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
@@ -54,16 +53,14 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 public class PolicySeverityService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
-    private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final InspectionPropertyService inspectionPropertyService;
     private final BlackDuckService blackDuckService;
     private final BlackDuckBOMService blackDuckBOMService;
     private final ProjectService projectService;
 
-    public PolicySeverityService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService,
-        final BlackDuckService blackDuckService, final BlackDuckBOMService blackDuckBOMService, final ProjectService projectService) {
-        this.artifactoryPAPIService = artifactoryPAPIService;
+    public PolicySeverityService(final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final BlackDuckService blackDuckService, final BlackDuckBOMService blackDuckBOMService,
+        final ProjectService projectService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.inspectionPropertyService = inspectionPropertyService;
         this.blackDuckService = blackDuckService;
@@ -86,8 +83,8 @@ public class PolicySeverityService {
                                                                               .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getName(), PolicySummaryStatusType.IN_VIOLATION_OVERRIDDEN.name())
                                                                               .build();
                 final List<RepoPath> repoPathsFound = new ArrayList<>();
-                repoPathsFound.addAll(artifactoryPAPIService.itemsByProperties(inViolationPropertyMap, repoKey));
-                repoPathsFound.addAll(artifactoryPAPIService.itemsByProperties(overriddenPropertyMap, repoKey));
+                repoPathsFound.addAll(artifactoryPropertyService.getItemsContainingPropertiesAndValues(inViolationPropertyMap, repoKey));
+                repoPathsFound.addAll(artifactoryPropertyService.getItemsContainingPropertiesAndValues(overriddenPropertyMap, repoKey));
 
                 repoPathsFound.stream()
                     .filter(repoPath -> !artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES))

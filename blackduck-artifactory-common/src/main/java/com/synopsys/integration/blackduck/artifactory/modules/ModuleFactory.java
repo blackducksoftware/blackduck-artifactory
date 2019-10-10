@@ -131,7 +131,7 @@ public class ModuleFactory {
             externalIdService, blackDuckService);
         final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
-        final PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPAPIService,artifactoryPropertyService,inspectionPropertyService,blackDuckService,blackDuckBOMService,projectService);
+        final PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckService, blackDuckBOMService, projectService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
             simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, policySeverityService);

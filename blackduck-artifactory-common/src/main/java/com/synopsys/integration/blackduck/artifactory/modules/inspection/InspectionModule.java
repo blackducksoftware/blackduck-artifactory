@@ -91,7 +91,7 @@ public class InspectionModule implements Module {
 
     // TODO: Remove in 9.0.0
     public void performNpmForgeUpgrade() {
-        final List<RepoPath> repoPaths = artifactoryPAPIService.itemsByProperties(
+        final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(
             ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getName(), "npm"),
             inspectionModuleConfig.getRepos().toArray(new String[0])
         );
@@ -142,7 +142,7 @@ public class InspectionModule implements Module {
 
         final SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getName(), UpdateStatus.OUT_OF_DATE.name());
         final String[] repoKeys = inspectionModuleConfig.getRepos().toArray(new String[0]);
-        final List<RepoPath> repoPaths = artifactoryPropertyService.getAllItemsInRepoWithPropertiesAndValues(propertyMap, repoKeys);
+        final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(propertyMap, repoKeys);
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
     }
 
