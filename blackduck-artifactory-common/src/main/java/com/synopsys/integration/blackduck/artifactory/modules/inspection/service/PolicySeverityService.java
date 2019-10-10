@@ -89,10 +89,7 @@ public class PolicySeverityService {
                 repoPathsFound.addAll(artifactoryPAPIService.itemsByProperties(inViolationPropertyMap, repoKey));
                 repoPathsFound.addAll(artifactoryPAPIService.itemsByProperties(overriddenPropertyMap, repoKey));
 
-                repoPathsFound.stream()
-                    .filter(repoPath -> !artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES))
-                    .forEach(repoPath -> upgradeSeverityForRepoPath(projectVersionWrapper.get().getProjectVersionView(), repoPath));
-
+                repoPathsFound.forEach(repoPath -> upgradeSeverityForRepoPath(projectVersionWrapper.get().getProjectVersionView(), repoPath));
             } else {
                 logger.warn(String.format("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.", repoKey));
             }
