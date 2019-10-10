@@ -21,15 +21,14 @@ jar.finalizedBy shadowJar
 
 dependencies {
     implementation "com.blackducksoftware.integration:blackduck-common:$blackDuckCommonVersion"
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     compileOnly "org.artifactory:artifactory-papi:$artifactoryMinimumVersion"
-
     testCompile "org.artifactory:artifactory-papi:$artifactoryMinimumVersion"
 
     testImplementation 'org.codehaus.groovy:groovy-all:2.4.12'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
     testImplementation 'org.mockito:mockito-core:2.+'
-    testImplementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     testImplementation 'com.github.kittinunf.fuel:fuel:2.1.0'
     testImplementation 'com.github.kittinunf.fuel:fuel-gson:2.1.0'
 }
