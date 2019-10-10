@@ -20,24 +20,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory;
+package com.synopsys.integration.blackduck.artifactory
 
-public enum TriggerType {
+enum class TriggerType private constructor(val logName: String) {
     BEFORE_DOWNLOAD("download beforeDownload"),
     CRON_JOB("cron job"),
     REST_REQUEST("REST request"),
     STARTUP("startup"),
     STORAGE_AFTER_CREATE("storage afterCreate"),
     STORAGE_AFTER_COPY("storage afterCopy"),
-    STORAGE_AFTER_MOVE("storage afterMove");
-
-    private final String logName;
-
-    TriggerType(final String logName) {
-        this.logName = logName;
-    }
-
-    public String getLogName() {
-        return logName;
-    }
+    STORAGE_AFTER_MOVE("storage afterMove")
 }
