@@ -13,10 +13,13 @@ internal class ArtifactoryPAPIServiceTest {
     fun getPackageType() {
         val repositoryConfiguration = mock(RepositoryConfiguration::class.java)
         mockWhen(repositoryConfiguration.packageType).thenReturn("maven")
+
         val repositories = mock(Repositories::class.java)
         mockWhen(repositories.getRepositoryConfiguration("maven-local")).thenReturn(repositoryConfiguration)
 
-        val artifactoryPAPIService = ArtifactoryPAPIService(PluginRepoPathFactory(false), repositories, null)
+        val searches = mock(Searches::class.java)
+
+        val artifactoryPAPIService = ArtifactoryPAPIService(PluginRepoPathFactory(false), repositories, searches)
         val packageType = artifactoryPAPIService.getPackageType("maven-local")
 
         Assertions.assertTrue(packageType.isPresent)
@@ -37,7 +40,9 @@ internal class ArtifactoryPAPIServiceTest {
         mockWhen(repositories.getArtifactsCount(repoKeyPath)).thenReturn(3L)
         mockWhen(repositories.getArtifactsCount(repoKeyPath2)).thenReturn(6L)
 
-        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, null)
+        val searches = mock(Searches::class.java)
+
+        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, searches)
         val artifactCount3 = artifactoryPAPIService.getArtifactCount(listOf(repoKeyPath.repoKey))
         val artifactCount6 = artifactoryPAPIService.getArtifactCount(listOf(repoKeyPath2.repoKey))
         val artifactCount9 = artifactoryPAPIService.getArtifactCount(listOf(repoKeyPath.repoKey, repoKeyPath2.repoKey))
@@ -60,7 +65,9 @@ internal class ArtifactoryPAPIServiceTest {
         mockWhen(repositories.getRepositoryConfiguration("maven-local")).thenReturn(repositoryConfiguration)
         mockWhen(repositories.exists(repoKeyPath)).thenReturn(true)
 
-        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, null)
+        val searches = mock(Searches::class.java)
+
+        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, searches)
         val isValid = artifactoryPAPIService.isValidRepository("maven-local")
 
         Assertions.assertTrue(isValid)
@@ -77,7 +84,9 @@ internal class ArtifactoryPAPIServiceTest {
         val repositories = mock(Repositories::class.java)
         mockWhen(repositories.exists(repoKeyPath)).thenReturn(false)
 
-        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, null)
+        val searches = mock(Searches::class.java)
+
+        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, searches)
         val isValid = artifactoryPAPIService.isValidRepository("maven-local")
 
         Assertions.assertFalse(isValid)
@@ -95,7 +104,9 @@ internal class ArtifactoryPAPIServiceTest {
         mockWhen(repositories.getRepositoryConfiguration("maven-local")).thenReturn(null)
         mockWhen(repositories.exists(repoKeyPath)).thenReturn(true)
 
-        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, null)
+        val searches = mock(Searches::class.java)
+
+        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, searches)
         val isValid = artifactoryPAPIService.isValidRepository("maven-local")
 
         Assertions.assertFalse(isValid)
@@ -107,11 +118,13 @@ internal class ArtifactoryPAPIServiceTest {
         val artifact1 = pluginRepoPathFactory.create("maven-local/artifact1.jar")
         val artifact2 = pluginRepoPathFactory.create("maven-local/artifact1.tar.gz")
 
+        val repositories = mock(Repositories::class.java)
+
         val searches = mock(Searches::class.java)
         mockWhen(searches.artifactsByName("*.jar", "maven-local")).thenReturn(listOf(artifact1))
         mockWhen(searches.artifactsByName("*.tar.gz", "maven-local")).thenReturn(listOf(artifact2))
 
-        val artifactoryPAPIService = ArtifactoryPAPIService(null, null, searches)
+        val artifactoryPAPIService = ArtifactoryPAPIService(pluginRepoPathFactory, repositories, searches)
         val artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(listOf("maven-local"), listOf("*.jar", "*.tar.gz"))
 
         Assertions.assertEquals(2, artifacts.size)

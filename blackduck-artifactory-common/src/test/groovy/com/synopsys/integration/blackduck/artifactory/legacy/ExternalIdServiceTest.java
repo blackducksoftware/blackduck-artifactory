@@ -42,7 +42,10 @@ import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.md.Properties;
 import org.artifactory.md.PropertiesInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.repo.Repositories;
+import org.artifactory.search.Searches;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.Multimap;
@@ -392,7 +395,7 @@ public class ExternalIdServiceTest {
         private final Map<String, MockRepoPath> mockRepoPathMap = new HashMap<>();
 
         public MockArtifactoryPAPIService() {
-            super(new PluginRepoPathFactory(false), null, null);
+            super(new PluginRepoPathFactory(false), Mockito.mock(Repositories.class), Mockito.mock(Searches.class));
         }
 
         public void addMockRepoPath(final MockRepoPath mockRepoPath) {
