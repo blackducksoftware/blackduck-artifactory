@@ -23,6 +23,8 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda;
 
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ import com.synopsys.integration.util.NameVersion;
 
 public class CondaExternalIdExtractor {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+    private final Pattern pattern = Pattern.compile("(.*)-(.*)-([^-|\\s]*)");
 
     private final ExternalIdFactory externalIdFactory;
 
@@ -67,15 +70,17 @@ public class CondaExternalIdExtractor {
     }
 
     private NameVersion extractFileNamePieces(final String fileName) throws IntegrationException {
-        final String[] fileNamePieces = fileName.split("-");
-        validateLength(fileNamePieces, 3);
+        final Matcher matcher = pattern.matcher(fileName);
+        if (!matcher.matches() || matcher.group(1).isEmpty() || matcher.group(2).isEmpty() || matcher.group(3).isEmpty()) {
+            throw new IntegrationException("Failed to parse conda filename to extract component details.");
+        }
 
-        final String[] buildStringExtensionPieces = fileNamePieces[2].split("\\.", 2);
+        final String[] buildStringExtensionPieces = matcher.group(3).split("\\.", 2);
         validateLength(buildStringExtensionPieces, 2);
         final String buildString = buildStringExtensionPieces[0];
 
-        final String componentName = fileNamePieces[0].trim();
-        final String componentVersion = fileNamePieces[1].trim() + "-" + buildString;
+        final String componentName = matcher.group(1).trim();
+        final String componentVersion = matcher.group(2).trim() + "-" + buildString;
 
         return new NameVersion(componentName, componentVersion);
     }
