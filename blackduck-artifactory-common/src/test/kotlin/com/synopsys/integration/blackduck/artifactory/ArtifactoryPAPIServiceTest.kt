@@ -93,6 +93,18 @@ internal class ArtifactoryPAPIServiceTest {
     }
 
     @Test
+    fun isValidRepository_Invalid_NoRepoKey() {
+        val mockPluginRepoPathFactory = mock(PluginRepoPathFactory::class.java)
+        val repositories = mock(Repositories::class.java)
+        val searches = mock(Searches::class.java)
+
+        val artifactoryPAPIService = ArtifactoryPAPIService(mockPluginRepoPathFactory, repositories, searches)
+        val isValidEmpty = artifactoryPAPIService.isValidRepository(" ")
+
+        Assertions.assertFalse(isValidEmpty)
+    }
+
+    @Test
     fun isValidRepository_Invalid_NoRepositoryConfiguration() {
         val pluginRepoPathFactory = PluginRepoPathFactory(false)
         val repoKeyPath = pluginRepoPathFactory.create("maven-local")
@@ -128,5 +140,20 @@ internal class ArtifactoryPAPIServiceTest {
         val artifacts = artifactoryPAPIService.searchForArtifactsByPatterns("maven-local", listOf("*.jar", "*.tar.gz"))
 
         Assertions.assertEquals(2, artifacts.size)
+    }
+
+    @Test
+    fun searchForArtifactsByPatterns_NoArtifacts() {
+        val pluginRepoPathFactory = PluginRepoPathFactory(false)
+        val repositories = mock(Repositories::class.java)
+
+        val searches = mock(Searches::class.java)
+        mockWhen(searches.artifactsByName("*.jar", "maven-local")).thenReturn(listOf())
+        mockWhen(searches.artifactsByName("*.tar.gz", "maven-local")).thenReturn(listOf())
+
+        val artifactoryPAPIService = ArtifactoryPAPIService(pluginRepoPathFactory, repositories, searches)
+        val artifacts = artifactoryPAPIService.searchForArtifactsByPatterns("maven-local", listOf("*.jar", "*.tar.gz"))
+
+        Assertions.assertEquals(0, artifacts.size)
     }
 }

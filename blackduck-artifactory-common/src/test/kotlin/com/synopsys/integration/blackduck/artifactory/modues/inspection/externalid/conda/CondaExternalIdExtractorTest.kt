@@ -1,4 +1,4 @@
-package unit.modues.inspection.externalid.conda
+package com.synopsys.integration.blackduck.artifactory.modues.inspection.externalid.conda
 
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor

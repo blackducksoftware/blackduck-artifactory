@@ -42,18 +42,16 @@ class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifactory
 
     private fun getProperty(repoPath: RepoPath, propertyKey: String): Optional<String> {
         val propertyValue = StringUtils.stripToNull(artifactoryPAPIService.getProperty(repoPath, propertyKey))
-
         return Optional.ofNullable(propertyValue)
     }
 
     fun getPropertyAsInteger(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Optional<Int> {
-        return getProperty(repoPath, property).map { it.toInt() }
+        return getProperty(repoPath, property).map(Integer::parseInt)
     }
 
     fun getDateFromProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Optional<Date> {
         val dateTimeAsString = getProperty(repoPath, property)
-
-        return dateTimeAsString.map { dateTimeManager.getDateFromString(it) }
+        return dateTimeAsString.map(dateTimeManager::getDateFromString)
     }
 
     fun setProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty, value: String, logger: IntLogger) {

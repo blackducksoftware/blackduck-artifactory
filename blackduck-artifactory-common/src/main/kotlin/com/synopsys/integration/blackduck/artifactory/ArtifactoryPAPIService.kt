@@ -65,7 +65,7 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
 
         return isValid
     }
-    
+
     fun searchForArtifactsByPatterns(repoKey: String, patterns: List<String>): List<RepoPath> {
         val repoPaths = ArrayList<RepoPath>()
 
@@ -106,7 +106,7 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
         return repositories.getProperties(repoPath)
     }
 
-    fun hasProperty(repoPath: RepoPath, propertyName: String): Boolean {
+    open fun hasProperty(repoPath: RepoPath, propertyName: String): Boolean {
         return repositories.hasProperty(repoPath, propertyName)
     }
 

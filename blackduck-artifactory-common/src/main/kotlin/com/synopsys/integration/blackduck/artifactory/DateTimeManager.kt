@@ -28,7 +28,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-class DateTimeManager(val dateTimePattern: String, private val dateTimeZone: String?) {
+open class DateTimeManager(val dateTimePattern: String, private val dateTimeZone: String? = null) {
     fun getTimeFromString(dateTimeString: String): Long {
         return getDateFromString(dateTimeString).time
     }

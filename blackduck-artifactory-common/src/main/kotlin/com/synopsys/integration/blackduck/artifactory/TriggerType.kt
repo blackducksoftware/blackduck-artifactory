@@ -22,7 +22,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory
 
-enum class TriggerType private constructor(val logName: String) {
+enum class TriggerType(val logName: String) {
     BEFORE_DOWNLOAD("download beforeDownload"),
     CRON_JOB("cron job"),
     REST_REQUEST("REST request"),
