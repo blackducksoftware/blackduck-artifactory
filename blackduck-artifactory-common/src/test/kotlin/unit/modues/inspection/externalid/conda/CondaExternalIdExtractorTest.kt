@@ -28,10 +28,23 @@ internal class CondaExternalIdExtractorTest {
     }
 
     @Test
+    fun extractValidExternalIdWithExtraHyphens() {
+        val parentRepoPath = mock(RepoPath::class.java)
+        val repoPath: RepoPath = mock(RepoPath::class.java)
+        mockWhen(repoPath.name).thenReturn("ca-certificates-2019.8.28-0.tar.bz2")
+        mockWhen(repoPath.parent).thenReturn(parentRepoPath)
+        mockWhen(parentRepoPath.name).thenReturn("linux-64")
+
+        val actualExternalId = condaExternalIdExtractor.extractExternalId(supportedPackageType, repoPath)
+        val expectedExternalId = externalIdFactory.createNameVersionExternalId(supportedPackageType.forge, "ca-certificates", "2019.8.28-0-linux-64")
+        Assertions.assertEquals(expectedExternalId.createBdioId(), actualExternalId.get().createBdioId())
+    }
+
+    @Test
     fun extractInvalidFormatExternalId() {
         val parentRepoPath = mock(RepoPath::class.java)
         val repoPath: RepoPath = mock(RepoPath::class.java)
-        mockWhen(repoPath.name).thenReturn("numpy-1.13.1-py27-_0.tar.bz2")
+        mockWhen(repoPath.name).thenReturn("numpy-1.13.1-py27--_0.tar.bz2")
         mockWhen(repoPath.parent).thenReturn(parentRepoPath)
         mockWhen(parentRepoPath.name).thenReturn("linux-64")
 

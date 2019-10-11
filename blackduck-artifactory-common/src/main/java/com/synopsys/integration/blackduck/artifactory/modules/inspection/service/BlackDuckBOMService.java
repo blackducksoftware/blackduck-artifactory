@@ -155,7 +155,7 @@ public class BlackDuckBOMService {
             final String apiComponentsLinkPrefix = "/api/components/";
             final String componentHref = componentVersionViewHref.get();
             final int apiComponentsStart = componentHref.indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
-            int endingIndex = componentHref.length() - 1;
+            int endingIndex = componentHref.length();
             final String originsLinkPrefix = "/origins/";
             if (componentHref.contains(originsLinkPrefix)) {
                 endingIndex = componentHref.indexOf(originsLinkPrefix);
