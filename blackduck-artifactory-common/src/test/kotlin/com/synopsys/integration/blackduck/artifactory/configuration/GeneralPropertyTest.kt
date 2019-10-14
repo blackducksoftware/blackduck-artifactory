@@ -21,20 +21,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.configuration;
+package com.synopsys.integration.blackduck.artifactory.configuration
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.platform.commons.util.StringUtils;
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import org.junit.platform.commons.util.StringUtils
 
 class GeneralPropertyTest {
     @ParameterizedTest
-    @EnumSource(GeneralProperty.class)
-    void getKey(final GeneralProperty property) {
-        assertNotNull(property.getKey());
-        assertTrue(StringUtils.isNotBlank(property.getKey()));
+    @EnumSource(GeneralProperty::class)
+    fun getKey(property: GeneralProperty) {
+        assertNotNull(property.key, "A GeneralProperty must have a key.")
+        assertTrue(StringUtils.isNotBlank(property.key), "A GeneralProperty key must not be blank.")
     }
 }
