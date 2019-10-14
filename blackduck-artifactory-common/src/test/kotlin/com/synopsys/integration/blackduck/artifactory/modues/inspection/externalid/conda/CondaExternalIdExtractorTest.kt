@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when` as mockWhen
 
-internal class CondaExternalIdExtractorTest {
+class CondaExternalIdExtractorTest {
     private val externalIdFactory = ExternalIdFactory()
     private val condaExternalIdExtractor = CondaExternalIdExtractor(externalIdFactory)
     private val supportedPackageType = SupportedPackageType.CONDA

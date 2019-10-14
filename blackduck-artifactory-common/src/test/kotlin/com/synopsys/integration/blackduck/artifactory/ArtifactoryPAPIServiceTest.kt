@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when` as mockWhen
 
-internal class ArtifactoryPAPIServiceTest {
+class ArtifactoryPAPIServiceTest {
     @Test
     fun getPackageType() {
         val repositoryConfiguration = mock(RepositoryConfiguration::class.java)
