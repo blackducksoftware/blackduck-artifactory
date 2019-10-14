@@ -24,7 +24,6 @@
 package com.synopsys.integration.blackduck.artifactory.configuration
 
 import TestUtil
-import com.synopsys.integration.blackduck.artifactory.util.FileIO
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -58,7 +57,6 @@ class ConfigurationPropertyManagerTest {
     }
 
     @Test
-    @FileIO
     fun getRepositoryKeysFromPropertiesCsv() {
         configurationPropertyManager!!.properties.setProperty(repositoryKeyCsvProperty.key, TestUtil.getResourceAsFilePath("/repoCSV"))
         val repositoryKeysFromProperties = configurationPropertyManager!!.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty)

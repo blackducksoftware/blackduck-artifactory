@@ -22,57 +22,54 @@
  * under the License.
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Type;
-import java.util.Map;
-import java.util.Properties;
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
+import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.util.*
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
+object TestUtil {
+    private val GSON = GsonBuilder().setPrettyPrinting().create()
 
-public class TestUtil {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private const val DEFAULT_PROPERTIES_RESOURCE_PATH = "/blackDuckPlugin.properties"
+    private const val BLACKDUCK_CREDENTIALS_ENV_VAR = "BLACKDUCK_CREDENTIALS"
 
-    public static final String DEFAULT_PROPERTIES_RESOURCE_PATH = "/blackDuckPlugin.properties";
-    public static final String BLACKDUCK_CREDENTIALS_ENV_VAR = "BLACKDUCK_CREDENTIALS";
-
-    public static Properties getDefaultProperties() throws IOException {
-        return getResourceAsProperties(DEFAULT_PROPERTIES_RESOURCE_PATH);
+    fun getDefaultProperties(): Properties {
+        return getResourceAsProperties(DEFAULT_PROPERTIES_RESOURCE_PATH)
     }
 
-    public static Properties getResourceAsProperties(final String resourcePath) throws IOException {
-        final Properties properties = new Properties();
-        try (final InputStream inputStream = getResourceAsStream(resourcePath)) {
-            properties.load(inputStream);
-        }
+    fun getBlackDuckServerConfigBuilder(): BlackDuckServerConfigBuilder {
+        val credentials = System.getenv(BLACKDUCK_CREDENTIALS_ENV_VAR)
+        val type = object : TypeToken<Map<String, String>>() {
 
-        return properties;
+        }.type
+        val properties = GSON.fromJson<Map<String, String>>(credentials, type)
+
+        val blackDuckServerConfigBuilder = BlackDuckServerConfigBuilder()
+        blackDuckServerConfigBuilder.setFromProperties(properties)
+
+        return blackDuckServerConfigBuilder
     }
 
-    public static String getResourceAsFilePath(final String resourcePath) {
-        return TestUtil.class.getResource(resourcePath).getFile();
+    @Throws(IOException::class)
+    fun getResourceAsProperties(resourcePath: String): Properties {
+        val properties = Properties()
+        getResourceAsStream(resourcePath).use { inputStream -> properties.load(inputStream) }
+
+        return properties
     }
 
-    public static File getResourceAsFile(final String resourcePath) {
-        return new File(getResourceAsFilePath(resourcePath));
+    fun getResourceAsFilePath(resourcePath: String): String {
+        return TestUtil::class.java.getResource(resourcePath).file
     }
 
-    public static InputStream getResourceAsStream(final String resourcePath) {
-        return TestUtil.class.getResourceAsStream(resourcePath);
+    fun getResourceAsFile(resourcePath: String): File {
+        return File(getResourceAsFilePath(resourcePath))
     }
 
-    public static BlackDuckServerConfigBuilder getBlackDuckServerConfigBuilderFromEnvVar() {
-        final String credentials = System.getenv(BLACKDUCK_CREDENTIALS_ENV_VAR);
-        final Type type = new TypeToken<Map<String, String>>() {}.getType();
-        final Map<String, String> properties = GSON.fromJson(credentials, type);
-
-        final BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = new BlackDuckServerConfigBuilder();
-        blackDuckServerConfigBuilder.setFromProperties(properties);
-
-        return blackDuckServerConfigBuilder;
+    fun getResourceAsStream(resourcePath: String): InputStream {
+        return TestUtil::class.java.getResourceAsStream(resourcePath)
     }
 }
