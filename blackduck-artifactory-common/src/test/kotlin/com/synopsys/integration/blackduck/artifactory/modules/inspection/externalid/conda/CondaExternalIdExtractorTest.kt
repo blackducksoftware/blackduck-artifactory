@@ -1,7 +1,6 @@
-package com.synopsys.integration.blackduck.artifactory.modues.inspection.externalid.conda
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda
 
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType
 import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
