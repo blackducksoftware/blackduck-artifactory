@@ -42,6 +42,7 @@ import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
@@ -49,7 +50,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.collecto
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
@@ -201,10 +201,11 @@ public class InspectionModule implements Module {
     private void updateAnalytics() {
         final List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepos();
         simpleAnalyticsCollector.putMetadata("cache.repo.count", cacheRepositoryKeys.size());
-        simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys));
+        simpleAnalyticsCollector.putMetadata("cache.artifact.count", Optional.ofNullable(artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys)).orElse(0L));
 
         final String packageManagers = cacheRepositoryKeys.stream()
                                            .map(artifactoryPAPIService::getPackageType)
+                                           .map(Optional::ofNullable)
                                            .filter(Optional::isPresent)
                                            .map(Optional::get)
                                            .collect(Collectors.joining("/"));

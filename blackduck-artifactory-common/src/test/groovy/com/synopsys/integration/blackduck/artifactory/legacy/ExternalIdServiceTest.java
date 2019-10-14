@@ -405,9 +405,8 @@ public class ExternalIdServiceTest {
         }
 
         @Override
-        public Optional<String> getPackageType(final String repoKey) {
-            return Optional.ofNullable(mockRepoPathMap.get(repoKey))
-                       .map(mockRepoPath -> mockRepoPath.supportedPackageType.getArtifactoryName());
+        public String getPackageType(final String repoKey) {
+            return mockRepoPathMap.get(repoKey).supportedPackageType.getArtifactoryName();
         }
 
         @Override

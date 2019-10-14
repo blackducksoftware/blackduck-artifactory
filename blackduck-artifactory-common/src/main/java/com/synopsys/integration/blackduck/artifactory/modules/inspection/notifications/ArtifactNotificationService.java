@@ -46,6 +46,7 @@ import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
@@ -54,7 +55,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyStatusNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityNotification;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.NotificationService;
 import com.synopsys.integration.exception.IntegrationException;
@@ -121,7 +121,7 @@ public class ArtifactNotificationService {
 
         repoKeyPaths.forEach(repoKeyPath -> {
             inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS, null, null);
             // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
             inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
             final String repoKey = repoKeyPath.getRepoKey();

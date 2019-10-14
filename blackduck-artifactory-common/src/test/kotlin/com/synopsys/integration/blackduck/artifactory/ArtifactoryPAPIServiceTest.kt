@@ -22,8 +22,8 @@ internal class ArtifactoryPAPIServiceTest {
         val artifactoryPAPIService = ArtifactoryPAPIService(PluginRepoPathFactory(false), repositories, searches)
         val packageType = artifactoryPAPIService.getPackageType("maven-local")
 
-        Assertions.assertTrue(packageType.isPresent)
-        Assertions.assertEquals("maven", packageType.get())
+        Assertions.assertNotNull(packageType)
+        Assertions.assertEquals("maven", packageType)
     }
 
     @Test

@@ -36,6 +36,7 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersi
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
@@ -79,7 +80,7 @@ public class RepositoryInitializationService {
             return;
         }
 
-        final Optional<String> possiblePackageType = artifactoryPAPIService.getPackageType(repoKey);
+        final Optional<String> possiblePackageType = Optional.ofNullable(artifactoryPAPIService.getPackageType(repoKey));
         if (!possiblePackageType.isPresent()) {
             logger.warn(String.format("Skipping initialization of configured repo '%s' because its package type was not found. Please remove this repo from your configuration or ensure a package type is specified", repoKey));
             throw new FailedInspectionException(repoKeyPath, "Repository package type not found.");
@@ -128,7 +129,7 @@ public class RepositoryInitializationService {
             }
 
             inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
-            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS, null, null);
         } catch (final IntegrationException e) {
             final String message = String.format("Failed to create project and version in Black Duck for repository '%s'", repoKey);
             logger.debug(message, e);

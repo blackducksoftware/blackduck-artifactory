@@ -38,6 +38,7 @@ import com.synopsys.integration.blackduck.api.generated.component.VersionBomOrig
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
@@ -86,7 +87,7 @@ public class ArtifactInspectionService {
         }
 
         final ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
-        final Optional<List<String>> patterns = artifactoryPAPIService.getPackageType(repoPath.getRepoKey())
+        final Optional<List<String>> patterns = Optional.ofNullable(artifactoryPAPIService.getPackageType(repoPath.getRepoKey()))
                                                     .map(inspectionModuleConfig::getPatternsForPackageType);
 
         if (!patterns.isPresent() || patterns.get().isEmpty() || itemInfo.isFolder()) {
@@ -126,7 +127,7 @@ public class ArtifactInspectionService {
             inspectAllUnknownArtifacts(repoKeyPath);
         } catch (final IntegrationException e) {
             logger.error(String.format("An error occurred when inspecting '%s'.", repoKey));
-            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, e.getMessage());
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, e.getMessage(), null);
         }
     }
 
@@ -138,7 +139,7 @@ public class ArtifactInspectionService {
             return;
         }
 
-        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
+        final Optional<String> packageType = Optional.ofNullable(artifactoryPAPIService.getPackageType(repoKey));
         if (!packageType.isPresent()) {
             final String message = String.format("The repository '%s' has no package type. Inspection cannot be performed.", repoKey);
             logger.error(message);
@@ -193,7 +194,7 @@ public class ArtifactInspectionService {
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
             componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getVersionBomComponentView().getComponentVersion()));
-            inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
+            inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS, null, null);
             final String forge = versionBomOriginView.get().getExternalNamespace();
             final String originId = versionBomOriginView.get().getExternalId();
             inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId);

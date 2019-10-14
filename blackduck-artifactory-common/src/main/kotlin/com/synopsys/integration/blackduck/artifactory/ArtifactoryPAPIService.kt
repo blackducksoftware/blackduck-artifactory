@@ -39,8 +39,8 @@ import java.util.*
 open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoPathFactory, private val repositories: Repositories, private val searches: Searches) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
-    open fun getPackageType(repoKey: String): Optional<String> {
-        return getRepositoryConfiguration(repoKey).map { it.packageType }
+    open fun getPackageType(repoKey: String): String? {
+        return getRepositoryConfiguration(repoKey)?.packageType
     }
 
     fun getArtifactCount(repoKeys: List<String>): Long? {
@@ -57,7 +57,7 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
         }
 
         val repoPath = pluginRepoPathFactory.create(repoKey)
-        val isValid = repositories.exists(repoPath) && getRepositoryConfiguration(repoKey).isPresent
+        val isValid = repositories.exists(repoPath) && getRepositoryConfiguration(repoKey) != null
 
         if (!isValid) {
             logger.warn(String.format("Repository '%s' was not found or is not a valid repository.", repoKey))
@@ -82,8 +82,8 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
         return repoPaths
     }
 
-    private fun getRepositoryConfiguration(repoKey: String): Optional<RepositoryConfiguration> {
-        return Optional.ofNullable(repositories.getRepositoryConfiguration(repoKey))
+    private fun getRepositoryConfiguration(repoKey: String): RepositoryConfiguration? {
+        return repositories.getRepositoryConfiguration(repoKey)
     }
 
     /*

@@ -26,32 +26,30 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.SetMultimap
 import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.util.NameVersion
-import org.apache.commons.lang3.StringUtils
 import org.artifactory.repo.RepoPath
 import java.util.*
 
-class ArtifactoryPropertyService(private val artifactoryPAPIService: ArtifactoryPAPIService, private val dateTimeManager: DateTimeManager) {
+open class ArtifactoryPropertyService(private val artifactoryPAPIService: ArtifactoryPAPIService, private val dateTimeManager: DateTimeManager) {
 
     fun hasProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Boolean {
         return artifactoryPAPIService.hasProperty(repoPath, property.propertyName)
     }
 
-    fun getProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Optional<String> {
+    fun getProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): String? {
         return getProperty(repoPath, property.propertyName)
     }
 
-    private fun getProperty(repoPath: RepoPath, propertyKey: String): Optional<String> {
-        val propertyValue = StringUtils.stripToNull(artifactoryPAPIService.getProperty(repoPath, propertyKey))
-        return Optional.ofNullable(propertyValue)
+    private fun getProperty(repoPath: RepoPath, propertyKey: String): String? {
+        return artifactoryPAPIService.getProperty(repoPath, propertyKey).trimToNull()
     }
 
-    fun getPropertyAsInteger(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Optional<Int> {
-        return getProperty(repoPath, property).map(Integer::parseInt)
+    fun getPropertyAsInteger(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Int? {
+        return getProperty(repoPath, property)?.toInt()
     }
 
-    fun getDateFromProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Optional<Date> {
-        val dateTimeAsString = getProperty(repoPath, property)
-        return dateTimeAsString.map(dateTimeManager::getDateFromString)
+    fun getDateFromProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Date? {
+        val dateTimeAsString: String? = getProperty(repoPath, property)
+        return dateTimeAsString?.let { dateTimeManager.getDateFromString(it) }
     }
 
     fun setProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty, value: String, logger: IntLogger) {
@@ -115,15 +113,14 @@ class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifactory
         return artifactoryPAPIService.itemsByProperties(setMultimap, *repoKeys)
     }
 
-    fun getProjectNameVersion(repoPath: RepoPath): Optional<NameVersion> {
+    fun getProjectNameVersion(repoPath: RepoPath): NameVersion? {
         val projectName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME)
         val projectVersionName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME)
-        var nameVersion: NameVersion? = null
 
-        if (projectName.isPresent && projectVersionName.isPresent) {
-            nameVersion = NameVersion(projectName.get(), projectVersionName.get())
+        return if (projectName != null && projectVersionName != null) {
+            NameVersion(projectName, projectVersionName)
+        } else {
+            null
         }
-
-        return Optional.ofNullable(nameVersion)
     }
 }
