@@ -39,7 +39,6 @@ import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponent
 import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyRuleView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;

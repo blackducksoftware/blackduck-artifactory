@@ -29,7 +29,6 @@ import java.util.Optional;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;

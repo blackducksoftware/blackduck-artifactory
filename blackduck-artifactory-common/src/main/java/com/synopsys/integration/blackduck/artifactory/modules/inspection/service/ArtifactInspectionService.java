@@ -38,7 +38,6 @@ import com.synopsys.integration.blackduck.api.generated.component.VersionBomOrig
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;

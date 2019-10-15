@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory.com.modules.inspection.service
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 
 import com.google.common.collect.HashMultimap
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
@@ -29,7 +29,6 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport
@@ -44,7 +43,7 @@ import org.artifactory.repo.RepoPathFactory
 import org.slf4j.LoggerFactory
 import java.util.*
 
-class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, dateTimeManager: DateTimeManager, private val projectService: ProjectService, private val inspectionModuleConfig: InspectionModuleConfig) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
+class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, dateTimeManager: DateTimeManager, private val projectService: ProjectService, private val retryCount: Int) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
     fun hasExternalIdProperties(repoPath: RepoPath): Boolean {
@@ -57,7 +56,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
     }
 
     fun shouldRetryInspection(repoPath: RepoPath): Boolean {
-        return !hasInspectionStatus(repoPath) || assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < inspectionModuleConfig.retryCount
+        return !hasInspectionStatus(repoPath) || assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < retryCount
     }
 
     fun setVulnerabilityProperties(repoPath: RepoPath, vulnerabilityAggregate: VulnerabilityAggregate) {
@@ -87,7 +86,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
     fun failInspection(repoPath: RepoPath, inspectionStatusMessage: String?) {
         val retryCount = getFailedInspectionCount(repoPath) + 1
         logger.debug(String.format("Attempting to fail inspection for '%s' with message '%s'", repoPath.toPath(), inspectionStatusMessage))
-        if (retryCount > inspectionModuleConfig.retryCount) {
+        if (retryCount > retryCount) {
             logger.debug(String.format("Attempting to fail inspection more than the number of maximum attempts: %s", repoPath.path))
         } else {
             setInspectionStatus(repoPath, InspectionStatus.FAILURE, inspectionStatusMessage, retryCount)
