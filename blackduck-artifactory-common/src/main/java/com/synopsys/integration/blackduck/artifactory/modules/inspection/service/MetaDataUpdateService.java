@@ -52,13 +52,13 @@ public class MetaDataUpdateService {
         final Date now = new Date();
         Date earliestDate = now;
         for (final RepoPath repoKeyPath : repoKeyPaths) {
-            final boolean shouldTryUpdate = inspectionPropertyService.getInspectionStatus(repoKeyPath)
+            final boolean shouldTryUpdate = Optional.ofNullable(inspectionPropertyService.getInspectionStatus(repoKeyPath))
                                                 .filter(inspectionStatus -> inspectionStatus.equals(InspectionStatus.SUCCESS) || inspectionStatus.equals(InspectionStatus.PENDING))
                                                 .isPresent();
 
             if (shouldTryUpdate) {
-                final Optional<Date> lastUpdateProperty = inspectionPropertyService.getLastUpdate(repoKeyPath);
-                final Optional<Date> lastInspectionProperty = inspectionPropertyService.getLastInspection(repoKeyPath);
+                final Optional<Date> lastUpdateProperty = Optional.ofNullable(inspectionPropertyService.getLastUpdate(repoKeyPath));
+                final Optional<Date> lastInspectionProperty = Optional.ofNullable(inspectionPropertyService.getLastInspection(repoKeyPath));
                 final Date dateToCheck;
 
                 if (lastUpdateProperty.isPresent()) {

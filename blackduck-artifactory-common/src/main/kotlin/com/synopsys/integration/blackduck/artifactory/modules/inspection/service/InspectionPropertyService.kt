@@ -102,7 +102,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
         setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name, logger)
 
         if (!inspectionStatusMessage.isNullOrBlank()) {
-            setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, inspectionStatusMessage!!, logger)
+            setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, inspectionStatusMessage, logger)
         } else if (hasProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE)) {
             deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, logger)
         }
@@ -114,9 +114,8 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
         }
     }
 
-    fun getInspectionStatus(repoPath: RepoPath): Optional<InspectionStatus> {
-        val inspectionStatus = getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)
-        return Optional.ofNullable(inspectionStatus?.let { InspectionStatus.valueOf(it) })
+    fun getInspectionStatus(repoPath: RepoPath): InspectionStatus? {
+        return getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)?.let { InspectionStatus.valueOf(it) }
     }
 
     fun hasInspectionStatus(repoPath: RepoPath): Boolean {
@@ -130,9 +129,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
     }
 
     fun assertInspectionStatus(repoPath: RepoPath, inspectionStatus: InspectionStatus): Boolean {
-        return getInspectionStatus(repoPath)
-                .filter { inspectionStatus == it }
-                .isPresent
+        return getInspectionStatus(repoPath)?.takeIf { inspectionStatus == it } != null
     }
 
     fun getRepoProjectName(repoKey: String): String {
@@ -169,12 +166,12 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
         projectVersionView.href.ifPresent { uiUrl -> setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger) }
     }
 
-    fun getLastUpdate(repoKeyPath: RepoPath): Optional<Date> {
-        return Optional.ofNullable(getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE))
+    fun getLastUpdate(repoKeyPath: RepoPath): Date? {
+        return getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE)
     }
 
-    fun getLastInspection(repoKeyPath: RepoPath): Optional<Date>? {
-        return Optional.ofNullable(getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION))
+    fun getLastInspection(repoKeyPath: RepoPath): Date? {
+        return getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION)
     }
 
     fun setUpdateStatus(repoKeyPath: RepoPath, updateStatus: UpdateStatus) {
