@@ -54,7 +54,7 @@ class InspectionPropertyServiceTest {
         whenever(artifactoryPAPIService.hasProperty(any(), any())).doAnswer {
             val repoPath: RepoPath = it.getArgument(0)
             val propertyKey: String = it.getArgument(1)
-            return@doAnswer repoPathPropertyMap[repoPath]?.get(propertyKey) != null
+            return@doAnswer repoPathPropertyMap[repoPath]?.containsKey(propertyKey)
         }
 
         // Delete property
@@ -327,7 +327,7 @@ class InspectionPropertyServiceTest {
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
         val inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath)
-        Assertions.assertEquals(inspectionStatus, "RepoPath '${repoPath.toPath()}' should have a ${BlackDuckArtifactoryProperty.INSPECTION_STATUS} property.")
+        Assertions.assertEquals(InspectionStatus.SUCCESS, inspectionStatus, "RepoPath '${repoPath.toPath()}' should have a ${BlackDuckArtifactoryProperty.INSPECTION_STATUS} property.")
     }
 
     @Test
