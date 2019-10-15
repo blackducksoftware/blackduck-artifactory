@@ -97,7 +97,12 @@ public class ScanModule implements Module {
     }
 
     public void addPolicyStatus() {
-        final Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths();
+        final Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths().stream()
+                                            .filter(repoPath -> {
+                                                final Optional<String> property = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT);
+                                                return property.isPresent() && property.get().equals(Result.SUCCESS.name());
+                                            })
+                                            .collect(Collectors.toSet());
         scanPolicyService.populatePolicyStatuses(repoPaths);
         updateAnalyticsData();
     }
