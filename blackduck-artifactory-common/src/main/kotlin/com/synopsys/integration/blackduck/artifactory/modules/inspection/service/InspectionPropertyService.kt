@@ -43,7 +43,7 @@ import org.artifactory.repo.RepoPathFactory
 import org.slf4j.LoggerFactory
 import java.util.*
 
-class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, dateTimeManager: DateTimeManager, private val projectService: ProjectService, private val retryCount: Int) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
+class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, dateTimeManager: DateTimeManager, private val projectService: ProjectService, private val maxRetryCount: Int) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
     fun hasExternalIdProperties(repoPath: RepoPath): Boolean {
@@ -56,7 +56,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
     }
 
     fun shouldRetryInspection(repoPath: RepoPath): Boolean {
-        return !hasInspectionStatus(repoPath) || assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < retryCount
+        return !hasInspectionStatus(repoPath) || assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < maxRetryCount
     }
 
     fun setVulnerabilityProperties(repoPath: RepoPath, vulnerabilityAggregate: VulnerabilityAggregate) {
@@ -86,7 +86,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
     fun failInspection(repoPath: RepoPath, inspectionStatusMessage: String?) {
         val retryCount = getFailedInspectionCount(repoPath) + 1
         logger.debug(String.format("Attempting to fail inspection for '%s' with message '%s'", repoPath.toPath(), inspectionStatusMessage))
-        if (retryCount > retryCount) {
+        if (retryCount > maxRetryCount) {
             logger.debug(String.format("Attempting to fail inspection more than the number of maximum attempts: %s", repoPath.path))
         } else {
             setInspectionStatus(repoPath, InspectionStatus.FAILURE, inspectionStatusMessage, retryCount)
@@ -101,7 +101,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
         setPropertyFromDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, Date(), logger)
         setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name, logger)
 
-        if (StringUtils.isNotBlank(inspectionStatusMessage)) {
+        if (!inspectionStatusMessage.isNullOrBlank()) {
             setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, inspectionStatusMessage!!, logger)
         } else if (hasProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE)) {
             deleteProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE, logger)

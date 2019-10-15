@@ -40,7 +40,7 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
     }
 
     private fun getProperty(repoPath: RepoPath, propertyKey: String): String? {
-        return artifactoryPAPIService.getProperty(repoPath, propertyKey).trimToNull()
+        return artifactoryPAPIService.getProperty(repoPath, propertyKey)?.trimToNull()
     }
 
     fun getPropertyAsInteger(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Int? {

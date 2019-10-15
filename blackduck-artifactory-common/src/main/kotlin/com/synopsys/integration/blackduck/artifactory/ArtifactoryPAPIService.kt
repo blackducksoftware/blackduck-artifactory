@@ -110,7 +110,7 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
         return repositories.hasProperty(repoPath, propertyName)
     }
 
-    open fun getProperty(repoPath: RepoPath, propertyName: String): String {
+    open fun getProperty(repoPath: RepoPath, propertyName: String): String? {
         return repositories.getProperty(repoPath, propertyName)
     }
 
@@ -118,7 +118,7 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
         repositories.setProperty(repoPath, propertyName, value)
     }
 
-    fun deleteProperty(repoPath: RepoPath, propertyName: String) {
+    open fun deleteProperty(repoPath: RepoPath, propertyName: String) {
         repositories.deleteProperty(repoPath, propertyName)
     }
 
