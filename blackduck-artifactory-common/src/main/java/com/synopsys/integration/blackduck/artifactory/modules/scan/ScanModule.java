@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
@@ -99,8 +100,8 @@ public class ScanModule implements Module {
     public void addPolicyStatus() {
         final Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths().stream()
                                             .filter(repoPath -> {
-                                                final Optional<String> property = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT);
-                                                return property.isPresent() && property.get().equals(Result.SUCCESS.name());
+                                                final String property = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT);
+                                                return StringUtils.isNotBlank(property) && property.equals(Result.SUCCESS.name());
                                             })
                                             .collect(Collectors.toSet());
         scanPolicyService.populatePolicyStatuses(repoPaths);
@@ -122,7 +123,7 @@ public class ScanModule implements Module {
         final List<RepoPath> repoPathsWithFailures = scanModuleConfig.getRepos().stream()
                                                          .map(repoKey -> artifactoryPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.SCAN_RESULT))
                                                          .flatMap(List::stream)
-                                                         .filter(repoPath -> artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT).equals(Optional.of(Result.FAILURE.toString())))
+                                                         .filter(repoPath -> Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT)).equals(Optional.of(Result.FAILURE.toString())))
                                                          .collect(Collectors.toList());
 
         repoPathsWithFailures.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
@@ -133,7 +134,8 @@ public class ScanModule implements Module {
         final List<RepoPath> repoPathsOutOfDate = scanModuleConfig.getRepos().stream()
                                                       .map(repoKey -> artifactoryPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.UPDATE_STATUS))
                                                       .flatMap(List::stream)
-                                                      .filter(repoPath -> artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS).equals(Optional.of(UpdateStatus.OUT_OF_DATE.toString())))
+                                                      .filter(repoPath -> Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS))
+                                                                              .equals(Optional.of(UpdateStatus.OUT_OF_DATE.toString())))
                                                       .collect(Collectors.toList());
 
         repoPathsOutOfDate.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
