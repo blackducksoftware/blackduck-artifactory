@@ -66,7 +66,7 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
     }
 
     fun setPolicyProperties(repoPath: RepoPath, policyStatusReport: PolicyStatusReport) {
-        if (policyStatusReport.policySeverityTypes.isEmpty() && hasProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES)) {
+        if (policyStatusReport.policySeverityTypes.isEmpty()) {
             deleteProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, logger)
         } else {
             val policySeverityTypes = StringUtils.join(policyStatusReport.policySeverityTypes, ",")
