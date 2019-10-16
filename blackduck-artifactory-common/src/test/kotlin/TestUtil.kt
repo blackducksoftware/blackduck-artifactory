@@ -24,11 +24,19 @@
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.doAnswer
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.whenever
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder
+import org.artifactory.repo.RepoPath
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
+
+typealias PropertiesMap = MutableMap<String, String>
 
 object TestUtil {
     private val GSON = GsonBuilder().setPrettyPrinting().create()
@@ -71,5 +79,42 @@ object TestUtil {
 
     fun getResourceAsStream(resourcePath: String): InputStream {
         return TestUtil::class.java.getResourceAsStream(resourcePath)
+    }
+
+    fun createMockArtifactoryPAPIService(repoPathPropertyMap: MutableMap<RepoPath, PropertiesMap>): ArtifactoryPAPIService {
+        val artifactoryPAPIService = mock<ArtifactoryPAPIService>()
+
+        // Set property
+        whenever(artifactoryPAPIService.setProperty(any(), any(), any())).then {
+            val repoPath: RepoPath = it.getArgument(0)
+            val propertyKey: String = it.getArgument(1)
+            val propertyValue: String = it.getArgument(2)
+            val properties = repoPathPropertyMap.getOrPut(repoPath, defaultValue = { mutableMapOf() })
+            properties[propertyKey] = propertyValue
+            repoPathPropertyMap.put(repoPath, properties)
+        }
+
+        // Get property
+        whenever(artifactoryPAPIService.getProperty(any(), any())).doAnswer {
+            val repoPath: RepoPath = it.getArgument(0)
+            val propertyKey: String = it.getArgument(1)
+            return@doAnswer repoPathPropertyMap[repoPath]?.get(propertyKey)
+        }
+
+        // Has property
+        whenever(artifactoryPAPIService.hasProperty(any(), any())).doAnswer {
+            val repoPath: RepoPath = it.getArgument(0)
+            val propertyKey: String = it.getArgument(1)
+            return@doAnswer repoPathPropertyMap[repoPath]?.containsKey(propertyKey)
+        }
+
+        // Delete property
+        whenever(artifactoryPAPIService.deleteProperty(any(), any())).then {
+            val repoPath: RepoPath = it.getArgument(0)
+            val propertyKey: String = it.getArgument(1)
+            repoPathPropertyMap[repoPath]?.remove(propertyKey)
+        }
+
+        return artifactoryPAPIService
     }
 }
