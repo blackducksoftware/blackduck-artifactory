@@ -29,6 +29,7 @@ import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
+import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder
 import org.artifactory.repo.RepoPath
 import java.io.File
@@ -116,5 +117,9 @@ object TestUtil {
         }
 
         return artifactoryPAPIService
+    }
+
+    fun createRepoPath(repoPath: String = "test"): RepoPath {
+        return PluginRepoPathFactory(false).create(repoPath)
     }
 }

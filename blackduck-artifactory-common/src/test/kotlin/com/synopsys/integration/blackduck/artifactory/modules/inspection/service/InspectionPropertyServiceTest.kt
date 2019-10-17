@@ -2,6 +2,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.servic
 
 import PropertiesMap
 import TestUtil.createMockArtifactoryPAPIService
+import TestUtil.createRepoPath
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType
@@ -9,7 +10,6 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummar
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager
-import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate
@@ -20,11 +20,6 @@ import org.junit.jupiter.api.Test
 
 
 class InspectionPropertyServiceTest {
-
-    private fun createRepoPath(repoPath: String = "test"): RepoPath {
-        return PluginRepoPathFactory(false).create(repoPath)
-    }
-
     private fun createInspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, dateTimeManager: DateTimeManager = mock(), projectService: ProjectService = mock(), retryCount: Int = 5): InspectionPropertyService {
         return InspectionPropertyService(artifactoryPAPIService, dateTimeManager, projectService, retryCount)
     }
