@@ -123,15 +123,15 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
     }
 
     // TODO: Stop using ArtifactoryPAPIService for this. Use InspectionPropertyService
-    fun itemsByProperties(properties: SetMultimap<String, String>, vararg repoKeys: String): List<RepoPath> {
+    open fun itemsByProperties(properties: SetMultimap<String, String>, vararg repoKeys: String): List<RepoPath> {
         return searches.itemsByProperties(properties, *repoKeys)
     }
 
-    fun itemsByName(artifactByName: String, vararg repoKeys: String): List<RepoPath> {
+    open fun itemsByName(artifactByName: String, vararg repoKeys: String): List<RepoPath> {
         return searches.artifactsByName(artifactByName, *repoKeys)
     }
 
-    fun getArtifactContent(repoPath: RepoPath): ResourceStreamHandle {
+    open fun getArtifactContent(repoPath: RepoPath): ResourceStreamHandle {
         return repositories.getContent(repoPath)
     }
 }
