@@ -29,15 +29,15 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 open class DateTimeManager(val dateTimePattern: String, private val dateTimeZone: String? = null) {
-    fun getTimeFromString(dateTimeString: String): Long {
+    open fun getTimeFromString(dateTimeString: String): Long {
         return getDateFromString(dateTimeString).time
     }
 
-    fun getStringFromDate(date: Date): String {
+    open fun getStringFromDate(date: Date): String {
         return getStringFromDate(date, ZoneOffset.UTC)
     }
 
-    fun geStringFromDateWithTimeZone(date: Date): Optional<String> {
+    open fun geStringFromDateWithTimeZone(date: Date): Optional<String> {
         if (dateTimeZone.isNullOrBlank()) {
             return Optional.empty()
         }
@@ -53,7 +53,7 @@ open class DateTimeManager(val dateTimePattern: String, private val dateTimeZone
         return date.toInstant().atZone(zoneId).format(dateTimeFormatter)
     }
 
-    fun getDateFromString(dateTimeString: String): Date {
+    open fun getDateFromString(dateTimeString: String): Date {
         val dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC)
         return Date.from(ZonedDateTime.from(dateTimeFormatter.parse(dateTimeString)).toInstant())
     }
