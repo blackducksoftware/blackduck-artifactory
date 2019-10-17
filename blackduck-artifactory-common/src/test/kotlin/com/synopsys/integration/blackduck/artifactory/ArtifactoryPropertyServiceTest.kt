@@ -9,8 +9,8 @@ import com.nhaarman.mockitokotlin2.whenever
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyMap
 import java.util.*
 
 internal class ArtifactoryPropertyServiceTest {
@@ -144,7 +144,6 @@ internal class ArtifactoryPropertyServiceTest {
     }
 
     @Test
-    @Disabled("deleteAllBlackDuckPropertiesFromRepo: Disabled because SetMultimap is too difficult to mock. It would require the test to know the implementation.")
     fun deleteAllBlackDuckPropertiesFromRepo() {
         val repoPath1 = createRepoPath("test/repoPath1")
         val repoPath2 = createRepoPath("test/repoPath2")
@@ -162,9 +161,9 @@ internal class ArtifactoryPropertyServiceTest {
                 )
         )
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
-        whenever(artifactoryPAPIService.itemsByProperties(any(), repoPath1.repoKey)).doReturn(listOf(repoPath1, repoPath2))
+        whenever(artifactoryPAPIService.itemsByProperties(anyMap(), any())).doReturn(listOf(repoPath1, repoPath2))
         val artifactoryPropertyService = ArtifactoryPropertyService(artifactoryPAPIService, mock())
-        val logger = Slf4jIntLogger(org.slf4j.LoggerFactory.getLogger("ArtifactoryPropertyServiceTest::deleteProperty"))
+        val logger = Slf4jIntLogger(org.slf4j.LoggerFactory.getLogger("ArtifactoryPropertyServiceTest::deleteAllBlackDuckPropertiesFromRepo"))
 
         artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoPath1.repoKey, mutableMapOf(), logger)
 
@@ -179,21 +178,37 @@ internal class ArtifactoryPropertyServiceTest {
     }
 
     @Test
-    @Disabled("deleteAllBlackDuckPropertiesFromRepoPath: Disabled because SetMultimap is too difficult to mock. It would require the test to know the implementation.")
     fun deleteAllBlackDuckPropertiesFromRepoPath() {
-        // See disabled annotation.
-    }
+        val repoPath1 = createRepoPath("test/repoPath1")
+        val repoPath2 = createRepoPath("test/repoPath2")
+        val pypiPropertyName = "pypi.name"
+        val repoPathPropertyMap = mutableMapOf(
+                repoPath1 to mutableMapOf(
+                        BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName to "r1-value1",
+                        BlackDuckArtifactoryProperty.UPDATE_STATUS.propertyName to "r1-value2",
+                        pypiPropertyName to "r1-value3"
+                ),
+                repoPath2 to mutableMapOf(
+                        BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName to "r2-value1",
+                        BlackDuckArtifactoryProperty.UPDATE_STATUS.propertyName to "r2-value2",
+                        pypiPropertyName to "r1-value3"
+                )
+        )
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val artifactoryPropertyService = ArtifactoryPropertyService(artifactoryPAPIService, mock())
+        val logger = Slf4jIntLogger(org.slf4j.LoggerFactory.getLogger("ArtifactoryPropertyServiceTest::deleteAllBlackDuckPropertiesFromRepoPath"))
 
-    @Test
-    @Disabled("getItemsContainingProperties: Disabled because SetMultimap is too difficult to mock. It would require the test to know the implementation.")
-    fun getItemsContainingProperties() {
-        // See disabled annotation.
-    }
+        artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath1, mutableMapOf(), logger)
 
-    @Test
-    @Disabled("getItemsContainingPropertiesAndValues: Disabled because SetMultimap is too difficult to mock. It would require the test to know the implementation.")
-    fun getItemsContainingPropertiesAndValues() {
-        // See disabled annotation.
+        // Removed properly from repoPath1
+        Assertions.assertNull(repoPathPropertyMap[repoPath1]!![BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName], "The ${BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName} property should not exist on ${repoPath1.toPath()}.")
+        Assertions.assertNull(repoPathPropertyMap[repoPath1]!![BlackDuckArtifactoryProperty.UPDATE_STATUS.propertyName], "The ${BlackDuckArtifactoryProperty.UPDATE_STATUS.propertyName} property should not exist on ${repoPath1.toPath()}.")
+        Assertions.assertNotNull(repoPathPropertyMap[repoPath1]!![pypiPropertyName], "The pypi.name property should still exist on ${repoPath1.toPath()}.")
+
+        // Nothing was removed from repoPath2
+        Assertions.assertNotNull(repoPathPropertyMap[repoPath2]!![BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName], "The ${BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName} property should still exist on ${repoPath2.toPath()}.")
+        Assertions.assertNotNull(repoPathPropertyMap[repoPath2]!![BlackDuckArtifactoryProperty.UPDATE_STATUS.propertyName], "The ${BlackDuckArtifactoryProperty.UPDATE_STATUS.propertyName} property should still exist on ${repoPath2.toPath()}.")
+        Assertions.assertNotNull(repoPathPropertyMap[repoPath2]!![pypiPropertyName], "The pypi.name property should still exist on ${repoPath1.toPath()}.")
     }
 
     @Test
