@@ -22,7 +22,6 @@
  */
 package com.synopsys.integration.blackduck.artifactory
 
-import com.google.common.collect.HashMultimap
 import com.google.common.collect.SetMultimap
 import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.util.NameVersion
@@ -104,14 +103,28 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
     }
 
     fun getItemsContainingProperties(repoKey: String, vararg properties: BlackDuckArtifactoryProperty): List<RepoPath> {
-        val setMultimap = HashMultimap.create<String, String>()
-        properties.forEach { setMultimap.put(it.propertyName, "*") }
+        val propertiesMap = mutableMapOf<String, String>()
+        properties.forEach { propertiesMap[it.propertyName] = "*" }
 
-        return getItemsContainingPropertiesAndValues(setMultimap, repoKey)
+        return getItemsContainingPropertiesAndValues(propertiesMap, repoKey)
     }
 
-    fun getItemsContainingPropertiesAndValues(setMultimap: SetMultimap<String, String>, vararg repoKeys: String): List<RepoPath> {
-        return artifactoryPAPIService.itemsByProperties(setMultimap, *repoKeys)
+    fun getItemsContainingPropertiesAndValues(properties: SetMultimap<String, String>, vararg repoKeys: String): List<RepoPath> {
+        val propertyMap = mutableMapOf<String, String>()
+        properties.keySet().forEach {
+            val values = properties[it]
+            if (values.size > 1) {
+                throw UnsupportedOperationException("Cannot convert SetMultimap to Map because multiple values were assigned to the same key.")
+            }
+
+            propertyMap[it] = values.first()
+        }
+        
+        return getItemsContainingPropertiesAndValues(propertyMap, *repoKeys)
+    }
+
+    fun getItemsContainingPropertiesAndValues(properties: Map<String, String>, vararg repoKeys: String): List<RepoPath> {
+        return artifactoryPAPIService.itemsByProperties(properties, *repoKeys)
     }
 
     fun getProjectNameVersion(repoPath: RepoPath): NameVersion? {

@@ -22,7 +22,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory
 
-import com.google.common.collect.SetMultimap
+import com.google.common.collect.HashMultimap
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.fs.FileLayoutInfo
@@ -122,9 +122,10 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
         repositories.deleteProperty(repoPath, propertyName)
     }
     
-    // TODO: Accept a regular map. SetMultimap is too difficult to mock and is not needed until the call to searches.
-    open fun itemsByProperties(properties: SetMultimap<String, String>, vararg repoKeys: String): List<RepoPath> {
-        return searches.itemsByProperties(properties, *repoKeys)
+    open fun itemsByProperties(properties: Map<String, String>, vararg repoKeys: String): List<RepoPath> {
+        val setMultimap = HashMultimap.create<String, String>()
+        properties.entries.forEach { setMultimap.put(it.key, it.value) }
+        return searches.itemsByProperties(setMultimap, *repoKeys)
     }
 
     open fun itemsByName(artifactByName: String, vararg repoKeys: String): List<RepoPath> {
