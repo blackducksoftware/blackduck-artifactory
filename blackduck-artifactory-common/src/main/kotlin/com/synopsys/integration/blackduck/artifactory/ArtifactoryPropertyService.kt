@@ -52,6 +52,7 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
         return dateTimeAsString?.let { dateTimeManager.getDateFromString(it) }
     }
 
+    // TODO: These methods should not require an IntLogger, but a regular Logger
     fun setProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty, value: String, logger: IntLogger) {
         setProperty(repoPath, property.propertyName, value, logger)
     }
@@ -89,7 +90,7 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
 
     private fun getItemsContainingAnyProperties(repoKey: String, vararg properties: BlackDuckArtifactoryProperty): List<RepoPath> {
         return properties
-                .flatMap { getItemsContainingAnyProperties(repoKey, it) }
+                .flatMap { getItemsContainingProperties(repoKey, it) }
     }
 
     fun deleteAllBlackDuckPropertiesFromRepoPath(repoPath: RepoPath, params: Map<String, List<String>>, logger: IntLogger) {

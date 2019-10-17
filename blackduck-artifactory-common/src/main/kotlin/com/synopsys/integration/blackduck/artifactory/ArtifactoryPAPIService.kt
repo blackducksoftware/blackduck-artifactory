@@ -121,8 +121,8 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
     open fun deleteProperty(repoPath: RepoPath, propertyName: String) {
         repositories.deleteProperty(repoPath, propertyName)
     }
-
-    // TODO: Stop using ArtifactoryPAPIService for this. Use InspectionPropertyService
+    
+    // TODO: Accept a regular map. SetMultimap is too difficult to mock and is not needed until the call to searches.
     open fun itemsByProperties(properties: SetMultimap<String, String>, vararg repoKeys: String): List<RepoPath> {
         return searches.itemsByProperties(properties, *repoKeys)
     }
