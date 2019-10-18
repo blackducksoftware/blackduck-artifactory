@@ -106,7 +106,7 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
         val propertiesMap = mutableMapOf<String, String>()
         properties.forEach { propertiesMap[it.propertyName] = "*" }
 
-        return getItemsContainingPropertiesAndValues(propertiesMap, repoKey)
+        return getItemsContainingPropertiesAndValues(propertiesMap, arrayOf(repoKey))
     }
 
     fun getItemsContainingPropertiesAndValues(properties: SetMultimap<String, String>, vararg repoKeys: String): List<RepoPath> {
@@ -119,12 +119,12 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
 
             propertyMap[it] = values.first()
         }
-        
-        return getItemsContainingPropertiesAndValues(propertyMap, *repoKeys)
+
+        return getItemsContainingPropertiesAndValues(propertyMap, arrayOf(*repoKeys))
     }
 
-    fun getItemsContainingPropertiesAndValues(properties: Map<String, String>, vararg repoKeys: String): List<RepoPath> {
-        return artifactoryPAPIService.itemsByProperties(properties, *repoKeys)
+    private fun getItemsContainingPropertiesAndValues(properties: Map<String, String>, repoKeys: Array<String>): List<RepoPath> {
+        return artifactoryPAPIService.itemsByProperties(properties, repoKeys)
     }
 
     fun getProjectNameVersion(repoPath: RepoPath): NameVersion? {

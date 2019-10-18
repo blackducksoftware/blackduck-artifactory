@@ -121,8 +121,8 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
     open fun deleteProperty(repoPath: RepoPath, propertyName: String) {
         repositories.deleteProperty(repoPath, propertyName)
     }
-    
-    open fun itemsByProperties(properties: Map<String, String>, vararg repoKeys: String): List<RepoPath> {
+
+    open fun itemsByProperties(properties: Map<String, String>, repoKeys: Array<String>): List<RepoPath> {
         val setMultimap = HashMultimap.create<String, String>()
         properties.entries.forEach { setMultimap.put(it.key, it.value) }
         return searches.itemsByProperties(setMultimap, *repoKeys)

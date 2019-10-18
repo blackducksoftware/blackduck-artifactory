@@ -32,6 +32,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder
 import org.artifactory.repo.RepoPath
+import org.mockito.ArgumentMatchers.anyMap
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -114,6 +115,26 @@ object TestUtil {
             val repoPath: RepoPath = it.getArgument(0)
             val propertyKey: String = it.getArgument(1)
             repoPathPropertyMap[repoPath]?.remove(propertyKey)
+        }
+
+        // Search for artifact with property
+        whenever(artifactoryPAPIService.itemsByProperties(anyMap(), any())).doAnswer { invocationOnMock ->
+            val propertiesToLookFor = invocationOnMock.getArgument<Map<String, String>>(0)
+            val repoKey = invocationOnMock.getArgument<String>(1)
+
+            val matchingRepoPaths = mutableListOf<RepoPath>()
+            repoPathPropertyMap.entries
+                    .filter { repoKey == null || it.key.repoKey == repoKey }
+                    .forEach { entry ->
+                        entry.value.entries.forEach { repoPathProperty ->
+                            val property = propertiesToLookFor[repoPathProperty.key]
+                            if (property != null && (property == "*" || repoPathProperty.value == property)) {
+                                matchingRepoPaths.add(entry.key)
+                            }
+                        }
+                    }
+
+            return@doAnswer listOf<RepoPath>()
         }
 
         return artifactoryPAPIService
