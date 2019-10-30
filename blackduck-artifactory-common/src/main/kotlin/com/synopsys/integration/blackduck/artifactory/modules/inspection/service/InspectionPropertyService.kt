@@ -24,10 +24,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.servic
 
 import com.google.common.collect.HashMultimap
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.DateTimeManager
+import com.synopsys.integration.blackduck.artifactory.*
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
@@ -39,11 +36,17 @@ import com.synopsys.integration.log.Slf4jIntLogger
 import com.synopsys.integration.util.HostNameHelper
 import org.apache.commons.lang3.StringUtils
 import org.artifactory.repo.RepoPath
-import org.artifactory.repo.RepoPathFactory
 import org.slf4j.LoggerFactory
 import java.util.*
 
-class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, dateTimeManager: DateTimeManager, private val projectService: ProjectService, private val maxRetryCount: Int) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
+class InspectionPropertyService(
+        artifactoryPAPIService: ArtifactoryPAPIService,
+        dateTimeManager: DateTimeManager,
+        private val pluginRepoPathFactory: PluginRepoPathFactory,
+        private val projectService: ProjectService,
+        private val maxRetryCount: Int
+) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
+
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
     fun hasExternalIdProperties(repoPath: RepoPath): Boolean {
@@ -133,25 +136,26 @@ class InspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, 
     }
 
     fun getRepoProjectName(repoKey: String): String {
-        val repoPath = RepoPathFactory.create(repoKey)
+        val repoPath = pluginRepoPathFactory.create(repoKey)
         val projectNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME)
 
         return projectNameProperty ?: repoKey
     }
 
     fun getRepoProjectVersionName(repoKey: String): String {
-        val repoPath = RepoPathFactory.create(repoKey)
+        val repoPath = pluginRepoPathFactory.create(repoKey)
         val projectVersionNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME)
 
         return projectVersionNameProperty ?: HostNameHelper.getMyHostName("UNKNOWN_HOST")
     }
 
     fun setRepoProjectNameProperties(repoKey: String, projectName: String, projectVersionName: String) {
-        val repoPath = RepoPathFactory.create(repoKey)
+        val repoPath = pluginRepoPathFactory.create(repoKey)
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectName, logger)
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionName, logger)
     }
 
+    @Deprecated("Use the updateProjectUIUrl that takes in a RepoPath and ProjectVersionView instead.")
     @Throws(IntegrationException::class)
     fun updateProjectUIUrl(repoPath: RepoPath, projectName: String, projectVersion: String) {
         val projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersion)

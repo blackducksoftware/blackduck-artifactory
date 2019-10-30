@@ -120,11 +120,11 @@ object TestUtil {
         // Search for artifact with property
         whenever(artifactoryPAPIService.itemsByProperties(anyMap(), any())).doAnswer { invocationOnMock ->
             val propertiesToLookFor = invocationOnMock.getArgument<Map<String, String>>(0)
-            val repoKey = invocationOnMock.getArgument<String>(1)
+            val repoKeys = invocationOnMock.getArgument<Array<String>>(1)
 
             val matchingRepoPaths = mutableListOf<RepoPath>()
             repoPathPropertyMap.entries
-                    .filter { repoKey == null || it.key.repoKey == repoKey }
+                    .filter { repoKeys == null || repoKeys.contains(it.key.repoKey) }
                     .forEach { entry ->
                         entry.value.entries.forEach { repoPathProperty ->
                             val property = propertiesToLookFor[repoPathProperty.key]

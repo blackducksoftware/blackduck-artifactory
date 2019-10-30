@@ -3,25 +3,39 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.servic
 import PropertiesMap
 import TestUtil.createMockArtifactoryPAPIService
 import TestUtil.createRepoPath
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType
+import com.synopsys.integration.blackduck.api.generated.component.ResourceMetadata
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager
+import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
+import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate
 import com.synopsys.integration.blackduck.service.ProjectService
+import com.synopsys.integration.util.HostNameHelper
 import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import java.util.*
 
 
 class InspectionPropertyServiceTest {
-    private fun createInspectionPropertyService(artifactoryPAPIService: ArtifactoryPAPIService, dateTimeManager: DateTimeManager = mock(), projectService: ProjectService = mock(), retryCount: Int = 5): InspectionPropertyService {
-        return InspectionPropertyService(artifactoryPAPIService, dateTimeManager, projectService, retryCount)
+    private fun createInspectionPropertyService(
+            artifactoryPAPIService: ArtifactoryPAPIService,
+            dateTimeManager: DateTimeManager = mock(),
+            pluginRepoPathFactory: PluginRepoPathFactory = PluginRepoPathFactory(false),
+            projectService: ProjectService = mock(),
+            retryCount: Int = 5
+    ): InspectionPropertyService {
+        return InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, projectService, retryCount)
     }
 
     @Test
@@ -303,6 +317,32 @@ class InspectionPropertyServiceTest {
 
     @Test
     fun getAllArtifactsInRepoWithInspectionStatus() {
+        val repoPathSuccess = createRepoPath("test/valid")
+        val repoPathPending = createRepoPath("test/pending")
+        val repoPathFailure = createRepoPath("test/failure")
+        val repoPathNoProperties = createRepoPath("test/no-properties")
+        val inspectionStatusProperty = BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>(
+                repoPathSuccess to mutableMapOf(
+                        inspectionStatusProperty to InspectionStatus.SUCCESS.name
+                ),
+                repoPathPending to mutableMapOf(
+                        inspectionStatusProperty to InspectionStatus.PENDING.name
+                ),
+                repoPathFailure to mutableMapOf(
+                        inspectionStatusProperty to InspectionStatus.FAILURE.name
+                ),
+                repoPathNoProperties to mutableMapOf()
+        )
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
+
+        InspectionStatus.values().forEach { inspectionStatus ->
+            val foundArtifacts = inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus("test", InspectionStatus.SUCCESS)
+            foundArtifacts.forEach { repoPath ->
+                Assertions.assertEquals(inspectionStatus.name, repoPathPropertyMap[repoPath]!![inspectionStatusProperty], "The $inspectionStatusProperty should be set to ${inspectionStatus.name} on ${repoPath.toPath()}")
+            }
+        }
     }
 
     @Test
@@ -330,37 +370,146 @@ class InspectionPropertyServiceTest {
 
     @Test
     fun getRepoProjectName() {
+        val repoPathWithNoName = createRepoPath("test-repo-1")
+        val repoPathWithName = createRepoPath("test-repo-2")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPathWithNoName] = mutableMapOf()
+        repoPathPropertyMap[repoPathWithName] = mutableMapOf(
+                BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.propertyName to "project-name"
+        )
+
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
+
+        val projectNameProperty = inspectionPropertyService.getRepoProjectName(repoPathWithName.repoKey)
+        Assertions.assertEquals("project-name", projectNameProperty, "The ${BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.propertyName} property should be used as the source of the project name.")
+
+        val projectNameNoProperty = inspectionPropertyService.getRepoProjectName(repoPathWithNoName.repoKey)
+        Assertions.assertEquals("test-repo-1", projectNameNoProperty, "The repo key should be used as the source of the project name.")
     }
 
     @Test
     fun getRepoProjectVersionName() {
+        val repoPathWithNoVersion = createRepoPath("test-repo-1")
+        val repoPathWithVersion = createRepoPath("test-repo-2")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPathWithNoVersion] = mutableMapOf()
+        repoPathPropertyMap[repoPathWithVersion] = mutableMapOf(
+                BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.propertyName to "project-version-name"
+        )
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
+
+        val projectVersionNameProperty = inspectionPropertyService.getRepoProjectVersionName(repoPathWithVersion.repoKey)
+        Assertions.assertEquals("project-version-name", projectVersionNameProperty, "The ${BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.propertyName} property should be used as the source of the project version name.")
+
+        val projectVersionNoProperty = inspectionPropertyService.getRepoProjectVersionName(repoPathWithNoVersion.repoKey)
+        Assertions.assertEquals(HostNameHelper.getMyHostName("UNKNOWN_HOST"), projectVersionNoProperty, "The hostname should be used as the source of the project version name.")
     }
 
     @Test
     fun setRepoProjectNameProperties() {
+        val repoPath = createRepoPath("test-repo-1")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPath] = mutableMapOf()
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
+
+        inspectionPropertyService.setRepoProjectNameProperties(repoPath.repoKey, "project-name", "project-version-name")
+
+        assertPropertyWasSet(repoPath, repoPathPropertyMap, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, "project-name")
+        assertPropertyWasSet(repoPath, repoPathPropertyMap, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, "project-version-name")
     }
 
     @Test
     fun updateProjectUIUrl() {
-    }
+        val repoPath = createRepoPath("test-repo-1")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPath] = mutableMapOf()
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-    @Test
-    fun testUpdateProjectUIUrl() {
+        val projectVersionView = ProjectVersionView()
+        val resourceMetadata = ResourceMetadata()
+        resourceMetadata.href = "https://synopsys.com"
+        projectVersionView.meta = resourceMetadata
+        inspectionPropertyService.updateProjectUIUrl(repoPath, projectVersionView)
+
+        assertPropertyWasSet(repoPath, repoPathPropertyMap, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, "https://synopsys.com")
     }
 
     @Test
     fun getLastUpdate() {
+        val repoPath = createRepoPath("test-repo-1")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPath] = mutableMapOf(
+                BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName to "last-update"
+        )
+        val dateTimeManager = mock<DateTimeManager>()
+        val expectedDate = Date()
+        whenever(dateTimeManager.getDateFromString("last-update")).doReturn(expectedDate)
+
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService, dateTimeManager = dateTimeManager)
+
+        val lastUpdate: Date? = inspectionPropertyService.getLastUpdate(repoPath)
+        Assertions.assertNotNull(lastUpdate, "The date retrieved should not be null.")
+        Assertions.assertEquals(expectedDate, lastUpdate, "The last update retrieved differs. This may just be a mocking issue.")
     }
 
     @Test
     fun getLastInspection() {
+        val repoPath = createRepoPath("test-repo-1")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPath] = mutableMapOf(
+                BlackDuckArtifactoryProperty.LAST_INSPECTION.propertyName to "last-update"
+        )
+        val dateTimeManager = mock<DateTimeManager>()
+        val expectedDate = Date()
+        whenever(dateTimeManager.getDateFromString("last-update")).doReturn(expectedDate)
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService, dateTimeManager = dateTimeManager)
+
+        val lastInspection = inspectionPropertyService.getLastInspection(repoPath)
+        Assertions.assertNotNull(lastInspection, "The date retrieved should not be null.")
+        Assertions.assertEquals(expectedDate, lastInspection, "The last inspection retrieved differs. This may just be a mocking issue.")
     }
 
     @Test
     fun setUpdateStatus() {
+        val repoPath = createRepoPath("test-repo-1")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPath] = mutableMapOf()
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
+
+        UpdateStatus.values().forEach { updateStatus ->
+            inspectionPropertyService.setUpdateStatus(repoPath, updateStatus)
+
+            assertPropertyWasSet(repoPath, repoPathPropertyMap, BlackDuckArtifactoryProperty.UPDATE_STATUS, updateStatus.name)
+        }
     }
 
     @Test
     fun setLastUpdate() {
+        val repoPath = createRepoPath("test-repo-1")
+        val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
+        repoPathPropertyMap[repoPath] = mutableMapOf()
+
+        val dateTimeManager = mock<DateTimeManager>()
+        whenever(dateTimeManager.getStringFromDate(any())).doReturn("the-date")
+        val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
+        val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService, dateTimeManager = dateTimeManager)
+
+        inspectionPropertyService.setLastUpdate(repoPath, Date())
+
+        assertPropertyWasSet(repoPath, repoPathPropertyMap, BlackDuckArtifactoryProperty.LAST_UPDATE, "the-date")
+    }
+
+    private fun assertPropertyWasSet(repoPath: RepoPath, repoPathPropertyMap: MutableMap<RepoPath, PropertiesMap>, property: BlackDuckArtifactoryProperty, expectedPropertyValue: String) {
+        val propertyName = property.propertyName
+        val propertyValue = repoPathPropertyMap[repoPath]!![propertyName]
+        Assertions.assertNotNull(propertyValue, "The $propertyName should exist on the artifact.")
+        Assertions.assertEquals(expectedPropertyValue, propertyValue, "The $propertyName property should be set to '$expectedPropertyValue'.")
     }
 }
