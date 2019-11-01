@@ -187,11 +187,11 @@ public class ArtifactNotificationService {
                     final String affectedRepos = String.join(",", affectedRepoKeys);
                     if (componentView.isPresent()) {
                         logger.error(String.format("Origin limit reached. Failed to update policy status for component '%s==%s' in one or more of the following repositories: %s."
-                                                       + "This will require the blackduck properties to be deleated from that component manually wherever it appears to insure it is up to date.",
+                                                       + " This will require the blackduck properties to be deleted from that component manually wherever it appears to insure it is up to date.",
                             componentView.get().getName(), componentVersionView.getVersionName(), affectedRepos));
                     } else {
                         logger.error(String.format("Origin limit reached. Failed to update policy status for component '%s' one or more of the following repositories: %s.", componentVersionView.getHref(), affectedRepos)
-                                         + "This will require the blackduck properties to be deleated from that component manually wherever it appears to insure it is up to date.");
+                                         + " This will require the blackduck properties to be deleted from that component manually wherever it appears to insure it is up to date.");
                     }
                 } else {
                     affectedArtifacts = originViews.stream()
