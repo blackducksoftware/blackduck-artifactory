@@ -23,7 +23,7 @@ version = '7.2.0-SNAPSHOT'
 final String parentVersion = project.version
 
 final String artifactoryMinimumVersion = '6.1.0'
-final String blackDuckCommonVersion = '44.0.0'
+final String blackDuckCommonVersion = '44.3.0'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 

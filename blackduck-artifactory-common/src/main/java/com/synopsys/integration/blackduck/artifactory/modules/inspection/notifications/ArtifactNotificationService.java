@@ -40,6 +40,7 @@ import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
 import com.synopsys.integration.blackduck.api.generated.discovery.ApiDiscovery;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
@@ -163,15 +164,30 @@ public class ArtifactNotificationService {
 
             if (affectedRepoKeys.length != 0) {
                 final ComponentVersionView componentVersionView = notification.getComponentVersionView();
-                final List<OriginView> originViews = blackDuckService.getAllResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE);
+                final int totalLimit = 550;
+                final List<OriginView> originViews = blackDuckService.getSomeResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE, totalLimit);
 
-                affectedArtifacts = originViews.stream()
-                                        .filter(originView -> originView.getOriginId() != null)
-                                        .filter(originView -> originView.getOriginName() != null)
-                                        .map(originView -> artifactSearchService.findArtifactsWithOriginId(originView.getOriginName(), originView.getOriginId(), affectedRepoKeys))
-                                        .flatMap(List::stream)
-                                        .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
-                                        .collect(Collectors.toList());
+                // TODO: We should be attempting to get a match from artifactory while getting the responses.
+                if (originViews.size() >= totalLimit) {
+                    final Optional<ComponentView> componentView = blackDuckService.getResponse(componentVersionView, ComponentVersionView.COMPONENT_LINK_RESPONSE);
+                    final String affectedRepos = String.join(",", affectedRepoKeys);
+                    if (componentView.isPresent()) {
+                        logger.error(String.format("Origin limit reached. Failed to update policy status for component '%s==%s' in one or more of the following repositories: %s."
+                                                       + "This will require the blackduck properties to be deleated from that component manually wherever it appears to insure it is up to date.",
+                            componentView.get().getName(), componentVersionView.getVersionName(), affectedRepos));
+                    } else {
+                        logger.error(String.format("Origin limit reached. Failed to update policy status for component '%s' one or more of the following repositories: %s.", componentVersionView.getHref(), affectedRepos)
+                                         + "This will require the blackduck properties to be deleated from that component manually wherever it appears to insure it is up to date.");
+                    }
+                } else {
+                    affectedArtifacts = originViews.stream()
+                                            .filter(originView -> originView.getOriginId() != null)
+                                            .filter(originView -> originView.getOriginName() != null)
+                                            .map(originView -> artifactSearchService.findArtifactsWithOriginId(originView.getOriginName(), originView.getOriginId(), affectedRepoKeys))
+                                            .flatMap(List::stream)
+                                            .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
+                                            .collect(Collectors.toList());
+                }
             }
         } catch (final IntegrationException e) {
             logger.error(String.format("Failed to get origins for: %s", notification.getComponentVersionView().getHref().orElse("Unknown")), e);
