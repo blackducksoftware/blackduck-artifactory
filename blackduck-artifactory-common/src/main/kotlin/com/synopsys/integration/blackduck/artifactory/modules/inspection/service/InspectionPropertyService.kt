@@ -30,8 +30,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.excepti
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate
-import com.synopsys.integration.blackduck.service.ProjectService
-import com.synopsys.integration.exception.IntegrationException
 import com.synopsys.integration.log.Slf4jIntLogger
 import com.synopsys.integration.util.HostNameHelper
 import org.apache.commons.lang3.StringUtils
@@ -43,7 +41,6 @@ class InspectionPropertyService(
         artifactoryPAPIService: ArtifactoryPAPIService,
         dateTimeManager: DateTimeManager,
         private val pluginRepoPathFactory: PluginRepoPathFactory,
-        private val projectService: ProjectService,
         private val maxRetryCount: Int
 ) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
 
@@ -153,17 +150,6 @@ class InspectionPropertyService(
         val repoPath = pluginRepoPathFactory.create(repoKey)
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectName, logger)
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionName, logger)
-    }
-
-    @Deprecated("Use the updateProjectUIUrl that takes in a RepoPath and ProjectVersionView instead.")
-    @Throws(IntegrationException::class)
-    fun updateProjectUIUrl(repoPath: RepoPath, projectName: String, projectVersion: String) {
-        val projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersion)
-
-        if (projectVersionWrapper.isPresent) {
-            val projectVersionView = projectVersionWrapper.get().projectVersionView
-            updateProjectUIUrl(repoPath, projectVersionView)
-        }
     }
 
     fun updateProjectUIUrl(repoPath: RepoPath, projectVersionView: ProjectVersionView) {

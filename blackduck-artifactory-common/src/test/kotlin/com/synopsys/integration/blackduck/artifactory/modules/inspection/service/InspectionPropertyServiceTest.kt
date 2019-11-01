@@ -35,7 +35,7 @@ class InspectionPropertyServiceTest {
             projectService: ProjectService = mock(),
             retryCount: Int = 5
     ): InspectionPropertyService {
-        return InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, projectService, retryCount)
+        return InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, retryCount)
     }
 
     @Test

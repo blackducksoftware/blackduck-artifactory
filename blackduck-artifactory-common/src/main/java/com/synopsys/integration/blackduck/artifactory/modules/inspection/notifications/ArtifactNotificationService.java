@@ -42,6 +42,7 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummar
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.OriginView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
@@ -58,6 +59,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.NotificationService;
+import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -68,14 +71,17 @@ public class ArtifactNotificationService {
 
     private final NotificationRetrievalService notificationRetrievalService;
     private final BlackDuckService blackDuckService;
+    private final ProjectService projectService;
     private final NotificationService notificationService;
     private final ArtifactSearchService artifactSearchService;
     private final InspectionPropertyService inspectionPropertyService;
 
-    public ArtifactNotificationService(final NotificationRetrievalService notificationRetrievalService, final BlackDuckService blackDuckService, final NotificationService notificationService,
+    public ArtifactNotificationService(final NotificationRetrievalService notificationRetrievalService, final BlackDuckService blackDuckService, final ProjectService projectService,
+        final NotificationService notificationService,
         final ArtifactSearchService artifactSearchService, final InspectionPropertyService inspectionPropertyService) {
         this.notificationRetrievalService = notificationRetrievalService;
         this.blackDuckService = blackDuckService;
+        this.projectService = projectService;
         this.notificationService = notificationService;
         this.artifactSearchService = artifactSearchService;
         this.inspectionPropertyService = inspectionPropertyService;
@@ -121,17 +127,25 @@ public class ArtifactNotificationService {
         final Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(notificationUserViews);
 
         repoKeyPaths.forEach(repoKeyPath -> {
-            inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS, null, null);
-            // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
-            inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
-            final String repoKey = repoKeyPath.getRepoKey();
-            final String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
-            final String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
-            try {
-                inspectionPropertyService.updateProjectUIUrl(repoKeyPath, repoProjectName, repoProjectVersionName);
-            } catch (final IntegrationException e) {
-                logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getPropertyName(), repoKey));
+            if (inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS)) {
+                inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
+                inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS, null, null);
+                // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
+                inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
+                final String repoKey = repoKeyPath.getRepoKey();
+                final String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
+                final String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+                try {
+                    final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(repoProjectName, repoProjectVersionName);
+                    if (projectVersionWrapper.isPresent()) {
+                        final ProjectVersionView projectVersionView = projectVersionWrapper.get().getProjectVersionView();
+                        inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
+                    }
+                } catch (final IntegrationException e) {
+                    logger.debug(String.format("Failed to update %s on repo '%s'", BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL.getPropertyName(), repoKey));
+                }
+            } else {
+                logger.debug(String.format("Not updating from notifications for repo '%s' because the repository has not been initialized.", repoKeyPath.getRepoKey()));
             }
         });
     }
