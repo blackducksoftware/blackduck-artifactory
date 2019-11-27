@@ -58,7 +58,7 @@ object TestUtil {
         val properties = GSON.fromJson<Map<String, String>>(credentials, type)
 
         val blackDuckServerConfigBuilder = BlackDuckServerConfigBuilder()
-        blackDuckServerConfigBuilder.setFromProperties(properties)
+        blackDuckServerConfigBuilder.setProperties(properties.entries)
 
         return blackDuckServerConfigBuilder
     }

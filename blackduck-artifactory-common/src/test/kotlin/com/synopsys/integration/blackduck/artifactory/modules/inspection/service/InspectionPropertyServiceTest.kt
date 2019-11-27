@@ -19,7 +19,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate
-import com.synopsys.integration.blackduck.service.ProjectService
 import com.synopsys.integration.util.HostNameHelper
 import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
@@ -32,7 +31,6 @@ class InspectionPropertyServiceTest {
             artifactoryPAPIService: ArtifactoryPAPIService,
             dateTimeManager: DateTimeManager = mock(),
             pluginRepoPathFactory: PluginRepoPathFactory = PluginRepoPathFactory(false),
-            projectService: ProjectService = mock(),
             retryCount: Int = 5
     ): InspectionPropertyService {
         return InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, retryCount)
