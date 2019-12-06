@@ -62,6 +62,11 @@ public class ArtifactoryInfoExternalIdExtractor implements ExternalIdExtactor {
         final Forge forge = supportedPackageType.getForge();
         final String namePropertyKey = supportedPackageType.getArtifactoryNameProperty();
         final String versionPropertyKey = supportedPackageType.getArtifactoryVersionProperty();
+
+        if (namePropertyKey == null || versionPropertyKey == null) {
+            return Optional.empty();
+        }
+
         final String name = properties.getFirst(namePropertyKey);
         final String version = properties.getFirst(versionPropertyKey);
         return createNameVersionExternalId(externalIdFactory, forge, name, version);
