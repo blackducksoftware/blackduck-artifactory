@@ -22,10 +22,13 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +41,14 @@ import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.NameVersion;
 
 public class CondaExternalIdExtractor {
+    private static final List<String> SUPPORTED_FILE_EXTENSIONS;
+
+    static {
+        SUPPORTED_FILE_EXTENSIONS = new ArrayList<>();
+        SUPPORTED_FILE_EXTENSIONS.add(".tar.bz2");
+        SUPPORTED_FILE_EXTENSIONS.add(".conda");
+    }
+
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
     private final Pattern pattern = Pattern.compile("(.*)-(.*)-([^-|\\s]*)");
 
@@ -75,19 +86,22 @@ public class CondaExternalIdExtractor {
             throw new IntegrationException("Failed to parse conda filename to extract component details.");
         }
 
-        final String[] buildStringExtensionPieces = matcher.group(3).split("\\.", 2);
-        validateLength(buildStringExtensionPieces, 2);
-        final String buildString = buildStringExtensionPieces[0];
+        final String buildStringExtension = matcher.group(3);
+        String buildString = null;
+        for (final String supportedFileExtension : SUPPORTED_FILE_EXTENSIONS) {
+            if (buildStringExtension.endsWith(supportedFileExtension)) {
+                buildString = StringUtils.stripEnd(buildStringExtension, supportedFileExtension);
+                break;
+            }
+        }
+        if (buildString == null) {
+            final String supportedExtensionsMessage = "Supported conda file extensions are " + String.join(", ", SUPPORTED_FILE_EXTENSIONS);
+            throw new IntegrationException(String.format("Failed to parse conda filename to extract component details. Likely unsupported file extension. %s", supportedExtensionsMessage));
+        }
 
         final String componentName = matcher.group(1).trim();
         final String componentVersion = matcher.group(2).trim() + "-" + buildString;
 
         return new NameVersion(componentName, componentVersion);
-    }
-
-    private void validateLength(final String[] pieces, final int expectedLength) throws IntegrationException {
-        if (pieces.length != expectedLength) {
-            throw new IntegrationException("Failed to parse conda filename to extract component details.");
-        }
     }
 }
