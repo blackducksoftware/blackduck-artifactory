@@ -69,14 +69,14 @@ import com.synopsys.integration.util.NameVersion;
 public class ArtifactNotificationService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
-    private final NotificationRetrievalService notificationRetrievalService;
+    private final NotificationProcessingService notificationRetrievalService;
     private final BlackDuckService blackDuckService;
     private final ProjectService projectService;
     private final NotificationService notificationService;
     private final ArtifactSearchService artifactSearchService;
     private final InspectionPropertyService inspectionPropertyService;
 
-    public ArtifactNotificationService(final NotificationRetrievalService notificationRetrievalService, final BlackDuckService blackDuckService, final ProjectService projectService,
+    public ArtifactNotificationService(final NotificationProcessingService notificationRetrievalService, final BlackDuckService blackDuckService, final ProjectService projectService,
         final NotificationService notificationService,
         final ArtifactSearchService artifactSearchService, final InspectionPropertyService inspectionPropertyService) {
         this.notificationRetrievalService = notificationRetrievalService;
