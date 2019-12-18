@@ -119,9 +119,9 @@ public class ModuleFactory {
         final PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
 
         final InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
-        final NotificationProcessingService notificationRetrievalService = new NotificationProcessingService(blackDuckService);
+        final NotificationProcessingService notificationProcessingService = new NotificationProcessingService(blackDuckService);
 
-        final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationRetrievalService, blackDuckService, projectService, notificationService, artifactSearchService, inspectionPropertyService);
+        final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessingService, blackDuckService, projectService, notificationService, artifactSearchService, inspectionPropertyService);
         final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService);
 
         final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);

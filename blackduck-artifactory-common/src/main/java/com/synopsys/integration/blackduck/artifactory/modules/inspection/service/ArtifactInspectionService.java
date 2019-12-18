@@ -194,9 +194,12 @@ public class ArtifactInspectionService {
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
             componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getVersionBomComponentView().getComponentVersion()));
             inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS, null, null);
+
             final String forge = versionBomOriginView.get().getExternalNamespace();
             final String originId = versionBomOriginView.get().getExternalId();
-            inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId);
+            final String componentName = componentViewWrapper.getVersionBomComponentView().getComponentName();
+            final String componentVersionName = componentViewWrapper.getVersionBomComponentView().getComponentVersionName();
+            inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId, componentName, componentVersionName);
         } else {
             throw new FailedInspectionException(repoPath, "No OriginViews were found for component.");
         }

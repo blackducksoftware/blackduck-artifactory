@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.PolicyStatusView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionStatus;
@@ -124,16 +125,19 @@ public class NotificationProcessingService {
         throws IntegrationException {
         final UriSingleResponse<ComponentVersionView> componentVersionViewUriSingleResponse = new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class);
         final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUriSingleResponse);
+        final ComponentView componentView = blackDuckService.getResponse(componentVersionView, ComponentVersionView.COMPONENT_LINK_RESPONSE).orElseThrow(
+            () -> new IntegrationException(String.format("Failed to get the %s link from %s", ComponentVersionView.COMPONENT_LINK, componentVersionView.getHref().orElse("unknown ComponentVersionView.")))
+        );
         final UriSingleResponse<PolicyStatusView> policyStatusViewUriSingleResponse = new UriSingleResponse<>(policyStatusUrl, PolicyStatusView.class);
         final PolicyStatusView policyStatus = blackDuckService.getResponse(policyStatusViewUriSingleResponse);
 
-        return new PolicyStatusNotification(affectedProjectVersions, componentVersionView, policyStatus, policyInfos);
+        return new PolicyStatusNotification(affectedProjectVersions, componentVersionView, componentView, policyStatus, policyInfos);
     }
 
     public List<VulnerabilityNotification> getVulnerabilityNotifications(final List<NotificationUserView> notificationUserViews) {
         return notificationUserViews.stream()
-                   .filter(notificationUserView -> notificationUserView instanceof VulnerabilityNotificationUserView)
-                   .map(notificationUserView -> (VulnerabilityNotificationUserView) notificationUserView)
+                   .filter(VulnerabilityNotificationUserView.class::isInstance)
+                   .map(VulnerabilityNotificationUserView.class::cast)
                    .map(this::aggregateVulnerabilityNotification)
                    .filter(Optional::isPresent)
                    .map(Optional::get)
@@ -145,6 +149,7 @@ public class NotificationProcessingService {
         try {
             final VulnerabilityNotificationContent content = notificationUserView.getContent();
             final String componentVersionOriginId = content.getComponentVersionOriginId();
+            final String componentVersionOriginName = content.getComponentVersionOriginName();
             final UriSingleResponse<ComponentVersionView> componentVersionViewUri = new UriSingleResponse<>(content.getComponentVersion(), ComponentVersionView.class);
             final ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUri);
             final Optional<String> vulnerabilitiesLink = componentVersionView.getFirstLink(ComponentVersionView.VULNERABILITIES_LINK);
@@ -155,9 +160,9 @@ public class NotificationProcessingService {
                 final List<NameVersion> affectedProjectVersions = content.getAffectedProjectVersions().stream()
                                                                       .map(affectedProjectVersion -> new NameVersion(affectedProjectVersion.getProjectName(), affectedProjectVersion.getProjectVersionName()))
                                                                       .collect(Collectors.toList());
-                vulnerabilityNotification = new VulnerabilityNotification(affectedProjectVersions, componentVersionView, vulnerabilityAggregate);
+                vulnerabilityNotification = new VulnerabilityNotification(affectedProjectVersions, componentVersionView, vulnerabilityAggregate, componentVersionOriginName, componentVersionOriginId);
             } else {
-                throw new IntegrationException(String.format("Failed to find vulnerabilities link for component with origin id '%s'", componentVersionOriginId));
+                throw new IntegrationException(String.format("Failed to find vulnerabilities link for component with origin id '%s:%s'", componentVersionOriginName, componentVersionOriginId));
             }
         } catch (final IntegrationException e) {
             logger.debug("An error occurred when attempting to aggregate vulnerabilities from a notification.", e);

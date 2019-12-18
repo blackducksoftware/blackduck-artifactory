@@ -33,6 +33,7 @@ enum class BlackDuckArtifactoryProperty(suffix: String) {
     POLICY_STATUS("policyStatus"),
     POLICY_SEVERITY_TYPES("policySeverityTypes"),
     COMPONENT_VERSION_URL("componentVersionUrl"),
+    COMPONENT_NAME_VERSION("componentNameVersion"),
     PROJECT_VERSION_UI_URL("uiUrl"),
     OVERALL_POLICY_STATUS("overallPolicyStatus"),
     LAST_INSPECTION("lastInspection"),
