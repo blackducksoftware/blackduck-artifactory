@@ -45,7 +45,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRetrievalService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationProcessingService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
@@ -119,7 +119,7 @@ public class ModuleFactory {
         final PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
 
         final InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
-        final NotificationRetrievalService notificationRetrievalService = new NotificationRetrievalService(blackDuckService);
+        final NotificationProcessingService notificationRetrievalService = new NotificationProcessingService(blackDuckService);
 
         final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationRetrievalService, blackDuckService, projectService, notificationService, artifactSearchService, inspectionPropertyService);
         final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService);

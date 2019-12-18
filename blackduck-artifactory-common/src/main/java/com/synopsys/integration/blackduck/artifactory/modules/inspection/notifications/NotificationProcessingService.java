@@ -54,12 +54,12 @@ import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.NameVersion;
 
-public class NotificationRetrievalService {
+public class NotificationProcessingService {
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
 
     private final BlackDuckService blackDuckService;
 
-    public NotificationRetrievalService(final BlackDuckService blackDuckService) {
+    public NotificationProcessingService(final BlackDuckService blackDuckService) {
         this.blackDuckService = blackDuckService;
     }
 
