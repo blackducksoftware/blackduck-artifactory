@@ -25,16 +25,20 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifi
 import java.util.List;
 
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.PolicyStatusView;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.util.NameVersion;
 
 public class PolicyStatusNotification extends BlackDuckNotification {
+    private final ComponentView componentView;
     private final PolicyStatusView policyStatusView;
     private final List<PolicyInfo> policyInfos;
 
-    public PolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final ComponentVersionView componentVersionView, final PolicyStatusView policyStatusView, final List<PolicyInfo> policyInfos) {
+    public PolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final ComponentVersionView componentVersionView, final ComponentView componentView, final PolicyStatusView policyStatusView,
+        final List<PolicyInfo> policyInfos) {
         super(affectedProjectVersions, componentVersionView);
+        this.componentView = componentView;
         this.policyStatusView = policyStatusView;
         this.policyInfos = policyInfos;
     }
@@ -45,5 +49,9 @@ public class PolicyStatusNotification extends BlackDuckNotification {
 
     public List<PolicyInfo> getPolicyInfos() {
         return policyInfos;
+    }
+
+    public ComponentView getComponentView() {
+        return componentView;
     }
 }

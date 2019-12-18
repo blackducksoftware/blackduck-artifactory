@@ -43,16 +43,22 @@ class InspectionPropertyService(
         private val pluginRepoPathFactory: PluginRepoPathFactory,
         private val maxRetryCount: Int
 ) : ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager) {
+    companion object {
+        const val COMPONENT_NAME_VERSION_FORMAT: String = "%s-%s"
+    }
 
     private val logger = Slf4jIntLogger(LoggerFactory.getLogger(this.javaClass))
 
     fun hasExternalIdProperties(repoPath: RepoPath): Boolean {
-        return hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID) && hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE)
+        return hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID)
+                && hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE)
+                && hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION)
     }
 
-    fun setExternalIdProperties(repoPath: RepoPath, forge: String, originId: String) {
+    fun setExternalIdProperties(repoPath: RepoPath, forge: String, originId: String, componentName: String, componentVersionName: String) {
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, originId, logger)
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, forge, logger)
+        setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION, COMPONENT_NAME_VERSION_FORMAT.format(componentName, componentVersionName), logger)
     }
 
     fun shouldRetryInspection(repoPath: RepoPath): Boolean {

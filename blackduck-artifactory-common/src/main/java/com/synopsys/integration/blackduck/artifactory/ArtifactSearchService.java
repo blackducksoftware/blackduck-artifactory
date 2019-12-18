@@ -28,6 +28,7 @@ import org.artifactory.repo.RepoPath;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
 // TODO: Move search services from ArtifactoryPropertyService to here.
 public class ArtifactSearchService {
@@ -39,12 +40,19 @@ public class ArtifactSearchService {
         this.artifactoryPropertyService = artifactoryPropertyService;
     }
 
-    public List<RepoPath> findArtifactsWithOriginId(final String forge, final String originId, final String... repoKeys) {
+    public List<RepoPath> findArtifactsWithOriginId(final String forge, final String originId, final List<String> repoKeys) {
         final SetMultimap<String, String> setMultimap = HashMultimap.create();
         setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), forge);
         setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getPropertyName(), originId);
 
-        return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys);
+        return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys.toArray(new String[0]));
+    }
+
+    public List<RepoPath> findArtifactsWithComponentNameVersion(final String componentName, final String componentVersionName, final List<String> repoKeys) {
+        final SetMultimap<String, String> setMultimap = HashMultimap.create();
+        setMultimap.put(BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.getPropertyName(), String.format(InspectionPropertyService.COMPONENT_NAME_VERSION_FORMAT, componentName, componentVersionName));
+
+        return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys.toArray(new String[0]));
     }
 
     public List<RepoPath> findArtifactByName(final String artifactName, final String... repoKeys) {
