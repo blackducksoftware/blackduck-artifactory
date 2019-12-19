@@ -102,7 +102,7 @@ public class PolicySeverityService {
             final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionView);
             final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
             final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews;
-            versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
+            versionBomPolicyRuleViews = blackDuckService.getAllResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE);
 
             final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
             final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
