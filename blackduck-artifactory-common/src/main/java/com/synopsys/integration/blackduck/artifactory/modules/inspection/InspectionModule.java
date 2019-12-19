@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
@@ -53,6 +54,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -98,6 +100,25 @@ public class InspectionModule implements Module {
         for (final RepoPath repoPath : repoPaths) {
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, SupportedPackageType.NPM.getForge().getName(), logger);
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
+        }
+    }
+
+    // TODO: Remove in 9.0.0
+    public void performComponentNameVersionUpgrade() {
+        for (final String repoKey : inspectionModuleConfig.getRepos()) {
+            final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "*"), repoKey);
+
+            try {
+                final ProjectVersionView projectVersionView = artifactInspectionService.fetchProjectVersionWrapper(repoKey).getProjectVersionView();
+                for (final RepoPath repoPath : repoPaths) {
+                    if (inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.SUCCESS) && !inspectionPropertyService.hasExternalIdProperties(repoPath)) {
+                        logger.debug(String.format("Performing componentNameVersion upgrade on artifact: %s", repoPath.toPath()));
+                        artifactInspectionService.inspectSingleArtifact(repoPath, projectVersionView);
+                    }
+                }
+            } catch (final IntegrationException e) {
+                logger.debug(String.format("Failed to perform componentNameVersion upgrade for repo '%s'.", repoKey), e);
+            }
         }
     }
 

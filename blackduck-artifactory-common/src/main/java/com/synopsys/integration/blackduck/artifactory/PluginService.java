@@ -120,6 +120,7 @@ public class PluginService {
 
         // TODO: Remove upgrades in 9.0.0
         inspectionModule.performNpmForgeUpgrade();
+        inspectionModule.performComponentNameVersionUpgrade();
         inspectionModule.performPolicySeverityUpdate();
 
         logger.info("...blackDuckPlugin initialized.");
