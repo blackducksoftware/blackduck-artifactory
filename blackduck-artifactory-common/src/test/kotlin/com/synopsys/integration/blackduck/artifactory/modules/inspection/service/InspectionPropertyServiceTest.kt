@@ -64,22 +64,23 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = mock<ArtifactoryPAPIService>()
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        fun setReturns(hasOriginId: Boolean, hasForge: Boolean) {
+        fun setReturns(hasOriginId: Boolean, hasForge: Boolean, hasComponentNameVersion: Boolean) {
             whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.propertyName)).thenReturn(hasForge)
             whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.propertyName)).thenReturn(hasOriginId)
+            whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.propertyName)).thenReturn(hasComponentNameVersion)
         }
 
-        setReturns(true, true)
-        Assertions.assertTrue(inspectionPropertyService.hasExternalIdProperties(repoPath))
+        val possibleValues = listOf(true, false)
 
-        setReturns(true, false)
-        Assertions.assertFalse(inspectionPropertyService.hasExternalIdProperties(repoPath))
-
-        setReturns(false, true)
-        Assertions.assertFalse(inspectionPropertyService.hasExternalIdProperties(repoPath))
-
-        setReturns(false, false)
-        Assertions.assertFalse(inspectionPropertyService.hasExternalIdProperties(repoPath))
+        for (hasOriginId in possibleValues) {
+            for (hasForge in possibleValues) {
+                for (hasComponentNameVersion in possibleValues) {
+                    setReturns(hasOriginId, hasForge, hasComponentNameVersion)
+                    val shouldBeTrue = hasOriginId && hasForge && hasComponentNameVersion
+                    Assertions.assertEquals(shouldBeTrue, inspectionPropertyService.hasExternalIdProperties(repoPath))
+                }
+            }
+        }
     }
 
     @Test
@@ -90,15 +91,20 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val forgeProperty = BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.propertyName
         val originIdProperty = BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.propertyName
+        val componentNameProperty = BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.propertyName
 
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
-        inspectionPropertyService.setExternalIdProperties(repoPath, "Forge", "OriginId")
+        inspectionPropertyService.setExternalIdProperties(repoPath, "Forge", "OriginId", "ComponentName", "ComponentVersionName")
 
         val propertyMap = repoPathPropertyMap[repoPath]!!
+
         Assertions.assertTrue(propertyMap.containsKey(forgeProperty), "The $forgeProperty is missing from the properties.")
         Assertions.assertTrue(propertyMap.containsKey(originIdProperty), "The $originIdProperty is missing from the properties.")
+        Assertions.assertTrue(propertyMap.containsKey(componentNameProperty), "The $componentNameProperty is missing from the properties.")
+
         Assertions.assertEquals("Forge", propertyMap[forgeProperty])
         Assertions.assertEquals("OriginId", propertyMap[originIdProperty])
+        Assertions.assertEquals(InspectionPropertyService.COMPONENT_NAME_VERSION_FORMAT.format("ComponentName", "ComponentVersionName"), propertyMap[componentNameProperty])
     }
 
     @Test
