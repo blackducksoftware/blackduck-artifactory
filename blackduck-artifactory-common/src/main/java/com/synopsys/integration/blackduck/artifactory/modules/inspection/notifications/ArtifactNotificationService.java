@@ -214,7 +214,7 @@ public class ArtifactNotificationService {
                     "Failed to find artifact that matches notification content (%s:%s) in the affected repositories: %s. Defaulting to legacy search.",
                     notification.getComponentVersionOriginName(),
                     notification.getComponentVersionOriginId(),
-                    StringUtils.join(repoKeys, ',')
+                    StringUtils.join(affectedRepoKeys, ',')
                 ));
                 affectedArtifacts = legacySearchForAffectedArtifacts(repoKeys, notification);
             }
@@ -259,6 +259,8 @@ public class ArtifactNotificationService {
         } catch (final IntegrationException e) {
             logger.error(String.format("Failed to get origins for: %s", notification.getComponentVersionView().getHref().orElse("Unknown")), e);
         }
+
+        logger.debug(String.format("Found %d artifacts affected by notification with legacy search.", affectedArtifacts.size()));
 
         return affectedArtifacts;
     }
