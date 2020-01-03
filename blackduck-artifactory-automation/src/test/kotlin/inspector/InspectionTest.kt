@@ -68,7 +68,7 @@ abstract class InspectionTest : SpringTest() {
         assertNotNull(BlackDuckArtifactoryProperty.LAST_INSPECTION, properties, itemProperties.uri, false)
     }
 
-    fun assertSuccess(itemProperties: ItemProperties) {
+    fun assertSuccess(itemProperties: ItemProperties, checkPolicySeverity: Boolean = false) {
         val properties: Map<String, String> = itemProperties.properties.mapValues { it.value.first() }
 
         Assertions.assertEquals(properties[BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName], InspectionStatus.SUCCESS.name, "Inspection status should be ${InspectionStatus.FAILURE.name}. ${itemProperties.uri}")
@@ -82,7 +82,9 @@ abstract class InspectionTest : SpringTest() {
         assertNotNull(BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, properties, itemProperties.uri)
         assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, properties, itemProperties.uri)
         assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, properties, itemProperties.uri)
-        assertNotNull(BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, properties, itemProperties.uri);
+        if (checkPolicySeverity) {
+            assertNotNull(BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, properties, itemProperties.uri)
+        }
     }
 
     private fun assertNull(property: BlackDuckArtifactoryProperty, properties: Map<String, String>, uri: String, success: Boolean = true) {
