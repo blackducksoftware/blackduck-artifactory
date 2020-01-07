@@ -83,11 +83,11 @@ public abstract class ConfigurationValidator {
     }
 
     protected void validateList(final PropertyGroupReport statusReport, final ConfigurationProperty property, final List<?> list, final String errorMessage) {
-        final boolean notNull = validateNotNull(statusReport, property, list);
-
-        if (notNull && list.isEmpty()) {
+        if (list != null && list.isEmpty()) {
             final PropertyValidationResult propertyValidationResult = new PropertyValidationResult(property, String.format("Property %s is empty. %s", property.getKey(), errorMessage));
             statusReport.addPropertyValidationReport(propertyValidationResult);
+        } else {
+            validateNotNull(statusReport, property, list);
         }
     }
 
