@@ -95,11 +95,11 @@ public class PluginAPI implements Analyzable {
     }
 
     public void setModuleState(final TriggerType triggerType, final Map<String, List<String>> params) {
-        final String funtionName = "setModuleState";
-        LogUtil.start(logger, funtionName, triggerType);
+        final String functionName = "setModuleState";
+        LogUtil.start(logger, functionName, triggerType);
         moduleManager.setModulesState(params);
-        featureAnalyticsCollector.logFeatureHit(ModuleManager.class.getName(), funtionName);
-        LogUtil.finish(logger, funtionName, triggerType);
+        featureAnalyticsCollector.logFeatureHit(ModuleManager.class.getName(), functionName);
+        LogUtil.finish(logger, functionName, triggerType);
     }
 
     public void triggerScan(final TriggerType triggerType) {
