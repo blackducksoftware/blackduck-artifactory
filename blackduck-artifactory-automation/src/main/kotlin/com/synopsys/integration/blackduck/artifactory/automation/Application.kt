@@ -74,8 +74,10 @@ class Application(
             containerId = imageTag
             logger.info("Skipping Artifactory installation.")
 
-            logger.info("Installing plugin.")
-            blackDuckPluginManager.installPlugin()
+            // TODO: Find a way to install the plugin and run repository initialization without artifactory returning 500. See IARTH-374 for details.
+            // logger.info("Installing plugin.")
+            // blackDuckPluginManager.installPlugin()
+            
             systemApiService.waitForSuccessfulStartup()
         }
     }
@@ -85,7 +87,7 @@ fun InputStream.convertToString(encoding: Charset = StandardCharsets.UTF_8): Str
 
 fun Response.validate(): Response {
     if (this.isClientError || this.isServerError || this.statusCode < 0) {
-        throw IntegrationException("Status Code: ${this.statusCode}, Content: ${this}")
+        throw IntegrationException("Status Code: ${this.statusCode}${System.lineSeparator()}Content: $this Body Content: ${this.body().asString("application/json")}")
     }
     return this
 }

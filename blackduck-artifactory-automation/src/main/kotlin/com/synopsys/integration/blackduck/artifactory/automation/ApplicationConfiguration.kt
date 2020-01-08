@@ -27,6 +27,7 @@ import org.springframework.boot.SpringBootConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.core.env.ConfigurableEnvironment
 import java.io.File
+import java.time.Duration
 
 @SpringBootConfiguration
 class ApplicationConfiguration {
@@ -79,6 +80,11 @@ class ApplicationConfiguration {
     @Bean
     fun fuelManager(@Autowired artifactoryConfiguration: ArtifactoryConfiguration): FuelManager {
         val fuelManager = FuelManager()
+
+        // It is helpful to have a longer timeout for debugging.
+        fuelManager.timeoutInMillisecond = Duration.ofMinutes(1).toMillis().toInt()
+        fuelManager.timeoutReadInMillisecond = fuelManager.timeoutInMillisecond
+
         fuelManager.basePath = artifactoryConfiguration.url
         fuelManager.addRequestInterceptor {
             {

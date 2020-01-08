@@ -22,9 +22,9 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
     private val dependencyVersionReplacement = "<dependency-version>"
 
     fun resolveBowerArtifact(repositoryKey: String, externalId: ExternalId) {
-        dockerService.buildTestDockerfile(PackageType.Defaults.BOWER)
+        dockerService.buildTestDockerfile(PackageType.Defaults.BOWER, noCache = false)
         dockerService.runDockerImage(
-                PackageType.Defaults.BOWER.dockerImageTag!!,
+                PackageType.Defaults.BOWER.dockerImageTag,
                 "bower", "install", "${externalId.name}#${externalId.version}", "--allow-root", "--config.registry=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/bower/${repositoryKey}"
         )
     }
@@ -39,25 +39,25 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         println("composer.json: ${outputFile.absolutePath}")
 
         dockerService.buildTestDockerfile(PackageType.Defaults.COMPOSER, outputFile.parentFile)
-        dockerService.runDockerImage(PackageType.Defaults.COMPOSER.dockerImageTag!!, "php", "composer.phar", "install", directory = outputFile.parentFile)
+        dockerService.runDockerImage(PackageType.Defaults.COMPOSER.dockerImageTag, "php", "composer.phar", "install", directory = outputFile.parentFile)
     }
 
     fun resolveCondaArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.CONDA)
-        dockerService.runDockerImage(PackageType.Defaults.CONDA.dockerImageTag!!, "conda", "install", "--override-channels", "--channel", "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/conda/$repositoryKey",
+        dockerService.runDockerImage(PackageType.Defaults.CONDA.dockerImageTag, "conda", "install", "--override-channels", "--channel", "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/conda/$repositoryKey",
                 "${externalId.name}=${externalId.version}")
     }
 
     fun resolveCranArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.CRAN)
-        dockerService.runDockerImage(PackageType.Defaults.CRAN.dockerImageTag!!, "r", "-e",
+        dockerService.runDockerImage(PackageType.Defaults.CRAN.dockerImageTag, "r", "-e",
                 "install.packages('${externalId.name}', version = '${externalId.version}', repos = 'http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/$repositoryKey')")
     }
 
     fun resolveGemsArtifact(repositoryKey: String, externalId: ExternalId) {
         // gem install packaging --version '0.99.35' --source http://<server:port>/artifactory/api/gems/<remote-repo-key>
         dockerService.buildTestDockerfile(PackageType.Defaults.GEMS)
-        dockerService.runDockerImage(PackageType.Defaults.GEMS.dockerImageTag!!, "gem", "install", externalId.name, "--version", externalId.version, "--clear-sources", "--source",
+        dockerService.runDockerImage(PackageType.Defaults.GEMS.dockerImageTag, "gem", "install", externalId.name, "--version", externalId.version, "--clear-sources", "--source",
                 "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/gems/${repositoryKey}", "-V")
     }
 
@@ -84,7 +84,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         val helloGoFile = File(outputDirectory, "hello.go")
         helloGoFile.writeText(helloGoText)
 
-        dockerService.buildDockerfile(dockerfile, outputDirectory, PackageType.Defaults.GO.dockerImageTag!!, noCache = true)
+        dockerService.buildDockerfile(dockerfile, outputDirectory, PackageType.Defaults.GO.dockerImageTag, noCache = true)
     }
 
     fun resolveMavenGradleArtifact(repositoryKey: String, externalId: ExternalId) {
@@ -96,7 +96,7 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
 
     fun resolveNpmArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.NPM)
-        dockerService.runDockerImage(PackageType.Defaults.NPM.dockerImageTag!!, "npm", "install", "${externalId.name}@${externalId.version}", "-g", "--registry",
+        dockerService.runDockerImage(PackageType.Defaults.NPM.dockerImageTag, "npm", "install", "${externalId.name}@${externalId.version}", "-g", "--registry",
                 "http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/npm/$repositoryKey")
     }
 
@@ -111,13 +111,13 @@ class ArtifactResolver(private val artifactRetrievalApiService: ArtifactRetrieva
         outputFile.writeText(packageJsonText)
         println("Dockerfile: ${outputFile.absolutePath}")
 
-        dockerService.buildDockerfile(outputFile, outputFile.parentFile, PackageType.Defaults.NUGET.dockerImageTag!!, noCache = true)
+        dockerService.buildDockerfile(outputFile, outputFile.parentFile, PackageType.Defaults.NUGET.dockerImageTag, noCache = true)
     }
 
     fun resolvePyPiArtifact(repositoryKey: String, externalId: ExternalId) {
         dockerService.buildTestDockerfile(PackageType.Defaults.PYPI, noCache = false)
         dockerService.runDockerImage(
-                PackageType.Defaults.PYPI.dockerImageTag!!,
+                PackageType.Defaults.PYPI.dockerImageTag,
                 "pip3", "install", "${externalId.name}==${externalId.version}", "--index-url=http://127.0.0.1:${artifactoryConfiguration.port}/artifactory/api/pypi/$repositoryKey/simple"
         )
     }
@@ -156,7 +156,11 @@ object Resolvers {
     val CONDA_RESOLVER = Resolver(
             ArtifactResolver::resolveCondaArtifact,
             listOf(
-                    TestablePackage("numpy-1.13.1-py27_0.tar.bz2", externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "numpy", "numpy-1.13.1-py27_0-linux-64"))
+                    TestablePackage(
+                            "numpy-1.13.1-py27_0.tar.bz2",
+                            externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "numpy", "1.13.1"),
+                            expectedExternalId = externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "numpy", "1.13.1-py27_0-linux-64").createExternalId()
+                    )
             )
     )
 

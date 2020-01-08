@@ -65,10 +65,8 @@ abstract class SpringTest {
 
     protected fun verifyTestSupport(packageType: PackageType) {
         val supported = SupportedPackageType.getAsSupportedPackageType(packageType.packageType).isPresent
-        if (supported && packageType.dockerImageTag != null) {
+        if (supported && packageType.resolver == null) {
             throw MissingSupportedPackageTypeException(packageType)
-        } else if (supported && packageType.dockerImageTag == null) {
-            println("Skipping $packageType because it cannot be automated.")
         } else {
             println("Skipping $packageType because it is not supported by the plugin.")
         }
