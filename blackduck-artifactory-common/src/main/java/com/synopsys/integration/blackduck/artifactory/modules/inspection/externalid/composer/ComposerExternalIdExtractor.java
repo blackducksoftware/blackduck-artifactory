@@ -107,14 +107,11 @@ public class ComposerExternalIdExtractor {
             final Set<Map.Entry<String, JsonElement>> rootEntries = root.getAsJsonObject().get("packages").getAsJsonObject().entrySet();
             final List<ComposerVersion> composerVersions = new ArrayList<>();
             for (final Map.Entry<String, JsonElement> rootEntry : rootEntries) {
-                final String groupModuleName = rootEntry.getKey().toLowerCase();
-                if (groupModuleName.contains(groupModuleName)) {
-                    final Set<Map.Entry<String, JsonElement>> versionJsonElements = rootEntry.getValue().getAsJsonObject().entrySet();
+                final Set<Map.Entry<String, JsonElement>> versionJsonElements = rootEntry.getValue().getAsJsonObject().entrySet();
 
-                    for (final Map.Entry<String, JsonElement> versionJsonElement : versionJsonElements) {
-                        final ComposerVersion composerVersion = gson.fromJson(versionJsonElement.getValue(), ComposerVersion.class);
-                        composerVersions.add(composerVersion);
-                    }
+                for (final Map.Entry<String, JsonElement> versionJsonElement : versionJsonElements) {
+                    final ComposerVersion composerVersion = gson.fromJson(versionJsonElement.getValue(), ComposerVersion.class);
+                    composerVersions.add(composerVersion);
                 }
             }
 
