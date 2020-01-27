@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -36,12 +36,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.api.generated.discovery.ApiDiscovery;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentView;
-import com.synopsys.integration.blackduck.api.generated.view.OriginView;
+import com.synopsys.integration.blackduck.api.manual.throwaway.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
@@ -108,14 +108,14 @@ public class ArtifactNotificationService {
             final PolicyStatusNotification policyStatusNotification = policyArtifact.getBlackDuckNotification();
 
             final String policyApprovalStatus = policyStatusNotification.getPolicyStatusView().getApprovalStatus().name();
-            final PolicySummaryStatusType policySummaryStatusType = PolicySummaryStatusType.valueOf(policyApprovalStatus);
-            final List<PolicySeverityType> policySeverityTypes = policyStatusNotification.getPolicyInfos().stream()
+            final PolicyStatusType policySummaryStatusType = PolicyStatusType.valueOf(policyApprovalStatus);
+            final List<PolicyRuleSeverityType> policySeverityTypes = policyStatusNotification.getPolicyInfos().stream()
                                                                      .map(PolicyInfo::getSeverity)
                                                                      .map(severity -> {
                                                                          if (StringUtils.isBlank(severity)) {
-                                                                             return PolicySeverityType.UNSPECIFIED;
+                                                                             return PolicyRuleSeverityType.UNSPECIFIED;
                                                                          } else {
-                                                                             return PolicySeverityType.valueOf(severity);
+                                                                             return PolicyRuleSeverityType.valueOf(severity);
                                                                          }
                                                                      })
                                                                      .collect(Collectors.toList());

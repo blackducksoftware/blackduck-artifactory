@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -27,39 +27,39 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.EnumUtils;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyRuleView;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentPolicyRulesView;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyStatusReport {
-    private final PolicySummaryStatusType policySummaryStatusType;
-    private final List<PolicySeverityType> policySeverityTypes;
+    private final PolicyStatusType policySummaryStatusType;
+    private final List<PolicyRuleSeverityType> policySeverityTypes;
 
-    public static PolicyStatusReport fromVersionBomComponentView(final VersionBomComponentView versionBomComponentView, final BlackDuckService blackDuckService) throws IntegrationException {
-        final PolicySummaryStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
+    public static PolicyStatusReport fromProjectVersionComponentView(final ProjectVersionComponentView versionBomComponentView, final BlackDuckService blackDuckService) throws IntegrationException {
+        final PolicyStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
 
-        final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
-        final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
-                                                                 .map(VersionBomPolicyRuleView::getSeverity)
-                                                                 .map(severity -> EnumUtils.getEnumIgnoreCase(PolicySeverityType.class, severity))
+        final List<ComponentPolicyRulesView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, ProjectVersionComponentView.POLICY_RULES_LINK_RESPONSE, true);
+        final List<PolicyRuleSeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
+                                                                 .map(ComponentPolicyRulesView::getSeverity)
+                                                                 .map(severity -> EnumUtils.getEnumIgnoreCase(PolicyRuleSeverityType.class, severity.name()))
                                                                  .collect(Collectors.toList());
 
         return new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
     }
 
-    public PolicyStatusReport(final PolicySummaryStatusType policySummaryStatusType, final List<PolicySeverityType> policySeverityTypes) {
+    public PolicyStatusReport(final PolicyStatusType policySummaryStatusType, final List<PolicyRuleSeverityType> policySeverityTypes) {
         this.policySummaryStatusType = policySummaryStatusType;
         this.policySeverityTypes = policySeverityTypes;
     }
 
-    public PolicySummaryStatusType getPolicySummaryStatusType() {
+    public PolicyStatusType getPolicyStatusType() {
         return policySummaryStatusType;
     }
 
-    public List<PolicySeverityType> getPolicySeverityTypes() {
+    public List<PolicyRuleSeverityType> getPolicyRuleSeverityTypes() {
         return policySeverityTypes;
     }
 }

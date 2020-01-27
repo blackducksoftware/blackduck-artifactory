@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -34,7 +34,7 @@ import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
-import com.synopsys.integration.blackduck.api.generated.component.VersionBomOriginView;
+import com.synopsys.integration.blackduck.api.manual.throwaway.generated.component.VersionBomOriginView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -185,23 +185,23 @@ public class ArtifactInspectionService {
     }
 
     private void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentViewWrapper componentViewWrapper) throws IntegrationException {
-        final Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getVersionBomComponentView().getOrigins().stream().findFirst();
+        final Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getProjectVersionComponentView().getOrigins().stream().findFirst();
 
         if (versionBomOriginView.isPresent()) {
             final ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
             final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
             final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
-            final PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getVersionBomComponentView(), blackDuckService);
+            final PolicyStatusReport policyStatusReport = PolicyStatusReport.fromProjectVersionComponentView(componentViewWrapper.getProjectVersionComponentView(), blackDuckService);
 
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
-            componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getVersionBomComponentView().getComponentVersion()));
+            componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getProjectVersionComponentView().getComponentVersion()));
             inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS, null, null);
 
             final String forge = versionBomOriginView.get().getExternalNamespace();
             final String originId = versionBomOriginView.get().getExternalId();
-            final String componentName = componentViewWrapper.getVersionBomComponentView().getComponentName();
-            final String componentVersionName = componentViewWrapper.getVersionBomComponentView().getComponentVersionName();
+            final String componentName = componentViewWrapper.getProjectVersionComponentView().getComponentName();
+            final String componentVersionName = componentViewWrapper.getProjectVersionComponentView().getComponentVersionName();
             inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId, componentName, componentVersionName);
         } else {
             throw new FailedInspectionException(repoPath, "No OriginViews were found for component.");

@@ -2,6 +2,7 @@ buildscript {
     ext.spring_boot_version = '2.1.0.RELEASE'
 
     repositories {
+        mavenLocal()
         mavenCentral()
         jcenter()
         maven { url 'https://plugins.gradle.org/m2/' }
@@ -22,6 +23,7 @@ group = parent?.group ?: "com.synopsys.integration"
 version = parent?.version ?: "UNKNOWN-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     jcenter()
 }
@@ -33,7 +35,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     implementation 'org.artifactory:artifactory-papi:' + ext.artifactoryMinimumVersion
-    implementation "com.blackducksoftware.integration:blackduck-common:43.0.0"
+    implementation "com.synopsys.integration:blackduck-common:45.1.1-SNAPSHOT"
     implementation 'com.github.kittinunf.fuel:fuel:2.1.0'
     implementation 'com.github.kittinunf.fuel:fuel-gson:2.1.0'
 

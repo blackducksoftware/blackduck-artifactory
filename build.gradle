@@ -3,12 +3,13 @@ buildscript {
     ext.spring_boot_version = '2.1.0.RELEASE'
 
     repositories {
+        mavenLocal()
         jcenter()
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
+        classpath 'com.synopsys.integration:common-gradle-plugin:1.0.0'
         classpath 'org.apache.commons:commons-configuration2:2.2'
     }
 }
@@ -23,9 +24,9 @@ version = '7.3.0-SNAPSHOT'
 final String parentVersion = project.version
 
 final String artifactoryMinimumVersion = '6.1.0'
-final String blackDuckCommonVersion = '44.3.0'
+final String blackDuckCommonVersion = '45.1.1-SNAPSHOT'
 
-apply plugin: 'com.blackducksoftware.integration.solution'
+apply plugin: 'com.synopsys.integration.solution'
 
 license {
     header rootProject.file('LICENSE')
@@ -35,7 +36,7 @@ dependencies {
     compile project("blackduck-artifactory-common")
 
     implementation 'org.codehaus.groovy:groovy-all:2.4.15'
-    implementation 'com.blackducksoftware.integration:blackduck-common:' + blackDuckCommonVersion
+    implementation 'com.synopsys.integration:blackduck-common:' + blackDuckCommonVersion
 
     compileOnly 'org.apache.commons:commons-configuration2:2.2'
     compileOnly 'org.artifactory:artifactory-papi:' + artifactoryMinimumVersion

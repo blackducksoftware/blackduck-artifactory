@@ -5,7 +5,7 @@ buildscript {
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
+        classpath 'com.synopsys.integration:common-gradle-plugin:1.0.0'
     }
 }
 
@@ -14,13 +14,13 @@ plugins {
     id 'groovy'
 }
 
-apply plugin: 'com.blackducksoftware.integration.simple'
+apply plugin: 'com.synopsys.integration.simple'
 apply plugin: 'kotlin'
 
 jar.finalizedBy shadowJar
 
 dependencies {
-    implementation "com.blackducksoftware.integration:blackduck-common:$blackDuckCommonVersion"
+    implementation "com.synopsys.integration:blackduck-common:$blackDuckCommonVersion"
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     compileOnly "org.artifactory:artifactory-papi:$artifactoryMinimumVersion"

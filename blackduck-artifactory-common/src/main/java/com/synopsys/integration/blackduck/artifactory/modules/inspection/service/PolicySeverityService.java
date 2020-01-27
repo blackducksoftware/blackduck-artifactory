@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -32,11 +32,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyRuleView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentPolicyRulesView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
@@ -76,11 +76,11 @@ public class PolicySeverityService {
             if (projectVersionWrapper.isPresent()) {
                 final SetMultimap<String, String> inViolationPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
                                                                                .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
-                                                                               .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicySummaryStatusType.IN_VIOLATION.name())
+                                                                               .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicyStatusType.IN_VIOLATION.name())
                                                                                .build();
                 final SetMultimap<String, String> overriddenPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
                                                                               .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
-                                                                              .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicySummaryStatusType.IN_VIOLATION_OVERRIDDEN.name())
+                                                                              .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicyStatusType.IN_VIOLATION_OVERRIDDEN.name())
                                                                               .build();
                 final List<RepoPath> repoPathsFound = new ArrayList<>();
                 repoPathsFound.addAll(artifactoryPropertyService.getItemsContainingPropertiesAndValues(inViolationPropertyMap, repoKey));
@@ -100,14 +100,13 @@ public class PolicySeverityService {
             final String componentVersionUrl = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL))
                                                    .orElseThrow(() -> new IntegrationException("Missing component version url."));
             final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionView);
-            final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
-            final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews;
-            versionBomPolicyRuleViews = blackDuckService.getAllResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE);
+            final ProjectVersionComponentView versionBomComponentView = componentViewWrapper.getProjectVersionComponentView();
+            final List<ComponentPolicyRulesView> versionBomPolicyRuleViews;
+            versionBomPolicyRuleViews = blackDuckService.getAllResponses(versionBomComponentView, ProjectVersionComponentView.POLICY_RULES_LINK_RESPONSE);
 
-            final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
-            final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
-                                                                     .map(VersionBomPolicyRuleView::getSeverity)
-                                                                     .map(PolicySeverityType::valueOf)
+            final PolicyStatusType policyStatus = versionBomComponentView.getPolicyStatus();
+            final List<PolicyRuleSeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
+                                                                     .map(ComponentPolicyRulesView::getSeverity)
                                                                      .collect(Collectors.toList());
             final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policyStatus, policySeverityTypes);
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);

@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -72,13 +72,13 @@ class InspectionPropertyService(
     }
 
     fun setPolicyProperties(repoPath: RepoPath, policyStatusReport: PolicyStatusReport) {
-        if (policyStatusReport.policySeverityTypes.isEmpty()) {
+        if (policyStatusReport.policyRuleSeverityTypes.isEmpty()) {
             deleteProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, logger)
         } else {
-            val policySeverityTypes = StringUtils.join(policyStatusReport.policySeverityTypes, ",")
+            val policySeverityTypes = StringUtils.join(policyStatusReport.policyRuleSeverityTypes, ",")
             setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, logger)
         }
-        setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusReport.policySummaryStatusType.name, logger)
+        setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusReport.policyStatusType.name, logger)
     }
 
     fun setComponentVersionUrl(repoPath: RepoPath, componentVersionUrl: String) {

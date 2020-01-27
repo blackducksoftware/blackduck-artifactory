@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -30,10 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.UriSingleResponse;
-import com.synopsys.integration.blackduck.api.generated.view.ComponentSearchResultView;
+import com.synopsys.integration.blackduck.api.generated.response.ComponentsView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.Artifact;
@@ -88,7 +88,7 @@ public class BlackDuckBOMService {
     }
 
     public Optional<String> searchForComponent(final ExternalId componentExternalId) throws IntegrationException {
-        final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getFirstOrEmptyResult(componentExternalId);
+        final Optional<ComponentsView> componentSearchResultView = componentService.getFirstOrEmptyResult(componentExternalId);
         String componentVersionUrl = null;
         if (componentSearchResultView.isPresent()) {
             if (StringUtils.isNotBlank(componentSearchResultView.get().getVariant())) {
@@ -150,7 +150,7 @@ public class BlackDuckBOMService {
         final Optional<String> componentVersionViewHref = componentVersionView.getHref();
 
         // This is bad practice but...
-        // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
+        // The link to a ProjectVersionComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
         if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
             final String apiComponentsLinkPrefix = "/api/components/";
             final String componentHref = componentVersionViewHref.get();
@@ -161,8 +161,8 @@ public class BlackDuckBOMService {
                 endingIndex = componentHref.indexOf(originsLinkPrefix);
             }
             final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentHref.substring(apiComponentsStart, endingIndex);
-            final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
-            final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
+            final UriSingleResponse<ProjectVersionComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, ProjectVersionComponentView.class);
+            final ProjectVersionComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
 
             return new ComponentViewWrapper(versionBomComponentView, componentVersionView);
         } else {

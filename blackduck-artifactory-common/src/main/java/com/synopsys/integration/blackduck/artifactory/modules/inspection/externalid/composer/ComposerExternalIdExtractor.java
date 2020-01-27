@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -85,7 +85,7 @@ public class ComposerExternalIdExtractor {
                                              .boxed()
                                              .map(String::valueOf)
                                              .toArray(String[]::new);
-                if (StringUtils.containsAny(foundExternalId.version, numbers) || externalId == null) {
+                if (StringUtils.containsAny(foundExternalId.getVersion(), numbers) || externalId == null) {
                     externalId = foundExternalId;
                 }
 

@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,18 +23,18 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
 
 public class ComponentViewWrapper {
-    private final VersionBomComponentView versionBomComponentView;
+    private final ProjectVersionComponentView versionBomComponentView;
     private final ComponentVersionView componentVersionView;
 
-    public ComponentViewWrapper(final VersionBomComponentView versionBomComponentView, final ComponentVersionView componentVersionView) {
+    public ComponentViewWrapper(final ProjectVersionComponentView versionBomComponentView, final ComponentVersionView componentVersionView) {
         this.versionBomComponentView = versionBomComponentView;
         this.componentVersionView = componentVersionView;
     }
 
-    public VersionBomComponentView getVersionBomComponentView() {
+    public ProjectVersionComponentView getProjectVersionComponentView() {
         return versionBomComponentView;
     }
 
