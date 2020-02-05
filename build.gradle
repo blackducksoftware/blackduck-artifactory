@@ -8,7 +8,7 @@ buildscript {
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+'
+        classpath 'com.synopsys.integration:common-gradle-plugin:1.1.0'
         classpath 'org.apache.commons:commons-configuration2:2.2'
     }
 }
@@ -25,7 +25,7 @@ final String parentVersion = project.version
 final String artifactoryMinimumVersion = '6.1.0'
 final String blackDuckCommonVersion = '44.3.0'
 
-apply plugin: 'com.blackducksoftware.integration.solution'
+apply plugin: 'com.synopsys.integration.solution'
 
 license {
     header rootProject.file('LICENSE')
