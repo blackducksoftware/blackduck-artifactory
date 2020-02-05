@@ -137,7 +137,8 @@ public class InspectionModule implements Module {
     }
 
     public void deleteInspectionPropertiesFromOutOfDate(final Map<String, List<String>> params) {
-        inspectionModuleConfig.getRepos()
+        inspectionModuleConfig.getRepos().stream()
+            .filter(repoKey -> inspectionPropertyService.assertUpdateStatus(RepoPathFactory.create(repoKey), UpdateStatus.OUT_OF_DATE))
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
 
         final SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getPropertyName(), UpdateStatus.OUT_OF_DATE.name());
