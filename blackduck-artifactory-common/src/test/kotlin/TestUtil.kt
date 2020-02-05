@@ -1,8 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (C) 2019 Black Duck Software, Inc.
- * http://www.blackducksoftware.com/
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -21,7 +20,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.nhaarman.mockitokotlin2.any
@@ -58,7 +56,7 @@ object TestUtil {
         val properties = GSON.fromJson<Map<String, String>>(credentials, type)
 
         val blackDuckServerConfigBuilder = BlackDuckServerConfigBuilder()
-        blackDuckServerConfigBuilder.setFromProperties(properties)
+        blackDuckServerConfigBuilder.setProperties(properties.entries)
 
         return blackDuckServerConfigBuilder
     }

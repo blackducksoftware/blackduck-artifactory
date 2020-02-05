@@ -1,7 +1,7 @@
 /**
  * blackduck-artifactory-common
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -24,7 +24,11 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.servic
 
 import com.google.common.collect.HashMultimap
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
-import com.synopsys.integration.blackduck.artifactory.*
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
+import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
+import com.synopsys.integration.blackduck.artifactory.DateTimeManager
+import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
@@ -136,6 +140,10 @@ class InspectionPropertyService(
 
     fun assertInspectionStatus(repoPath: RepoPath, inspectionStatus: InspectionStatus): Boolean {
         return getInspectionStatus(repoPath)?.takeIf { inspectionStatus == it } != null
+    }
+
+    fun assertUpdateStatus(repoPath: RepoPath, updateStatus: UpdateStatus): Boolean {
+        return getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS)?.let { UpdateStatus.valueOf(it) }?.takeIf { updateStatus == it } != null
     }
 
     fun getRepoProjectName(repoKey: String): String {
