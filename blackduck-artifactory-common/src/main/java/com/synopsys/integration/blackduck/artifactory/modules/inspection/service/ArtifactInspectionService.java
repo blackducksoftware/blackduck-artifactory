@@ -134,7 +134,7 @@ public class ArtifactInspectionService {
             inspectAllUnknownArtifacts(repoKeyPath);
         } catch (final IntegrationException e) {
             logger.error(String.format("An error occurred when inspecting '%s'.", repoKey));
-            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, e.getMessage(), null);
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, e.getMessage());
         }
     }
 
@@ -196,7 +196,7 @@ public class ArtifactInspectionService {
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
             componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getVersionBomComponentView().getComponentVersion()));
-            inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS, null, null);
+            inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
 
             final String forge = versionBomOriginView.get().getExternalNamespace();
             final String originId = versionBomOriginView.get().getExternalId();
