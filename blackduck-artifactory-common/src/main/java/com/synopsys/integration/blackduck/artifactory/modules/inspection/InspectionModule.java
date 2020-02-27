@@ -223,11 +223,10 @@ public class InspectionModule implements Module {
     private void updateAnalytics() {
         final List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepos();
         simpleAnalyticsCollector.putMetadata("cache.repo.count", cacheRepositoryKeys.size());
-        simpleAnalyticsCollector.putMetadata("cache.artifact.count", Optional.ofNullable(artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys)).orElse(0L));
+        simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys));
 
         final String packageManagers = cacheRepositoryKeys.stream()
                                            .map(artifactoryPAPIService::getPackageType)
-                                           .map(Optional::ofNullable)
                                            .filter(Optional::isPresent)
                                            .map(Optional::get)
                                            .collect(Collectors.joining("/"));

@@ -53,7 +53,7 @@ public class ExternalIdService {
 
     public Optional<ExternalId> extractExternalId(final RepoPath repoPath) {
         final String repoKey = repoPath.getRepoKey();
-        final String packageType = Optional.ofNullable(artifactoryPAPIService.getPackageType(repoKey)).orElse(null);
+        final String packageType = artifactoryPAPIService.getPackageType(repoKey).orElse(null);
         final Optional<SupportedPackageType> supportedPackageTypeOptional = SupportedPackageType.getAsSupportedPackageType(packageType);
 
         ExternalId externalId = null;

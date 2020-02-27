@@ -86,7 +86,7 @@ public class ArtifactInspectionService {
         }
 
         final ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
-        final Optional<List<String>> patterns = Optional.ofNullable(artifactoryPAPIService.getPackageType(repoPath.getRepoKey()))
+        final Optional<List<String>> patterns = artifactoryPAPIService.getPackageType(repoPath.getRepoKey())
                                                     .map(inspectionModuleConfig::getPatternsForPackageType);
 
         if (!patterns.isPresent() || patterns.get().isEmpty() || itemInfo.isFolder()) {
@@ -146,7 +146,7 @@ public class ArtifactInspectionService {
             return;
         }
 
-        final Optional<String> packageType = Optional.ofNullable(artifactoryPAPIService.getPackageType(repoKey));
+        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (!packageType.isPresent()) {
             final String message = String.format("The repository '%s' has no package type. Inspection cannot be performed.", repoKey);
             logger.error(message);

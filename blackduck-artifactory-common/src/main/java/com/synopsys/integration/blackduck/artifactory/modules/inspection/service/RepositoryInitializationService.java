@@ -79,7 +79,7 @@ public class RepositoryInitializationService {
             return;
         }
 
-        final Optional<String> possiblePackageType = Optional.ofNullable(artifactoryPAPIService.getPackageType(repoKey));
+        final Optional<String> possiblePackageType = artifactoryPAPIService.getPackageType(repoKey);
         if (!possiblePackageType.isPresent()) {
             logger.warn(String.format("Skipping initialization of configured repo '%s' because its package type was not found. Please remove this repo from your configuration or ensure a package type is specified", repoKey));
             throw new FailedInspectionException(repoKeyPath, "Repository package type not found.");

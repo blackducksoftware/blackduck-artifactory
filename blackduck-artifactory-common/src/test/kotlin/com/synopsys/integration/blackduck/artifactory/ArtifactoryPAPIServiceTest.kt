@@ -28,6 +28,7 @@ import org.artifactory.search.Searches
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import java.util.*
 import org.mockito.Mockito.`when` as mockWhen
 
 class ArtifactoryPAPIServiceTest {
@@ -44,8 +45,8 @@ class ArtifactoryPAPIServiceTest {
         val artifactoryPAPIService = ArtifactoryPAPIService(PluginRepoPathFactory(false), repositories, searches)
         val packageType = artifactoryPAPIService.getPackageType("maven-local")
 
-        Assertions.assertNotNull(packageType)
-        Assertions.assertEquals("maven", packageType)
+        Assertions.assertTrue(packageType.isPresent)
+        Assertions.assertEquals(Optional.of("maven"), packageType)
     }
 
     @Test

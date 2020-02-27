@@ -98,7 +98,7 @@ object TestUtil {
         whenever(artifactoryPAPIService.getProperty(any(), any())).doAnswer {
             val repoPath: RepoPath = it.getArgument(0)
             val propertyKey: String = it.getArgument(1)
-            return@doAnswer repoPathPropertyMap[repoPath]?.get(propertyKey)
+            return@doAnswer Optional.ofNullable(repoPathPropertyMap[repoPath]?.get(propertyKey))
         }
 
         // Has property
