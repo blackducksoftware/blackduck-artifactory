@@ -62,7 +62,7 @@ public class PostScanActionsService {
 
         for (final String repoKey : repoKeys) {
             final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-            final Optional<ProjectVersionPhaseType> postScanPhase = Optional.ofNullable(artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.POST_SCAN_PHASE))
+            final Optional<ProjectVersionPhaseType> postScanPhase = artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.POST_SCAN_PHASE)
                                                                         .map(ProjectVersionPhaseType::valueOf);
             final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKey);
             if (postScanPhase.isPresent()) {
@@ -89,7 +89,7 @@ public class PostScanActionsService {
 
     // TODO: Create a ScanPropertyService for this class and ScanPolicyService to use.
     private ProjectVersionWrapper resolveProjectVersionWrapper(final RepoPath repoPath) throws IntegrationException {
-        final Optional<NameVersion> nameVersion = Optional.ofNullable(artifactoryPropertyService.getProjectNameVersion(repoPath));
+        final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
 
         if (nameVersion.isPresent()) {
             final String projectName = nameVersion.get().getName();

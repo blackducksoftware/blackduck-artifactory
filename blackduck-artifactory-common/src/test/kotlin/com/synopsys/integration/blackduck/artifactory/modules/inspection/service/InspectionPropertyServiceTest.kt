@@ -478,9 +478,9 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService, dateTimeManager = dateTimeManager)
 
-        val lastUpdate: Date? = inspectionPropertyService.getLastUpdate(repoPath)
-        Assertions.assertNotNull(lastUpdate, "The date retrieved should not be null.")
-        Assertions.assertEquals(expectedDate, lastUpdate, "The last update retrieved differs. This may just be a mocking issue.")
+        val lastUpdate: Optional<Date> = inspectionPropertyService.getLastUpdate(repoPath)
+        Assertions.assertTrue(lastUpdate.isPresent, "The date retrieved should not be null.")
+        Assertions.assertEquals(expectedDate, lastUpdate.get(), "The last update retrieved differs. This may just be a mocking issue.")
     }
 
     @Test
@@ -497,8 +497,8 @@ class InspectionPropertyServiceTest {
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService, dateTimeManager = dateTimeManager)
 
         val lastInspection = inspectionPropertyService.getLastInspection(repoPath)
-        Assertions.assertNotNull(lastInspection, "The date retrieved should not be null.")
-        Assertions.assertEquals(expectedDate, lastInspection, "The last inspection retrieved differs. This may just be a mocking issue.")
+        Assertions.assertTrue(lastInspection.isPresent, "The date retrieved should not be null.")
+        Assertions.assertEquals(expectedDate, lastInspection.get(), "The last inspection retrieved differs. This may just be a mocking issue.")
     }
 
     @Test

@@ -55,8 +55,8 @@ public class MetaDataUpdateService {
             final boolean shouldTryUpdate = inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS) || inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
 
             if (shouldTryUpdate) {
-                final Optional<Date> lastUpdateProperty = Optional.ofNullable(inspectionPropertyService.getLastUpdate(repoKeyPath));
-                final Optional<Date> lastInspectionProperty = Optional.ofNullable(inspectionPropertyService.getLastInspection(repoKeyPath));
+                final Optional<Date> lastUpdateProperty = inspectionPropertyService.getLastUpdate(repoKeyPath);
+                final Optional<Date> lastInspectionProperty = inspectionPropertyService.getLastInspection(repoKeyPath);
                 final Date dateToCheck;
 
                 if (lastUpdateProperty.isPresent()) {

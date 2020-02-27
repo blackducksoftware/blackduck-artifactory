@@ -172,9 +172,9 @@ public class ArtifactScanService {
     private NameVersion determineProjectNameVersion(final RepoPath repoPath) {
         final FileLayoutInfo fileLayoutInfo = getArtifactFromPath(repoPath);
         final String fileName = repoPath.getName();
-        String project = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME))
+        String project = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME)
                              .orElse(fileLayoutInfo.getModule());
-        String version = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME))
+        String version = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME)
                              .orElse(fileLayoutInfo.getBaseRevision());
 
         final boolean missingProjectName = StringUtils.isBlank(project);
@@ -193,7 +193,7 @@ public class ArtifactScanService {
         }
 
         final RepoPath repoKeyPath = RepoPathFactory.create(repoPath.getRepoKey());
-        final Optional<String> projectName = Optional.ofNullable(artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME));
+        final Optional<String> projectName = artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
         String finalProjectName = project;
         String finalProjectVersion = version;
         if (projectName.isPresent()) {

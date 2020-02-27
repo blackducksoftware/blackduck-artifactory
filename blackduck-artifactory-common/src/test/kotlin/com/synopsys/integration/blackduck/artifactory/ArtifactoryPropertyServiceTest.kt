@@ -66,11 +66,11 @@ internal class ArtifactoryPropertyServiceTest {
         val artifactoryPropertyService = ArtifactoryPropertyService(artifactoryPAPIService, mock())
 
         val actualPropertyValue = artifactoryPropertyService.getProperty(repoPath, property)
-        Assertions.assertNotNull(actualPropertyValue, "The ${property.propertyName} property should exist.")
-        Assertions.assertEquals(expectedPropertyValue, actualPropertyValue, "The retrieved property value should be $expectedPropertyValue.")
+        Assertions.assertTrue(actualPropertyValue.isPresent, "The ${property.propertyName} property should exist.")
+        Assertions.assertEquals(expectedPropertyValue, actualPropertyValue.get(), "The retrieved property value should be $expectedPropertyValue.")
 
         val missingPropertyValue = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS)
-        Assertions.assertNull(missingPropertyValue, "The retrieved property should be missing.")
+        Assertions.assertFalse(missingPropertyValue.isPresent, "The retrieved property should be missing.")
     }
 
     @Test
@@ -87,8 +87,8 @@ internal class ArtifactoryPropertyServiceTest {
         val artifactoryPropertyService = ArtifactoryPropertyService(artifactoryPAPIService, mock())
 
         val actualPropertyValue = artifactoryPropertyService.getPropertyAsInteger(repoPath, property)
-        Assertions.assertNotNull(actualPropertyValue, "The ${property.propertyName} property should exist.")
-        Assertions.assertEquals(expectedPropertyValue, actualPropertyValue, "The retrieved property value should be $expectedPropertyValue.")
+        Assertions.assertTrue(actualPropertyValue.isPresent, "The ${property.propertyName} property should exist.")
+        Assertions.assertEquals(expectedPropertyValue, actualPropertyValue.get(), "The retrieved property value should be $expectedPropertyValue.")
     }
 
     @Test
@@ -107,8 +107,8 @@ internal class ArtifactoryPropertyServiceTest {
         val artifactoryPropertyService = ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager)
 
         val actualPropertyValue = artifactoryPropertyService.getDateFromProperty(repoPath, property)
-        Assertions.assertNotNull(actualPropertyValue, "The ${property.propertyName} property should exist.")
-        Assertions.assertEquals(expectedPropertyValue, actualPropertyValue, "The retrieved property value should be $expectedPropertyValue.")
+        Assertions.assertTrue(actualPropertyValue.isPresent, "The ${property.propertyName} property should exist.")
+        Assertions.assertEquals(expectedPropertyValue, actualPropertyValue.get(), "The retrieved property value should be $expectedPropertyValue.")
     }
 
     @Test
@@ -254,17 +254,17 @@ internal class ArtifactoryPropertyServiceTest {
             val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
             val artifactoryPropertyService = ArtifactoryPropertyService(artifactoryPAPIService, mock())
 
-            val nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath)
+            val nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath)!!
 
             if (expectNull) {
-                Assertions.assertNull(nameVersion, "The expected NameVersion should be null.")
+                Assertions.assertFalse(nameVersion.isPresent, "The expected NameVersion should be null.")
             } else {
-                Assertions.assertNotNull(nameVersion, "The project name and version should not missing.")
+                Assertions.assertTrue(nameVersion.isPresent, "The project name and version should not missing.")
 
-                Assertions.assertNotNull(nameVersion!!.name, "The project name should not be set to null.")
-                Assertions.assertEquals(expectedProjectName, nameVersion.name, "The project name is not what was expected.")
-                Assertions.assertNotNull(nameVersion.version, "The project name should not be set to null.")
-                Assertions.assertEquals(expectedProjectVersion, nameVersion.version, "The project version is not what was expected.")
+                Assertions.assertNotNull(nameVersion.get().name, "The project name should not be set to null.")
+                Assertions.assertEquals(expectedProjectName, nameVersion.get().name, "The project name is not what was expected.")
+                Assertions.assertNotNull(nameVersion.get().version, "The project name should not be set to null.")
+                Assertions.assertEquals(expectedProjectVersion, nameVersion.get().version, "The project version is not what was expected.")
             }
         }
 

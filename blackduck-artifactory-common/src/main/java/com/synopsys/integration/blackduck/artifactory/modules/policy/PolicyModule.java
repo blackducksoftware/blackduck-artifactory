@@ -83,12 +83,12 @@ public class PolicyModule implements Module {
             return false;
         }
 
-        final Optional<PolicySummaryStatusType> inViolationProperty = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS))
+        final Optional<PolicySummaryStatusType> inViolationProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS)
                                                                           .map(PolicySummaryStatusType::valueOf)
                                                                           .filter(it -> it.equals(PolicySummaryStatusType.IN_VIOLATION));
 
         if (inViolationProperty.isPresent()) {
-            final Optional<String> severityTypes = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES));
+            final Optional<String> severityTypes = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES);
             if (severityTypes.isPresent()) {
                 final List<PolicySeverityType> severityTypesToBlock = policyModuleConfig.getPolicySeverityTypes();
                 final List<PolicySeverityType> matchingSeverityTypes = Arrays.stream(severityTypes.get().split(","))

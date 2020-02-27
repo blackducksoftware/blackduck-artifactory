@@ -122,15 +122,15 @@ public class ScanPolicyService {
 
     private void failPolicyStatusUpdate(final RepoPath repoPath, final Exception e) {
         logger.debug(String.format("An error occurred while attempting to update policy status on %s", repoPath.getPath()), e);
-        final Optional<String> policyStatus = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS));
-        final Optional<String> overallPolicyStatus = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS));
+        final Optional<String> policyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
+        final Optional<String> overallPolicyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS);
         if (policyStatus.isPresent() || overallPolicyStatus.isPresent()) {
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString(), logger);
         }
     }
 
     private ProjectVersionWrapper resolveProjectVersionWrapper(final RepoPath repoPath) throws IntegrationException {
-        final Optional<NameVersion> nameVersion = Optional.ofNullable(artifactoryPropertyService.getProjectNameVersion(repoPath));
+        final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
 
         if (nameVersion.isPresent()) {
             final String projectName = nameVersion.get().getName();

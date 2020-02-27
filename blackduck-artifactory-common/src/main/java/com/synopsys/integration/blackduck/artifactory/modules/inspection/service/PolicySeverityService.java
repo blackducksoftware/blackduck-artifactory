@@ -97,7 +97,7 @@ public class PolicySeverityService {
 
     private void upgradeSeverityForRepoPath(final ProjectVersionView projectVersionView, final RepoPath repoPath) {
         try {
-            final String componentVersionUrl = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL))
+            final String componentVersionUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL)
                                                    .orElseThrow(() -> new IntegrationException("Missing component version url."));
             final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionView);
             final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();

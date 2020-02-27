@@ -100,7 +100,7 @@ public class RepositoryIdentificationService {
             return false;
         }
 
-        final Optional<String> blackDuckScanTimeProperty = Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME));
+        final Optional<String> blackDuckScanTimeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME);
         if (!blackDuckScanTimeProperty.isPresent()) {
             return true;
         }

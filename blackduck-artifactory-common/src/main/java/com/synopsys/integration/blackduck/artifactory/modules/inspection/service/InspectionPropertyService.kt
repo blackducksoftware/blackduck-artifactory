@@ -104,7 +104,7 @@ class InspectionPropertyService(
     }
 
     private fun getFailedInspectionCount(repoPath: RepoPath): Int {
-        return getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT) ?: 0
+        return getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT).orElse(0)
     }
 
     fun setInspectionStatus(repoPath: RepoPath, status: InspectionStatus, inspectionStatusMessage: String? = null, retryCount: Int? = null) {
@@ -125,7 +125,9 @@ class InspectionPropertyService(
     }
 
     fun getInspectionStatus(repoPath: RepoPath): InspectionStatus? {
-        return getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)?.let { InspectionStatus.valueOf(it) }
+        return getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)
+                .map(InspectionStatus::valueOf)
+                .orElse(null)
     }
 
     fun hasInspectionStatus(repoPath: RepoPath): Boolean {
@@ -143,21 +145,24 @@ class InspectionPropertyService(
     }
 
     fun assertUpdateStatus(repoPath: RepoPath, updateStatus: UpdateStatus): Boolean {
-        return getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS)?.let { UpdateStatus.valueOf(it) }?.takeIf { updateStatus == it } != null
+        return getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS)
+                .map(UpdateStatus::valueOf)
+                .filter { it == updateStatus }
+                .isPresent
     }
 
     fun getRepoProjectName(repoKey: String): String {
         val repoPath = pluginRepoPathFactory.create(repoKey)
         val projectNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME)
 
-        return projectNameProperty ?: repoKey
+        return projectNameProperty.orElse(repoKey)
     }
 
     fun getRepoProjectVersionName(repoKey: String): String {
         val repoPath = pluginRepoPathFactory.create(repoKey)
         val projectVersionNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME)
 
-        return projectVersionNameProperty ?: HostNameHelper.getMyHostName("UNKNOWN_HOST")
+        return projectVersionNameProperty.orElse(HostNameHelper.getMyHostName("UNKNOWN_HOST"))
     }
 
     fun setRepoProjectNameProperties(repoKey: String, projectName: String, projectVersionName: String) {
@@ -170,11 +175,11 @@ class InspectionPropertyService(
         projectVersionView.href.ifPresent { uiUrl -> setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger) }
     }
 
-    fun getLastUpdate(repoKeyPath: RepoPath): Date? {
+    fun getLastUpdate(repoKeyPath: RepoPath): Optional<Date> {
         return getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE)
     }
 
-    fun getLastInspection(repoKeyPath: RepoPath): Date? {
+    fun getLastInspection(repoKeyPath: RepoPath): Optional<Date> {
         return getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION)
     }
 
