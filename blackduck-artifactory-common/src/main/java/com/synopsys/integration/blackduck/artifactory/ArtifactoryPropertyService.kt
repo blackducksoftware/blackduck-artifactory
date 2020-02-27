@@ -25,6 +25,7 @@ package com.synopsys.integration.blackduck.artifactory
 import com.google.common.collect.SetMultimap
 import com.synopsys.integration.log.IntLogger
 import com.synopsys.integration.util.NameVersion
+import org.apache.commons.lang3.StringUtils
 import org.artifactory.repo.RepoPath
 import java.util.*
 
@@ -39,7 +40,7 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
     }
 
     private fun getProperty(repoPath: RepoPath, propertyKey: String): String? {
-        return artifactoryPAPIService.getProperty(repoPath, propertyKey)?.trimToNull()
+        return StringUtils.trimToNull(artifactoryPAPIService.getProperty(repoPath, propertyKey))
     }
 
     fun getPropertyAsInteger(repoPath: RepoPath, property: BlackDuckArtifactoryProperty): Int? {

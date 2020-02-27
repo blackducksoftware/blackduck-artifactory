@@ -20,10 +20,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.blackduck.artifactory
+package com.synopsys.integration.blackduck.artifactory;
 
-import org.apache.commons.lang.StringUtils
+public enum TriggerType {
+    BEFORE_DOWNLOAD("download beforeDownload"),
+    CRON_JOB("cron job"),
+    REST_REQUEST("REST request"),
+    STARTUP("startup"),
+    STORAGE_AFTER_CREATE("storage afterCreate"),
+    STORAGE_AFTER_COPY("storage afterCopy"),
+    STORAGE_AFTER_MOVE("storage afterMove");
 
-fun String.trimToNull(): String? {
-    return StringUtils.trimToNull(this)
+    final String logName;
+
+    TriggerType(final String logName) {
+        this.logName = logName;
+    }
+
+    public String getLogName() {
+        return logName;
+    }
 }
