@@ -129,7 +129,7 @@ public class ArtifactNotificationService {
         repoKeyPaths.forEach(repoKeyPath -> {
             if (inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS)) {
                 inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-                inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS, null, null);
+                inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
                 // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
                 inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
                 final String repoKey = repoKeyPath.getRepoKey();

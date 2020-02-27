@@ -104,7 +104,8 @@ class InspectionPropertyServiceTest {
 
         Assertions.assertEquals("Forge", propertyMap[forgeProperty])
         Assertions.assertEquals("OriginId", propertyMap[originIdProperty])
-        Assertions.assertEquals(InspectionPropertyService.COMPONENT_NAME_VERSION_FORMAT.format("ComponentName", "ComponentVersionName"), propertyMap[componentNameProperty])
+
+        Assertions.assertEquals(String.format(InspectionPropertyService.COMPONENT_NAME_VERSION_FORMAT, "ComponentName", "ComponentVersionName"), propertyMap[componentNameProperty])
     }
 
     @Test
@@ -324,7 +325,8 @@ class InspectionPropertyServiceTest {
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
         val inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath)
-        Assertions.assertEquals(InspectionStatus.SUCCESS, inspectionStatus, "RepoPath '${repoPath.toPath()}' should have a ${BlackDuckArtifactoryProperty.INSPECTION_STATUS} property.")
+        Assertions.assertTrue(inspectionStatus.isPresent)
+        Assertions.assertEquals(InspectionStatus.SUCCESS, inspectionStatus.get(), "RepoPath '${repoPath.toPath()}' should have a ${BlackDuckArtifactoryProperty.INSPECTION_STATUS} property.")
     }
 
     @Test

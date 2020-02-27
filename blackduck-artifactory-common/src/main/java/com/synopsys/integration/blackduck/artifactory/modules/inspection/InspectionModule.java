@@ -204,7 +204,7 @@ public class InspectionModule implements Module {
     }
 
     public void handleBeforeDownloadEvent(final RepoPath repoPath) {
-        final Optional<InspectionStatus> inspectionStatus = Optional.ofNullable(inspectionPropertyService.getInspectionStatus(repoPath));
+        final Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
         final boolean shouldCancelDownload = inspectionModuleConfig.isMetadataBlockEnabled()
                                                  && (!inspectionStatus.isPresent() || inspectionStatus.get().equals(InspectionStatus.PENDING))
                                                  && artifactInspectionService.shouldInspectArtifact(repoPath);
