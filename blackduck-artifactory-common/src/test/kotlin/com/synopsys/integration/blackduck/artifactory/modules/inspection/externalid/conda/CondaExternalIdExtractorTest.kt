@@ -64,6 +64,13 @@ class CondaExternalIdExtractorTest {
         assertValidExtraction(fileName = "numpy-1.13.1-py27_0.tar.bz2", expectedName = "numpy", expectedVersion = "1.13.1-py27_0-linux-64")
     }
 
+    @Test // IARTH-387
+    fun extractValidExternalId2() {
+        assertValidExtraction(fileName = "libgcc-ng-9.2.0-h24d8f2e_1.tar.bz2", expectedName = "libgcc-ng", expectedVersion = "9.2.0-h24d8f2e_1-linux-64")
+        assertValidExtraction(fileName = "libgcc-ng-9.2.0-h24d8f2e_2.tar.bz2", expectedName = "libgcc-ng", expectedVersion = "9.2.0-h24d8f2e_2-linux-64")
+        assertValidExtraction(fileName = "libgcc-ng-9.2.0-h24d8f2e_3.tar.bz2", expectedName = "libgcc-ng", expectedVersion = "9.2.0-h24d8f2e_3-linux-64")
+    }
+
     @Test
     fun extractValidExternalIdWithDots() {
         assertValidExtraction(fileName = "cudnn-7.1.2-cuda9.0_0.tar.bz2", expectedName = "cudnn", expectedVersion = "7.1.2-cuda9.0_0-linux-64")
