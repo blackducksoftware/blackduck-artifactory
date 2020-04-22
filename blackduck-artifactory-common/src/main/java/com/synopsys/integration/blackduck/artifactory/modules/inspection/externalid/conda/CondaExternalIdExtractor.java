@@ -90,7 +90,7 @@ public class CondaExternalIdExtractor {
         String buildString = null;
         for (final String supportedFileExtension : SUPPORTED_FILE_EXTENSIONS) {
             if (buildStringExtension.endsWith(supportedFileExtension)) {
-                buildString = StringUtils.stripEnd(buildStringExtension, supportedFileExtension);
+                buildString = StringUtils.removeEnd(buildStringExtension, supportedFileExtension);
                 break;
             }
         }
