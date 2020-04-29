@@ -156,7 +156,16 @@ object Resolvers {
     val CONDA_RESOLVER = Resolver(
             ArtifactResolver::resolveCondaArtifact,
             listOf(
-                    TestablePackage("numpy-1.13.1-py27_0.tar.bz2", externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "numpy", "numpy-1.13.1-py27_0-linux-64"))
+                    TestablePackage(
+                            artifactoryFileName = "numpy-1.13.1-py27_0.tar.bz2",
+                            externalId = externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "numpy", "1.13.1"),
+                            expectedExternalId = externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "numpy", "numpy-1.13.1-py27_0-linux-64").createExternalId()
+                    ),
+                    TestablePackage(
+                            artifactoryFileName = "pip-20.0.2-py_2",
+                            externalId = externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "pip", "20.0.2"),
+                            expectedExternalId = externalIdFactory.createNameVersionExternalId(SupportedPackageType.CONDA.forge, "pip", "pip-20.0.2-py_2-linux-64").createExternalId()
+                    )
             )
     )
 

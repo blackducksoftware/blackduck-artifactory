@@ -15,11 +15,13 @@ interface PackageType {
         COCOAPODS("cocoapods", "https://github.com/"),
         COMPOSER("composer", "https://github.com/", "composer-default", Resolvers.COMPOSER_RESOLVER, "artifactory-automation-composer"),
         CONAN("conan", "https://conan.bintray.com"),
-        CONDA("conda", "https://repo.anaconda.com/pkgs/free"),
+        CONDA("conda", "https://repo.anaconda.com/pkgs/free", "simple-default", Resolvers.CONDA_RESOLVER, "artifactory-automation-conda"),
         CRAN("cran", "https://cran.r-project.org/", "cran-automation", Resolvers.CRAN_RESOLVER, "artifactory-automation-cran"),
         DEBIAN("debian", "http://archive.ubuntu.com/ubuntu/"),
+
         // DOCKER("docker", "https://registry-1.docker.io/", false), Unsupported.
         GEMS("gems", "https://rubygems.org/", "gems-automation", Resolvers.GEMS_RESOLVER, "artifactory-automation-gems"),
+
         // GENERIC("generic", "" ), Needs a remote URL. This PackageType should be created manually.
         // GITLFS("gitlfs", ""), Needs a remote URL. This PackageType should be created manually.
         GO("go", "https://gocenter.io/", "go-default", Resolvers.GO_RESOLVER, "artifactory-automation-go", requiresVirtual = true),
@@ -29,12 +31,14 @@ interface PackageType {
         MAVEN("maven", "https://jcenter.bintray.com", "maven-2-default", Resolvers.MAVEN_RESOLVER),
         NPM("npm", "https://registry.npmjs.org", "npm-default", Resolvers.NPM_RESOLVER, "artifactory-automation-npm"),
         NUGET("nuget", "https://www.nuget.org/", "nuget-default", Resolvers.NUGET_RESOLVER, "artifactory-automation-nuget"),
+
         // OPKG("opkg", ""), Needs a remote URL. This PackageType should be created manually.
         // P2("p2", ""), Needs a remote URL. This PackageType should be created manually.
         PUPPET("puppet", "https://forgeapi.puppetlabs.com/"),
         PYPI("pypi", "https://files.pythonhosted.org", "pypi-automation", Resolvers.PYPI_RESOLVER, "artifactory-automation-pypi"),
         RPM("rpm", "http://mirror.centos.org/centos/"),
         SBT("sbt", "https://jcenter.bintray.com"),
+
         // VAGRANT("vagrant", ""), In doc, but not creatable via UI as of Artifactory-6.10.3
         VCS("vcs", "https://github.com/"),
         // YUM("yum", ""), In doc, but not creatable via UI as of Artifactory-6.10.3
