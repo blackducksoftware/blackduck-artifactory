@@ -114,7 +114,7 @@ open class ArtifactoryPAPIService(private val pluginRepoPathFactory: PluginRepoP
         return repositories.getProperty(repoPath, propertyName)
     }
 
-    open fun setProperty(repoPath: RepoPath, propertyName: String, value: String) {
+    open fun setProperty(repoPath: RepoPath, propertyName: String, value: String?) {
         repositories.setProperty(repoPath, propertyName, value)
     }
 

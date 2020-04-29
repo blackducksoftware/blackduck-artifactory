@@ -52,11 +52,11 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
     }
 
     // TODO: These methods should not require an IntLogger, but a regular Logger
-    fun setProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty, value: String, logger: IntLogger) {
+    fun setProperty(repoPath: RepoPath, property: BlackDuckArtifactoryProperty, value: String?, logger: IntLogger) {
         setProperty(repoPath, property.propertyName, value, logger)
     }
 
-    private fun setProperty(repoPath: RepoPath, property: String, value: String, logger: IntLogger) {
+    private fun setProperty(repoPath: RepoPath, property: String, value: String?, logger: IntLogger) {
         artifactoryPAPIService.setProperty(repoPath, property, value)
         logger.debug("Set property $property to $value on ${repoPath.toPath()}")
     }
@@ -117,7 +117,11 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
                 throw UnsupportedOperationException("Cannot convert SetMultimap to Map because multiple values were assigned to the same key.")
             }
 
-            propertyMap[it] = values.first()
+            if (values.isEmpty()) {
+                throw UnsupportedOperationException("Property key '$it' has no assigned value. This could cause Artifacts to not be updated properly. Property map: ${properties.asMap()}")
+            } else {
+                propertyMap[it] = values.first()
+            }
         }
 
         return getItemsContainingPropertiesAndValues(propertyMap, arrayOf(*repoKeys))

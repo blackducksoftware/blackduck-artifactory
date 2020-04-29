@@ -201,23 +201,27 @@ public class ArtifactNotificationService {
 
         final List<NameVersion> affectedProjectVersions = notification.getAffectedProjectVersions();
         final List<String> affectedRepoKeys = determineAffectedRepos(repoKeys, affectedProjectVersions);
+        try {
+            if (!affectedRepoKeys.isEmpty()) {
+                final List<RepoPath> artifactsWithOriginId = artifactSearchService.findArtifactsWithOriginId(notification.getComponentVersionOriginName(), notification.getComponentVersionOriginId(), repoKeys);
 
-        if (affectedRepoKeys.size() > 0) {
-            final List<RepoPath> artifactsWithOriginId = artifactSearchService.findArtifactsWithOriginId(notification.getComponentVersionOriginName(), notification.getComponentVersionOriginId(), repoKeys);
+                artifactsWithOriginId.stream()
+                    .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
+                    .forEach(affectedArtifacts::add);
 
-            artifactsWithOriginId.stream()
-                .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
-                .forEach(affectedArtifacts::add);
-
-            if (artifactsWithOriginId.isEmpty()) {
-                logger.error(String.format(
-                    "Failed to find artifact that matches notification content (%s:%s) in the affected repositories: %s. Defaulting to legacy search.",
-                    notification.getComponentVersionOriginName(),
-                    notification.getComponentVersionOriginId(),
-                    StringUtils.join(affectedRepoKeys, ',')
-                ));
-                affectedArtifacts = legacySearchForAffectedArtifacts(repoKeys, notification);
+                if (artifactsWithOriginId.isEmpty()) {
+                    throw new IntegrationException();
+                }
             }
+        } catch (final IntegrationException | UnsupportedOperationException e) {
+            logger.error(String.format(
+                "Failed to find artifact that matches notification content (%s:%s) in the affected repositories: %s. Defaulting to legacy search. Original error: %s",
+                notification.getComponentVersionOriginName(),
+                notification.getComponentVersionOriginId(),
+                StringUtils.join(affectedRepoKeys, ','),
+                e.getMessage()
+            ));
+            affectedArtifacts = legacySearchForAffectedArtifacts(repoKeys, notification);
         }
 
         return affectedArtifacts;

@@ -90,7 +90,7 @@ public class PolicySeverityService {
             } else {
                 logger.warn(String.format("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.", repoKey));
             }
-        } catch (final IntegrationException e) {
+        } catch (final IntegrationException | UnsupportedOperationException e) {
             logger.error(String.format("Failed to perform the policy severity upgrade for repo '%s'. The %s may not work as expected.", repoKey, PolicyModule.class.getSimpleName()), e);
         }
     }

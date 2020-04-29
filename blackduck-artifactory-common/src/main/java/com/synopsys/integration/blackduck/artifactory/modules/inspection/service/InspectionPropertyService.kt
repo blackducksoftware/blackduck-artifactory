@@ -59,7 +59,7 @@ class InspectionPropertyService(
                 && hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION)
     }
 
-    fun setExternalIdProperties(repoPath: RepoPath, forge: String, originId: String, componentName: String, componentVersionName: String) {
+    fun setExternalIdProperties(repoPath: RepoPath, forge: String?, originId: String?, componentName: String, componentVersionName: String) {
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, originId, logger)
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, forge, logger)
         setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION, COMPONENT_NAME_VERSION_FORMAT.format(componentName, componentVersionName), logger)
