@@ -203,14 +203,16 @@ public class ArtifactNotificationService {
         final List<String> affectedRepoKeys = determineAffectedRepos(repoKeys, affectedProjectVersions);
         try {
             if (!affectedRepoKeys.isEmpty()) {
-                final List<RepoPath> artifactsWithOriginId = artifactSearchService.findArtifactsWithOriginId(notification.getComponentVersionOriginName(), notification.getComponentVersionOriginId(), repoKeys);
+                final String originName = notification.getComponentVersionOriginName();
+                final String originId = notification.getComponentVersionOriginId();
+                final List<RepoPath> artifactsWithOriginId = artifactSearchService.findArtifactsWithOriginId(originName, originId, repoKeys);
 
                 artifactsWithOriginId.stream()
                     .map(repoPath -> new AffectedArtifact<>(repoPath, notification))
                     .forEach(affectedArtifacts::add);
 
                 if (artifactsWithOriginId.isEmpty()) {
-                    throw new IntegrationException();
+                    throw new IntegrationException(String.format("No artifacts found with origin id '%s:%s' for component '%s'. ", originName, originId, notification.getComponentVersionView()));
                 }
             }
         } catch (final IntegrationException | UnsupportedOperationException e) {
@@ -233,7 +235,7 @@ public class ArtifactNotificationService {
             final List<NameVersion> affectedProjectVersions = notification.getAffectedProjectVersions();
             final List<String> affectedRepoKeys = determineAffectedRepos(repoKeys, affectedProjectVersions);
 
-            if (affectedRepoKeys.size() > 0) {
+            if (!affectedRepoKeys.isEmpty()) {
                 final ComponentVersionView componentVersionView = notification.getComponentVersionView();
                 final int totalLimit = 550;
                 final List<OriginView> originViews = blackDuckService.getSomeResponses(componentVersionView, ComponentVersionView.ORIGINS_LINK_RESPONSE, totalLimit);

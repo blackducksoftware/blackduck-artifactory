@@ -117,7 +117,7 @@ open class ArtifactoryPropertyService(private val artifactoryPAPIService: Artifa
                 throw UnsupportedOperationException("Cannot convert SetMultimap to Map because multiple values were assigned to the same key.")
             }
 
-            if (values.isEmpty()) {
+            if (values.isEmpty() || values.first() == null) {
                 throw UnsupportedOperationException("Property key '$it' has no assigned value. This could cause Artifacts to not be updated properly. Property map: ${properties.asMap()}")
             } else {
                 propertyMap[it] = values.first()
