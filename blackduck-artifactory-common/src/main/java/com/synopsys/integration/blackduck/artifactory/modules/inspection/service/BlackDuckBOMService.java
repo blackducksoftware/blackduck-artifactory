@@ -64,11 +64,11 @@ public class BlackDuckBOMService {
     public ComponentViewWrapper addArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) throws FailedInspectionException {
         final RepoPath repoPath = artifact.getRepoPath();
         final ComponentViewWrapper componentViewWrapper;
+        final Optional<ExternalId> artifactExternalId = artifact.getExternalId();
 
-        if (artifact.getExternalId().isPresent()) {
-            final ExternalId externalId = artifact.getExternalId().get();
+        if (artifactExternalId.isPresent()) {
             try {
-                componentViewWrapper = addComponentToProjectVersion(repoPath, externalId, projectVersionView);
+                componentViewWrapper = addComponentToProjectVersion(repoPath, artifactExternalId.get(), projectVersionView);
             } catch (final BlackDuckIntegrationException e) {
                 logger.warn(String.format("Cannot find component match for artifact at %s.", repoPath.toPath()));
                 throw new FailedInspectionException(repoPath, "Failed to find component match.");

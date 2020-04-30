@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
@@ -185,7 +186,11 @@ public class ArtifactInspectionService {
     }
 
     private void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentViewWrapper componentViewWrapper) throws IntegrationException {
-        final Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getVersionBomComponentView().getOrigins().stream().findFirst();
+        // Black Duck can return origins with no forge or origin id. These must be filtered out.
+        final Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getVersionBomComponentView().getOrigins().stream()
+                                                                        .filter(it -> StringUtils.isNotBlank(it.getExternalNamespace()))
+                                                                        .filter(it -> StringUtils.isNotBlank(it.getExternalId()))
+                                                                        .findFirst();
 
         if (versionBomOriginView.isPresent()) {
             final ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
