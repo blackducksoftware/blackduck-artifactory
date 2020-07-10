@@ -1,0 +1,8 @@
+{
+  "variables": [
+    {
+      "name": "modelGradleTasks",
+      "value": ["createFinalZip"]
+    }
+  ]
+}
