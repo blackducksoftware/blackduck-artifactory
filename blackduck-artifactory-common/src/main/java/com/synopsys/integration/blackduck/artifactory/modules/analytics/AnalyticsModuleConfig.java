@@ -27,18 +27,18 @@ import com.synopsys.integration.blackduck.artifactory.configuration.model.Proper
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class AnalyticsModuleConfig extends ModuleConfig {
-    public AnalyticsModuleConfig(final Boolean enabled) {
+    public AnalyticsModuleConfig(Boolean enabled) {
         super(AnalyticsModule.class.getSimpleName(), enabled);
     }
 
-    public static AnalyticsModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
-        final Boolean enabled = configurationPropertyManager.getBooleanProperty(AnalyticsModuleProperty.ENABLED);
+    public static AnalyticsModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager) {
+        Boolean enabled = configurationPropertyManager.getBooleanProperty(AnalyticsModuleProperty.ENABLED);
 
         return new AnalyticsModuleConfig(enabled);
     }
 
     @Override
-    public void validate(final PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport) {
         validateBoolean(propertyGroupReport, AnalyticsModuleProperty.ENABLED, isEnabledUnverified());
     }
 }

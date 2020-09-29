@@ -29,7 +29,7 @@ public enum AnalyticsModuleProperty implements ConfigurationProperty {
 
     private final String key;
 
-    AnalyticsModuleProperty(final String key) {
+    AnalyticsModuleProperty(String key) {
         this.key = "blackduck.artifactory.analytics." + key;
     }
 

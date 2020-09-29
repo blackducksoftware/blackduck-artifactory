@@ -43,7 +43,7 @@ public class AnalyticsModule implements Module {
 
     private int submissionAttemptCounter = 0;
 
-    public AnalyticsModule(final AnalyticsModuleConfig analyticsModuleConfig, final AnalyticsService analyticsService, final SimpleAnalyticsCollector simpleAnalyticsCollector, final ModuleManager moduleManager) {
+    public AnalyticsModule(AnalyticsModuleConfig analyticsModuleConfig, AnalyticsService analyticsService, SimpleAnalyticsCollector simpleAnalyticsCollector, ModuleManager moduleManager) {
         this.analyticsModuleConfig = analyticsModuleConfig;
         this.analyticsService = analyticsService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
@@ -67,7 +67,7 @@ public class AnalyticsModule implements Module {
     public Boolean submitAnalytics() {
         moduleManager.getModuleConfigs().forEach(this::updateModuleStatus);
 
-        final boolean analyticsSuccess = analyticsService.submitAnalytics();
+        boolean analyticsSuccess = analyticsService.submitAnalytics();
         if (!analyticsSuccess) {
             submissionAttemptCounter++;
 
@@ -80,8 +80,8 @@ public class AnalyticsModule implements Module {
         return analyticsSuccess;
     }
 
-    private void updateModuleStatus(final ModuleConfig moduleConfig) {
-        final String key = String.format("modules.%s.enabled", moduleConfig.getModuleName());
+    private void updateModuleStatus(ModuleConfig moduleConfig) {
+        String key = String.format("modules.%s.enabled", moduleConfig.getModuleName());
         simpleAnalyticsCollector.putMetadata(key, moduleConfig.isEnabled());
     }
 

@@ -52,21 +52,21 @@ public class AnalyticsService {
 
     private final List<AnalyticsCollector> analyticsCollectors = new ArrayList<>();
 
-    public AnalyticsService(final DirectoryConfig directoryConfig, final BlackDuckServicesFactory blackDuckServicesFactory) {
+    public AnalyticsService(DirectoryConfig directoryConfig, BlackDuckServicesFactory blackDuckServicesFactory) {
         this.directoryConfig = directoryConfig;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
     }
 
-    public static AnalyticsService createFromBlackDuckServerConfig(final DirectoryConfig directoryConfig, final BlackDuckServerConfig blackDuckServerConfig) {
-        final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(AnalyticsService.class));
-        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+    public static AnalyticsService createFromBlackDuckServerConfig(DirectoryConfig directoryConfig, BlackDuckServerConfig blackDuckServerConfig) {
+        IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(AnalyticsService.class));
+        BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
 
         return new AnalyticsService(directoryConfig, blackDuckServicesFactory);
     }
 
-    public void registerAnalyzable(final Analyzable... analyzables) {
-        for (final Analyzable analyzable : analyzables) {
-            final List<AnalyticsCollector> analyticsCollector = analyzable.getAnalyticsCollectors();
+    public void registerAnalyzable(Analyzable... analyzables) {
+        for (Analyzable analyzable : analyzables) {
+            List<AnalyticsCollector> analyticsCollector = analyzable.getAnalyticsCollectors();
 
             if (analyticsCollector != null) {
                 this.analyticsCollectors.addAll(analyticsCollector);
@@ -80,13 +80,13 @@ public class AnalyticsService {
      */
     public Boolean submitAnalytics() {
         // Flatten the notifications maps from all of the collectors
-        final Map<String, String> metadataMap = analyticsCollectors.stream()
+        Map<String, String> metadataMap = analyticsCollectors.stream()
                                                     .map(AnalyticsCollector::getMetadataMap)
                                                     .map(Map::entrySet)
                                                     .flatMap(Collection::stream)
                                                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        final Boolean phoneHomeSuccess = phoneHome(metadataMap);
+        Boolean phoneHomeSuccess = phoneHome(metadataMap);
         if (phoneHomeSuccess) {
             analyticsCollectors.forEach(AnalyticsCollector::clear);
         }
@@ -94,10 +94,10 @@ public class AnalyticsService {
         return phoneHomeSuccess;
     }
 
-    private Boolean phoneHome(final Map<String, String> metadataMap) {
+    private Boolean phoneHome(Map<String, String> metadataMap) {
         try {
             String pluginVersion = "UNKNOWN_VERSION";
-            final File versionFile = directoryConfig.getVersionFile();
+            File versionFile = directoryConfig.getVersionFile();
             if (versionFile != null) {
                 pluginVersion = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
             }
@@ -107,13 +107,13 @@ public class AnalyticsService {
                 thirdPartyVersion = "UNKNOWN_VERSION";
             }
 
-            final Map<String, String> metadata = new HashMap<>(metadataMap);
+            Map<String, String> metadata = new HashMap<>(metadataMap);
             metadata.put("third.party.version", thirdPartyVersion);
-            final BlackDuckPhoneHomeHelper phoneHomeHelper = BlackDuckPhoneHomeHelper.createAsynchronousPhoneHomeHelper(blackDuckServicesFactory, new NoThreadExecutorService());
-            final PhoneHomeResponse phoneHomeResponse = phoneHomeHelper.handlePhoneHome("blackduck-artifactory", pluginVersion, metadata);
+            BlackDuckPhoneHomeHelper phoneHomeHelper = BlackDuckPhoneHomeHelper.createAsynchronousPhoneHomeHelper(blackDuckServicesFactory, new NoThreadExecutorService());
+            PhoneHomeResponse phoneHomeResponse = phoneHomeHelper.handlePhoneHome("blackduck-artifactory", pluginVersion, metadata);
 
             return phoneHomeResponse.getImmediateResult();
-        } catch (final Exception ignored) {
+        } catch (Exception ignored) {
             // Phone home is not a critical operation
             return Boolean.FALSE;
         }

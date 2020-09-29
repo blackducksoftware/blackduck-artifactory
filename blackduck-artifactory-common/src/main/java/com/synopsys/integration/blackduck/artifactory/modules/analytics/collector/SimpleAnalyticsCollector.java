@@ -28,7 +28,7 @@ import java.util.Map;
 public class SimpleAnalyticsCollector extends AnalyticsCollector {
     private final Map<String, String> metadataMap = new HashMap<>();
 
-    public Object putMetadata(final String key, final Object value) {
+    public Object putMetadata(String key, Object value) {
         return metadataMap.put(key, value.toString());
     }
 

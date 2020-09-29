@@ -32,20 +32,20 @@ public class FeatureAnalyticsCollector extends AnalyticsCollector {
     private final Class analyzableClass;
     private final Map<String, Integer> statisticCounter = new HashMap<>();
 
-    public FeatureAnalyticsCollector(final Class analyzableClass) {
+    public FeatureAnalyticsCollector(Class analyzableClass) {
         this.analyzableClass = analyzableClass;
     }
 
-    public void logFeatureHit(final String className, final String featureName, final Object value) {
+    public void logFeatureHit(String className, String featureName, Object value) {
         logFeatureHit(className, featureName, value.toString());
     }
 
-    public void logFeatureHit(final String featureName, final String value) {
+    public void logFeatureHit(String featureName, String value) {
         logFeatureHit(analyzableClass.getSimpleName(), featureName, value);
     }
 
-    public void logFeatureHit(final String className, final String featureName, final String value) {
-        final String statisticName = String.format("feature:%s.%s:%s", className, featureName, value);
+    public void logFeatureHit(String className, String featureName, String value) {
+        String statisticName = String.format("feature:%s.%s:%s", className, featureName, value);
         incrementStatistic(statisticName);
     }
 
@@ -59,10 +59,10 @@ public class FeatureAnalyticsCollector extends AnalyticsCollector {
         statisticCounter.clear();
     }
 
-    private void incrementStatistic(final String statisticName) {
+    private void incrementStatistic(String statisticName) {
         int count = 1;
         if (statisticCounter.containsKey(statisticName)) {
-            final int currentCount = statisticCounter.get(statisticName);
+            int currentCount = statisticCounter.get(statisticName);
             if (currentCount < Integer.MAX_VALUE - 2) {
                 count = currentCount + 1;
             }
