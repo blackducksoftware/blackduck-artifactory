@@ -44,13 +44,13 @@ public class PolicyModule implements Module {
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final FeatureAnalyticsCollector featureAnalyticsCollector;
 
-    public PolicyModule(final PolicyModuleConfig policyModuleConfig, final ArtifactoryPropertyService artifactoryPropertyService, final FeatureAnalyticsCollector featureAnalyticsCollector) {
+    public PolicyModule(PolicyModuleConfig policyModuleConfig, ArtifactoryPropertyService artifactoryPropertyService, FeatureAnalyticsCollector featureAnalyticsCollector) {
         this.policyModuleConfig = policyModuleConfig;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.featureAnalyticsCollector = featureAnalyticsCollector;
     }
 
-    public void handleBeforeDownloadEvent(final RepoPath repoPath) {
+    public void handleBeforeDownloadEvent(RepoPath repoPath) {
         String reason = null;
         final boolean shouldBlock = false;
         if (shouldCancelOnPolicyViolation(repoPath)) {
@@ -74,7 +74,7 @@ public class PolicyModule implements Module {
         return policyModuleConfig;
     }
 
-    private boolean shouldCancelOnPolicyViolation(final RepoPath repoPath) {
+    private boolean shouldCancelOnPolicyViolation(RepoPath repoPath) {
         if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)) {
             // TODO: Fix in 8.0.0
             // Currently scanned artifacts are not supported because POLICY_STATUS and OVERALL_POLICY_STATUS is used in scans and there is overlap
@@ -83,15 +83,15 @@ public class PolicyModule implements Module {
             return false;
         }
 
-        final Optional<PolicySummaryStatusType> inViolationProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS)
+        Optional<PolicySummaryStatusType> inViolationProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS)
                                                                           .map(PolicySummaryStatusType::valueOf)
                                                                           .filter(it -> it.equals(PolicySummaryStatusType.IN_VIOLATION));
 
         if (inViolationProperty.isPresent()) {
-            final Optional<String> severityTypes = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES);
+            Optional<String> severityTypes = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES);
             if (severityTypes.isPresent()) {
-                final List<PolicySeverityType> severityTypesToBlock = policyModuleConfig.getPolicySeverityTypes();
-                final List<PolicySeverityType> matchingSeverityTypes = Arrays.stream(severityTypes.get().split(","))
+                List<PolicySeverityType> severityTypesToBlock = policyModuleConfig.getPolicySeverityTypes();
+                List<PolicySeverityType> matchingSeverityTypes = Arrays.stream(severityTypes.get().split(","))
                                                                            .map(PolicySeverityType::valueOf)
                                                                            .filter(severityTypesToBlock::contains)
                                                                            .collect(Collectors.toList());

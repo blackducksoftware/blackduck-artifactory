@@ -30,7 +30,7 @@ public enum PolicyModuleProperty implements ConfigurationProperty {
 
     private final String key;
 
-    PolicyModuleProperty(final String key) {
+    PolicyModuleProperty(String key) {
         this.key = "blackduck.artifactory.policy." + key;
     }
 

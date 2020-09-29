@@ -33,14 +33,14 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 public class PolicyModuleConfig extends ModuleConfig {
     private final List<PolicySeverityType> policySeverityTypes;
 
-    public PolicyModuleConfig(final Boolean enabled, final List<PolicySeverityType> policySeverityTypes) {
+    public PolicyModuleConfig(Boolean enabled, List<PolicySeverityType> policySeverityTypes) {
         super(PolicyModule.class.getSimpleName(), enabled);
         this.policySeverityTypes = policySeverityTypes;
     }
 
-    public static PolicyModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager) {
-        final Boolean enabled = configurationPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
-        final List<PolicySeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(PolicyModuleProperty.SEVERITY_TYPES).stream()
+    public static PolicyModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager) {
+        Boolean enabled = configurationPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
+        List<PolicySeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(PolicyModuleProperty.SEVERITY_TYPES).stream()
                                                                  .map(PolicySeverityType::valueOf)
                                                                  .collect(Collectors.toList());
 
@@ -48,7 +48,7 @@ public class PolicyModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(final PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport) {
         validateBoolean(propertyGroupReport, PolicyModuleProperty.ENABLED, isEnabledUnverified());
         validateList(propertyGroupReport, PolicyModuleProperty.SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
     }
