@@ -31,7 +31,7 @@ public abstract class ModuleConfig extends ConfigurationValidator {
     private final Boolean enabledProperty;
     private boolean enabled;
 
-    public ModuleConfig(final String moduleName, final Boolean enabled) {
+    public ModuleConfig(String moduleName, Boolean enabled) {
         this.moduleName = moduleName;
         this.enabledProperty = enabled;
         this.enabled = BooleanUtils.toBoolean(enabledProperty);
@@ -52,7 +52,7 @@ public abstract class ModuleConfig extends ConfigurationValidator {
         return enabledProperty;
     }
 
-    public void setEnabled(final boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 }

@@ -68,9 +68,9 @@ public class PluginAPI implements Analyzable {
     private final PolicyModuleConfig policyModuleConfig;
     private final AnalyticsModuleConfig analyticsModuleConfig;
 
-    public PluginAPI(final FeatureAnalyticsCollector featureAnalyticsCollector, final ModuleManager moduleManager, final ScanModule scanModule, final InspectionModule inspectionModule,
-        final PolicyModule policyModule,
-        final AnalyticsModule analyticsModule, final ScanModuleConfig scanModuleConfig, final InspectionModuleConfig inspectionModuleConfig, final PolicyModuleConfig policyModuleConfig, final AnalyticsModuleConfig analyticsModuleConfig) {
+    public PluginAPI(FeatureAnalyticsCollector featureAnalyticsCollector, ModuleManager moduleManager, ScanModule scanModule, InspectionModule inspectionModule,
+        PolicyModule policyModule,
+        AnalyticsModule analyticsModule, ScanModuleConfig scanModuleConfig, InspectionModuleConfig inspectionModuleConfig, PolicyModuleConfig policyModuleConfig, AnalyticsModuleConfig analyticsModuleConfig) {
         this.featureAnalyticsCollector = featureAnalyticsCollector;
         this.moduleManager = moduleManager;
         this.scanModule = scanModule;
@@ -83,18 +83,18 @@ public class PluginAPI implements Analyzable {
         this.analyticsModuleConfig = analyticsModuleConfig;
     }
 
-    public static PluginAPI createFromModules(final ModuleManager moduleManager, final FeatureAnalyticsCollector featureAnalyticsCollector, final ScanModule scanModule, final InspectionModule inspectionModule,
-        final PolicyModule policyModule,
-        final AnalyticsModule analyticsModule) {
-        final ScanModuleConfig scanModuleConfig = scanModule.getModuleConfig();
-        final InspectionModuleConfig inspectionModuleConfig = inspectionModule.getModuleConfig();
-        final PolicyModuleConfig policyModuleConfig = policyModule.getModuleConfig();
-        final AnalyticsModuleConfig analyticsModuleConfig = analyticsModule.getModuleConfig();
+    public static PluginAPI createFromModules(ModuleManager moduleManager, FeatureAnalyticsCollector featureAnalyticsCollector, ScanModule scanModule, InspectionModule inspectionModule,
+        PolicyModule policyModule,
+        AnalyticsModule analyticsModule) {
+        ScanModuleConfig scanModuleConfig = scanModule.getModuleConfig();
+        InspectionModuleConfig inspectionModuleConfig = inspectionModule.getModuleConfig();
+        PolicyModuleConfig policyModuleConfig = policyModule.getModuleConfig();
+        AnalyticsModuleConfig analyticsModuleConfig = analyticsModule.getModuleConfig();
 
         return new PluginAPI(featureAnalyticsCollector, moduleManager, scanModule, inspectionModule, policyModule, analyticsModule, scanModuleConfig, inspectionModuleConfig, policyModuleConfig, analyticsModuleConfig);
     }
 
-    public void setModuleState(final TriggerType triggerType, final Map<String, List<String>> params) {
+    public void setModuleState(TriggerType triggerType, Map<String, List<String>> params) {
         final String functionName = "setModuleState";
         LogUtil.start(logger, functionName, triggerType);
         moduleManager.setModulesState(params);
@@ -102,27 +102,27 @@ public class PluginAPI implements Analyzable {
         LogUtil.finish(logger, functionName, triggerType);
     }
 
-    public void triggerScan(final TriggerType triggerType) {
+    public void triggerScan(TriggerType triggerType) {
         runMethod(scanModuleConfig, triggerType, scanModule::triggerScan);
     }
 
-    public void addScanPolicyStatus(final TriggerType triggerType) {
+    public void addScanPolicyStatus(TriggerType triggerType) {
         runMethod(scanModuleConfig, triggerType, scanModule::addPolicyStatus);
     }
 
-    public void performPostScanActions(final TriggerType triggerType) {
+    public void performPostScanActions(TriggerType triggerType) {
         runMethod(scanModuleConfig, triggerType, scanModule::performPostScanActions);
     }
 
-    public void deleteScanProperties(final TriggerType triggerType, final Map<String, List<String>> params) {
+    public void deleteScanProperties(TriggerType triggerType, Map<String, List<String>> params) {
         runMethod(scanModuleConfig, triggerType, () -> scanModule.deleteScanProperties(params));
     }
 
-    public void deleteScanPropertiesFromFailures(final TriggerType triggerType, final Map<String, List<String>> params) {
+    public void deleteScanPropertiesFromFailures(TriggerType triggerType, Map<String, List<String>> params) {
         runMethod(scanModuleConfig, triggerType, () -> scanModule.deleteScanPropertiesFromFailures(params));
     }
 
-    public void deleteScanPropertiesFromOutOfDate(final TriggerType triggerType, final Map<String, List<String>> params) {
+    public void deleteScanPropertiesFromOutOfDate(TriggerType triggerType, Map<String, List<String>> params) {
         runMethod(scanModuleConfig, triggerType, () -> scanModule.deleteScanPropertiesFromOutOfDate(params));
     }
 
@@ -130,47 +130,47 @@ public class PluginAPI implements Analyzable {
         return scanModuleConfig.getCron();
     }
 
-    public void handleAfterCreateEvent(final ItemInfo itemInfo, final TriggerType triggerType) {
+    public void handleAfterCreateEvent(ItemInfo itemInfo, TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, itemInfo, inspectionModule::handleAfterCreateEvent);
     }
 
-    public void handleAfterCopyEvent(final RepoPath targetRepoPath, final TriggerType triggerType) {
+    public void handleAfterCopyEvent(RepoPath targetRepoPath, TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterCopyEvent);
     }
 
-    public void handleAfterMoveEvent(final RepoPath targetRepoPath, final TriggerType triggerType) {
+    public void handleAfterMoveEvent(RepoPath targetRepoPath, TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, targetRepoPath, inspectionModule::handleAfterMoveEvent);
     }
 
-    public void inspectAllUnknownArtifacts(final TriggerType triggerType) {
+    public void inspectAllUnknownArtifacts(TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::inspectAllUnknownArtifacts);
     }
 
-    public void updateMetadata(final TriggerType triggerType) {
+    public void updateMetadata(TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::updateMetadata);
     }
 
-    public void deleteInspectionProperties(final TriggerType triggerType, final Map<String, List<String>> params) {
+    public void deleteInspectionProperties(TriggerType triggerType, Map<String, List<String>> params) {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.deleteInspectionProperties(params));
     }
 
-    public void deleteInspectionPropertiesFromOutOfDate(final TriggerType triggerType, final Map<String, List<String>> params) {
+    public void deleteInspectionPropertiesFromOutOfDate(TriggerType triggerType, Map<String, List<String>> params) {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.deleteInspectionPropertiesFromOutOfDate(params));
     }
 
-    public void reinspectFromFailures(final TriggerType triggerType) {
+    public void reinspectFromFailures(TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, (Runnable) inspectionModule::reinspectFromFailures);
     }
 
-    public void reinspectFromFailures(final TriggerType triggerType, final Map<String, List<String>> params) {
+    public void reinspectFromFailures(TriggerType triggerType, Map<String, List<String>> params) {
         runMethod(inspectionModuleConfig, triggerType, () -> inspectionModule.reinspectFromFailures(params));
     }
 
-    public void performPolicySeverityUpdate(final TriggerType triggerType) {
+    public void performPolicySeverityUpdate(TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::performPolicySeverityUpdate);
     }
 
-    public void initializeRepositories(final TriggerType triggerType) {
+    public void initializeRepositories(TriggerType triggerType) {
         runMethod(inspectionModuleConfig, triggerType, inspectionModule::initializeRepositories);
     }
 
@@ -182,16 +182,16 @@ public class PluginAPI implements Analyzable {
         return inspectionModuleConfig.getReinspectCron();
     }
 
-    public void handleBeforeDownloadEventInspection(final TriggerType triggerType, final RepoPath repoPath) {
+    public void handleBeforeDownloadEventInspection(TriggerType triggerType, RepoPath repoPath) {
         runMethod(inspectionModuleConfig, triggerType, repoPath, inspectionModule::handleBeforeDownloadEvent);
     }
 
-    public void handleBeforeDownloadEventPolicy(final TriggerType triggerType, final RepoPath repoPath) {
+    public void handleBeforeDownloadEventPolicy(TriggerType triggerType, RepoPath repoPath) {
         runMethod(policyModuleConfig, triggerType, repoPath, policyModule::handleBeforeDownloadEvent);
     }
 
-    public String submitAnalytics(final TriggerType triggerType) {
-        final Boolean success = runMethod(analyticsModuleConfig, triggerType, analyticsModule::submitAnalytics);
+    public String submitAnalytics(TriggerType triggerType) {
+        Boolean success = runMethod(analyticsModuleConfig, triggerType, analyticsModule::submitAnalytics);
         return success == null ? "AnalyticsModule disabled" : success.toString();
     }
 
@@ -199,21 +199,21 @@ public class PluginAPI implements Analyzable {
      * Below are utility methods to help reuse the code for logging and analytics
      */
 
-    private <T> void runMethod(final ModuleConfig moduleConfig, final TriggerType triggerType, final T consumable, final Consumer<T> consumer) {
+    private <T> void runMethod(ModuleConfig moduleConfig, TriggerType triggerType, T consumable, Consumer<T> consumer) {
         if (startMethodRun(moduleConfig, triggerType)) {
             consumer.accept(consumable);
             finishMethodRun(moduleConfig, triggerType, triggerType);
         }
     }
 
-    private void runMethod(final ModuleConfig moduleConfig, final TriggerType triggerType, final Runnable runnable) {
+    private void runMethod(ModuleConfig moduleConfig, TriggerType triggerType, Runnable runnable) {
         if (startMethodRun(moduleConfig, triggerType)) {
             runnable.run();
             finishMethodRun(moduleConfig, triggerType, triggerType);
         }
     }
 
-    private <T> T runMethod(final ModuleConfig moduleConfig, final TriggerType triggerType, final Supplier<T> supplier) {
+    private <T> T runMethod(ModuleConfig moduleConfig, TriggerType triggerType, Supplier<T> supplier) {
         T result = null;
 
         if (startMethodRun(moduleConfig, triggerType)) {
@@ -224,8 +224,8 @@ public class PluginAPI implements Analyzable {
         return result;
     }
 
-    private boolean startMethodRun(final ModuleConfig moduleConfig, final TriggerType triggerType) {
-        final String methodName = getMethodName();
+    private boolean startMethodRun(ModuleConfig moduleConfig, TriggerType triggerType) {
+        String methodName = getMethodName();
         if (moduleConfig.isEnabled()) {
             LogUtil.start(logger, methodName, triggerType);
         } else if (triggerType.equals(TriggerType.REST_REQUEST)) {
@@ -237,15 +237,15 @@ public class PluginAPI implements Analyzable {
         return moduleConfig.isEnabled();
     }
 
-    private void finishMethodRun(final ModuleConfig moduleConfig, final TriggerType triggerType, final Object result) {
-        final String methodName = getMethodName();
+    private void finishMethodRun(ModuleConfig moduleConfig, TriggerType triggerType, Object result) {
+        String methodName = getMethodName();
         featureAnalyticsCollector.logFeatureHit(moduleConfig.getModuleName(), methodName, result);
         LogUtil.finish(logger, methodName, triggerType);
     }
 
     private String getMethodName() {
         final int methodDepth = 4;
-        final StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
         final String result = "UnknownMethod";
 
         if (stackTraceElements.length - methodDepth > 0) {

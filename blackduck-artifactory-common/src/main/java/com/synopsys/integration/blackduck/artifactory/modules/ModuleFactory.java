@@ -79,8 +79,8 @@ public class ModuleFactory {
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final Gson gson;
 
-    public ModuleFactory(final ConfigurationPropertyManager configurationPropertyManager, final BlackDuckServerConfig blackDuckServerConfig, final ArtifactoryPAPIService artifactoryPAPIService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactSearchService artifactSearchService, final DateTimeManager dateTimeManager, final BlackDuckServicesFactory blackDuckServicesFactory, final Gson gson) {
+    public ModuleFactory(ConfigurationPropertyManager configurationPropertyManager, BlackDuckServerConfig blackDuckServerConfig, ArtifactoryPAPIService artifactoryPAPIService, ArtifactoryPropertyService artifactoryPropertyService,
+        ArtifactSearchService artifactSearchService, DateTimeManager dateTimeManager, BlackDuckServicesFactory blackDuckServicesFactory, Gson gson) {
         this.configurationPropertyManager = configurationPropertyManager;
         this.blackDuckServerConfig = blackDuckServerConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -91,63 +91,63 @@ public class ModuleFactory {
         this.gson = gson;
     }
 
-    public ScanModule createScanModule(final File blackDuckDirectory) throws IOException, IntegrationException {
-        final File cliDirectory = ScanModule.setUpCliDuckDirectory(blackDuckDirectory);
-        final ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
-        final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
-        final ProjectService projectService = blackDuckServicesFactory.createProjectService();
+    public ScanModule createScanModule(File blackDuckDirectory) throws IOException, IntegrationException {
+        File cliDirectory = ScanModule.setUpCliDuckDirectory(blackDuckDirectory);
+        ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
+        SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
+        ProjectService projectService = blackDuckServicesFactory.createProjectService();
 
-        final RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
-        final ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService
+        RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
+        ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService
         );
-        final ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckServerConfig, artifactoryPropertyService);
-        final PostScanActionsService postScanActionsService = new PostScanActionsService(artifactoryPropertyService, projectService);
+        ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckServerConfig, artifactoryPropertyService);
+        PostScanActionsService postScanActionsService = new PostScanActionsService(artifactoryPropertyService, projectService);
 
         return new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPropertyService, artifactoryPAPIService, simpleAnalyticsCollector, scanPolicyService, postScanActionsService);
     }
 
     public InspectionModule createInspectionModule() throws IOException {
-        final InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
-        final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
+        InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
+        SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
-        final BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
-        final ComponentService componentService = blackDuckServicesFactory.createComponentService();
-        final ProjectService projectService = blackDuckServicesFactory.createProjectService();
-        final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
-        final NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
-        final ExternalIdFactory externalIdFactory = new ExternalIdFactory();
-        final PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
+        BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+        ComponentService componentService = blackDuckServicesFactory.createComponentService();
+        ProjectService projectService = blackDuckServicesFactory.createProjectService();
+        ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
+        NotificationService notificationService = blackDuckServicesFactory.createNotificationService();
+        ExternalIdFactory externalIdFactory = new ExternalIdFactory();
+        PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
 
-        final InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
-        final NotificationProcessingService notificationProcessingService = new NotificationProcessingService(blackDuckService);
+        InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
+        NotificationProcessingService notificationProcessingService = new NotificationProcessingService(blackDuckService);
 
-        final ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessingService, blackDuckService, projectService, notificationService, artifactSearchService, inspectionPropertyService);
-        final BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService);
+        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessingService, blackDuckService, projectService, notificationService, artifactSearchService, inspectionPropertyService);
+        BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService);
 
-        final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
-        final ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
-        final CondaExternalIdExtractor condaExternalIdExtractor = new CondaExternalIdExtractor(externalIdFactory);
-        final ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor, condaExternalIdExtractor);
-        final ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, inspectionModuleConfig, inspectionPropertyService, projectService, componentService,
+        ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
+        ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
+        CondaExternalIdExtractor condaExternalIdExtractor = new CondaExternalIdExtractor(externalIdFactory);
+        ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor, condaExternalIdExtractor);
+        ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, inspectionModuleConfig, inspectionPropertyService, projectService, componentService,
             externalIdService, blackDuckService);
-        final MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
-        final RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
-        final PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckService, blackDuckBOMService, projectService);
+        MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
+        RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
+        PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckService, blackDuckBOMService, projectService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
             simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, policySeverityService);
     }
 
     public PolicyModule createPolicyModule() {
-        final PolicyModuleConfig policyModuleConfig = PolicyModuleConfig.createFromProperties(configurationPropertyManager);
-        final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PolicyModule.class);
+        PolicyModuleConfig policyModuleConfig = PolicyModuleConfig.createFromProperties(configurationPropertyManager);
+        FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PolicyModule.class);
 
         return new PolicyModule(policyModuleConfig, artifactoryPropertyService, featureAnalyticsCollector);
     }
 
-    public AnalyticsModule createAnalyticsModule(final AnalyticsService analyticsService, final ModuleManager moduleManager) {
-        final AnalyticsModuleConfig analyticsModuleConfig = AnalyticsModuleConfig.createFromProperties(configurationPropertyManager);
-        final SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
+    public AnalyticsModule createAnalyticsModule(AnalyticsService analyticsService, ModuleManager moduleManager) {
+        AnalyticsModuleConfig analyticsModuleConfig = AnalyticsModuleConfig.createFromProperties(configurationPropertyManager);
+        SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
         return new AnalyticsModule(analyticsModuleConfig, analyticsService, simpleAnalyticsCollector, moduleManager);
     }

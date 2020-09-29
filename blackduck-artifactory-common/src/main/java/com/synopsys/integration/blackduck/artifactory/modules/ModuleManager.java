@@ -44,17 +44,17 @@ public class ModuleManager {
 
     private final AnalyticsService analyticsService;
 
-    public ModuleManager(final AnalyticsService analyticsService) {
+    public ModuleManager(AnalyticsService analyticsService) {
         this.analyticsService = analyticsService;
     }
 
-    public void setModulesState(final Map<String, List<String>> params) {
-        for (final Map.Entry<String, List<String>> entry : params.entrySet()) {
+    public void setModulesState(Map<String, List<String>> params) {
+        for (Map.Entry<String, List<String>> entry : params.entrySet()) {
             if (!entry.getValue().isEmpty()) {
-                final String moduleStateRaw = entry.getValue().get(0);
-                final boolean moduleState = BooleanUtils.toBoolean(moduleStateRaw);
-                final String moduleName = entry.getKey();
-                final List<ModuleConfig> moduleConfigs = getModuleConfigsByName(moduleName);
+                String moduleStateRaw = entry.getValue().get(0);
+                boolean moduleState = BooleanUtils.toBoolean(moduleStateRaw);
+                String moduleName = entry.getKey();
+                List<ModuleConfig> moduleConfigs = getModuleConfigsByName(moduleName);
 
                 if (moduleConfigs.isEmpty()) {
                     logger.warn(String.format("No registered modules with the name '%s' found. Hit the blackDuckTestConfig endpoint to see why.", moduleName));
@@ -68,10 +68,10 @@ public class ModuleManager {
         }
     }
 
-    private void registerModule(final Module module) {
-        final ModuleConfig moduleConfig = module.getModuleConfig();
-        final BuilderStatus builderStatus = new BuilderStatus();
-        final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), builderStatus);
+    private void registerModule(Module module) {
+        ModuleConfig moduleConfig = module.getModuleConfig();
+        BuilderStatus builderStatus = new BuilderStatus();
+        PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), builderStatus);
         moduleConfig.validate(propertyGroupReport);
 
         allModules.add(module);
@@ -85,8 +85,8 @@ public class ModuleManager {
         }
     }
 
-    public void registerModules(final Module... modules) {
-        for (final Module module : modules) {
+    public void registerModules(Module... modules) {
+        for (Module module : modules) {
             registerModule(module);
         }
     }
@@ -109,17 +109,17 @@ public class ModuleManager {
                    .collect(Collectors.toList());
     }
 
-    public List<ModuleConfig> getModuleConfigsByName(final String moduleName) {
+    public List<ModuleConfig> getModuleConfigsByName(String moduleName) {
         return getModuleConfigs().stream()
                    .filter(moduleConfig -> moduleConfig.getModuleName().equalsIgnoreCase(moduleName))
                    .collect(Collectors.toList());
     }
 
-    public Optional<ModuleConfig> getFirstModuleConfigByName(final String moduleName) {
+    public Optional<ModuleConfig> getFirstModuleConfigByName(String moduleName) {
         return getModuleConfigsByName(moduleName).stream().findAny();
     }
 
-    public void setAllModulesEnabledState(final boolean isModuleEnabled) {
+    public void setAllModulesEnabledState(boolean isModuleEnabled) {
         getAllModuleConfigs().forEach(moduleConfig -> moduleConfig.setEnabled(isModuleEnabled));
     }
 }
