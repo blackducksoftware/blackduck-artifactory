@@ -51,7 +51,7 @@ public enum BlackDuckArtifactoryProperty {
     private final String propertyName;
     private final String timeName;
 
-    BlackDuckArtifactoryProperty(final String suffix) {
+    BlackDuckArtifactoryProperty(String suffix) {
         propertyName = "blackduck." + suffix;
         timeName = propertyName + ".converted";
     }

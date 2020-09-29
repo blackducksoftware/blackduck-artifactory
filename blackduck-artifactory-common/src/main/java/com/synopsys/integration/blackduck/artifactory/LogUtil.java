@@ -29,7 +29,7 @@ public class LogUtil {
         throw new IllegalStateException("Utility class.");
     }
 
-    public static void start(final IntLogger logger, final String functionName, final TriggerType triggerType) {
+    public static void start(IntLogger logger, String functionName, TriggerType triggerType) {
         if (triggerType.equals(TriggerType.STARTUP)) {
             logger.info(String.format("Starting %s for %s...", functionName, triggerType.getLogName()));
         } else {
@@ -37,7 +37,7 @@ public class LogUtil {
         }
     }
 
-    public static void finish(final IntLogger logger, final String functionName, final TriggerType triggerType) {
+    public static void finish(IntLogger logger, String functionName, TriggerType triggerType) {
         logger.info(String.format("...completed %s %s.", functionName, triggerType.getLogName()));
     }
 }

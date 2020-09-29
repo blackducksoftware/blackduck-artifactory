@@ -35,27 +35,27 @@ public class ArtifactSearchService {
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
 
-    public ArtifactSearchService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactoryPropertyService artifactoryPropertyService) {
+    public ArtifactSearchService(ArtifactoryPAPIService artifactoryPAPIService, ArtifactoryPropertyService artifactoryPropertyService) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactoryPropertyService = artifactoryPropertyService;
     }
 
-    public List<RepoPath> findArtifactsWithOriginId(final String forge, final String originId, final List<String> repoKeys) {
-        final SetMultimap<String, String> setMultimap = HashMultimap.create();
+    public List<RepoPath> findArtifactsWithOriginId(String forge, String originId, List<String> repoKeys) {
+        SetMultimap<String, String> setMultimap = HashMultimap.create();
         setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), forge);
         setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getPropertyName(), originId);
 
         return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys.toArray(new String[0]));
     }
 
-    public List<RepoPath> findArtifactsWithComponentNameVersion(final String componentName, final String componentVersionName, final List<String> repoKeys) {
-        final SetMultimap<String, String> setMultimap = HashMultimap.create();
+    public List<RepoPath> findArtifactsWithComponentNameVersion(String componentName, String componentVersionName, List<String> repoKeys) {
+        SetMultimap<String, String> setMultimap = HashMultimap.create();
         setMultimap.put(BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.getPropertyName(), String.format(InspectionPropertyService.COMPONENT_NAME_VERSION_FORMAT, componentName, componentVersionName));
 
         return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys.toArray(new String[0]));
     }
 
-    public List<RepoPath> findArtifactByName(final String artifactName, final String... repoKeys) {
+    public List<RepoPath> findArtifactByName(String artifactName, String... repoKeys) {
         return artifactoryPAPIService.itemsByName(artifactName, repoKeys);
     }
 }

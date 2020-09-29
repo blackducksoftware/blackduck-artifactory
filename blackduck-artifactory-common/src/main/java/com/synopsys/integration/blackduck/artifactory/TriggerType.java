@@ -33,7 +33,7 @@ public enum TriggerType {
 
     final String logName;
 
-    TriggerType(final String logName) {
+    TriggerType(String logName) {
         this.logName = logName;
     }
 

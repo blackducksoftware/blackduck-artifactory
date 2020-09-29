@@ -33,11 +33,11 @@ public class PluginRepoPathFactory {
         this(true);
     }
 
-    public PluginRepoPathFactory(final boolean useArtifactory) {
+    public PluginRepoPathFactory(boolean useArtifactory) {
         this.useArtifactory = useArtifactory;
     }
 
-    public RepoPath create(final String repoPath) {
+    public RepoPath create(String repoPath) {
         if (useArtifactory) {
             return RepoPathFactory.create(repoPath);
         } else {
@@ -46,9 +46,9 @@ public class PluginRepoPathFactory {
                 throw new IllegalArgumentException("Path cannot be empty.");
             }
             rpp = PathUtils.trimLeadingSlashes(PathUtils.formatPath(rpp));
-            final int idx = rpp.indexOf('/');
-            final String repoKey;
-            final String path;
+            int idx = rpp.indexOf('/');
+            String repoKey;
+            String path;
             if (idx < 0) {
                 //Just a repo name with no rel path
                 repoKey = rpp;
@@ -61,7 +61,7 @@ public class PluginRepoPathFactory {
         }
     }
 
-    public RepoPath create(final String repoKey, final String path) {
+    public RepoPath create(String repoKey, String path) {
         if (useArtifactory) {
             return RepoPathFactory.create(repoKey, path);
         } else {

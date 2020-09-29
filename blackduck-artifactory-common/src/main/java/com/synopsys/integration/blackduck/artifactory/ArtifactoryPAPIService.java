@@ -50,32 +50,32 @@ public class ArtifactoryPAPIService {
     private final Repositories repositories;
     private final Searches searches;
 
-    public ArtifactoryPAPIService(final PluginRepoPathFactory pluginRepoPathFactory, final Repositories repositories, final Searches searches) {
+    public ArtifactoryPAPIService(PluginRepoPathFactory pluginRepoPathFactory, Repositories repositories, Searches searches) {
         this.pluginRepoPathFactory = pluginRepoPathFactory;
         this.repositories = repositories;
         this.searches = searches;
     }
 
-    public Optional<String> getPackageType(final String repoKey) {
+    public Optional<String> getPackageType(String repoKey) {
         return getRepositoryConfiguration(repoKey)
                    .map(RepositoryConfiguration::getPackageType);
     }
 
-    public long getArtifactCount(final List<String> repoKeys) {
+    public long getArtifactCount(List<String> repoKeys) {
         return repoKeys.stream()
                    .map(pluginRepoPathFactory::create)
                    .mapToLong(repositories::getArtifactsCount)
                    .sum();
     }
 
-    public boolean isValidRepository(final String repoKey) {
+    public boolean isValidRepository(String repoKey) {
         if (StringUtils.isBlank(repoKey)) {
             logger.warn("A blank repo key is invalid");
             return false;
         }
 
-        final RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
-        final boolean isValid = repositories.exists(repoPath) && getRepositoryConfiguration(repoKey).isPresent();
+        RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
+        boolean isValid = repositories.exists(repoPath) && getRepositoryConfiguration(repoKey).isPresent();
 
         if (!isValid) {
             logger.warn(String.format("Repository '%s' was not found or is not a valid repository.", repoKey));
@@ -84,11 +84,11 @@ public class ArtifactoryPAPIService {
         return isValid;
     }
 
-    public List<RepoPath> searchForArtifactsByPatterns(final String repoKey, final List<String> patterns) {
-        final List<RepoPath> repoPaths = new ArrayList<>();
+    public List<RepoPath> searchForArtifactsByPatterns(String repoKey, List<String> patterns) {
+        List<RepoPath> repoPaths = new ArrayList<>();
 
-        for (final String pattern : patterns) {
-            final List<RepoPath> foundRepoPaths = searches.artifactsByName(pattern, repoKey);
+        for (String pattern : patterns) {
+            List<RepoPath> foundRepoPaths = searches.artifactsByName(pattern, repoKey);
             if (!foundRepoPaths.isEmpty()) {
                 repoPaths.addAll(foundRepoPaths);
                 logger.debug(String.format("Found %d artifacts matching pattern [%s]", foundRepoPaths.size(), pattern));
@@ -100,7 +100,7 @@ public class ArtifactoryPAPIService {
         return repoPaths;
     }
 
-    private Optional<RepositoryConfiguration> getRepositoryConfiguration(final String repoKey) {
+    private Optional<RepositoryConfiguration> getRepositoryConfiguration(String repoKey) {
         return Optional.ofNullable(repositories.getRepositoryConfiguration(repoKey));
     }
 
@@ -108,49 +108,49 @@ public class ArtifactoryPAPIService {
     Methods below provide low level access to the Artifactory PAPI. No additional verification should be performed.
      */
 
-    public ItemInfo getItemInfo(final RepoPath repoPath) {
+    public ItemInfo getItemInfo(RepoPath repoPath) {
         return repositories.getItemInfo(repoPath);
     }
 
-    public FileLayoutInfo getLayoutInfo(final RepoPath repoPath) {
+    public FileLayoutInfo getLayoutInfo(RepoPath repoPath) {
         return repositories.getLayoutInfo(repoPath);
     }
 
-    public ResourceStreamHandle getContent(final RepoPath repoPath) {
+    public ResourceStreamHandle getContent(RepoPath repoPath) {
         return repositories.getContent(repoPath);
     }
 
-    public Properties getProperties(final RepoPath repoPath) {
+    public Properties getProperties(RepoPath repoPath) {
         return repositories.getProperties(repoPath);
     }
 
-    public boolean hasProperty(final RepoPath repoPath, final String propertyName) {
+    public boolean hasProperty(RepoPath repoPath, String propertyName) {
         return repositories.hasProperty(repoPath, propertyName);
     }
 
-    public Optional<String> getProperty(final RepoPath repoPath, final String propertyName) {
+    public Optional<String> getProperty(RepoPath repoPath, String propertyName) {
         return Optional.ofNullable(repositories.getProperty(repoPath, propertyName));
     }
 
-    public void setProperty(final RepoPath repoPath, final String propertyName, final String value) {
+    public void setProperty(RepoPath repoPath, String propertyName, String value) {
         repositories.setProperty(repoPath, propertyName, value);
     }
 
-    public void deleteProperty(final RepoPath repoPath, final String propertyName) {
+    public void deleteProperty(RepoPath repoPath, String propertyName) {
         repositories.deleteProperty(repoPath, propertyName);
     }
 
-    public List<RepoPath> itemsByProperties(final Map<String, String> properties, final String[] repoKeys) {
-        final SetMultimap<String, String> setMultimap = HashMultimap.create();
+    public List<RepoPath> itemsByProperties(Map<String, String> properties, String[] repoKeys) {
+        SetMultimap<String, String> setMultimap = HashMultimap.create();
         properties.forEach(setMultimap::put);
         return searches.itemsByProperties(setMultimap, repoKeys);
     }
 
-    public List<RepoPath> itemsByName(final String artifactByName, final String... repoKeys) {
+    public List<RepoPath> itemsByName(String artifactByName, String... repoKeys) {
         return searches.artifactsByName(artifactByName, repoKeys);
     }
 
-    public ResourceStreamHandle getArtifactContent(final RepoPath repoPath) {
+    public ResourceStreamHandle getArtifactContent(RepoPath repoPath) {
         return repositories.getContent(repoPath);
     }
 }

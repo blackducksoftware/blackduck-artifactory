@@ -68,7 +68,7 @@ public class PluginService {
     private File blackDuckDirectory;
     private ConfigValidationService configValidationService;
 
-    public PluginService(final DirectoryConfig directoryConfig, final Repositories repositories, final Searches searches) {
+    public PluginService(DirectoryConfig directoryConfig, Repositories repositories, Searches searches) {
         this.directoryConfig = directoryConfig;
         this.repositories = repositories;
         this.searches = searches;
@@ -77,45 +77,45 @@ public class PluginService {
     public PluginAPI initializePlugin() throws IOException, IntegrationException {
         logger.info("initializing blackDuckPlugin...");
 
-        final File propertiesFile = getPropertiesFile();
-        final Properties unprocessedProperties = loadPropertiesFromFile(propertiesFile);
+        File propertiesFile = getPropertiesFile();
+        Properties unprocessedProperties = loadPropertiesFromFile(propertiesFile);
         configurationPropertyManager = new ConfigurationPropertyManager(unprocessedProperties);
 
-        final PluginConfig pluginConfig = PluginConfig.createFromProperties(configurationPropertyManager);
-        final BlackDuckServerConfig blackDuckServerConfig = pluginConfig.getBlackDuckServerConfigBuilder().build();
+        PluginConfig pluginConfig = PluginConfig.createFromProperties(configurationPropertyManager);
+        BlackDuckServerConfig blackDuckServerConfig = pluginConfig.getBlackDuckServerConfigBuilder().build();
 
         this.blackDuckDirectory = setUpBlackDuckDirectory();
 
-        final DateTimeManager dateTimeManager = new DateTimeManager(pluginConfig.getDateTimePattern(), pluginConfig.getDateTimeZone());
-        final PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
-        final ArtifactoryPAPIService artifactoryPAPIService = new ArtifactoryPAPIService(pluginRepoPathFactory, repositories, searches);
-        final ArtifactoryPropertyService artifactoryPropertyService = new ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager);
-        final ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPAPIService, artifactoryPropertyService);
-        final AnalyticsService analyticsService = AnalyticsService.createFromBlackDuckServerConfig(directoryConfig, blackDuckServerConfig);
-        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
-        final ModuleManager moduleManager = new ModuleManager(analyticsService);
-        final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        final ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, artifactSearchService, dateTimeManager, blackDuckServicesFactory, gson);
+        DateTimeManager dateTimeManager = new DateTimeManager(pluginConfig.getDateTimePattern(), pluginConfig.getDateTimeZone());
+        PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
+        ArtifactoryPAPIService artifactoryPAPIService = new ArtifactoryPAPIService(pluginRepoPathFactory, repositories, searches);
+        ArtifactoryPropertyService artifactoryPropertyService = new ArtifactoryPropertyService(artifactoryPAPIService, dateTimeManager);
+        ArtifactSearchService artifactSearchService = new ArtifactSearchService(artifactoryPAPIService, artifactoryPropertyService);
+        AnalyticsService analyticsService = AnalyticsService.createFromBlackDuckServerConfig(directoryConfig, blackDuckServerConfig);
+        BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+        ModuleManager moduleManager = new ModuleManager(analyticsService);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        ModuleFactory moduleFactory = new ModuleFactory(configurationPropertyManager, blackDuckServerConfig, artifactoryPAPIService, artifactoryPropertyService, artifactSearchService, dateTimeManager, blackDuckServicesFactory, gson);
 
-        final ScanModule scanModule = moduleFactory.createScanModule(blackDuckDirectory);
-        final InspectionModule inspectionModule = moduleFactory.createInspectionModule();
-        final PolicyModule policyModule = moduleFactory.createPolicyModule();
-        final AnalyticsModule analyticsModule = moduleFactory.createAnalyticsModule(analyticsService, moduleManager);
+        ScanModule scanModule = moduleFactory.createScanModule(blackDuckDirectory);
+        InspectionModule inspectionModule = moduleFactory.createInspectionModule();
+        PolicyModule policyModule = moduleFactory.createPolicyModule();
+        AnalyticsModule analyticsModule = moduleFactory.createAnalyticsModule(analyticsService, moduleManager);
 
         moduleManager.registerModules(scanModule, inspectionModule, policyModule, analyticsModule);
 
         configValidationService = new ConfigValidationService(moduleManager, pluginConfig, directoryConfig.getVersionFile());
-        final ConfigValidationReport configValidationReport = configValidationService.validateConfig();
+        ConfigValidationReport configValidationReport = configValidationService.validateConfig();
         if (configValidationReport.getGeneralPropertyReport().hasError()) {
             moduleManager.setAllModulesEnabledState(false);
         }
-        final LogLevel logLevel = logger.getLogLevel();
-        final boolean includeValid = logLevel.isLoggable(LogLevel.INFO);
-        final String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport, includeValid);
+        LogLevel logLevel = logger.getLogLevel();
+        boolean includeValid = logLevel.isLoggable(LogLevel.INFO);
+        String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport, includeValid);
         logger.warn(statusCheckMessage);
 
-        final FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PluginAPI.class);
-        final PluginAPI pluginAPI = PluginAPI.createFromModules(moduleManager, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
+        FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PluginAPI.class);
+        PluginAPI pluginAPI = PluginAPI.createFromModules(moduleManager, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
         analyticsService.registerAnalyzable(pluginAPI);
 
         // TODO: Remove upgrades in 9.0.0
@@ -127,7 +127,7 @@ public class PluginService {
         return pluginAPI;
     }
 
-    public void reloadBlackDuckDirectory(final TriggerType triggerType) throws IOException, IntegrationException {
+    public void reloadBlackDuckDirectory(TriggerType triggerType) throws IOException, IntegrationException {
         LogUtil.start(logger, "blackDuckReloadDirectory", triggerType);
 
         FileUtils.deleteDirectory(determineBlackDuckDirectory());
@@ -136,10 +136,10 @@ public class PluginService {
         LogUtil.finish(logger, "blackDuckReloadDirectory", triggerType);
     }
 
-    public String logStatusCheckMessage(final TriggerType triggerType) {
+    public String logStatusCheckMessage(TriggerType triggerType) {
         LogUtil.start(logger, "generateStatusCheckMessage", triggerType);
-        final ConfigValidationReport configValidationReport = configValidationService.validateConfig();
-        final String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport, true);
+        ConfigValidationReport configValidationReport = configValidationService.validateConfig();
+        String statusCheckMessage = configValidationService.generateStatusCheckMessage(configValidationReport, true);
         logger.info(statusCheckMessage);
         LogUtil.finish(logger, "generateStatusCheckMessage", triggerType);
 
@@ -148,22 +148,22 @@ public class PluginService {
 
     private File setUpBlackDuckDirectory() throws IOException, IntegrationException {
         try {
-            final File directory = determineBlackDuckDirectory();
+            File directory = determineBlackDuckDirectory();
 
             if (!directory.exists() && !directory.mkdir()) {
                 throw new IntegrationException(String.format("Failed to create the BlackDuck directory: %s", directory.getCanonicalPath()));
             }
 
             return directory;
-        } catch (final IOException | IntegrationException e) {
+        } catch (IOException | IntegrationException e) {
             logger.error(String.format("Exception while setting up the Black Duck directory %s", blackDuckDirectory), e);
             throw e;
         }
     }
 
     private File determineBlackDuckDirectory() {
-        final File directory;
-        final String scanBinariesDirectory = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
+        File directory;
+        String scanBinariesDirectory = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
         if (StringUtils.isNotEmpty(scanBinariesDirectory)) {
             directory = new File(directoryConfig.getHomeDirectory(), scanBinariesDirectory);
         } else {
@@ -174,8 +174,8 @@ public class PluginService {
     }
 
     private File getPropertiesFile() {
-        final String propertiesFilePathOverride = directoryConfig.getPropertiesFilePathOverride();
-        final File propertiesFile;
+        String propertiesFilePathOverride = directoryConfig.getPropertiesFilePathOverride();
+        File propertiesFile;
 
         if (StringUtils.isNotBlank(propertiesFilePathOverride)) {
             propertiesFile = new File(propertiesFilePathOverride);
@@ -186,9 +186,9 @@ public class PluginService {
         return propertiesFile;
     }
 
-    private Properties loadPropertiesFromFile(final File propertiesFile) throws IOException {
-        final Properties properties = new Properties();
-        try (final FileInputStream fileInputStream = new FileInputStream(propertiesFile)) {
+    private Properties loadPropertiesFromFile(File propertiesFile) throws IOException {
+        Properties properties = new Properties();
+        try (FileInputStream fileInputStream = new FileInputStream(propertiesFile)) {
             properties.load(fileInputStream);
         }
 

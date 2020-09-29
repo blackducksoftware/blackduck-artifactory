@@ -36,7 +36,7 @@ public class PluginRepoPath implements RepoPath {
     private final String repoKey;
     private final String repoPath;
 
-    public PluginRepoPath(final String key, final String path) {
+    public PluginRepoPath(String key, String path) {
         this.repoKey = key.replace("/", "");
         if (!path.startsWith("/") && !path.isEmpty()) {
             this.repoPath = "/" + path;
@@ -74,7 +74,7 @@ public class PluginRepoPath implements RepoPath {
     @Nullable
     @Override
     public RepoPath getParent() {
-        final Path fullPath = new File(toPath()).toPath().getParent();
+        Path fullPath = new File(toPath()).toPath().getParent();
         if (isRoot()) {
             return new PluginRepoPath(fullPath.toString(), "");
         } else {
@@ -98,12 +98,12 @@ public class PluginRepoPath implements RepoPath {
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
         if (this == o)
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        final PluginRepoPath that = (PluginRepoPath) o;
+        PluginRepoPath that = (PluginRepoPath) o;
         return Objects.equals(getRepoKey(), that.getRepoKey()) &&
                    Objects.equals(repoPath, that.repoPath);
     }

@@ -43,66 +43,66 @@ public class ArtifactoryPropertyService {
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final DateTimeManager dateTimeManager;
 
-    public ArtifactoryPropertyService(final ArtifactoryPAPIService artifactoryPAPIService, final DateTimeManager dateTimeManager) {
+    public ArtifactoryPropertyService(ArtifactoryPAPIService artifactoryPAPIService, DateTimeManager dateTimeManager) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.dateTimeManager = dateTimeManager;
     }
 
-    public boolean hasProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
+    public boolean hasProperty(RepoPath repoPath, BlackDuckArtifactoryProperty property) {
         return artifactoryPAPIService.hasProperty(repoPath, property.getPropertyName());
     }
 
-    public Optional<String> getProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
+    public Optional<String> getProperty(RepoPath repoPath, BlackDuckArtifactoryProperty property) {
         return getProperty(repoPath, property.getPropertyName());
     }
 
-    private Optional<String> getProperty(final RepoPath repoPath, final String propertyKey) {
+    private Optional<String> getProperty(RepoPath repoPath, String propertyKey) {
         return artifactoryPAPIService.getProperty(repoPath, propertyKey)
                    .map(StringUtils::stripToNull);
     }
 
-    public Optional<Integer> getPropertyAsInteger(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
+    public Optional<Integer> getPropertyAsInteger(RepoPath repoPath, BlackDuckArtifactoryProperty property) {
         return getProperty(repoPath, property)
                    .map(Integer::valueOf);
     }
 
-    public Optional<Date> getDateFromProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property) {
-        final Optional<String> dateTimeAsString = getProperty(repoPath, property);
+    public Optional<Date> getDateFromProperty(RepoPath repoPath, BlackDuckArtifactoryProperty property) {
+        Optional<String> dateTimeAsString = getProperty(repoPath, property);
         return dateTimeAsString.map(dateTimeManager::getDateFromString);
     }
 
     // TODO: These methods should not require an IntLogger, but a regular Logger
-    public void setProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final String value, final IntLogger logger) {
+    public void setProperty(RepoPath repoPath, BlackDuckArtifactoryProperty property, String value, IntLogger logger) {
         setProperty(repoPath, property.getPropertyName(), value, logger);
     }
 
-    private void setProperty(final RepoPath repoPath, final String property, final String value, final IntLogger logger) {
+    private void setProperty(RepoPath repoPath, String property, String value, IntLogger logger) {
         artifactoryPAPIService.setProperty(repoPath, property, value);
         logger.debug(String.format("Set property %s to %s on %s.", property, value, repoPath.toPath()));
     }
 
-    public void setPropertyFromDate(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final Date date, final IntLogger logger) {
-        final String dateTimeAsString = dateTimeManager.getStringFromDate(date);
+    public void setPropertyFromDate(RepoPath repoPath, BlackDuckArtifactoryProperty property, Date date, IntLogger logger) {
+        String dateTimeAsString = dateTimeManager.getStringFromDate(date);
         setProperty(repoPath, property, dateTimeAsString, logger);
 
-        final Optional<String> dateTimeAsStringConverted = dateTimeManager.geStringFromDateWithTimeZone(date);
+        Optional<String> dateTimeAsStringConverted = dateTimeManager.geStringFromDateWithTimeZone(date);
         dateTimeAsStringConverted.ifPresent((converted) -> setProperty(repoPath, property.getTimeName(), converted, logger));
     }
 
-    public void deleteProperty(final RepoPath repoPath, final BlackDuckArtifactoryProperty property, final IntLogger logger) {
+    public void deleteProperty(RepoPath repoPath, BlackDuckArtifactoryProperty property, IntLogger logger) {
         deleteProperty(repoPath, property.getPropertyName(), logger);
         deleteProperty(repoPath, property.getTimeName(), logger);
     }
 
-    private void deleteProperty(final RepoPath repoPath, final String propertyName, final IntLogger logger) {
+    private void deleteProperty(RepoPath repoPath, String propertyName, IntLogger logger) {
         if (artifactoryPAPIService.hasProperty(repoPath, propertyName)) {
             artifactoryPAPIService.deleteProperty(repoPath, propertyName);
             logger.debug("Removed property " + propertyName + " from " + repoPath.toPath() + ".");
         }
     }
 
-    public void deleteAllBlackDuckPropertiesFromRepo(final String repoKey, final Map<String, List<String>> params, final IntLogger logger) {
-        final List<RepoPath> repoPaths = Arrays.stream(BlackDuckArtifactoryProperty.values())
+    public void deleteAllBlackDuckPropertiesFromRepo(String repoKey, Map<String, List<String>> params, IntLogger logger) {
+        List<RepoPath> repoPaths = Arrays.stream(BlackDuckArtifactoryProperty.values())
                                              .map(artifactoryProperty -> getItemsContainingAnyProperties(repoKey, artifactoryProperty))
                                              .flatMap(List::stream)
                                              .collect(Collectors.toList());
@@ -110,22 +110,22 @@ public class ArtifactoryPropertyService {
         repoPaths.forEach(repoPath -> deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
     }
 
-    private List<RepoPath> getItemsContainingAnyProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
+    private List<RepoPath> getItemsContainingAnyProperties(String repoKey, BlackDuckArtifactoryProperty... properties) {
         return Arrays.stream(properties)
                    .map(property -> getItemsContainingProperties(repoKey, property))
                    .flatMap(List::stream)
                    .collect(Collectors.toList());
     }
 
-    public void deleteAllBlackDuckPropertiesFromRepoPath(final RepoPath repoPath, final Map<String, List<String>> params, final IntLogger logger) {
-        final List<BlackDuckArtifactoryProperty> properties = Arrays.stream(BlackDuckArtifactoryProperty.values())
+    public void deleteAllBlackDuckPropertiesFromRepoPath(RepoPath repoPath, Map<String, List<String>> params, IntLogger logger) {
+        List<BlackDuckArtifactoryProperty> properties = Arrays.stream(BlackDuckArtifactoryProperty.values())
                                                                   .filter(property -> !isPropertyInParams(property, params))
                                                                   .collect(Collectors.toList());
 
         properties.forEach(property -> deleteProperty(repoPath, property, logger));
     }
 
-    private boolean isPropertyInParams(final BlackDuckArtifactoryProperty blackDuckArtifactoryProperty, final Map<String, List<String>> params) {
+    private boolean isPropertyInParams(BlackDuckArtifactoryProperty blackDuckArtifactoryProperty, Map<String, List<String>> params) {
         return params.entrySet().stream()
                    .filter(stringListEntry -> stringListEntry.getKey().equals("properties"))
                    .map(Map.Entry::getValue)
@@ -133,19 +133,19 @@ public class ArtifactoryPropertyService {
                    .anyMatch(paramValue -> paramValue.equals(blackDuckArtifactoryProperty.getPropertyName()));
     }
 
-    public List<RepoPath> getItemsContainingProperties(final String repoKey, final BlackDuckArtifactoryProperty... properties) {
-        final SetMultimap<String, String> setMultimap = Arrays.stream(properties)
+    public List<RepoPath> getItemsContainingProperties(String repoKey, BlackDuckArtifactoryProperty... properties) {
+        SetMultimap<String, String> setMultimap = Arrays.stream(properties)
                                                             .filter(property -> property.getPropertyName() != null)
                                                             .collect(HashMultimap::create, (multimap, property) -> multimap.put(property.getPropertyName(), "*"), (self, other) -> self.putAll(other));
 
         return getItemsContainingPropertiesAndValues(setMultimap, repoKey);
     }
 
-    public List<RepoPath> getItemsContainingPropertiesAndValues(final SetMultimap<String, String> properties, final String... repoKeys) {
-        final Map<String, String> propertyMap = new HashMap<>();
+    public List<RepoPath> getItemsContainingPropertiesAndValues(SetMultimap<String, String> properties, String... repoKeys) {
+        Map<String, String> propertyMap = new HashMap<>();
 
         properties.keySet().forEach(key -> {
-            final Set<String> values = properties.get(key);
+            Set<String> values = properties.get(key);
             if (values.size() > 1) {
                 throw new UnsupportedOperationException("Cannot convert SetMultimap to Map because multiple values were assigned to the same key.");
             }
@@ -156,13 +156,13 @@ public class ArtifactoryPropertyService {
         return getItemsContainingPropertiesAndValues(propertyMap, repoKeys);
     }
 
-    private List<RepoPath> getItemsContainingPropertiesAndValues(final Map<String, String> properties, final String[] repoKeys) {
+    private List<RepoPath> getItemsContainingPropertiesAndValues(Map<String, String> properties, String[] repoKeys) {
         return artifactoryPAPIService.itemsByProperties(properties, repoKeys);
     }
 
-    public Optional<NameVersion> getProjectNameVersion(final RepoPath repoPath) {
-        final Optional<String> projectName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
-        final Optional<String> projectVersionName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
+    public Optional<NameVersion> getProjectNameVersion(RepoPath repoPath) {
+        Optional<String> projectName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
+        Optional<String> projectVersionName = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
         NameVersion nameVersion = null;
 
         if (projectName.isPresent() && projectVersionName.isPresent()) {

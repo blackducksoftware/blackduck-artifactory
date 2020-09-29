@@ -39,41 +39,41 @@ public class DateTimeManager {
     @Nullable
     private final String dateTimeZone;
 
-    public DateTimeManager(final String dateTimePattern) {
+    public DateTimeManager(String dateTimePattern) {
         this(dateTimePattern, null);
     }
 
-    public DateTimeManager(final String dateTimePattern, @Nullable final String dateTimeZone) {
+    public DateTimeManager(String dateTimePattern, @Nullable String dateTimeZone) {
         this.dateTimePattern = dateTimePattern;
         this.dateTimeZone = dateTimeZone;
     }
 
-    public Long getTimeFromString(final String dateTimeString) {
+    public Long getTimeFromString(String dateTimeString) {
         return getDateFromString(dateTimeString).getTime();
     }
 
-    public String getStringFromDate(final Date date) {
+    public String getStringFromDate(Date date) {
         return getStringFromDate(date, ZoneOffset.UTC);
     }
 
-    public Optional<String> geStringFromDateWithTimeZone(final Date date) {
+    public Optional<String> geStringFromDateWithTimeZone(Date date) {
         if (StringUtils.isBlank(dateTimeZone)) {
             return Optional.empty();
         }
 
-        final TimeZone timeZone = TimeZone.getTimeZone(dateTimeZone);
-        final ZoneId zoneId = timeZone.toZoneId();
+        TimeZone timeZone = TimeZone.getTimeZone(dateTimeZone);
+        ZoneId zoneId = timeZone.toZoneId();
 
         return Optional.of(getStringFromDate(date, zoneId));
     }
 
-    public String getStringFromDate(final Date date, final ZoneId zoneId) {
-        final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(zoneId);
+    public String getStringFromDate(Date date, ZoneId zoneId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(zoneId);
         return date.toInstant().atZone(zoneId).format(dateTimeFormatter);
     }
 
-    public Date getDateFromString(final String dateTimeString) {
-        final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC);
+    public Date getDateFromString(String dateTimeString) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimePattern).withZone(ZoneOffset.UTC);
         return Date.from(ZonedDateTime.from(dateTimeFormatter.parse(dateTimeString)).toInstant());
     }
 
