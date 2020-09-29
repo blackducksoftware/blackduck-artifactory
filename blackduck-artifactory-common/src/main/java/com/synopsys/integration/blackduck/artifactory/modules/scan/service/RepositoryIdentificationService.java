@@ -50,7 +50,7 @@ public class RepositoryIdentificationService {
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
 
-    public RepositoryIdentificationService(final ScanModuleConfig scanModuleConfig, final DateTimeManager dateTimeManager, final ArtifactoryPropertyService artifactoryPropertyService, final ArtifactoryPAPIService artifactoryPAPIService) {
+    public RepositoryIdentificationService(ScanModuleConfig scanModuleConfig, DateTimeManager dateTimeManager, ArtifactoryPropertyService artifactoryPropertyService, ArtifactoryPAPIService artifactoryPAPIService) {
         this.scanModuleConfig = scanModuleConfig;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -58,9 +58,9 @@ public class RepositoryIdentificationService {
     }
 
     public Set<RepoPath> searchForRepoPaths() {
-        final List<String> patternsToScan = scanModuleConfig.getNamePatterns();
-        final List<String> repoKeysToScan = scanModuleConfig.getRepos();
-        final List<RepoPath> repoPaths = new ArrayList<>();
+        List<String> patternsToScan = scanModuleConfig.getNamePatterns();
+        List<String> repoKeysToScan = scanModuleConfig.getRepos();
+        List<RepoPath> repoPaths = new ArrayList<>();
 
         if (!repoKeysToScan.isEmpty()) {
             repoKeysToScan.stream()
@@ -79,17 +79,17 @@ public class RepositoryIdentificationService {
     /**
      * If artifact's last modified time is newer than the scan time, or we have no record of the scan time, we should scan now, unless, if the cutoff date is set, only scan if the modified date is greater than or equal to the cutoff.
      */
-    boolean shouldRepoPathBeScannedNow(final RepoPath repoPath) {
-        final ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
-        final long lastModifiedTime = itemInfo.getLastModified();
-        final String artifactCutoffDate = scanModuleConfig.getArtifactCutoffDate();
+    boolean shouldRepoPathBeScannedNow(RepoPath repoPath) {
+        ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
+        long lastModifiedTime = itemInfo.getLastModified();
+        String artifactCutoffDate = scanModuleConfig.getArtifactCutoffDate();
 
         boolean shouldCutoffPreventScanning = false;
         if (StringUtils.isNotBlank(artifactCutoffDate)) {
             try {
-                final long cutoffTime = dateTimeManager.getTimeFromString(artifactCutoffDate);
+                long cutoffTime = dateTimeManager.getTimeFromString(artifactCutoffDate);
                 shouldCutoffPreventScanning = lastModifiedTime < cutoffTime;
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 logger.error(String.format("The pattern: %s does not match the date string: %s", dateTimeManager.getDateTimePattern(), artifactCutoffDate), e);
                 shouldCutoffPreventScanning = false;
             }
@@ -100,15 +100,15 @@ public class RepositoryIdentificationService {
             return false;
         }
 
-        final Optional<String> blackDuckScanTimeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME);
+        Optional<String> blackDuckScanTimeProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME);
         if (!blackDuckScanTimeProperty.isPresent()) {
             return true;
         }
 
         try {
-            final long blackDuckScanTime = dateTimeManager.getTimeFromString(blackDuckScanTimeProperty.get());
+            long blackDuckScanTime = dateTimeManager.getTimeFromString(blackDuckScanTimeProperty.get());
             return lastModifiedTime >= blackDuckScanTime;
-        } catch (final Exception e) {
+        } catch (Exception e) {
             //if the date format changes, the old format won't parse, so just cleanup the property by returning true and re-scanning
             logger.error("Exception parsing the scan date (most likely the format changed)", e);
         }

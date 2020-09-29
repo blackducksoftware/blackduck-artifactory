@@ -52,32 +52,32 @@ public class ScanPolicyService {
     private final ProjectService projectService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
 
-    public ScanPolicyService(final ProjectBomService projectBomService, final ProjectService projectService, final ArtifactoryPropertyService artifactoryPropertyService) {
+    public ScanPolicyService(ProjectBomService projectBomService, ProjectService projectService, ArtifactoryPropertyService artifactoryPropertyService) {
         this.projectBomService = projectBomService;
         this.projectService = projectService;
         this.artifactoryPropertyService = artifactoryPropertyService;
     }
 
-    public static ScanPolicyService createDefault(final BlackDuckServerConfig blackDuckServerConfig, final ArtifactoryPropertyService artifactoryPropertyService) {
-        final BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
-        final ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
-        final ProjectService projectService = blackDuckServicesFactory.createProjectService();
+    public static ScanPolicyService createDefault(BlackDuckServerConfig blackDuckServerConfig, ArtifactoryPropertyService artifactoryPropertyService) {
+        BlackDuckServicesFactory blackDuckServicesFactory = blackDuckServerConfig.createBlackDuckServicesFactory(logger);
+        ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
+        ProjectService projectService = blackDuckServicesFactory.createProjectService();
 
         return new ScanPolicyService(projectBomService, projectService, artifactoryPropertyService);
     }
 
-    public void populatePolicyStatuses(final Set<RepoPath> repoPaths) {
+    public void populatePolicyStatuses(Set<RepoPath> repoPaths) {
         boolean problemRetrievingPolicyStatus = false;
 
         logger.info(String.format("Attempting to update policy status of %d repoPaths", repoPaths.size()));
-        for (final RepoPath repoPath : repoPaths) {
+        for (RepoPath repoPath : repoPaths) {
             try {
-                final ProjectVersionWrapper projectVersionWrapper = resolveProjectVersionWrapper(repoPath);
-                final Optional<String> projectVersionUIUrl = projectVersionWrapper.getProjectVersionView().getHref();
+                ProjectVersionWrapper projectVersionWrapper = resolveProjectVersionWrapper(repoPath);
+                Optional<String> projectVersionUIUrl = projectVersionWrapper.getProjectVersionView().getHref();
                 projectVersionUIUrl.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
-            } catch (final IntegrationException e) {
-                final Exception exception = new IntegrationException(String.format("Failed to get project version for artifact. Scan may not be finished. Cannot update policy: %s", repoPath.toPath()));
+            } catch (IntegrationException e) {
+                Exception exception = new IntegrationException(String.format("Failed to get project version for artifact. Scan may not be finished. Cannot update policy: %s", repoPath.toPath()));
                 failPolicyStatusUpdate(repoPath, exception);
                 problemRetrievingPolicyStatus = true;
             }
@@ -88,31 +88,31 @@ public class ScanPolicyService {
         }
     }
 
-    private boolean setPolicyStatusProperties(final RepoPath repoPath, final ProjectVersionWrapper projectVersionWrapper) {
-        final String projectName = projectVersionWrapper.getProjectView().getName();
-        final String projectVersionName = projectVersionWrapper.getProjectVersionView().getVersionName();
+    private boolean setPolicyStatusProperties(RepoPath repoPath, ProjectVersionWrapper projectVersionWrapper) {
+        String projectName = projectVersionWrapper.getProjectView().getName();
+        String projectVersionName = projectVersionWrapper.getProjectVersionView().getVersionName();
         boolean success = false;
 
         try {
-            final Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = projectBomService.getPolicyStatusForVersion(projectVersionWrapper.getProjectVersionView());
+            Optional<VersionBomPolicyStatusView> versionBomPolicyStatusViewOptional = projectBomService.getPolicyStatusForVersion(projectVersionWrapper.getProjectVersionView());
             if (!versionBomPolicyStatusViewOptional.isPresent()) {
                 throw new IntegrationException(String.format("BlackDuck failed to return a policy status. Project '%s' with version '%s' may not exist in BlackDuck", projectName, projectVersionName));
             }
 
-            final VersionBomPolicyStatusView versionBomPolicyStatusView = versionBomPolicyStatusViewOptional.get();
+            VersionBomPolicyStatusView versionBomPolicyStatusView = versionBomPolicyStatusViewOptional.get();
             logger.debug(String.format("Policy status json for %s is: %s", repoPath.toPath(), versionBomPolicyStatusView.getJson()));
-            final PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView);
-            final String patchedPolicyStatusMessage = policyStatusDescription.getPolicyStatusMessage();
+            PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(versionBomPolicyStatusView);
+            String patchedPolicyStatusMessage = policyStatusDescription.getPolicyStatusMessage();
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, patchedPolicyStatusMessage, logger);
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, versionBomPolicyStatusView.getOverallStatus().toString(), logger);
             logger.info(String.format("Updated policy status of %s: %s", repoPath.getName(), repoPath.toPath()));
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString(), logger);
             artifactoryPropertyService.setPropertyFromDate(repoPath, BlackDuckArtifactoryProperty.LAST_UPDATE, new Date(), logger);
             success = true;
-        } catch (final IntegrationRestException e) {
+        } catch (IntegrationRestException e) {
             logger.warn(String.format("Update policy status failed with status code (%d)", e.getHttpStatusCode()));
             failPolicyStatusUpdate(repoPath, e);
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             logger.warn(String.format("Update policy status failed. Project '%s' with version '%s' may not exist in BlackDuck", projectName, projectVersionName));
             failPolicyStatusUpdate(repoPath, e);
         }
@@ -120,21 +120,21 @@ public class ScanPolicyService {
         return success;
     }
 
-    private void failPolicyStatusUpdate(final RepoPath repoPath, final Exception e) {
+    private void failPolicyStatusUpdate(RepoPath repoPath, Exception e) {
         logger.debug(String.format("An error occurred while attempting to update policy status on %s", repoPath.getPath()), e);
-        final Optional<String> policyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
-        final Optional<String> overallPolicyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS);
+        Optional<String> policyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
+        Optional<String> overallPolicyStatus = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS);
         if (policyStatus.isPresent() || overallPolicyStatus.isPresent()) {
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.OUT_OF_DATE.toString(), logger);
         }
     }
 
-    private ProjectVersionWrapper resolveProjectVersionWrapper(final RepoPath repoPath) throws IntegrationException {
-        final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
+    private ProjectVersionWrapper resolveProjectVersionWrapper(RepoPath repoPath) throws IntegrationException {
+        Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
 
         if (nameVersion.isPresent()) {
-            final String projectName = nameVersion.get().getName();
-            final String projectVersionName = nameVersion.get().getVersion();
+            String projectName = nameVersion.get().getName();
+            String projectVersionName = nameVersion.get().getVersion();
             return projectService.getProjectVersion(projectName, projectVersionName)
                        .orElseThrow(() -> new IntegrationException(String.format("Failed to find Black Duck project version with name '%s' and version '%s'.", projectName, projectVersionName)));
         } else {

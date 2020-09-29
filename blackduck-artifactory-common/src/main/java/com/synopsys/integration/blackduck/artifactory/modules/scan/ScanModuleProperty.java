@@ -39,7 +39,7 @@ public enum ScanModuleProperty implements ConfigurationProperty {
 
     private final String key;
 
-    ScanModuleProperty(final String key) {
+    ScanModuleProperty(String key) {
         this.key = "blackduck.artifactory.scan." + key;
     }
 

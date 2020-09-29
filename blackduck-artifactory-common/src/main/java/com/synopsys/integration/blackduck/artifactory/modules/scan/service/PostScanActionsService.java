@@ -50,21 +50,21 @@ public class PostScanActionsService {
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ProjectService projectService;
 
-    public PostScanActionsService(final ArtifactoryPropertyService artifactoryPropertyService, final ProjectService projectService) {
+    public PostScanActionsService(ArtifactoryPropertyService artifactoryPropertyService, ProjectService projectService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.projectService = projectService;
     }
 
-    public void performPostScanActions(final List<String> repoKeys) {
-        final SetMultimap<String, String> setMultimap = HashMultimap.create();
+    public void performPostScanActions(List<String> repoKeys) {
+        SetMultimap<String, String> setMultimap = HashMultimap.create();
         setMultimap.put(BlackDuckArtifactoryProperty.SCAN_RESULT.getPropertyName(), Result.SUCCESS.name());
         setMultimap.put(BlackDuckArtifactoryProperty.POST_SCAN_ACTION_STATUS.getPropertyName(), PostScanActionStatus.PENDING.name());
 
-        for (final String repoKey : repoKeys) {
-            final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
-            final Optional<ProjectVersionPhaseType> postScanPhase = artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.POST_SCAN_PHASE)
+        for (String repoKey : repoKeys) {
+            RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
+            Optional<ProjectVersionPhaseType> postScanPhase = artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.POST_SCAN_PHASE)
                                                                         .map(ProjectVersionPhaseType::valueOf);
-            final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKey);
+            List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKey);
             if (postScanPhase.isPresent()) {
                 setProjectPhase(repoPaths, postScanPhase.get());
             } else {
@@ -73,27 +73,27 @@ public class PostScanActionsService {
         }
     }
 
-    private void setProjectPhase(final List<RepoPath> repoPaths, final ProjectVersionPhaseType projectVersionPhaseType) {
-        for (final RepoPath repoPath : repoPaths) {
+    private void setProjectPhase(List<RepoPath> repoPaths, ProjectVersionPhaseType projectVersionPhaseType) {
+        for (RepoPath repoPath : repoPaths) {
             try {
-                final ProjectVersionWrapper projectVersionWrapper = resolveProjectVersionWrapper(repoPath);
-                final ProjectVersionView projectVersionView = projectVersionWrapper.getProjectVersionView();
+                ProjectVersionWrapper projectVersionWrapper = resolveProjectVersionWrapper(repoPath);
+                ProjectVersionView projectVersionView = projectVersionWrapper.getProjectVersionView();
                 projectVersionView.setPhase(projectVersionPhaseType);
                 projectService.updateProjectVersion(projectVersionView);
                 artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POST_SCAN_ACTION_STATUS, PostScanActionStatus.SUCCESS.name(), logger);
-            } catch (final IntegrationException e) {
+            } catch (IntegrationException e) {
                 logger.warn(String.format("Failed to perform post scan actions on '%s'. Black Duck may not have finished processing the scan. Will try again.", repoPath.getPath()));
             }
         }
     }
 
     // TODO: Create a ScanPropertyService for this class and ScanPolicyService to use.
-    private ProjectVersionWrapper resolveProjectVersionWrapper(final RepoPath repoPath) throws IntegrationException {
-        final Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
+    private ProjectVersionWrapper resolveProjectVersionWrapper(RepoPath repoPath) throws IntegrationException {
+        Optional<NameVersion> nameVersion = artifactoryPropertyService.getProjectNameVersion(repoPath);
 
         if (nameVersion.isPresent()) {
-            final String projectName = nameVersion.get().getName();
-            final String projectVersionName = nameVersion.get().getVersion();
+            String projectName = nameVersion.get().getName();
+            String projectVersionName = nameVersion.get().getVersion();
             return projectService.getProjectVersion(projectName, projectVersionName)
                        .orElseThrow(() -> new IntegrationException(String.format("Failed to find Black Duck project version with name '%s' and version '%s'.", projectName, projectVersionName)));
         } else {

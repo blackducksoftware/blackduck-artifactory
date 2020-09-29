@@ -48,8 +48,8 @@ public class ScanModuleConfig extends ModuleConfig {
 
     private final DateTimeManager dateTimeManager;
 
-    public ScanModuleConfig(final Boolean enabled, final String cron, final String binariesDirectoryPath, final String artifactCutoffDate, final Boolean dryRun, final List<String> namePatterns, final Integer memory,
-        final Boolean repoPathCodelocation, final List<String> repos, final Boolean codelocationIncludeHostname, final File cliDirectory, final DateTimeManager dateTimeManager) {
+    public ScanModuleConfig(Boolean enabled, String cron, String binariesDirectoryPath, String artifactCutoffDate, Boolean dryRun, List<String> namePatterns, Integer memory,
+        Boolean repoPathCodelocation, List<String> repos, Boolean codelocationIncludeHostname, File cliDirectory, DateTimeManager dateTimeManager) {
         super(ScanModule.class.getSimpleName(), enabled);
         this.cron = cron;
         this.binariesDirectoryPath = binariesDirectoryPath;
@@ -64,26 +64,26 @@ public class ScanModuleConfig extends ModuleConfig {
         this.dateTimeManager = dateTimeManager;
     }
 
-    public static ScanModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService, final File cliDirectory, final DateTimeManager dateTimeManager)
+    public static ScanModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager, ArtifactoryPAPIService artifactoryPAPIService, File cliDirectory, DateTimeManager dateTimeManager)
         throws IOException {
-        final String cron = configurationPropertyManager.getProperty(ScanModuleProperty.CRON);
-        final String binariesDirectoryPath = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
-        final String artifactCutoffDate = configurationPropertyManager.getProperty(ScanModuleProperty.CUTOFF_DATE);
-        final Boolean dryRun = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.DRY_RUN);
-        final Boolean enabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.ENABLED);
-        final List<String> namePatterns = configurationPropertyManager.getPropertyAsList(ScanModuleProperty.NAME_PATTERNS);
-        final Integer memory = configurationPropertyManager.getIntegerProperty(ScanModuleProperty.MEMORY);
-        final Boolean repoPathCodelocation = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.REPO_PATH_CODELOCATION);
-        final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()
+        String cron = configurationPropertyManager.getProperty(ScanModuleProperty.CRON);
+        String binariesDirectoryPath = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
+        String artifactCutoffDate = configurationPropertyManager.getProperty(ScanModuleProperty.CUTOFF_DATE);
+        Boolean dryRun = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.DRY_RUN);
+        Boolean enabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.ENABLED);
+        List<String> namePatterns = configurationPropertyManager.getPropertyAsList(ScanModuleProperty.NAME_PATTERNS);
+        Integer memory = configurationPropertyManager.getIntegerProperty(ScanModuleProperty.MEMORY);
+        Boolean repoPathCodelocation = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.REPO_PATH_CODELOCATION);
+        List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
-        final Boolean codelocationIncludeHostname = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.CODELOCATION_INCLUDE_HOSTNAME);
+        Boolean codelocationIncludeHostname = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.CODELOCATION_INCLUDE_HOSTNAME);
 
         return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, codelocationIncludeHostname, cliDirectory, dateTimeManager);
     }
 
     @Override
-    public void validate(final PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport) {
         validateCronExpression(propertyGroupReport, ScanModuleProperty.CRON, cron);
         validateNotBlank(propertyGroupReport, ScanModuleProperty.BINARIES_DIRECTORY_PATH, binariesDirectoryPath, "Please specify a path");
         validateDate(propertyGroupReport, ScanModuleProperty.CUTOFF_DATE, artifactCutoffDate, dateTimeManager);
