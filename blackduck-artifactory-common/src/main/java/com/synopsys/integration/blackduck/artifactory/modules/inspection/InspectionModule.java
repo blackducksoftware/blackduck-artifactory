@@ -71,10 +71,10 @@ public class InspectionModule implements Module {
     private final ArtifactInspectionService artifactInspectionService;
     private final PolicySeverityService policySeverityService;
 
-    public InspectionModule(final InspectionModuleConfig inspectionModuleConfig, final ArtifactoryPAPIService artifactoryPAPIService, final MetaDataUpdateService metaDataUpdateService,
-        final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final SimpleAnalyticsCollector simpleAnalyticsCollector,
-        final RepositoryInitializationService repositoryInitializationService, final ArtifactInspectionService artifactInspectionService,
-        final PolicySeverityService policySeverityService) {
+    public InspectionModule(InspectionModuleConfig inspectionModuleConfig, ArtifactoryPAPIService artifactoryPAPIService, MetaDataUpdateService metaDataUpdateService,
+        ArtifactoryPropertyService artifactoryPropertyService, InspectionPropertyService inspectionPropertyService, SimpleAnalyticsCollector simpleAnalyticsCollector,
+        RepositoryInitializationService repositoryInitializationService, ArtifactInspectionService artifactInspectionService,
+        PolicySeverityService policySeverityService) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataUpdateService = metaDataUpdateService;
@@ -93,11 +93,11 @@ public class InspectionModule implements Module {
 
     // TODO: Remove in 9.0.0
     public void performNpmForgeUpgrade() {
-        final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(
+        List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(
             ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "npm"),
             inspectionModuleConfig.getRepos().toArray(new String[0])
         );
-        for (final RepoPath repoPath : repoPaths) {
+        for (RepoPath repoPath : repoPaths) {
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, SupportedPackageType.NPM.getForge().getName(), logger);
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
         }
@@ -105,18 +105,18 @@ public class InspectionModule implements Module {
 
     // TODO: Remove in 9.0.0
     public void performComponentNameVersionUpgrade() {
-        for (final String repoKey : inspectionModuleConfig.getRepos()) {
-            final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "*"), repoKey);
+        for (String repoKey : inspectionModuleConfig.getRepos()) {
+            List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "*"), repoKey);
 
             try {
-                final ProjectVersionView projectVersionView = artifactInspectionService.fetchProjectVersionWrapper(repoKey).getProjectVersionView();
-                for (final RepoPath repoPath : repoPaths) {
+                ProjectVersionView projectVersionView = artifactInspectionService.fetchProjectVersionWrapper(repoKey).getProjectVersionView();
+                for (RepoPath repoPath : repoPaths) {
                     if (inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.SUCCESS) && !inspectionPropertyService.hasExternalIdProperties(repoPath)) {
                         logger.debug(String.format("Performing componentNameVersion upgrade on artifact: %s", repoPath.toPath()));
                         artifactInspectionService.inspectSingleArtifact(repoPath, projectVersionView);
                     }
                 }
-            } catch (final IntegrationException e) {
+            } catch (IntegrationException e) {
                 logger.debug(String.format("Failed to perform componentNameVersion upgrade for repo '%s'.", repoKey), e);
             }
         }
@@ -128,7 +128,7 @@ public class InspectionModule implements Module {
     }
 
     public void reinspectFromFailures() {
-        final Map<String, List<String>> params = new HashMap<>();
+        Map<String, List<String>> params = new HashMap<>();
         params.put("properties", Arrays.asList(BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getPropertyName(), BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getPropertyName()));
         reinspectFromFailures(params);
     }
@@ -144,7 +144,7 @@ public class InspectionModule implements Module {
     }
 
     public void updateMetadata() {
-        final List<RepoPath> repoKeyPaths = inspectionModuleConfig.getRepos().stream()
+        List<RepoPath> repoKeyPaths = inspectionModuleConfig.getRepos().stream()
                                                 .map(RepoPathFactory::create)
                                                 .collect(Collectors.toList());
         metaDataUpdateService.updateMetadata(repoKeyPaths);
@@ -152,24 +152,24 @@ public class InspectionModule implements Module {
 
     //////////////////////// Endpoints ////////////////////////
 
-    public void deleteInspectionProperties(final Map<String, List<String>> params) {
+    public void deleteInspectionProperties(Map<String, List<String>> params) {
         inspectionModuleConfig.getRepos()
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
     }
 
-    public void deleteInspectionPropertiesFromOutOfDate(final Map<String, List<String>> params) {
+    public void deleteInspectionPropertiesFromOutOfDate(Map<String, List<String>> params) {
         inspectionModuleConfig.getRepos().stream()
             .filter(repoKey -> inspectionPropertyService.assertUpdateStatus(RepoPathFactory.create(repoKey), UpdateStatus.OUT_OF_DATE))
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
 
-        final SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getPropertyName(), UpdateStatus.OUT_OF_DATE.name());
-        final String[] repoKeys = inspectionModuleConfig.getRepos().toArray(new String[0]);
-        final List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(propertyMap, repoKeys);
+        SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getPropertyName(), UpdateStatus.OUT_OF_DATE.name());
+        String[] repoKeys = inspectionModuleConfig.getRepos().toArray(new String[0]);
+        List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(propertyMap, repoKeys);
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
     }
 
-    public void reinspectFromFailures(final Map<String, List<String>> params) {
-        final List<RepoPath> repoPaths = inspectionModuleConfig.getRepos().stream()
+    public void reinspectFromFailures(Map<String, List<String>> params) {
+        List<RepoPath> repoPaths = inspectionModuleConfig.getRepos().stream()
                                              .map(repoKey -> inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
                                              .flatMap(Collection::stream).collect(Collectors.toList());
 
@@ -181,20 +181,20 @@ public class InspectionModule implements Module {
 
     //////////////////////// Event Listeners ////////////////////////
 
-    public void handleAfterCreateEvent(final ItemInfo itemInfo) {
-        final RepoPath repoPath = itemInfo.getRepoPath();
+    public void handleAfterCreateEvent(ItemInfo itemInfo) {
+        RepoPath repoPath = itemInfo.getRepoPath();
         handleStorageEvent(repoPath);
     }
 
-    public void handleAfterCopyEvent(final RepoPath targetRepoPath) {
+    public void handleAfterCopyEvent(RepoPath targetRepoPath) {
         handleStorageEvent(targetRepoPath);
     }
 
-    public void handleAfterMoveEvent(final RepoPath targetRepoPath) {
+    public void handleAfterMoveEvent(RepoPath targetRepoPath) {
         handleStorageEvent(targetRepoPath);
     }
 
-    private void handleStorageEvent(final RepoPath repoPath) {
+    private void handleStorageEvent(RepoPath repoPath) {
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
             artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, new HashMap<>(), logger);
             artifactInspectionService.inspectSingleArtifact(repoPath);
@@ -203,9 +203,9 @@ public class InspectionModule implements Module {
         }
     }
 
-    public void handleBeforeDownloadEvent(final RepoPath repoPath) {
-        final Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
-        final boolean shouldCancelDownload = inspectionModuleConfig.isMetadataBlockEnabled()
+    public void handleBeforeDownloadEvent(RepoPath repoPath) {
+        Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
+        boolean shouldCancelDownload = inspectionModuleConfig.isMetadataBlockEnabled()
                                                  && (!inspectionStatus.isPresent() || inspectionStatus.get().equals(InspectionStatus.PENDING))
                                                  && artifactInspectionService.shouldInspectArtifact(repoPath);
 
@@ -221,11 +221,11 @@ public class InspectionModule implements Module {
     }
 
     private void updateAnalytics() {
-        final List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepos();
+        List<String> cacheRepositoryKeys = inspectionModuleConfig.getRepos();
         simpleAnalyticsCollector.putMetadata("cache.repo.count", cacheRepositoryKeys.size());
         simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys));
 
-        final String packageManagers = cacheRepositoryKeys.stream()
+        String packageManagers = cacheRepositoryKeys.stream()
                                            .map(artifactoryPAPIService::getPackageType)
                                            .filter(Optional::isPresent)
                                            .map(Optional::get)

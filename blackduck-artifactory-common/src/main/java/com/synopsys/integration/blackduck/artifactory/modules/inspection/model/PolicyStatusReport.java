@@ -38,11 +38,11 @@ public class PolicyStatusReport {
     private final PolicySummaryStatusType policySummaryStatusType;
     private final List<PolicySeverityType> policySeverityTypes;
 
-    public static PolicyStatusReport fromVersionBomComponentView(final VersionBomComponentView versionBomComponentView, final BlackDuckService blackDuckService) throws IntegrationException {
-        final PolicySummaryStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
+    public static PolicyStatusReport fromVersionBomComponentView(VersionBomComponentView versionBomComponentView, BlackDuckService blackDuckService) throws IntegrationException {
+        PolicySummaryStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
 
-        final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
-        final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
+        List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
+        List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
                                                                  .map(VersionBomPolicyRuleView::getSeverity)
                                                                  .map(severity -> EnumUtils.getEnumIgnoreCase(PolicySeverityType.class, severity))
                                                                  .collect(Collectors.toList());
@@ -50,7 +50,7 @@ public class PolicyStatusReport {
         return new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
     }
 
-    public PolicyStatusReport(final PolicySummaryStatusType policySummaryStatusType, final List<PolicySeverityType> policySeverityTypes) {
+    public PolicyStatusReport(PolicySummaryStatusType policySummaryStatusType, List<PolicySeverityType> policySeverityTypes) {
         this.policySummaryStatusType = policySummaryStatusType;
         this.policySeverityTypes = policySeverityTypes;
     }

@@ -44,8 +44,8 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final List<String> repos;
     private final Integer retryCount;
 
-    public InspectionModuleConfig(final Boolean enabled, final String blackDuckIdentifyArtifactsCron, final String reinspectCron, final Boolean metadataBlockEnabled, final Map<SupportedPackageType, List<String>> patternMap,
-        final List<String> repos, final int retryCount) {
+    public InspectionModuleConfig(Boolean enabled, String blackDuckIdentifyArtifactsCron, String reinspectCron, Boolean metadataBlockEnabled, Map<SupportedPackageType, List<String>> patternMap,
+        List<String> repos, int retryCount) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.inspectionCron = blackDuckIdentifyArtifactsCron;
         this.reinspectCron = reinspectCron;
@@ -55,25 +55,25 @@ public class InspectionModuleConfig extends ModuleConfig {
         this.retryCount = retryCount;
     }
 
-    public static InspectionModuleConfig createFromProperties(final ConfigurationPropertyManager configurationPropertyManager, final ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
-        final Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
-        final String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
-        final String reinspectCron = configurationPropertyManager.getProperty(InspectionModuleProperty.REINSPECT_CRON);
-        final Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
+    public static InspectionModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager, ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
+        Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
+        String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
+        String reinspectCron = configurationPropertyManager.getProperty(InspectionModuleProperty.REINSPECT_CRON);
+        Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
 
-        final Map<SupportedPackageType, List<String>> patternMap = Arrays.stream(SupportedPackageType.values())
+        Map<SupportedPackageType, List<String>> patternMap = Arrays.stream(SupportedPackageType.values())
                                                                        .collect(Collectors.toMap(Function.identity(), supportedPackageType -> configurationPropertyManager.getPropertyAsList(supportedPackageType.getPatternProperty())));
 
-        final List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
+        List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
                                        .filter(artifactoryPAPIService::isValidRepository)
                                        .collect(Collectors.toList());
-        final Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
+        Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
         return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, patternMap, repos, retryCount);
     }
 
     @Override
-    public void validate(final PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport) {
         validateBoolean(propertyGroupReport, InspectionModuleProperty.ENABLED, isEnabledUnverified());
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.CRON, inspectionCron);
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.REINSPECT_CRON, reinspectCron);
@@ -105,13 +105,13 @@ public class InspectionModuleConfig extends ModuleConfig {
         return retryCount;
     }
 
-    public List<String> getPatternsForPackageType(final String packageType) {
+    public List<String> getPatternsForPackageType(String packageType) {
         return SupportedPackageType.getAsSupportedPackageType(packageType)
                    .map(patternMap::get)
                    .orElse(Collections.emptyList());
     }
 
-    public List<String> getPatternsForPackageType(final SupportedPackageType packageType) {
+    public List<String> getPatternsForPackageType(SupportedPackageType packageType) {
         return patternMap.get(packageType);
     }
 }

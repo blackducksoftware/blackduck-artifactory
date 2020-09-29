@@ -32,7 +32,7 @@ public class Artifact {
     private final RepoPath repoPath;
     private final ExternalId externalId;
 
-    public Artifact(final RepoPath repoPath, final ExternalId externalId) {
+    public Artifact(RepoPath repoPath, ExternalId externalId) {
         this.repoPath = repoPath;
         this.externalId = externalId;
     }

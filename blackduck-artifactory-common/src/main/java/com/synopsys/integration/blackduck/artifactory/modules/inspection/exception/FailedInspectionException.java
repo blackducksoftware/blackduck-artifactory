@@ -29,7 +29,7 @@ import com.synopsys.integration.exception.IntegrationException;
 public class FailedInspectionException extends IntegrationException {
     private final RepoPath repoPath;
 
-    public FailedInspectionException(final RepoPath repoPath, final String message) {
+    public FailedInspectionException(RepoPath repoPath, String message) {
         super(message);
         this.repoPath = repoPath;
     }

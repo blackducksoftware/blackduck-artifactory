@@ -43,28 +43,28 @@ public class MetaDataUpdateService {
     private final InspectionPropertyService inspectionPropertyService;
     private final ArtifactNotificationService artifactNotificationService;
 
-    public MetaDataUpdateService(final InspectionPropertyService inspectionPropertyService, final ArtifactNotificationService artifactNotificationService) {
+    public MetaDataUpdateService(InspectionPropertyService inspectionPropertyService, ArtifactNotificationService artifactNotificationService) {
         this.inspectionPropertyService = inspectionPropertyService;
         this.artifactNotificationService = artifactNotificationService;
     }
 
-    public void updateMetadata(final List<RepoPath> repoKeyPaths) {
-        final Date now = new Date();
+    public void updateMetadata(List<RepoPath> repoKeyPaths) {
+        Date now = new Date();
         Date earliestDate = now;
-        for (final RepoPath repoKeyPath : repoKeyPaths) {
-            final boolean shouldTryUpdate = inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS) || inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
+        for (RepoPath repoKeyPath : repoKeyPaths) {
+            boolean shouldTryUpdate = inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS) || inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
 
             if (shouldTryUpdate) {
-                final Optional<Date> lastUpdateProperty = inspectionPropertyService.getLastUpdate(repoKeyPath);
-                final Optional<Date> lastInspectionProperty = inspectionPropertyService.getLastInspection(repoKeyPath);
-                final Date dateToCheck;
+                Optional<Date> lastUpdateProperty = inspectionPropertyService.getLastUpdate(repoKeyPath);
+                Optional<Date> lastInspectionProperty = inspectionPropertyService.getLastInspection(repoKeyPath);
+                Date dateToCheck;
 
                 if (lastUpdateProperty.isPresent()) {
                     dateToCheck = lastUpdateProperty.get();
                 } else if (lastInspectionProperty.isPresent()) {
                     dateToCheck = lastInspectionProperty.get();
                 } else {
-                    final String message = String.format(
+                    String message = String.format(
                         "Could not find timestamp property on %s. Black Duck artifactory notifications is likely malformed and requires re-inspection. Run the blackDuckDeleteInspectionProperties rest endpoint to re-inspect all configured repositories or delete the malformed properties manually.",
                         repoKeyPath.toPath());
                     logger.debug(message);
@@ -80,7 +80,7 @@ public class MetaDataUpdateService {
 
         try {
             artifactNotificationService.updateMetadataFromNotifications(repoKeyPaths, earliestDate, now);
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             logger.error(String.format("The Black Duck %s encountered a problem while updating artifact notifications from BlackDuck notifications.", InspectionModule.class.getSimpleName()));
             logger.debug(e.getMessage(), e);
             repoKeyPaths.forEach(repoKeyPath -> inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE));

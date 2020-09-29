@@ -52,36 +52,36 @@ public class ComposerExternalIdExtractor {
     private final ExternalIdFactory externalIdFactory;
     private final Gson gson;
 
-    public ComposerExternalIdExtractor(final ArtifactSearchService artifactSearchService, final ArtifactoryPAPIService artifactoryPAPIService, final ExternalIdFactory externalIdFactory, final Gson gson) {
+    public ComposerExternalIdExtractor(ArtifactSearchService artifactSearchService, ArtifactoryPAPIService artifactoryPAPIService, ExternalIdFactory externalIdFactory, Gson gson) {
         this.artifactSearchService = artifactSearchService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.externalIdFactory = externalIdFactory;
         this.gson = gson;
     }
 
-    public Optional<ExternalId> extractExternalId(final SupportedPackageType supportedPackageType, final RepoPath repoPath) {
-        final FileNamePieces fileNamePieces = extractFileNamePieces(repoPath);
-        final String jsonFileName = fileNamePieces.getComponentName().toLowerCase() + ".json";
-        final List<RepoPath> jsonFileRepoPaths = artifactSearchService.findArtifactByName(jsonFileName, repoPath.getRepoKey());
+    public Optional<ExternalId> extractExternalId(SupportedPackageType supportedPackageType, RepoPath repoPath) {
+        FileNamePieces fileNamePieces = extractFileNamePieces(repoPath);
+        String jsonFileName = fileNamePieces.getComponentName().toLowerCase() + ".json";
+        List<RepoPath> jsonFileRepoPaths = artifactSearchService.findArtifactByName(jsonFileName, repoPath.getRepoKey());
 
         ExternalId externalId = null;
-        for (final RepoPath jsonFileRepoPath : jsonFileRepoPaths) {
-            final List<ComposerVersion> composerVersions = parseJson(jsonFileRepoPath);
-            final List<ExternalId> externalIds = new ArrayList<>();
+        for (RepoPath jsonFileRepoPath : jsonFileRepoPaths) {
+            List<ComposerVersion> composerVersions = parseJson(jsonFileRepoPath);
+            List<ExternalId> externalIds = new ArrayList<>();
 
-            for (final ComposerVersion composerVersion : composerVersions) {
-                final String referenceHash = composerVersion.getVersionSource().getReference();
-                final String artifactHash = fileNamePieces.getHash();
+            for (ComposerVersion composerVersion : composerVersions) {
+                String referenceHash = composerVersion.getVersionSource().getReference();
+                String artifactHash = fileNamePieces.getHash();
                 if (referenceHash.equals(artifactHash)) {
-                    final Forge forge = supportedPackageType.getForge();
-                    final ExternalId foundExternalId = externalIdFactory.createNameVersionExternalId(forge, composerVersion.getName(), composerVersion.getVersion());
+                    Forge forge = supportedPackageType.getForge();
+                    ExternalId foundExternalId = externalIdFactory.createNameVersionExternalId(forge, composerVersion.getName(), composerVersion.getVersion());
                     externalIds.add(foundExternalId);
                 }
             }
 
             // Try to find an external id that contains version numbers since dev releases can also be in this list.
-            for (final ExternalId foundExternalId : externalIds) {
-                final String[] numbers = IntStream.rangeClosed(0, 9)
+            for (ExternalId foundExternalId : externalIds) {
+                String[] numbers = IntStream.rangeClosed(0, 9)
                                              .boxed()
                                              .map(String::valueOf)
                                              .toArray(String[]::new);
@@ -99,18 +99,18 @@ public class ComposerExternalIdExtractor {
         return Optional.ofNullable(externalId);
     }
 
-    private List<ComposerVersion> parseJson(final RepoPath repoPath) {
-        try (final ResourceStreamHandle resourceStreamHandle = artifactoryPAPIService.getArtifactContent(repoPath)) {
-            final InputStream inputStream = resourceStreamHandle.getInputStream();
-            final InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            final JsonElement root = new JsonParser().parse(inputStreamReader);
-            final Set<Map.Entry<String, JsonElement>> rootEntries = root.getAsJsonObject().get("packages").getAsJsonObject().entrySet();
-            final List<ComposerVersion> composerVersions = new ArrayList<>();
-            for (final Map.Entry<String, JsonElement> rootEntry : rootEntries) {
-                final Set<Map.Entry<String, JsonElement>> versionJsonElements = rootEntry.getValue().getAsJsonObject().entrySet();
+    private List<ComposerVersion> parseJson(RepoPath repoPath) {
+        try (ResourceStreamHandle resourceStreamHandle = artifactoryPAPIService.getArtifactContent(repoPath)) {
+            InputStream inputStream = resourceStreamHandle.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            JsonElement root = new JsonParser().parse(inputStreamReader);
+            Set<Map.Entry<String, JsonElement>> rootEntries = root.getAsJsonObject().get("packages").getAsJsonObject().entrySet();
+            List<ComposerVersion> composerVersions = new ArrayList<>();
+            for (Map.Entry<String, JsonElement> rootEntry : rootEntries) {
+                Set<Map.Entry<String, JsonElement>> versionJsonElements = rootEntry.getValue().getAsJsonObject().entrySet();
 
-                for (final Map.Entry<String, JsonElement> versionJsonElement : versionJsonElements) {
-                    final ComposerVersion composerVersion = gson.fromJson(versionJsonElement.getValue(), ComposerVersion.class);
+                for (Map.Entry<String, JsonElement> versionJsonElement : versionJsonElements) {
+                    ComposerVersion composerVersion = gson.fromJson(versionJsonElement.getValue(), ComposerVersion.class);
                     composerVersions.add(composerVersion);
                 }
             }
@@ -119,17 +119,17 @@ public class ComposerExternalIdExtractor {
         }
     }
 
-    private FileNamePieces extractFileNamePieces(final RepoPath repoPath) {
-        final String fullFileName = repoPath.getName();
-        final String[] zipExtensionPieces = fullFileName.split("\\.");
-        final String extension = zipExtensionPieces[zipExtensionPieces.length - 1];
-        final int extensionStart = fullFileName.indexOf(extension) - 1;
-        final String extensionRemovedFileName = fullFileName.substring(0, extensionStart);
+    private FileNamePieces extractFileNamePieces(RepoPath repoPath) {
+        String fullFileName = repoPath.getName();
+        String[] zipExtensionPieces = fullFileName.split("\\.");
+        String extension = zipExtensionPieces[zipExtensionPieces.length - 1];
+        int extensionStart = fullFileName.indexOf(extension) - 1;
+        String extensionRemovedFileName = fullFileName.substring(0, extensionStart);
 
-        final String[] componentNameHashPieces = extensionRemovedFileName.split("-");
-        final String hash = componentNameHashPieces[componentNameHashPieces.length - 1];
-        final int hashStart = extensionRemovedFileName.indexOf(hash) - 1;
-        final String componentName = extensionRemovedFileName.substring(0, hashStart).toLowerCase();
+        String[] componentNameHashPieces = extensionRemovedFileName.split("-");
+        String hash = componentNameHashPieces[componentNameHashPieces.length - 1];
+        int hashStart = extensionRemovedFileName.indexOf(hash) - 1;
+        String componentName = extensionRemovedFileName.substring(0, hashStart).toLowerCase();
 
         return new FileNamePieces(componentName, hash, extension);
     }
@@ -139,7 +139,7 @@ public class ComposerExternalIdExtractor {
         private final String hash;
         private final String extension;
 
-        private FileNamePieces(final String componentName, final String hash, final String extension) {
+        private FileNamePieces(String componentName, String hash, String extension) {
             this.componentName = componentName;
             this.hash = hash;
             this.extension = extension;

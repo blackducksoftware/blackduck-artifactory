@@ -50,7 +50,7 @@ public enum SupportedPackageType {
     private final String artifactoryVersionProperty;
     private final InspectionModuleProperty patternProperty;
 
-    SupportedPackageType(final String artifactoryName, final Forge forge, final String artifactoryNameProperty, final String artifactoryVersionProperty, final InspectionModuleProperty patternProperty) {
+    SupportedPackageType(String artifactoryName, Forge forge, String artifactoryNameProperty, String artifactoryVersionProperty, InspectionModuleProperty patternProperty) {
         this.artifactoryName = artifactoryName;
         this.forge = forge;
         this.artifactoryNameProperty = artifactoryNameProperty;
@@ -58,7 +58,7 @@ public enum SupportedPackageType {
         this.patternProperty = patternProperty;
     }
 
-    SupportedPackageType(final String artifactoryName, final Forge forge, final InspectionModuleProperty patternProperty) {
+    SupportedPackageType(String artifactoryName, Forge forge, InspectionModuleProperty patternProperty) {
         this.artifactoryName = artifactoryName;
         this.forge = forge;
         this.artifactoryNameProperty = null;
@@ -66,7 +66,7 @@ public enum SupportedPackageType {
         this.patternProperty = patternProperty;
     }
 
-    public static Optional<SupportedPackageType> getAsSupportedPackageType(final String packageType) {
+    public static Optional<SupportedPackageType> getAsSupportedPackageType(String packageType) {
         return Arrays.stream(SupportedPackageType.values())
                    .filter(supportedPackageType -> supportedPackageType.getArtifactoryName().equalsIgnoreCase(packageType))
                    .findFirst();

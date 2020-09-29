@@ -47,7 +47,7 @@ public enum InspectionModuleProperty implements ConfigurationProperty {
 
     private final String key;
 
-    InspectionModuleProperty(final String key) {
+    InspectionModuleProperty(String key) {
         this.key = "blackduck.artifactory.inspect." + key;
     }
 

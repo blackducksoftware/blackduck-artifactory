@@ -55,27 +55,27 @@ public class BlackDuckBOMService {
     private final ComponentService componentService;
     private final BlackDuckService blackDuckService;
 
-    public BlackDuckBOMService(final ProjectBomService projectBomService, final ComponentService componentService, final BlackDuckService blackDuckService) {
+    public BlackDuckBOMService(ProjectBomService projectBomService, ComponentService componentService, BlackDuckService blackDuckService) {
         this.projectBomService = projectBomService;
         this.componentService = componentService;
         this.blackDuckService = blackDuckService;
     }
 
-    public ComponentViewWrapper addArtifactToProjectVersion(final Artifact artifact, final ProjectVersionView projectVersionView) throws FailedInspectionException {
-        final RepoPath repoPath = artifact.getRepoPath();
-        final ComponentViewWrapper componentViewWrapper;
+    public ComponentViewWrapper addArtifactToProjectVersion(Artifact artifact, ProjectVersionView projectVersionView) throws FailedInspectionException {
+        RepoPath repoPath = artifact.getRepoPath();
+        ComponentViewWrapper componentViewWrapper;
 
         if (artifact.getExternalId().isPresent()) {
-            final ExternalId externalId = artifact.getExternalId().get();
+            ExternalId externalId = artifact.getExternalId().get();
             try {
                 componentViewWrapper = addComponentToProjectVersion(repoPath, externalId, projectVersionView);
-            } catch (final BlackDuckIntegrationException e) {
+            } catch (BlackDuckIntegrationException e) {
                 logger.warn(String.format("Cannot find component match for artifact at %s.", repoPath.toPath()));
                 throw new FailedInspectionException(repoPath, "Failed to find component match.");
-            } catch (final FailedInspectionException e) {
+            } catch (FailedInspectionException e) {
                 // If we don't catch and throw, the inspectionStatus message will be too vague.
                 throw e;
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 logger.warn(String.format("The Black Duck %s could not successfully inspect '%s'.", InspectionModule.class.getSimpleName(), repoPath.toPath()));
                 logger.debug(e.getMessage(), e);
                 throw new FailedInspectionException(repoPath, "See logs for details.");
@@ -87,8 +87,8 @@ public class BlackDuckBOMService {
         return componentViewWrapper;
     }
 
-    public Optional<String> searchForComponent(final ExternalId componentExternalId) throws IntegrationException {
-        final Optional<ComponentSearchResultView> componentSearchResultView = componentService.getFirstOrEmptyResult(componentExternalId);
+    public Optional<String> searchForComponent(ExternalId componentExternalId) throws IntegrationException {
+        Optional<ComponentSearchResultView> componentSearchResultView = componentService.getFirstOrEmptyResult(componentExternalId);
         String componentVersionUrl = null;
         if (componentSearchResultView.isPresent()) {
             if (StringUtils.isNotBlank(componentSearchResultView.get().getVariant())) {
@@ -102,16 +102,16 @@ public class BlackDuckBOMService {
     }
 
     // Mostly copied from the ProjectBomService in blackduck-common. Made tweaks so the component that was attempting to be added is always returned.
-    private ComponentViewWrapper addComponentToProjectVersion(final RepoPath repoPath, final ExternalId componentExternalId, final ProjectVersionView projectVersionView) throws IntegrationException {
-        final String projectVersionComponentsUrl = projectVersionView.getFirstLink(ProjectVersionView.COMPONENTS_LINK).orElse(null);
-        final Optional<String> componentVersionUrl = searchForComponent(componentExternalId);
-        final ComponentViewWrapper componentViewWrapper;
+    private ComponentViewWrapper addComponentToProjectVersion(RepoPath repoPath, ExternalId componentExternalId, ProjectVersionView projectVersionView) throws IntegrationException {
+        String projectVersionComponentsUrl = projectVersionView.getFirstLink(ProjectVersionView.COMPONENTS_LINK).orElse(null);
+        Optional<String> componentVersionUrl = searchForComponent(componentExternalId);
+        ComponentViewWrapper componentViewWrapper;
         if (componentVersionUrl.isPresent()) {
             try {
                 projectBomService.addComponentToProjectVersion("application/json", projectVersionComponentsUrl, componentVersionUrl.get());
-            } catch (final IntegrationRestException e) {
+            } catch (IntegrationRestException e) {
                 handleIntegrationRestException(repoPath, e);
-            } catch (final BlackDuckApiException e) {
+            } catch (BlackDuckApiException e) {
                 handleIntegrationRestException(repoPath, e.getOriginalIntegrationRestException());
             }
             componentViewWrapper = getComponentViewWrapper(componentVersionUrl.get(), projectVersionView);
@@ -122,9 +122,9 @@ public class BlackDuckBOMService {
         return componentViewWrapper;
     }
 
-    private void handleIntegrationRestException(final RepoPath repoPath, final IntegrationRestException exception)
+    private void handleIntegrationRestException(RepoPath repoPath, IntegrationRestException exception)
         throws FailedInspectionException {
-        final int statusCode = exception.getHttpStatusCode();
+        int statusCode = exception.getHttpStatusCode();
 
         if (statusCode == 412) {
             logger.info(String.format("Unable to add manual BOM component because it already exists '%s'.", repoPath.toPath()));
@@ -140,29 +140,29 @@ public class BlackDuckBOMService {
         }
     }
 
-    public ComponentViewWrapper getComponentViewWrapper(final String componentVersionUrl, final ProjectVersionView projectVersionView) throws IntegrationException {
-        final ComponentVersionView componentVersionView = blackDuckService.getResponse(new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class));
+    public ComponentViewWrapper getComponentViewWrapper(String componentVersionUrl, ProjectVersionView projectVersionView) throws IntegrationException {
+        ComponentVersionView componentVersionView = blackDuckService.getResponse(new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class));
         return getComponentViewWrapper(componentVersionView, projectVersionView);
     }
 
-    private ComponentViewWrapper getComponentViewWrapper(final ComponentVersionView componentVersionView, final ProjectVersionView projectVersionView) throws IntegrationException {
-        final Optional<String> projectVersionViewHref = projectVersionView.getHref();
-        final Optional<String> componentVersionViewHref = componentVersionView.getHref();
+    private ComponentViewWrapper getComponentViewWrapper(ComponentVersionView componentVersionView, ProjectVersionView projectVersionView) throws IntegrationException {
+        Optional<String> projectVersionViewHref = projectVersionView.getHref();
+        Optional<String> componentVersionViewHref = componentVersionView.getHref();
 
         // This is bad practice but...
         // The link to a VersionBomComponentView cannot be obtained without searching the BOM or manually constructing the link. So for performance in Black Duck, we manually construct the link
         if (projectVersionViewHref.isPresent() && componentVersionViewHref.isPresent()) {
             final String apiComponentsLinkPrefix = "/api/components/";
-            final String componentHref = componentVersionViewHref.get();
-            final int apiComponentsStart = componentHref.indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
+            String componentHref = componentVersionViewHref.get();
+            int apiComponentsStart = componentHref.indexOf(apiComponentsLinkPrefix) + apiComponentsLinkPrefix.length();
             int endingIndex = componentHref.length();
             final String originsLinkPrefix = "/origins/";
             if (componentHref.contains(originsLinkPrefix)) {
                 endingIndex = componentHref.indexOf(originsLinkPrefix);
             }
-            final String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentHref.substring(apiComponentsStart, endingIndex);
-            final UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
-            final VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
+            String versionBomComponentUri = projectVersionViewHref.get() + "/components/" + componentHref.substring(apiComponentsStart, endingIndex);
+            UriSingleResponse<VersionBomComponentView> versionBomComponentViewUriResponse = new UriSingleResponse<>(versionBomComponentUri, VersionBomComponentView.class);
+            VersionBomComponentView versionBomComponentView = blackDuckService.getResponse(versionBomComponentViewUriResponse);
 
             return new ComponentViewWrapper(versionBomComponentView, componentVersionView);
         } else {

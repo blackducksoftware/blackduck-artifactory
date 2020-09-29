@@ -30,5 +30,5 @@ import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 
 public interface ExternalIdExtactor {
-    Optional<ExternalId> extractExternalId(final SupportedPackageType supportedPackageType, final RepoPath repoPath);
+    Optional<ExternalId> extractExternalId(SupportedPackageType supportedPackageType, RepoPath repoPath);
 }

@@ -28,7 +28,7 @@ public class AffectedArtifact<T extends BlackDuckNotification> {
     private final RepoPath repoPath;
     private final T blackDuckNotification;
 
-    public AffectedArtifact(final RepoPath repoPath, final T blackDuckNotification) {
+    public AffectedArtifact(RepoPath repoPath, T blackDuckNotification) {
         this.repoPath = repoPath;
         this.blackDuckNotification = blackDuckNotification;
     }

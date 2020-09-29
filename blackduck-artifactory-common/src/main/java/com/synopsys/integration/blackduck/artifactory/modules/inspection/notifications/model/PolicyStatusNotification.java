@@ -35,8 +35,8 @@ public class PolicyStatusNotification extends BlackDuckNotification {
     private final PolicyStatusView policyStatusView;
     private final List<PolicyInfo> policyInfos;
 
-    public PolicyStatusNotification(final List<NameVersion> affectedProjectVersions, final ComponentVersionView componentVersionView, final ComponentView componentView, final PolicyStatusView policyStatusView,
-        final List<PolicyInfo> policyInfos) {
+    public PolicyStatusNotification(List<NameVersion> affectedProjectVersions, ComponentVersionView componentVersionView, ComponentView componentView, PolicyStatusView policyStatusView,
+        List<PolicyInfo> policyInfos) {
         super(affectedProjectVersions, componentVersionView);
         this.componentView = componentView;
         this.policyStatusView = policyStatusView;

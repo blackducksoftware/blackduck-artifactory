@@ -59,8 +59,8 @@ public class PolicySeverityService {
     private final BlackDuckBOMService blackDuckBOMService;
     private final ProjectService projectService;
 
-    public PolicySeverityService(final ArtifactoryPropertyService artifactoryPropertyService, final InspectionPropertyService inspectionPropertyService, final BlackDuckService blackDuckService, final BlackDuckBOMService blackDuckBOMService,
-        final ProjectService projectService) {
+    public PolicySeverityService(ArtifactoryPropertyService artifactoryPropertyService, InspectionPropertyService inspectionPropertyService, BlackDuckService blackDuckService, BlackDuckBOMService blackDuckBOMService,
+        ProjectService projectService) {
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.inspectionPropertyService = inspectionPropertyService;
         this.blackDuckService = blackDuckService;
@@ -68,21 +68,21 @@ public class PolicySeverityService {
         this.projectService = projectService;
     }
 
-    public void performPolicySeverityUpgrade(final String repoKey) {
-        final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
-        final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+    public void performPolicySeverityUpgrade(String repoKey) {
+        String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
+        String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
         try {
-            final Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
+            Optional<ProjectVersionWrapper> projectVersionWrapper = projectService.getProjectVersion(projectName, projectVersionName);
             if (projectVersionWrapper.isPresent()) {
-                final SetMultimap<String, String> inViolationPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
+                SetMultimap<String, String> inViolationPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
                                                                                .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
                                                                                .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicySummaryStatusType.IN_VIOLATION.name())
                                                                                .build();
-                final SetMultimap<String, String> overriddenPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
+                SetMultimap<String, String> overriddenPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
                                                                               .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
                                                                               .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicySummaryStatusType.IN_VIOLATION_OVERRIDDEN.name())
                                                                               .build();
-                final List<RepoPath> repoPathsFound = new ArrayList<>();
+                List<RepoPath> repoPathsFound = new ArrayList<>();
                 repoPathsFound.addAll(artifactoryPropertyService.getItemsContainingPropertiesAndValues(inViolationPropertyMap, repoKey));
                 repoPathsFound.addAll(artifactoryPropertyService.getItemsContainingPropertiesAndValues(overriddenPropertyMap, repoKey));
 
@@ -90,28 +90,28 @@ public class PolicySeverityService {
             } else {
                 logger.warn(String.format("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.", repoKey));
             }
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             logger.error(String.format("Failed to perform the policy severity upgrade for repo '%s'. The %s may not work as expected.", repoKey, PolicyModule.class.getSimpleName()), e);
         }
     }
 
-    private void upgradeSeverityForRepoPath(final ProjectVersionView projectVersionView, final RepoPath repoPath) {
+    private void upgradeSeverityForRepoPath(ProjectVersionView projectVersionView, RepoPath repoPath) {
         try {
-            final String componentVersionUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL)
+            String componentVersionUrl = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL)
                                                    .orElseThrow(() -> new IntegrationException("Missing component version url."));
-            final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionView);
-            final VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
-            final List<VersionBomPolicyRuleView> versionBomPolicyRuleViews;
+            ComponentViewWrapper componentViewWrapper = blackDuckBOMService.getComponentViewWrapper(componentVersionUrl, projectVersionView);
+            VersionBomComponentView versionBomComponentView = componentViewWrapper.getVersionBomComponentView();
+            List<VersionBomPolicyRuleView> versionBomPolicyRuleViews;
             versionBomPolicyRuleViews = blackDuckService.getAllResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE);
 
-            final PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
-            final List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
+            PolicySummaryStatusType policyStatus = versionBomComponentView.getPolicyStatus();
+            List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
                                                                      .map(VersionBomPolicyRuleView::getSeverity)
                                                                      .map(PolicySeverityType::valueOf)
                                                                      .collect(Collectors.toList());
-            final PolicyStatusReport policyStatusReport = new PolicyStatusReport(policyStatus, policySeverityTypes);
+            PolicyStatusReport policyStatusReport = new PolicyStatusReport(policyStatus, policySeverityTypes);
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             logger.error(String.format("Failed to perform policy upgrade on %s. %s", repoPath.toPath(), e.getMessage()));
         }
     }

@@ -67,9 +67,9 @@ public class ArtifactInspectionService {
     private final ExternalIdService externalIdService;
     private final BlackDuckService blackDuckService;
 
-    public ArtifactInspectionService(final ArtifactoryPAPIService artifactoryPAPIService, final BlackDuckBOMService blackDuckBOMService, final InspectionModuleConfig inspectionModuleConfig,
-        final InspectionPropertyService inspectionPropertyService, final ProjectService projectService, final ComponentService componentService, final ExternalIdService externalIdService,
-        final BlackDuckService blackDuckService) {
+    public ArtifactInspectionService(ArtifactoryPAPIService artifactoryPAPIService, BlackDuckBOMService blackDuckBOMService, InspectionModuleConfig inspectionModuleConfig,
+        InspectionPropertyService inspectionPropertyService, ProjectService projectService, ComponentService componentService, ExternalIdService externalIdService,
+        BlackDuckService blackDuckService) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.inspectionModuleConfig = inspectionModuleConfig;
@@ -80,135 +80,135 @@ public class ArtifactInspectionService {
         this.blackDuckService = blackDuckService;
     }
 
-    public boolean shouldInspectArtifact(final RepoPath repoPath) {
+    public boolean shouldInspectArtifact(RepoPath repoPath) {
         if (!inspectionModuleConfig.getRepos().contains(repoPath.getRepoKey())) {
             return false;
         }
 
-        final ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
-        final Optional<List<String>> patterns = artifactoryPAPIService.getPackageType(repoPath.getRepoKey())
-                                                    .map(inspectionModuleConfig::getPatternsForPackageType);
+        ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
+        Optional<List<String>> patterns = artifactoryPAPIService.getPackageType(repoPath.getRepoKey())
+                                              .map(inspectionModuleConfig::getPatternsForPackageType);
 
         if (!patterns.isPresent() || patterns.get().isEmpty() || itemInfo.isFolder()) {
             return false;
         }
 
-        final File artifact = new File(itemInfo.getName());
-        final WildcardFileFilter wildcardFileFilter = new WildcardFileFilter(patterns.get());
+        File artifact = new File(itemInfo.getName());
+        WildcardFileFilter wildcardFileFilter = new WildcardFileFilter(patterns.get());
 
         return wildcardFileFilter.accept(artifact);
     }
 
-    private Artifact identifyArtifact(final RepoPath repoPath) {
-        final ExternalId externalId = externalIdService.extractExternalId(repoPath).orElse(null);
+    private Artifact identifyArtifact(RepoPath repoPath) {
+        ExternalId externalId = externalIdService.extractExternalId(repoPath).orElse(null);
         return new Artifact(repoPath, externalId);
     }
 
-    public void inspectSingleArtifact(final RepoPath repoPath) {
+    public void inspectSingleArtifact(RepoPath repoPath) {
         try {
-            final String repoKey = repoPath.getRepoKey();
-            final ProjectVersionWrapper projectVersionWrapper = fetchProjectVersionWrapper(repoKey);
+            String repoKey = repoPath.getRepoKey();
+            ProjectVersionWrapper projectVersionWrapper = fetchProjectVersionWrapper(repoKey);
 
             inspectSingleArtifact(repoPath, projectVersionWrapper.getProjectVersionView());
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             inspectionPropertyService.failInspection(repoPath, e.getMessage());
         }
     }
 
-    public void inspectSingleArtifact(final RepoPath repoPath, final ProjectVersionView projectVersionView) throws IntegrationException {
-        final Artifact artifact = identifyArtifact(repoPath);
-        final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersionView);
+    public void inspectSingleArtifact(RepoPath repoPath, ProjectVersionView projectVersionView) throws IntegrationException {
+        Artifact artifact = identifyArtifact(repoPath);
+        ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersionView);
         populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper);
     }
 
-    public ProjectVersionWrapper fetchProjectVersionWrapper(final String repoKey) throws IntegrationException {
-        final String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
-        final String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+    public ProjectVersionWrapper fetchProjectVersionWrapper(String repoKey) throws IntegrationException {
+        String repoProjectName = inspectionPropertyService.getRepoProjectName(repoKey);
+        String repoProjectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
         return projectService.getProjectVersion(repoProjectName, repoProjectVersionName)
                    .orElseThrow(() -> new IntegrationException(String.format("Project '%s' and version '%s' could not be found in Black Duck.", repoProjectName, repoProjectVersionName)));
     }
 
-    public void inspectAllUnknownArtifacts(final String repoKey) {
-        final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
+    public void inspectAllUnknownArtifacts(String repoKey) {
+        RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
         try {
             inspectAllUnknownArtifacts(repoKeyPath);
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             logger.error(String.format("An error occurred when inspecting '%s'.", repoKey));
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, e.getMessage());
         }
     }
 
-    private void inspectAllUnknownArtifacts(final RepoPath repoKeyPath) throws FailedInspectionException {
-        final String repoKey = repoKeyPath.getRepoKey();
+    private void inspectAllUnknownArtifacts(RepoPath repoKeyPath) throws FailedInspectionException {
+        String repoKey = repoKeyPath.getRepoKey();
 
         if (!inspectionPropertyService.hasInspectionStatus(repoKeyPath) || inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.FAILURE)) {
             // Only inspect a delta if the repository has been successfully initialized.
             return;
         }
 
-        final Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
+        Optional<String> packageType = artifactoryPAPIService.getPackageType(repoKey);
         if (!packageType.isPresent()) {
-            final String message = String.format("The repository '%s' has no package type. Inspection cannot be performed.", repoKey);
+            String message = String.format("The repository '%s' has no package type. Inspection cannot be performed.", repoKey);
             logger.error(message);
             throw new FailedInspectionException(repoKeyPath, message);
         }
 
-        final List<String> patterns = inspectionModuleConfig.getPatternsForPackageType(packageType.get());
+        List<String> patterns = inspectionModuleConfig.getPatternsForPackageType(packageType.get());
         if (patterns.isEmpty()) {
             // If we don't verify that patterns is not empty, artifactory will grab every artifact in the repo.
             logger.warn(String.format("The repository '%s' has a package type of '%s' which either isn't supported or has no patterns configured for it.", repoKey, packageType.get()));
             throw new FailedInspectionException(repoKeyPath, "Repo has an unsupported package type or not patterns configured for it.");
         }
 
-        final ProjectVersionView projectVersionView;
+        ProjectVersionView projectVersionView;
         try {
             projectVersionView = fetchProjectVersionWrapper(repoKey).getProjectVersionView();
             inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             logger.debug("An error occurred when attempting to get the project version from Black Duck.", e);
             throw new FailedInspectionException(repoKeyPath, String.format("Failed to get project version from Black Duck: %s", e.getMessage()));
         }
 
-        final List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(repoKey, patterns).stream()
-                                             .filter(this::shouldPerformDeltaAnalysis)
-                                             .map(this::identifyArtifact)
-                                             .collect(Collectors.toList());
+        List<Artifact> artifacts = artifactoryPAPIService.searchForArtifactsByPatterns(repoKey, patterns).stream()
+                                       .filter(this::shouldPerformDeltaAnalysis)
+                                       .map(this::identifyArtifact)
+                                       .collect(Collectors.toList());
 
-        for (final Artifact artifact : artifacts) {
+        for (Artifact artifact : artifacts) {
             try {
-                final ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersionView);
+                ComponentViewWrapper componentViewWrapper = blackDuckBOMService.addArtifactToProjectVersion(artifact, projectVersionView);
                 populateBlackDuckMetadata(artifact.getRepoPath(), componentViewWrapper);
-            } catch (final IntegrationException e) {
+            } catch (IntegrationException e) {
                 inspectionPropertyService.failInspection(artifact.getRepoPath(), String.format("Failed to find component: %s", e.getMessage()));
             }
         }
     }
 
-    private void populateBlackDuckMetadata(final RepoPath repoPath, final ComponentViewWrapper componentViewWrapper) throws IntegrationException {
-        final Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getVersionBomComponentView().getOrigins().stream().findFirst();
+    private void populateBlackDuckMetadata(RepoPath repoPath, ComponentViewWrapper componentViewWrapper) throws IntegrationException {
+        Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getVersionBomComponentView().getOrigins().stream().findFirst();
 
         if (versionBomOriginView.isPresent()) {
-            final ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
-            final ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
-            final VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
-            final PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getVersionBomComponentView(), blackDuckService);
+            ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
+            ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
+            VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
+            PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getVersionBomComponentView(), blackDuckService);
 
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
             componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getVersionBomComponentView().getComponentVersion()));
             inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
 
-            final String forge = versionBomOriginView.get().getExternalNamespace();
-            final String originId = versionBomOriginView.get().getExternalId();
-            final String componentName = componentViewWrapper.getVersionBomComponentView().getComponentName();
-            final String componentVersionName = componentViewWrapper.getVersionBomComponentView().getComponentVersionName();
+            String forge = versionBomOriginView.get().getExternalNamespace();
+            String originId = versionBomOriginView.get().getExternalId();
+            String componentName = componentViewWrapper.getVersionBomComponentView().getComponentName();
+            String componentVersionName = componentViewWrapper.getVersionBomComponentView().getComponentVersionName();
             inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId, componentName, componentVersionName);
         } else {
             throw new FailedInspectionException(repoPath, "No OriginViews were found for component.");
         }
     }
 
-    private boolean shouldPerformDeltaAnalysis(final RepoPath repoPath) {
+    private boolean shouldPerformDeltaAnalysis(RepoPath repoPath) {
         return (!inspectionPropertyService.hasInspectionStatus(repoPath) && !inspectionPropertyService.hasExternalIdProperties(repoPath))
                    || inspectionPropertyService.shouldRetryInspection(repoPath)
                    || inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.PENDING);

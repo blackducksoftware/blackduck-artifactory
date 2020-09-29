@@ -43,22 +43,22 @@ public class ExternalIdService {
     private final ComposerExternalIdExtractor composerExternalIdFactory;
     private final CondaExternalIdExtractor condaExternalIdExtractor;
 
-    public ExternalIdService(final ArtifactoryPAPIService artifactoryPAPIService, final ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor, final ComposerExternalIdExtractor composerExternalIdFactory,
-        final CondaExternalIdExtractor condaExternalIdExtractor) {
+    public ExternalIdService(ArtifactoryPAPIService artifactoryPAPIService, ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor, ComposerExternalIdExtractor composerExternalIdFactory,
+        CondaExternalIdExtractor condaExternalIdExtractor) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.artifactoryInfoExternalIdExtractor = artifactoryInfoExternalIdExtractor;
         this.composerExternalIdFactory = composerExternalIdFactory;
         this.condaExternalIdExtractor = condaExternalIdExtractor;
     }
 
-    public Optional<ExternalId> extractExternalId(final RepoPath repoPath) {
-        final String repoKey = repoPath.getRepoKey();
-        final String packageType = artifactoryPAPIService.getPackageType(repoKey).orElse(null);
-        final Optional<SupportedPackageType> supportedPackageTypeOptional = SupportedPackageType.getAsSupportedPackageType(packageType);
+    public Optional<ExternalId> extractExternalId(RepoPath repoPath) {
+        String repoKey = repoPath.getRepoKey();
+        String packageType = artifactoryPAPIService.getPackageType(repoKey).orElse(null);
+        Optional<SupportedPackageType> supportedPackageTypeOptional = SupportedPackageType.getAsSupportedPackageType(packageType);
 
         ExternalId externalId = null;
         if (supportedPackageTypeOptional.isPresent()) {
-            final SupportedPackageType supportedPackageType = supportedPackageTypeOptional.get();
+            SupportedPackageType supportedPackageType = supportedPackageTypeOptional.get();
 
             if (supportedPackageType.equals(SupportedPackageType.COMPOSER)) {
                 externalId = composerExternalIdFactory.extractExternalId(supportedPackageType, repoPath).orElse(null);

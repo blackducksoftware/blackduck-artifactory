@@ -55,54 +55,54 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
     private final PluginRepoPathFactory pluginRepoPathFactory;
     private final int maxRetryCount;
 
-    public InspectionPropertyService(final ArtifactoryPAPIService artifactoryPAPIService, final DateTimeManager dateTimeManager, final PluginRepoPathFactory pluginRepoPathFactory, final int maxRetryCount) {
+    public InspectionPropertyService(ArtifactoryPAPIService artifactoryPAPIService, DateTimeManager dateTimeManager, PluginRepoPathFactory pluginRepoPathFactory, int maxRetryCount) {
         super(artifactoryPAPIService, dateTimeManager);
         this.pluginRepoPathFactory = pluginRepoPathFactory;
         this.maxRetryCount = maxRetryCount;
     }
 
-    public boolean hasExternalIdProperties(final RepoPath repoPath) {
+    public boolean hasExternalIdProperties(RepoPath repoPath) {
         return hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID)
                    && hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE)
                    && hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION);
     }
 
-    public void setExternalIdProperties(final RepoPath repoPath, final String forge, final String originId, final String componentName, final String componentVersionName) {
+    public void setExternalIdProperties(RepoPath repoPath, String forge, String originId, String componentName, String componentVersionName) {
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, originId, logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, forge, logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION, String.format(COMPONENT_NAME_VERSION_FORMAT, componentName, componentVersionName), logger);
     }
 
-    public boolean shouldRetryInspection(final RepoPath repoPath) {
+    public boolean shouldRetryInspection(RepoPath repoPath) {
         return !hasInspectionStatus(repoPath) || assertInspectionStatus(repoPath, InspectionStatus.FAILURE) && getFailedInspectionCount(repoPath) < maxRetryCount;
     }
 
-    public void setVulnerabilityProperties(final RepoPath repoPath, final VulnerabilityAggregate vulnerabilityAggregate) {
+    public void setVulnerabilityProperties(RepoPath repoPath, VulnerabilityAggregate vulnerabilityAggregate) {
         setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getHighSeverityCount()), logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getMediumSeverityCount()), logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getLowSeverityCount()), logger);
     }
 
-    public void setPolicyProperties(final RepoPath repoPath, final PolicyStatusReport policyStatusReport) {
+    public void setPolicyProperties(RepoPath repoPath, PolicyStatusReport policyStatusReport) {
         if (policyStatusReport.getPolicySeverityTypes().isEmpty()) {
             deleteProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, logger);
         } else {
-            final String policySeverityTypes = StringUtils.join(policyStatusReport.getPolicySeverityTypes(), ",");
+            String policySeverityTypes = StringUtils.join(policyStatusReport.getPolicySeverityTypes(), ",");
             setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, logger);
         }
         setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusReport.getPolicySummaryStatusType().name(), logger);
     }
 
-    public void setComponentVersionUrl(final RepoPath repoPath, final String componentVersionUrl) {
+    public void setComponentVersionUrl(RepoPath repoPath, String componentVersionUrl) {
         setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, componentVersionUrl, logger);
     }
 
-    public void failInspection(final FailedInspectionException failedInspectionException) {
+    public void failInspection(FailedInspectionException failedInspectionException) {
         failInspection(failedInspectionException.getRepoPath(), failedInspectionException.getMessage());
     }
 
-    public void failInspection(final RepoPath repoPath, @Nullable final String inspectionStatusMessage) {
-        final int retryCount = getFailedInspectionCount(repoPath) + 1;
+    public void failInspection(RepoPath repoPath, @Nullable String inspectionStatusMessage) {
+        int retryCount = getFailedInspectionCount(repoPath) + 1;
         logger.debug(String.format("Attempting to fail inspection for '%s' with message '%s'", repoPath.toPath(), inspectionStatusMessage));
         if (retryCount > maxRetryCount) {
             logger.debug(String.format("Attempting to fail inspection more than the number of maximum attempts: %s", repoPath.getPath()));
@@ -111,19 +111,19 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
         }
     }
 
-    private int getFailedInspectionCount(final RepoPath repoPath) {
+    private int getFailedInspectionCount(RepoPath repoPath) {
         return getPropertyAsInteger(repoPath, BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT).orElse(0);
     }
 
-    public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status) {
+    public void setInspectionStatus(RepoPath repoPath, InspectionStatus status) {
         setInspectionStatus(repoPath, status, null);
     }
 
-    public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status, @Nullable final String inspectionStatusMessage) {
+    public void setInspectionStatus(RepoPath repoPath, InspectionStatus status, @Nullable String inspectionStatusMessage) {
         setInspectionStatus(repoPath, status, inspectionStatusMessage, null);
     }
 
-    public void setInspectionStatus(final RepoPath repoPath, final InspectionStatus status, @Nullable final String inspectionStatusMessage, @Nullable final Integer retryCount) {
+    public void setInspectionStatus(RepoPath repoPath, InspectionStatus status, @Nullable String inspectionStatusMessage, @Nullable Integer retryCount) {
         setPropertyFromDate(repoPath, BlackDuckArtifactoryProperty.LAST_INSPECTION, new Date(), logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, status.name(), logger);
 
@@ -140,71 +140,71 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
         }
     }
 
-    public Optional<InspectionStatus> getInspectionStatus(final RepoPath repoPath) {
+    public Optional<InspectionStatus> getInspectionStatus(RepoPath repoPath) {
         return getProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS)
                    .map(InspectionStatus::valueOf);
     }
 
-    public boolean hasInspectionStatus(final RepoPath repoPath) {
+    public boolean hasInspectionStatus(RepoPath repoPath) {
         return hasProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS);
     }
 
-    public List<RepoPath> getAllArtifactsInRepoWithInspectionStatus(final String repoKey, final InspectionStatus inspectionStatus) {
-        final SetMultimap<String, String> propertyMap = HashMultimap.create();
+    public List<RepoPath> getAllArtifactsInRepoWithInspectionStatus(String repoKey, InspectionStatus inspectionStatus) {
+        SetMultimap<String, String> propertyMap = HashMultimap.create();
         propertyMap.put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), inspectionStatus.name());
         return getItemsContainingPropertiesAndValues(propertyMap, repoKey);
     }
 
-    public boolean assertInspectionStatus(final RepoPath repoPath, final InspectionStatus inspectionStatus) {
+    public boolean assertInspectionStatus(RepoPath repoPath, InspectionStatus inspectionStatus) {
         return getInspectionStatus(repoPath)
                    .filter(inspectionStatus::equals)
                    .isPresent();
     }
 
-    public boolean assertUpdateStatus(final RepoPath repoPath, final UpdateStatus updateStatus) {
+    public boolean assertUpdateStatus(RepoPath repoPath, UpdateStatus updateStatus) {
         return getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS)
                    .map(UpdateStatus::valueOf)
                    .filter(updateStatus::equals)
                    .isPresent();
     }
 
-    public String getRepoProjectName(final String repoKey) {
-        final RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
-        final Optional<String> projectNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
+    public String getRepoProjectName(String repoKey) {
+        RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
+        Optional<String> projectNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME);
 
         return projectNameProperty.orElse(repoKey);
     }
 
-    public String getRepoProjectVersionName(final String repoKey) {
-        final RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
-        final Optional<String> projectVersionNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
+    public String getRepoProjectVersionName(String repoKey) {
+        RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
+        Optional<String> projectVersionNameProperty = getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME);
 
         return projectVersionNameProperty.orElse(HostNameHelper.getMyHostName("UNKNOWN_HOST"));
     }
 
-    public void setRepoProjectNameProperties(final String repoKey, final String projectName, final String projectVersionName) {
-        final RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
+    public void setRepoProjectNameProperties(String repoKey, String projectName, String projectVersionName) {
+        RepoPath repoPath = pluginRepoPathFactory.create(repoKey);
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME, projectName, logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME, projectVersionName, logger);
     }
 
-    public void updateProjectUIUrl(final RepoPath repoPath, final ProjectVersionView projectVersionView) {
+    public void updateProjectUIUrl(RepoPath repoPath, ProjectVersionView projectVersionView) {
         projectVersionView.getHref().ifPresent(uiUrl -> setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
     }
 
-    public Optional<Date> getLastUpdate(final RepoPath repoKeyPath) {
+    public Optional<Date> getLastUpdate(RepoPath repoKeyPath) {
         return getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE);
     }
 
-    public Optional<Date> getLastInspection(final RepoPath repoKeyPath) {
+    public Optional<Date> getLastInspection(RepoPath repoKeyPath) {
         return getDateFromProperty(repoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION);
     }
 
-    public void setUpdateStatus(final RepoPath repoKeyPath, final UpdateStatus updateStatus) {
+    public void setUpdateStatus(RepoPath repoKeyPath, UpdateStatus updateStatus) {
         setProperty(repoKeyPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, updateStatus.toString(), logger);
     }
 
-    public void setLastUpdate(final RepoPath repoKeyPath, final Date lastNotificationDate) {
+    public void setLastUpdate(RepoPath repoKeyPath, Date lastNotificationDate) {
         setPropertyFromDate(repoKeyPath, BlackDuckArtifactoryProperty.LAST_UPDATE, lastNotificationDate, logger);
     }
 }

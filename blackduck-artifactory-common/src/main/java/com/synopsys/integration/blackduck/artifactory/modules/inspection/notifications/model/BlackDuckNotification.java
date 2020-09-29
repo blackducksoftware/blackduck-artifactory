@@ -31,7 +31,7 @@ public class BlackDuckNotification {
     private final List<NameVersion> affectedProjectVersions;
     private final ComponentVersionView componentVersionView;
 
-    public BlackDuckNotification(final List<NameVersion> affectedProjectVersions, final ComponentVersionView componentVersionView) {
+    public BlackDuckNotification(List<NameVersion> affectedProjectVersions, ComponentVersionView componentVersionView) {
         this.affectedProjectVersions = affectedProjectVersions;
         this.componentVersionView = componentVersionView;
     }

@@ -29,7 +29,7 @@ public class ComponentViewWrapper {
     private final VersionBomComponentView versionBomComponentView;
     private final ComponentVersionView componentVersionView;
 
-    public ComponentViewWrapper(final VersionBomComponentView versionBomComponentView, final ComponentVersionView componentVersionView) {
+    public ComponentViewWrapper(VersionBomComponentView versionBomComponentView, ComponentVersionView componentVersionView) {
         this.versionBomComponentView = versionBomComponentView;
         this.componentVersionView = componentVersionView;
     }

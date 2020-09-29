@@ -53,25 +53,25 @@ public class RepositoryInitializationService {
     private final InspectionModuleConfig inspectionModuleConfig;
     private final ProjectService projectService;
 
-    public RepositoryInitializationService(final InspectionPropertyService inspectionPropertyService, final ArtifactoryPAPIService artifactoryPAPIService, final InspectionModuleConfig inspectionModuleConfig,
-        final ProjectService projectService) {
+    public RepositoryInitializationService(InspectionPropertyService inspectionPropertyService, ArtifactoryPAPIService artifactoryPAPIService, InspectionModuleConfig inspectionModuleConfig,
+        ProjectService projectService) {
         this.inspectionPropertyService = inspectionPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.projectService = projectService;
     }
 
-    public void initializeRepository(final String repoKey) {
-        final RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
+    public void initializeRepository(String repoKey) {
+        RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
         try {
             initializeRepository(repoKeyPath);
-        } catch (final FailedInspectionException e) {
+        } catch (FailedInspectionException e) {
             inspectionPropertyService.failInspection(e);
         }
     }
 
-    private void initializeRepository(final RepoPath repoKeyPath) throws FailedInspectionException {
-        final String repoKey = repoKeyPath.getRepoKey();
+    private void initializeRepository(RepoPath repoKeyPath) throws FailedInspectionException {
+        String repoKey = repoKeyPath.getRepoKey();
 
         if (!inspectionPropertyService.shouldRetryInspection(repoKeyPath)) {
             // If an inspection status is present, we don't need to do a BOM upload. A failure will be cleared automatically or by a user.
@@ -79,21 +79,21 @@ public class RepositoryInitializationService {
             return;
         }
 
-        final Optional<String> possiblePackageType = artifactoryPAPIService.getPackageType(repoKey);
+        Optional<String> possiblePackageType = artifactoryPAPIService.getPackageType(repoKey);
         if (!possiblePackageType.isPresent()) {
             logger.warn(String.format("Skipping initialization of configured repo '%s' because its package type was not found. Please remove this repo from your configuration or ensure a package type is specified", repoKey));
             throw new FailedInspectionException(repoKeyPath, "Repository package type not found.");
         }
-        final String packageType = possiblePackageType.get();
+        String packageType = possiblePackageType.get();
 
         if (!SupportedPackageType.getAsSupportedPackageType(packageType).isPresent()) {
             logger.warn(String.format("Skipping initialization of configured repo '%s' because its package type is not supported. Please remove this repo from your configuration or specify a supported package type", repoKey));
             throw new FailedInspectionException(repoKeyPath, "Repository package type not supported.");
         }
 
-        final List<String> fileNamePatterns = inspectionModuleConfig.getPatternsForPackageType(packageType);
+        List<String> fileNamePatterns = inspectionModuleConfig.getPatternsForPackageType(packageType);
         if (fileNamePatterns.isEmpty()) {
-            final String message = String.format("No file name patterns configured for discovered package type '%s'.", packageType);
+            String message = String.format("No file name patterns configured for discovered package type '%s'.", packageType);
             logger.warn(message);
             throw new FailedInspectionException(repoKeyPath, message);
         }
@@ -101,27 +101,27 @@ public class RepositoryInitializationService {
         initializeBlackDuckProjectVersion(repoKeyPath);
     }
 
-    private void initializeBlackDuckProjectVersion(final RepoPath repoKeyPath) throws FailedInspectionException {
-        final String repoKey = repoKeyPath.getRepoKey();
-        final String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
-        final String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
+    private void initializeBlackDuckProjectVersion(RepoPath repoKeyPath) throws FailedInspectionException {
+        String repoKey = repoKeyPath.getRepoKey();
+        String projectName = inspectionPropertyService.getRepoProjectName(repoKey);
+        String projectVersionName = inspectionPropertyService.getRepoProjectVersionName(repoKey);
         inspectionPropertyService.setRepoProjectNameProperties(repoKey, projectName, projectVersionName);
 
         try {
-            final Optional<ProjectView> projectViewOptional = projectService.getProjectByName(projectName);
-            final ProjectVersionView projectVersionView;
+            Optional<ProjectView> projectViewOptional = projectService.getProjectByName(projectName);
+            ProjectVersionView projectVersionView;
 
             if (projectViewOptional.isPresent()) {
-                final ProjectView projectView = projectViewOptional.get();
-                final Optional<ProjectVersionView> projectVersionViewOptional = projectService.getProjectVersion(projectView, projectVersionName);
+                ProjectView projectView = projectViewOptional.get();
+                Optional<ProjectVersionView> projectVersionViewOptional = projectService.getProjectVersion(projectView, projectVersionName);
                 if (projectVersionViewOptional.isPresent()) {
                     projectVersionView = projectVersionViewOptional.get();
                 } else {
-                    final ProjectVersionRequest projectVersionRequest = createProjectVersionRequest(projectVersionName);
+                    ProjectVersionRequest projectVersionRequest = createProjectVersionRequest(projectVersionName);
                     projectVersionView = projectService.createProjectVersion(projectView, projectVersionRequest);
                 }
             } else {
-                final ProjectRequest projectRequest = new ProjectRequest();
+                ProjectRequest projectRequest = new ProjectRequest();
                 projectRequest.setName(projectName);
                 projectRequest.setVersionRequest(createProjectVersionRequest(projectVersionName));
                 projectVersionView = projectService.createProject(projectRequest).getProjectVersionView();
@@ -129,15 +129,15 @@ public class RepositoryInitializationService {
 
             inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionView);
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
-        } catch (final IntegrationException e) {
-            final String message = String.format("Failed to create project and version in Black Duck for repository '%s'", repoKey);
+        } catch (IntegrationException e) {
+            String message = String.format("Failed to create project and version in Black Duck for repository '%s'", repoKey);
             logger.debug(message, e);
             throw new FailedInspectionException(repoKeyPath, message);
         }
     }
 
-    private ProjectVersionRequest createProjectVersionRequest(final String projectVersionName) {
-        final ProjectVersionRequest projectVersionRequest = new ProjectVersionRequest();
+    private ProjectVersionRequest createProjectVersionRequest(String projectVersionName) {
+        ProjectVersionRequest projectVersionRequest = new ProjectVersionRequest();
         projectVersionRequest.setVersionName(projectVersionName);
         projectVersionRequest.setPhase(ProjectVersionPhaseType.RELEASED);
         projectVersionRequest.setDistribution(ProjectVersionDistributionType.INTERNAL);
