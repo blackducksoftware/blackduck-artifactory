@@ -49,16 +49,16 @@ public class ConfigurationPropertyManager {
 
     private final Properties properties;
 
-    public ConfigurationPropertyManager(final Properties properties) {
+    public ConfigurationPropertyManager(Properties properties) {
         this.properties = properties;
     }
 
-    public List<String> getRepositoryKeysFromProperties(final ConfigurationProperty repositoryKeyListProperty, final ConfigurationProperty repositoryKeyCsvProperty) throws IOException {
-        final List<String> repositoryKeys;
+    public List<String> getRepositoryKeysFromProperties(ConfigurationProperty repositoryKeyListProperty, ConfigurationProperty repositoryKeyCsvProperty) throws IOException {
+        List<String> repositoryKeys;
 
-        final String repositoryKeyListString = getProperty(repositoryKeyListProperty);
-        final String repositoryKeyCsvPath = getProperty(repositoryKeyCsvProperty);
-        final File repositoryKeyCsvFile = new File(repositoryKeyCsvPath);
+        String repositoryKeyListString = getProperty(repositoryKeyListProperty);
+        String repositoryKeyCsvPath = getProperty(repositoryKeyCsvProperty);
+        File repositoryKeyCsvFile = new File(repositoryKeyCsvPath);
 
         if (repositoryKeyCsvFile.isFile()) {
             repositoryKeys = Files.readAllLines(repositoryKeyCsvFile.toPath()).stream()
@@ -85,44 +85,44 @@ public class ConfigurationPropertyManager {
                    .entrySet();
     }
 
-    public String getProperty(final ConfigurationProperty configurationProperty) {
+    public String getProperty(ConfigurationProperty configurationProperty) {
         return properties.getProperty(configurationProperty.getKey());
     }
 
-    private String getProperty(final String propertyKey) {
+    private String getProperty(String propertyKey) {
         return properties.getProperty(propertyKey);
     }
 
-    public Boolean getBooleanProperty(final ConfigurationProperty configurationProperty) {
+    public Boolean getBooleanProperty(ConfigurationProperty configurationProperty) {
         return getBooleanProperty(configurationProperty.getKey());
     }
 
-    private Boolean getBooleanProperty(final String propertyKey) {
+    private Boolean getBooleanProperty(String propertyKey) {
         return BooleanUtils.toBooleanObject(getProperty(propertyKey));
     }
 
-    public Integer getIntegerProperty(final ConfigurationProperty configurationProperty) {
+    public Integer getIntegerProperty(ConfigurationProperty configurationProperty) {
         return getIntegerProperty(configurationProperty.getKey());
     }
 
-    private Integer getIntegerProperty(final String propertyKey) {
+    private Integer getIntegerProperty(String propertyKey) {
         Integer value = null;
 
         try {
             value = Integer.valueOf(getProperty(propertyKey));
-        } catch (final NumberFormatException e) {
+        } catch (NumberFormatException e) {
             logger.debug(String.format("Failed to parse integer for property: %s", propertyKey), e);
         }
 
         return value;
     }
 
-    public List<String> getPropertyAsList(final ConfigurationProperty configurationProperty) {
-        final List<String> values;
-        final String property = getProperty(configurationProperty);
+    public List<String> getPropertyAsList(ConfigurationProperty configurationProperty) {
+        List<String> values;
+        String property = getProperty(configurationProperty);
 
         if (StringUtils.isNotBlank(property)) {
-            final String[] propertyValues = property.split(",");
+            String[] propertyValues = property.split(",");
             values = Arrays.asList(propertyValues);
         } else {
             values = Collections.emptyList();

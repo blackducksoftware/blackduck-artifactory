@@ -54,21 +54,21 @@ public class ConfigValidationService {
     private final PluginConfig pluginConfig;
     private final File versionFile;
 
-    public ConfigValidationService(final ModuleManager moduleManager, final PluginConfig pluginConfig, final File versionFile) {
+    public ConfigValidationService(ModuleManager moduleManager, PluginConfig pluginConfig, File versionFile) {
         this.moduleManager = moduleManager;
         this.pluginConfig = pluginConfig;
         this.versionFile = versionFile;
     }
 
     public ConfigValidationReport validateConfig() {
-        final BuilderStatus generalBuilderStatus = new BuilderStatus();
-        final PropertyGroupReport generalPropertyReport = new PropertyGroupReport("General Settings", generalBuilderStatus);
+        BuilderStatus generalBuilderStatus = new BuilderStatus();
+        PropertyGroupReport generalPropertyReport = new PropertyGroupReport("General Settings", generalBuilderStatus);
         pluginConfig.validate(generalPropertyReport);
 
-        final List<PropertyGroupReport> propertyGroupReports = new ArrayList<>();
-        for (final ModuleConfig moduleConfig : moduleManager.getAllModuleConfigs()) {
-            final BuilderStatus propertyGroupBuilderStatus = new BuilderStatus();
-            final PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), propertyGroupBuilderStatus);
+        List<PropertyGroupReport> propertyGroupReports = new ArrayList<>();
+        for (ModuleConfig moduleConfig : moduleManager.getAllModuleConfigs()) {
+            BuilderStatus propertyGroupBuilderStatus = new BuilderStatus();
+            PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), propertyGroupBuilderStatus);
             moduleConfig.validate(propertyGroupReport);
             propertyGroupReports.add(propertyGroupReport);
         }
@@ -76,19 +76,19 @@ public class ConfigValidationService {
         return new ConfigValidationReport(generalPropertyReport, propertyGroupReports);
     }
 
-    public String generateStatusCheckMessage(final ConfigValidationReport configValidationReport, final boolean includeValid) {
-        final String pluginVersion = getPluginVersion();
-        final StringBuilder statusCheckMessage = new StringBuilder(BLOCK_SEPARATOR + String.format("Status Check: Plugin Version - %s", pluginVersion) + BLOCK_SEPARATOR);
+    public String generateStatusCheckMessage(ConfigValidationReport configValidationReport, boolean includeValid) {
+        String pluginVersion = getPluginVersion();
+        StringBuilder statusCheckMessage = new StringBuilder(BLOCK_SEPARATOR + String.format("Status Check: Plugin Version - %s", pluginVersion) + BLOCK_SEPARATOR);
 
-        final PropertyGroupReport generalPropertyReport = configValidationReport.getGeneralPropertyReport();
-        final String configErrorMessage = generalPropertyReport.hasError() ? "CONFIGURATION ERROR" : "";
+        PropertyGroupReport generalPropertyReport = configValidationReport.getGeneralPropertyReport();
+        String configErrorMessage = generalPropertyReport.hasError() ? "CONFIGURATION ERROR" : "";
         statusCheckMessage.append(String.format("General Settings: %s", configErrorMessage)).append(LINE_SEPARATOR);
         appendPropertyGroupReport(statusCheckMessage, generalPropertyReport, includeValid);
         statusCheckMessage.append(BLOCK_SEPARATOR);
 
-        for (final PropertyGroupReport modulePropertyReport : configValidationReport.getModulePropertyReports()) {
-            final Optional<ModuleConfig> moduleConfigsByName = moduleManager.getFirstModuleConfigByName(modulePropertyReport.getPropertyGroupName());
-            final boolean enabled = moduleConfigsByName.isPresent() && moduleConfigsByName.get().isEnabled();
+        for (PropertyGroupReport modulePropertyReport : configValidationReport.getModulePropertyReports()) {
+            Optional<ModuleConfig> moduleConfigsByName = moduleManager.getFirstModuleConfigByName(modulePropertyReport.getPropertyGroupName());
+            boolean enabled = moduleConfigsByName.isPresent() && moduleConfigsByName.get().isEnabled();
             appendPropertyReportForModule(statusCheckMessage, modulePropertyReport, enabled, includeValid);
             statusCheckMessage.append(BLOCK_SEPARATOR);
         }
@@ -96,24 +96,24 @@ public class ConfigValidationService {
         return statusCheckMessage.toString();
     }
 
-    private void appendPropertyReportForModule(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport, final boolean enabled, final boolean includeValid) {
-        final String moduleName = propertyGroupReport.getPropertyGroupName();
-        final String state = enabled ? "Enabled" : "Disabled";
-        final String configErrorMessage = propertyGroupReport.hasError() ? "CONFIGURATION ERROR" : "";
-        final String moduleLine = String.format("%s [%s] %s", moduleName, state, configErrorMessage);
+    private void appendPropertyReportForModule(StringBuilder statusCheckMessage, PropertyGroupReport propertyGroupReport, boolean enabled, boolean includeValid) {
+        String moduleName = propertyGroupReport.getPropertyGroupName();
+        String state = enabled ? "Enabled" : "Disabled";
+        String configErrorMessage = propertyGroupReport.hasError() ? "CONFIGURATION ERROR" : "";
+        String moduleLine = String.format("%s [%s] %s", moduleName, state, configErrorMessage);
         statusCheckMessage.append(moduleLine).append(LINE_SEPARATOR);
 
         appendPropertyGroupReport(statusCheckMessage, propertyGroupReport, includeValid);
     }
 
-    private void appendPropertyGroupReport(final StringBuilder statusCheckMessage, final PropertyGroupReport propertyGroupReport, final boolean includeValid) {
-        for (final PropertyValidationResult propertyReport : propertyGroupReport.getPropertyReports()) {
-            final Optional<String> errorMessage = propertyReport.getErrorMessage();
+    private void appendPropertyGroupReport(StringBuilder statusCheckMessage, PropertyGroupReport propertyGroupReport, boolean includeValid) {
+        for (PropertyValidationResult propertyReport : propertyGroupReport.getPropertyReports()) {
+            Optional<String> errorMessage = propertyReport.getErrorMessage();
 
-            final String mark = errorMessage.isPresent() ? "X" : "✔";
-            final String property = propertyReport.getConfigurationProperty().getKey();
-            final String reportSuffix = errorMessage.isPresent() ? String.format(LINE_SEPARATOR + "      * %s", errorMessage.get()) : "";
-            final String reportLine = String.format("[%s] - %s %s", mark, property, reportSuffix);
+            String mark = errorMessage.isPresent() ? "X" : "✔";
+            String property = propertyReport.getConfigurationProperty().getKey();
+            String reportSuffix = errorMessage.isPresent() ? String.format(LINE_SEPARATOR + "      * %s", errorMessage.get()) : "";
+            String reportLine = String.format("[%s] - %s %s", mark, property, reportSuffix);
 
             if (includeValid || errorMessage.isPresent()) {
                 statusCheckMessage.append(wrapLine(reportLine)).append(LINE_SEPARATOR);
@@ -121,12 +121,12 @@ public class ConfigValidationService {
         }
 
         if (!propertyGroupReport.getBuilderStatus().isValid()) {
-            final String otherMessages = wrapLine(String.format("Other Messages: %s", propertyGroupReport.getBuilderStatus().getFullErrorMessage()));
+            String otherMessages = wrapLine(String.format("Other Messages: %s", propertyGroupReport.getBuilderStatus().getFullErrorMessage()));
             statusCheckMessage.append(otherMessages).append(LINE_SEPARATOR);
         }
     }
 
-    private String wrapLine(final String line) {
+    private String wrapLine(String line) {
         return WordUtils.wrap(line, LINE_CHARACTER_LIMIT, LINE_SEPARATOR + "        ", false);
     }
 
@@ -134,7 +134,7 @@ public class ConfigValidationService {
         String version = "Unknown";
         try {
             version = FileUtils.readFileToString(versionFile, StandardCharsets.UTF_8);
-        } catch (final IOException e) {
+        } catch (IOException e) {
             logger.debug("Failed to load plugin version.", e);
         }
 

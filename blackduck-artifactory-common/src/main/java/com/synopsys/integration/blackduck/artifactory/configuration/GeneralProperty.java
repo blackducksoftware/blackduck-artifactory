@@ -38,7 +38,7 @@ public enum GeneralProperty implements ConfigurationProperty {
 
     private final String key;
 
-    GeneralProperty(final String key) {
+    GeneralProperty(String key) {
         this.key = "blackduck." + key;
     }
 

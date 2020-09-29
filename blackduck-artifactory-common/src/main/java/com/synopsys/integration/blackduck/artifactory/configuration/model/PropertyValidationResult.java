@@ -32,11 +32,11 @@ public class PropertyValidationResult {
     private final ConfigurationProperty configurationProperty;
     private final String errorMessage;
 
-    public PropertyValidationResult(final ConfigurationProperty configurationProperty) {
+    public PropertyValidationResult(ConfigurationProperty configurationProperty) {
         this(configurationProperty, null);
     }
 
-    public PropertyValidationResult(final ConfigurationProperty configurationProperty, final String errorMessage) {
+    public PropertyValidationResult(ConfigurationProperty configurationProperty, String errorMessage) {
         this.configurationProperty = configurationProperty;
         this.errorMessage = StringUtils.stripToNull(errorMessage);
     }

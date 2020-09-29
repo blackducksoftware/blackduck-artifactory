@@ -35,22 +35,22 @@ public class PropertyGroupReport {
     private final String propertyGroupName;
     private final BuilderStatus builderStatus;
 
-    public PropertyGroupReport(final String propertyGroupName, final BuilderStatus builderStatus) {
+    public PropertyGroupReport(String propertyGroupName, BuilderStatus builderStatus) {
         this.propertyGroupName = propertyGroupName;
         this.builderStatus = builderStatus;
     }
 
-    public void addPropertyValidationReport(final PropertyValidationResult propertyValidationResult) {
+    public void addPropertyValidationReport(PropertyValidationResult propertyValidationResult) {
         propertyReports.add(propertyValidationResult);
     }
 
-    public void addErrorMessage(final ConfigurationProperty configurationProperty, final String errorMessage) {
-        final PropertyValidationResult propertyValidationResult = new PropertyValidationResult(configurationProperty, errorMessage);
+    public void addErrorMessage(ConfigurationProperty configurationProperty, String errorMessage) {
+        PropertyValidationResult propertyValidationResult = new PropertyValidationResult(configurationProperty, errorMessage);
         addPropertyValidationReport(propertyValidationResult);
     }
 
     public boolean hasError() {
-        final boolean propertyReportErrorExists = propertyReports.stream()
+        boolean propertyReportErrorExists = propertyReports.stream()
                                                       .map(PropertyValidationResult::getErrorMessage)
                                                       .anyMatch(Optional::isPresent);
 

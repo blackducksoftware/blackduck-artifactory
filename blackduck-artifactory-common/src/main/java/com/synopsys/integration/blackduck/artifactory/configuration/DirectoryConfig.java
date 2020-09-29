@@ -32,7 +32,7 @@ public class DirectoryConfig {
     private final String thirdPartyVersion;
     private final String propertiesFilePathOverride;
 
-    public DirectoryConfig(final File homeDirectory, final File etcDirectory, final File pluginsLibDirectory, final File versionFile, final String thirdPartyVersion, final String propertiesFilePathOverride) {
+    public DirectoryConfig(File homeDirectory, File etcDirectory, File pluginsLibDirectory, File versionFile, String thirdPartyVersion, String propertiesFilePathOverride) {
         this.homeDirectory = homeDirectory;
         this.etcDirectory = etcDirectory;
         this.pluginsLibDirectory = pluginsLibDirectory;
@@ -41,9 +41,9 @@ public class DirectoryConfig {
         this.propertiesFilePathOverride = propertiesFilePathOverride;
     }
 
-    public static DirectoryConfig createDefault(final File homeDirectory, final File etcDirectory, final File pluginsDirectory, final String thirdPartyVersion, final String propertiesFilePathOverride) {
-        final File pluginsLibDirectory = new File(pluginsDirectory, "lib");
-        final File versionFile = new File(pluginsLibDirectory, "version.txt");
+    public static DirectoryConfig createDefault(File homeDirectory, File etcDirectory, File pluginsDirectory, String thirdPartyVersion, String propertiesFilePathOverride) {
+        File pluginsLibDirectory = new File(pluginsDirectory, "lib");
+        File versionFile = new File(pluginsLibDirectory, "version.txt");
 
         return new DirectoryConfig(homeDirectory, etcDirectory, pluginsLibDirectory, versionFile, thirdPartyVersion, propertiesFilePathOverride);
     }
