@@ -110,15 +110,15 @@ public class ArtifactNotificationService {
             String policyApprovalStatus = policyStatusNotification.getPolicyStatusView().getApprovalStatus().name();
             PolicySummaryStatusType policySummaryStatusType = PolicySummaryStatusType.valueOf(policyApprovalStatus);
             List<PolicySeverityType> policySeverityTypes = policyStatusNotification.getPolicyInfos().stream()
-                                                                     .map(PolicyInfo::getSeverity)
-                                                                     .map(severity -> {
-                                                                         if (StringUtils.isBlank(severity)) {
-                                                                             return PolicySeverityType.UNSPECIFIED;
-                                                                         } else {
-                                                                             return PolicySeverityType.valueOf(severity);
-                                                                         }
-                                                                     })
-                                                                     .collect(Collectors.toList());
+                                                               .map(PolicyInfo::getSeverity)
+                                                               .map(severity -> {
+                                                                   if (StringUtils.isBlank(severity)) {
+                                                                       return PolicySeverityType.UNSPECIFIED;
+                                                                   } else {
+                                                                       return PolicySeverityType.valueOf(severity);
+                                                                   }
+                                                               })
+                                                               .collect(Collectors.toList());
             PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
@@ -273,7 +273,10 @@ public class ArtifactNotificationService {
             String projectVersionName = nameVersion.getVersion();
             String projectNameVersionKey = generateProjectNameKey(projectName, projectVersionName);
             String repoKey = nameVersionToRepoKeyMap.get(projectNameVersionKey);
-            affectedRepos.add(repoKey);
+
+            if (repoKey != null) {
+                affectedRepos.add(repoKey);
+            }
         }
 
         return affectedRepos;
