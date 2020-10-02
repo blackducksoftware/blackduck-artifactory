@@ -57,7 +57,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.NotificationService;
-import com.synopsys.integration.blackduck.service.ProjectService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -68,17 +67,14 @@ public class ArtifactNotificationService {
 
     private final NotificationProcessingService notificationProcessingService;
     private final BlackDuckService blackDuckService;
-    private final ProjectService projectService;
     private final NotificationService notificationService;
     private final ArtifactSearchService artifactSearchService;
     private final InspectionPropertyService inspectionPropertyService;
 
-    public ArtifactNotificationService(NotificationProcessingService notificationProcessingService, BlackDuckService blackDuckService, ProjectService projectService,
-        NotificationService notificationService,
-        ArtifactSearchService artifactSearchService, InspectionPropertyService inspectionPropertyService) {
+    public ArtifactNotificationService(NotificationProcessingService notificationProcessingService, BlackDuckService blackDuckService, NotificationService notificationService, ArtifactSearchService artifactSearchService,
+        InspectionPropertyService inspectionPropertyService) {
         this.notificationProcessingService = notificationProcessingService;
         this.blackDuckService = blackDuckService;
-        this.projectService = projectService;
         this.notificationService = notificationService;
         this.artifactSearchService = artifactSearchService;
         this.inspectionPropertyService = inspectionPropertyService;
@@ -124,7 +120,6 @@ public class ArtifactNotificationService {
         Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(notificationUserViews);
 
         repoKeyPaths.forEach(repoKeyPath -> {
-            logger.debug(String.format("Updated metadata on '%s'", repoKeyPath));
             inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
