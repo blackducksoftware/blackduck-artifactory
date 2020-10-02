@@ -38,7 +38,6 @@ import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
@@ -145,8 +144,8 @@ public class InspectionModule implements Module {
 
     public void updateMetadata() {
         List<RepoPath> repoKeyPaths = inspectionModuleConfig.getRepos().stream()
-                                                .map(RepoPathFactory::create)
-                                                .collect(Collectors.toList());
+                                          .map(RepoPathFactory::create)
+                                          .collect(Collectors.toList());
         metaDataUpdateService.updateMetadata(repoKeyPaths);
     }
 
@@ -161,17 +160,12 @@ public class InspectionModule implements Module {
         inspectionModuleConfig.getRepos().stream()
             .filter(repoKey -> inspectionPropertyService.assertUpdateStatus(RepoPathFactory.create(repoKey), UpdateStatus.OUT_OF_DATE))
             .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
-
-        SetMultimap<String, String> propertyMap = ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.UPDATE_STATUS.getPropertyName(), UpdateStatus.OUT_OF_DATE.name());
-        String[] repoKeys = inspectionModuleConfig.getRepos().toArray(new String[0]);
-        List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(propertyMap, repoKeys);
-        repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
     }
 
     public void reinspectFromFailures(Map<String, List<String>> params) {
         List<RepoPath> repoPaths = inspectionModuleConfig.getRepos().stream()
-                                             .map(repoKey -> inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
-                                             .flatMap(Collection::stream).collect(Collectors.toList());
+                                       .map(repoKey -> inspectionPropertyService.getAllArtifactsInRepoWithInspectionStatus(repoKey, InspectionStatus.FAILURE))
+                                       .flatMap(Collection::stream).collect(Collectors.toList());
 
         repoPaths.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
         repoPaths.stream()
@@ -206,8 +200,8 @@ public class InspectionModule implements Module {
     public void handleBeforeDownloadEvent(RepoPath repoPath) {
         Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
         boolean shouldCancelDownload = inspectionModuleConfig.isMetadataBlockEnabled()
-                                                 && (!inspectionStatus.isPresent() || inspectionStatus.get().equals(InspectionStatus.PENDING))
-                                                 && artifactInspectionService.shouldInspectArtifact(repoPath);
+                                           && (!inspectionStatus.isPresent() || inspectionStatus.get().equals(InspectionStatus.PENDING))
+                                           && artifactInspectionService.shouldInspectArtifact(repoPath);
 
         if (shouldCancelDownload) {
             throw new CancelException(String.format("The Black Duck %s has prevented the download of %s because it lacks blackduck notifications", InspectionModule.class.getSimpleName(), repoPath.toPath()), 403);
@@ -226,10 +220,10 @@ public class InspectionModule implements Module {
         simpleAnalyticsCollector.putMetadata("cache.artifact.count", artifactoryPAPIService.getArtifactCount(cacheRepositoryKeys));
 
         String packageManagers = cacheRepositoryKeys.stream()
-                                           .map(artifactoryPAPIService::getPackageType)
-                                           .filter(Optional::isPresent)
-                                           .map(Optional::get)
-                                           .collect(Collectors.joining("/"));
+                                     .map(artifactoryPAPIService::getPackageType)
+                                     .filter(Optional::isPresent)
+                                     .map(Optional::get)
+                                     .collect(Collectors.joining("/"));
         simpleAnalyticsCollector.putMetadata("cache.package.managers", packageManagers);
     }
 }
