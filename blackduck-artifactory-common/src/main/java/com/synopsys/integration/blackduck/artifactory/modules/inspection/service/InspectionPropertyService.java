@@ -189,7 +189,8 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
     }
 
     public void updateProjectUIUrl(RepoPath repoPath, ProjectVersionView projectVersionView) {
-        projectVersionView.getHref().ifPresent(uiUrl -> setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
+        Optional<String> componentsLink = projectVersionView.getFirstLink(ProjectVersionView.COMPONENTS_LINK);
+        componentsLink.ifPresent(uiUrl -> setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
     }
 
     public Optional<Date> getLastUpdate(RepoPath repoKeyPath) {
