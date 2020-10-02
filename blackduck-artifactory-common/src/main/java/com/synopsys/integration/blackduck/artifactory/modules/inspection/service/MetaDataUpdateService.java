@@ -22,6 +22,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,7 @@ public class MetaDataUpdateService {
     public void updateMetadata(List<RepoPath> repoKeyPaths) {
         Date now = new Date();
         Date earliestDate = now;
+        List<RepoPath> repoKeyPathsToUpdate = new ArrayList<>();
         for (RepoPath repoKeyPath : repoKeyPaths) {
             boolean shouldTryUpdate = inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS) || inspectionPropertyService.assertInspectionStatus(repoKeyPath, InspectionStatus.PENDING);
 
@@ -75,11 +77,13 @@ public class MetaDataUpdateService {
                 if (dateToCheck.before(earliestDate)) {
                     earliestDate = dateToCheck;
                 }
+
+                repoKeyPathsToUpdate.add(repoKeyPath);
             }
         }
 
         try {
-            artifactNotificationService.updateMetadataFromNotifications(repoKeyPaths, earliestDate, now);
+            artifactNotificationService.updateMetadataFromNotifications(repoKeyPathsToUpdate, earliestDate, now);
         } catch (IntegrationException e) {
             logger.error(String.format("The Black Duck %s encountered a problem while updating artifact notifications from BlackDuck notifications.", InspectionModule.class.getSimpleName()));
             logger.debug(e.getMessage(), e);
