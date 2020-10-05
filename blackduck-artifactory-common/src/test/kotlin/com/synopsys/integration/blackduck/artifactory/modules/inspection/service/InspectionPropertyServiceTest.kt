@@ -30,6 +30,7 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType
+import com.synopsys.integration.blackduck.api.generated.component.ResourceLink
 import com.synopsys.integration.blackduck.api.generated.component.ResourceMetadata
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
@@ -459,7 +460,9 @@ class InspectionPropertyServiceTest {
 
         val projectVersionView = ProjectVersionView()
         val resourceMetadata = ResourceMetadata()
-        resourceMetadata.href = "https://synopsys.com"
+        val componentsLink = ResourceLink()
+        componentsLink.href = "https://synopsys.com"
+        resourceMetadata.links = listOf(componentsLink)
         projectVersionView.meta = resourceMetadata
         inspectionPropertyService.updateProjectUIUrl(repoPath, projectVersionView)
 
