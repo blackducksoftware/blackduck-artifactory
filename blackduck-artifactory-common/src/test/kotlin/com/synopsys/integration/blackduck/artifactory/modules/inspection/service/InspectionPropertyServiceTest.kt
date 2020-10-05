@@ -461,6 +461,7 @@ class InspectionPropertyServiceTest {
         val projectVersionView = ProjectVersionView()
         val resourceMetadata = ResourceMetadata()
         val componentsLink = ResourceLink()
+        componentsLink.rel = ProjectVersionView.COMPONENTS_LINK
         componentsLink.href = "https://synopsys.com"
         resourceMetadata.links = listOf(componentsLink)
         projectVersionView.meta = resourceMetadata
