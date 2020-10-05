@@ -118,11 +118,6 @@ public class PluginService {
         PluginAPI pluginAPI = PluginAPI.createFromModules(moduleManager, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
         analyticsService.registerAnalyzable(pluginAPI);
 
-        // TODO: Remove upgrades in 9.0.0
-        inspectionModule.performNpmForgeUpgrade();
-        inspectionModule.performComponentNameVersionUpgrade();
-        inspectionModule.performPolicySeverityUpdate();
-
         logger.info("...blackDuckPlugin initialized.");
         return pluginAPI;
     }

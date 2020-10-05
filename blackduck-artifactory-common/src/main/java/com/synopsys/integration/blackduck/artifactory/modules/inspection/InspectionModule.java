@@ -90,6 +90,15 @@ public class InspectionModule implements Module {
         return inspectionModuleConfig;
     }
 
+    //////////////////////// Upgrade Executions ////////////////////////
+
+    // TODO: Remove upgrades in 9.0.0
+    public void performUpgrades() {
+        performNpmForgeUpgrade();
+        performComponentNameVersionUpgrade();
+        performPolicySeverityUpdate();
+    }
+
     // TODO: Remove in 9.0.0
     public void performNpmForgeUpgrade() {
         List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(
@@ -100,6 +109,7 @@ public class InspectionModule implements Module {
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, SupportedPackageType.NPM.getForge().getName(), logger);
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
         }
+        logger.info(String.format("Updated %d artifacts with outdated npm forge.", repoPaths.size()));
     }
 
     // TODO: Remove in 9.0.0
@@ -121,6 +131,10 @@ public class InspectionModule implements Module {
         }
     }
 
+    public void performPolicySeverityUpdate() {
+        inspectionModuleConfig.getRepos().forEach(policySeverityService::performPolicySeverityUpgrade);
+    }
+
     //////////////////////// New cron jobs ////////////////////////
     public void initializeRepositories() {
         inspectionModuleConfig.getRepos().forEach(repositoryInitializationService::initializeRepository);
@@ -130,10 +144,6 @@ public class InspectionModule implements Module {
         Map<String, List<String>> params = new HashMap<>();
         params.put("properties", Arrays.asList(BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.getPropertyName(), BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.getPropertyName()));
         reinspectFromFailures(params);
-    }
-
-    public void performPolicySeverityUpdate() {
-        inspectionModuleConfig.getRepos().forEach(policySeverityService::performPolicySeverityUpgrade);
     }
 
     //////////////////////// Old cron jobs ////////////////////////

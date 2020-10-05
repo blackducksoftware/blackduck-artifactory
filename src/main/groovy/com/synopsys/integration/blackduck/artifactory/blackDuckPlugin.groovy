@@ -206,6 +206,9 @@ executions {
     }
 
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
+
+    blackDuckPerformInspectionUpgrades(httpMethod: 'POST') { params -> pluginAPI.performPluginUpgrades(TriggerType.REST_REQUEST) }
+
     /**
      * Manual execution of the Repository Initialization step of inspection.
      * Automatic execution is performed by the blackDuckInitializeRepos CRON job below.
