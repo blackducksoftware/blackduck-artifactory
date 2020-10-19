@@ -83,7 +83,8 @@ public class MetaDataUpdateService {
         }
 
         try {
-            artifactNotificationService.updateMetadataFromNotifications(repoKeyPathsToUpdate, earliestDate, now);
+            artifactNotificationService.updateMetadataFromNotifications2(repoKeyPathsToUpdate, earliestDate, now);
+
         } catch (IntegrationException e) {
             logger.error(String.format("The Black Duck %s encountered a problem while updating artifact notifications from BlackDuck notifications.", InspectionModule.class.getSimpleName()));
             logger.debug(e.getMessage(), e);

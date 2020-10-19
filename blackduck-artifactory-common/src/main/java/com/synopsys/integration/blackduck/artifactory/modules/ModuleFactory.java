@@ -46,6 +46,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationProcessingService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.VulnerabilityNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
@@ -121,7 +123,10 @@ public class ModuleFactory {
         InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
         NotificationProcessingService notificationProcessingService = new NotificationProcessingService(blackDuckService);
 
-        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessingService, blackDuckService, notificationService, artifactSearchService, inspectionPropertyService);
+        PolicyNotificationService policyNotificationService = new PolicyNotificationService(blackDuckService, notificationService);
+        VulnerabilityNotificationService vulnerabilityNotificationService = new VulnerabilityNotificationService(blackDuckService, notificationService);
+        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessingService, blackDuckService, notificationService, artifactSearchService, inspectionPropertyService,
+            policyNotificationService, vulnerabilityNotificationService);
         BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService);
 
         ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);

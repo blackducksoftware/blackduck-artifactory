@@ -45,15 +45,25 @@ import com.synopsys.integration.blackduck.api.generated.view.OriginView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
+import com.synopsys.integration.blackduck.api.manual.view.VulnerabilityNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.AffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.BlackDuckNotification;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyAffectedArtifact;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyStatusNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityNotification;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerablityAffectedArtifact;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyOverrideProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyRuleClearedProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyViolationProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedPolicyNotification;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedVulnerabilityNotification;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.VulnerabilityProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.blackduck.service.NotificationService;
@@ -70,19 +80,100 @@ public class ArtifactNotificationService {
     private final NotificationService notificationService;
     private final ArtifactSearchService artifactSearchService;
     private final InspectionPropertyService inspectionPropertyService;
+    private final PolicyNotificationService policyNotificationService;
+    private final VulnerabilityNotificationService vulnerabilityNotificationService;
 
     public ArtifactNotificationService(NotificationProcessingService notificationProcessingService, BlackDuckService blackDuckService, NotificationService notificationService, ArtifactSearchService artifactSearchService,
-        InspectionPropertyService inspectionPropertyService) {
+        InspectionPropertyService inspectionPropertyService, PolicyNotificationService policyNotificationService, VulnerabilityNotificationService vulnerabilityNotificationService) {
         this.notificationProcessingService = notificationProcessingService;
         this.blackDuckService = blackDuckService;
         this.notificationService = notificationService;
         this.artifactSearchService = artifactSearchService;
         this.inspectionPropertyService = inspectionPropertyService;
+        this.policyNotificationService = policyNotificationService;
+        this.vulnerabilityNotificationService = vulnerabilityNotificationService;
+    }
+
+    public void updateMetadataFromNotifications2(List<RepoPath> repoKeyPaths, Date startDate, Date endDate) throws IntegrationException {
+        PolicyNotifications policyNotifications = policyNotificationService.fetchPolicyNotifications(startDate, endDate);
+        NotificationRepositoryFilter notificationRepositoryFilter = NotificationRepositoryFilter.fromProperties(inspectionPropertyService, repoKeyPaths);
+
+        List<PolicyAffectedArtifact> policyAffectedArtifacts = new ArrayList<>();
+
+        PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(blackDuckService);
+        List<ProcessedPolicyNotification> processedOverrideNotifications = policyOverrideProcessor.processPolicyOverrideNotifications(policyNotifications.getPolicyOverrideNotificationUserViews(), notificationRepositoryFilter);
+        policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedOverrideNotifications));
+
+        PolicyRuleClearedProcessor policyRuleClearedProcessor = new PolicyRuleClearedProcessor(blackDuckService);
+        List<ProcessedPolicyNotification> processedRuleClearedNotifications = policyRuleClearedProcessor
+                                                                                  .processPolicyRuleClearedNotifications(policyNotifications.getRuleViolationClearedNotificationUserViews(), notificationRepositoryFilter);
+        policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedRuleClearedNotifications));
+
+        PolicyViolationProcessor policyViolationProcessor = new PolicyViolationProcessor(blackDuckService);
+        List<ProcessedPolicyNotification> processedViolationNotifications = policyViolationProcessor.processPolicyViolationNotifications(policyNotifications.getRuleViolationNotificationUserViews(), notificationRepositoryFilter);
+        policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedViolationNotifications));
+
+        for (PolicyAffectedArtifact affectedArtifact : policyAffectedArtifacts) {
+            PolicyStatusReport policyStatusReport = affectedArtifact.getPolicyStatusReport();
+            for (RepoPath repoPath : affectedArtifact.getAffectedArtifacts()) {
+                inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
+            }
+        }
+
+        List<VulnerabilityNotificationUserView> vulnerabilityNotificationUserViews = vulnerabilityNotificationService.fetchVulnerabilityNotifications(startDate, endDate);
+        VulnerabilityProcessor vulnerabilityProcessor = new VulnerabilityProcessor(blackDuckService);
+        List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications = vulnerabilityProcessor.processVulnerabilityNotifications(vulnerabilityNotificationUserViews, notificationRepositoryFilter);
+        List<VulnerablityAffectedArtifact> vulnerabilityAffectedArtifacts = findVulnerabilityAffectedArtifacts(processedVulnerabilityNotifications);
+
+        for (VulnerablityAffectedArtifact affectedArtifact : vulnerabilityAffectedArtifacts) {
+            VulnerabilityAggregate vulnerabilityAggregate = affectedArtifact.getVulnerabilityAggregate();
+            for (RepoPath repoPath : affectedArtifact.getAffectedArtifacts()) {
+                inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
+            }
+        }
+
+        Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(policyNotifications.getAllNotificationUserViews());
+        repoKeyPaths.forEach(repoKeyPath -> {
+            inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
+            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+            // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
+            inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
+        });
+    }
+
+    private List<PolicyAffectedArtifact> findPolicyAffectedArtifacts(List<ProcessedPolicyNotification> processedPolicyNotifications) {
+        List<PolicyAffectedArtifact> affectedArtifacts = new ArrayList<>();
+        for (ProcessedPolicyNotification processedPolicyNotification : processedPolicyNotifications) {
+            String componentName = processedPolicyNotification.getComponentName();
+            String componentVersionName = processedPolicyNotification.getComponentVersionName();
+            PolicyStatusReport policyStatusReport = processedPolicyNotification.getPolicyStatusReport();
+            List<RepoPath> affectedProjects = processedPolicyNotification.getAffectedRepoKeyPaths();
+
+            List<RepoPath> foundArtifacts = artifactSearchService.findArtifactsUsingComponentNameVersions(componentName, componentVersionName, affectedProjects);
+            affectedArtifacts.add(new PolicyAffectedArtifact(foundArtifacts, policyStatusReport));
+        }
+
+        return affectedArtifacts;
+    }
+
+    private List<VulnerablityAffectedArtifact> findVulnerabilityAffectedArtifacts(List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications) {
+        List<VulnerablityAffectedArtifact> affectedArtifacts = new ArrayList<>();
+        for (ProcessedVulnerabilityNotification processedVulnerabilityNotification : processedVulnerabilityNotifications) {
+            String componentName = processedVulnerabilityNotification.getComponentName();
+            String componentVersionName = processedVulnerabilityNotification.getComponentVersionName();
+            List<RepoPath> affectedProjects = processedVulnerabilityNotification.getAffectedRepoKeyPaths();
+
+            List<RepoPath> foundArtifacts = artifactSearchService.findArtifactsUsingComponentNameVersions(componentName, componentVersionName, affectedProjects);
+            affectedArtifacts.add(new VulnerablityAffectedArtifact(foundArtifacts, processedVulnerabilityNotification.getVulnerabilityAggregate()));
+        }
+
+        return affectedArtifacts;
     }
 
     public void updateMetadataFromNotifications(List<RepoPath> repoKeyPaths, Date startDate, Date endDate) throws IntegrationException {
         UserView currentUser = blackDuckService.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
         List<NotificationUserView> notificationUserViews = notificationService.getAllUserNotifications(currentUser, startDate, endDate);
+
         List<VulnerabilityNotification> vulnerabilityNotifications = notificationProcessingService.getVulnerabilityNotifications(notificationUserViews);
         List<PolicyStatusNotification> policyStatusNotifications = notificationProcessingService.getPolicyStatusNotifications(notificationUserViews);
 

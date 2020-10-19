@@ -41,11 +41,11 @@ public class PolicyStatusReport {
     public static PolicyStatusReport fromVersionBomComponentView(VersionBomComponentView versionBomComponentView, BlackDuckService blackDuckService) throws IntegrationException {
         PolicySummaryStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
 
-        List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE, true);
+        List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getAllResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE);
         List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
-                                                                 .map(VersionBomPolicyRuleView::getSeverity)
-                                                                 .map(severity -> EnumUtils.getEnumIgnoreCase(PolicySeverityType.class, severity))
-                                                                 .collect(Collectors.toList());
+                                                           .map(VersionBomPolicyRuleView::getSeverity)
+                                                           .map(severity -> EnumUtils.getEnumIgnoreCase(PolicySeverityType.class, severity))
+                                                           .collect(Collectors.toList());
 
         return new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
     }

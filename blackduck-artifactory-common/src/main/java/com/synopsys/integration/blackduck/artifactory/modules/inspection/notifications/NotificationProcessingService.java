@@ -102,7 +102,13 @@ public class NotificationProcessingService {
         return policyStatusNotifications;
     }
 
-    private List<PolicyStatusNotification> createPolicyStatusNotifications(List<ComponentVersionStatus> componentVersionStatuses, String projectName, String projectVersionName, List<PolicyInfo> policyInfos) {
+    public PolicyStatusNotification createPolicyStatusNotification(PolicyOverrideNotificationUserView notificationUserView) throws IntegrationException {
+        PolicyOverrideNotificationContent content = notificationUserView.getContent();
+        NameVersion affectedProjectVersion = new NameVersion(content.getProjectName(), content.getProjectVersionName());
+        return createPolicyStatusNotification(Collections.singletonList(affectedProjectVersion), content.getComponentVersion(), content.getBomComponentVersionPolicyStatus(), content.getPolicyInfos());
+    }
+
+    public List<PolicyStatusNotification> createPolicyStatusNotifications(List<ComponentVersionStatus> componentVersionStatuses, String projectName, String projectVersionName, List<PolicyInfo> policyInfos) {
         NameVersion affectedProjectVersion = new NameVersion(projectName, projectVersionName);
         List<NameVersion> affectedProjectVersions = Collections.singletonList(affectedProjectVersion);
         List<PolicyStatusNotification> policyStatusNotifications = new ArrayList<>();
@@ -121,8 +127,7 @@ public class NotificationProcessingService {
         return policyStatusNotifications;
     }
 
-    private PolicyStatusNotification createPolicyStatusNotification(List<NameVersion> affectedProjectVersions, String componentVersionUrl, String policyStatusUrl, List<PolicyInfo> policyInfos)
-        throws IntegrationException {
+    public PolicyStatusNotification createPolicyStatusNotification(List<NameVersion> affectedProjectVersions, String componentVersionUrl, String policyStatusUrl, List<PolicyInfo> policyInfos) throws IntegrationException {
         UriSingleResponse<ComponentVersionView> componentVersionViewUriSingleResponse = new UriSingleResponse<>(componentVersionUrl, ComponentVersionView.class);
         ComponentVersionView componentVersionView = blackDuckService.getResponse(componentVersionViewUriSingleResponse);
         ComponentView componentView = blackDuckService.getResponse(componentVersionView, ComponentVersionView.COMPONENT_LINK_RESPONSE).orElseThrow(
@@ -144,7 +149,7 @@ public class NotificationProcessingService {
                    .collect(Collectors.toList());
     }
 
-    private Optional<VulnerabilityNotification> aggregateVulnerabilityNotification(VulnerabilityNotificationUserView notificationUserView) {
+    public Optional<VulnerabilityNotification> aggregateVulnerabilityNotification(VulnerabilityNotificationUserView notificationUserView) {
         VulnerabilityNotification vulnerabilityNotification = null;
         try {
             VulnerabilityNotificationContent content = notificationUserView.getContent();
@@ -158,8 +163,8 @@ public class NotificationProcessingService {
                 List<VulnerabilityView> componentVulnerabilities = blackDuckService.getAllResponses(vulnerabilitiesLink.get(), VulnerabilityView.class);
                 VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVulnerabilities);
                 List<NameVersion> affectedProjectVersions = content.getAffectedProjectVersions().stream()
-                                                                      .map(affectedProjectVersion -> new NameVersion(affectedProjectVersion.getProjectName(), affectedProjectVersion.getProjectVersionName()))
-                                                                      .collect(Collectors.toList());
+                                                                .map(affectedProjectVersion -> new NameVersion(affectedProjectVersion.getProjectName(), affectedProjectVersion.getProjectVersionName()))
+                                                                .collect(Collectors.toList());
                 vulnerabilityNotification = new VulnerabilityNotification(affectedProjectVersions, componentVersionView, vulnerabilityAggregate, componentVersionOriginName, componentVersionOriginId);
             } else {
                 throw new IntegrationException(String.format("Failed to find vulnerabilities link for component with origin id '%s:%s'", componentVersionOriginName, componentVersionOriginId));

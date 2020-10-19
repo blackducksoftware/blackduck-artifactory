@@ -59,6 +59,7 @@ public class ArtifactoryInfoExternalIdExtractor implements ExternalIdExtactor {
 
     private Optional<ExternalId> extractExternalIdFromProperties(SupportedPackageType supportedPackageType, RepoPath repoPath) {
         Properties properties = artifactoryPAPIService.getProperties(repoPath);
+
         Forge forge = supportedPackageType.getForge();
         String namePropertyKey = supportedPackageType.getArtifactoryNameProperty();
         String versionPropertyKey = supportedPackageType.getArtifactoryVersionProperty();
