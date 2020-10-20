@@ -45,9 +45,12 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationProcessingService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.VulnerabilityNotificationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyOverrideProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyRuleClearedProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyViolationProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.VulnerabilityProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.BlackDuckBOMService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
@@ -121,12 +124,17 @@ public class ModuleFactory {
         PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
 
         InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
-        NotificationProcessingService notificationProcessingService = new NotificationProcessingService(blackDuckService);
 
+        PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(blackDuckService);
+        PolicyRuleClearedProcessor policyRuleClearedProcessor = new PolicyRuleClearedProcessor(blackDuckService);
+        PolicyViolationProcessor policyViolationProcessor = new PolicyViolationProcessor(blackDuckService);
         PolicyNotificationService policyNotificationService = new PolicyNotificationService(blackDuckService, notificationService);
+
+        VulnerabilityProcessor vulnerabilityProcessor = new VulnerabilityProcessor(blackDuckService);
         VulnerabilityNotificationService vulnerabilityNotificationService = new VulnerabilityNotificationService(blackDuckService, notificationService);
-        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(notificationProcessingService, blackDuckService, notificationService, artifactSearchService, inspectionPropertyService,
-            policyNotificationService, vulnerabilityNotificationService);
+
+        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(artifactSearchService, inspectionPropertyService, policyNotificationService, vulnerabilityNotificationService, policyOverrideProcessor,
+            policyRuleClearedProcessor, policyViolationProcessor, vulnerabilityProcessor);
         BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService);
 
         ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
