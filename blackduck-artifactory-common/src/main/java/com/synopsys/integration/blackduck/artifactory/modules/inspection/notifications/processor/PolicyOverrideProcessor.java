@@ -35,14 +35,13 @@ import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNot
 import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRepositoryFilter;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyOverrideProcessor {
-    private final BlackDuckService blackDuckService;
+    private final ProcessorUtil processorUtil;
 
-    public PolicyOverrideProcessor(BlackDuckService blackDuckService) {
-        this.blackDuckService = blackDuckService;
+    public PolicyOverrideProcessor(ProcessorUtil processorUtil) {
+        this.processorUtil = processorUtil;
     }
 
     public List<ProcessedPolicyNotification> processPolicyOverrideNotifications(List<PolicyOverrideNotificationUserView> notificationUserViews, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
@@ -54,14 +53,14 @@ public class PolicyOverrideProcessor {
         return processedPolicyNotifications;
     }
 
-    public Optional<ProcessedPolicyNotification> processPolicyOverrideNotification(PolicyOverrideNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
+    private Optional<ProcessedPolicyNotification> processPolicyOverrideNotification(PolicyOverrideNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
         ProcessedPolicyNotification processedPolicyNotification = null;
         PolicyOverrideNotificationContent content = notificationUserView.getContent();
 
         Optional<RepoPath> repoKeyPath = repositoryFilter.getRepoKeyPath(content.getProjectName(), content.getProjectVersionName());
         if (repoKeyPath.isPresent()) {
             List<PolicySeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
-            PolicySummaryStatusType policySummaryStatusType = ProcessorUtil.fetchApprovalStatus(blackDuckService, content.getBomComponentVersionPolicyStatus());
+            PolicySummaryStatusType policySummaryStatusType = processorUtil.fetchApprovalStatus(content.getBomComponentVersionPolicyStatus());
             PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
             processedPolicyNotification = new ProcessedPolicyNotification(content.getComponentName(), content.getComponentVersionName(), policyStatusReport, Collections.singletonList(repoKeyPath.get()));

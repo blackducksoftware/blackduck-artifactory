@@ -38,16 +38,15 @@ import com.synopsys.integration.blackduck.api.manual.component.RuleViolationClea
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationClearedNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRepositoryFilter;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyRuleClearedProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final BlackDuckService blackDuckService;
+    private final ProcessorUtil processorUtil;
 
-    public PolicyRuleClearedProcessor(BlackDuckService blackDuckService) {
-        this.blackDuckService = blackDuckService;
+    public PolicyRuleClearedProcessor(ProcessorUtil processorUtil) {
+        this.processorUtil = processorUtil;
     }
 
     public List<ProcessedPolicyNotification> processPolicyRuleClearedNotifications(List<RuleViolationClearedNotificationUserView> notificationUserViews, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
@@ -58,7 +57,7 @@ public class PolicyRuleClearedProcessor {
         return processedPolicyNotifications;
     }
 
-    public List<ProcessedPolicyNotification> processPolicyRuleClearedNotification(RuleViolationClearedNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
+    private List<ProcessedPolicyNotification> processPolicyRuleClearedNotification(RuleViolationClearedNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
         List<ProcessedPolicyNotification> processedPolicyNotifications = new ArrayList<>();
         RuleViolationClearedNotificationContent content = notificationUserView.getContent();
 
@@ -69,7 +68,7 @@ public class PolicyRuleClearedProcessor {
             List<ComponentVersionStatus> componentVersionStatuses = content.getComponentVersionStatuses();
 
             for (ComponentVersionStatus componentVersionStatus : componentVersionStatuses) {
-                PolicySummaryStatusType policySummaryStatusType = ProcessorUtil.fetchApprovalStatus(blackDuckService, componentVersionStatus);
+                PolicySummaryStatusType policySummaryStatusType = processorUtil.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
                 PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
                 String componentName = componentVersionStatus.getComponentName();

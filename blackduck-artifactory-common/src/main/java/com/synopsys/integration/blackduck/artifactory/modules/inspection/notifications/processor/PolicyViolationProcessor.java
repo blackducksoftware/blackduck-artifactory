@@ -36,14 +36,13 @@ import com.synopsys.integration.blackduck.api.manual.component.RuleViolationNoti
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRepositoryFilter;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyViolationProcessor {
-    private final BlackDuckService blackDuckService;
+    private final ProcessorUtil processorUtil;
 
-    public PolicyViolationProcessor(BlackDuckService blackDuckService) {
-        this.blackDuckService = blackDuckService;
+    public PolicyViolationProcessor(ProcessorUtil processorUtil) {
+        this.processorUtil = processorUtil;
     }
 
     public List<ProcessedPolicyNotification> processPolicyViolationNotifications(List<RuleViolationNotificationUserView> notificationUserViews, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
@@ -54,7 +53,7 @@ public class PolicyViolationProcessor {
         return processedPolicyNotifications;
     }
 
-    public List<ProcessedPolicyNotification> processPolicyViolationNotification(RuleViolationNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
+    private List<ProcessedPolicyNotification> processPolicyViolationNotification(RuleViolationNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
         List<ProcessedPolicyNotification> processedPolicyNotifications = new ArrayList<>();
         RuleViolationNotificationContent content = notificationUserView.getContent();
 
@@ -62,7 +61,7 @@ public class PolicyViolationProcessor {
         if (repoKeyPath.isPresent()) {
             List<PolicySeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
             for (ComponentVersionStatus componentVersionStatus : content.getComponentVersionStatuses()) {
-                PolicySummaryStatusType policySummaryStatusType = ProcessorUtil.fetchApprovalStatus(blackDuckService, componentVersionStatus);
+                PolicySummaryStatusType policySummaryStatusType = processorUtil.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
                 PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
                 String componentName = componentVersionStatus.getComponentName();
