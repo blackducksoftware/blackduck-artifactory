@@ -132,7 +132,10 @@ public class ArtifactNotificationService {
             }
         }
 
-        Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(policyNotifications.getAllNotificationUserViews());
+        List<NotificationUserView> allNotifications = new ArrayList<>();
+        allNotifications.addAll(policyNotifications.getAllNotificationUserViews());
+        allNotifications.addAll(vulnerabilityNotificationUserViews);
+        Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(allNotifications);
         repoKeyPaths.forEach(repoKeyPath -> {
             inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
