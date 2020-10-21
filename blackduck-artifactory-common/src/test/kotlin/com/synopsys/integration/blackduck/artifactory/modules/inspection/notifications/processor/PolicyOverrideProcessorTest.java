@@ -15,20 +15,21 @@ import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
 
 class PolicyOverrideProcessorTest {
     @Test
     void processPolicyOverrideNotifications() throws IntegrationException {
-        ProcessorUtil processorUtil = Mockito.mock(ProcessorUtil.class);
-        Mockito.when(processorUtil.fetchApprovalStatus(Mockito.any())).thenReturn(PolicySummaryStatusType.IN_VIOLATION);
+        PolicyNotificationService policyNotificationService = Mockito.mock(PolicyNotificationService.class);
+        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(PolicySummaryStatusType.IN_VIOLATION);
 
         RepositoryProjectNameLookup repositoryFilter = Mockito.mock(RepositoryProjectNameLookup.class);
         RepoPath repoPath = new PluginRepoPathFactory(false).create("repo-1");
         Mockito.when(repositoryFilter.getRepoKeyPath(Mockito.any(), Mockito.any())).thenReturn(Optional.of(repoPath));
 
-        PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(processorUtil);
+        PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(policyNotificationService);
 
         PolicyOverrideNotificationUserView notificationUserView = new PolicyOverrideNotificationUserView();
         PolicyOverrideNotificationContent content = new PolicyOverrideNotificationContent();

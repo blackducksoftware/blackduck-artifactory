@@ -37,16 +37,17 @@ import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionS
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationClearedNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationClearedNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyRuleClearedProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final ProcessorUtil processorUtil;
+    private final PolicyNotificationService policyNotificationService;
 
-    public PolicyRuleClearedProcessor(ProcessorUtil processorUtil) {
-        this.processorUtil = processorUtil;
+    public PolicyRuleClearedProcessor(PolicyNotificationService policyNotificationService) {
+        this.policyNotificationService = policyNotificationService;
     }
 
     public List<ProcessedPolicyNotification> processPolicyRuleClearedNotifications(List<RuleViolationClearedNotificationUserView> notificationUserViews, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
@@ -68,7 +69,7 @@ public class PolicyRuleClearedProcessor {
             List<ComponentVersionStatus> componentVersionStatuses = content.getComponentVersionStatuses();
 
             for (ComponentVersionStatus componentVersionStatus : componentVersionStatuses) {
-                PolicySummaryStatusType policySummaryStatusType = processorUtil.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
+                PolicySummaryStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
                 PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
                 String componentName = componentVersionStatus.getComponentName();

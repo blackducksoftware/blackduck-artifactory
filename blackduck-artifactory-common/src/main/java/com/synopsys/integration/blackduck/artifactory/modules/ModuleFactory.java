@@ -50,7 +50,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyOverrideProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyRuleClearedProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyViolationProcessor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessorUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.VulnerabilityProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.BlackDuckBOMService;
@@ -126,14 +125,13 @@ public class ModuleFactory {
 
         InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
 
-        ProcessorUtil processorUtil = new ProcessorUtil(blackDuckService);
-        PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(processorUtil);
-        PolicyRuleClearedProcessor policyRuleClearedProcessor = new PolicyRuleClearedProcessor(processorUtil);
-        PolicyViolationProcessor policyViolationProcessor = new PolicyViolationProcessor(processorUtil);
         PolicyNotificationService policyNotificationService = new PolicyNotificationService(blackDuckService, notificationService);
+        PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(policyNotificationService);
+        PolicyRuleClearedProcessor policyRuleClearedProcessor = new PolicyRuleClearedProcessor(policyNotificationService);
+        PolicyViolationProcessor policyViolationProcessor = new PolicyViolationProcessor(policyNotificationService);
 
-        VulnerabilityProcessor vulnerabilityProcessor = new VulnerabilityProcessor(blackDuckService);
         VulnerabilityNotificationService vulnerabilityNotificationService = new VulnerabilityNotificationService(blackDuckService, notificationService);
+        VulnerabilityProcessor vulnerabilityProcessor = new VulnerabilityProcessor(vulnerabilityNotificationService);
 
         ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(artifactSearchService, inspectionPropertyService, policyNotificationService, vulnerabilityNotificationService, policyOverrideProcessor,
             policyRuleClearedProcessor, policyViolationProcessor, vulnerabilityProcessor);

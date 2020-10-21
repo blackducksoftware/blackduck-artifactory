@@ -19,17 +19,17 @@ import com.synopsys.integration.blackduck.api.manual.component.VulnerabilityNoti
 import com.synopsys.integration.blackduck.api.manual.view.VulnerabilityNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.VulnerabilityNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
 import com.synopsys.integration.exception.IntegrationException;
 
 class VulnerabiityProcessorTest {
     @Test
     void processVulnerabilityNotifications() throws IntegrationException {
-        BlackDuckService blackDuckService = Mockito.mock(BlackDuckService.class);
+        VulnerabilityNotificationService vulnerabilityNotificationService = Mockito.mock(VulnerabilityNotificationService.class);
         ComponentVersionView componentVersionView = new ComponentVersionView();
         componentVersionView.setVersionName("component-version-name-1.0");
-        Mockito.when(blackDuckService.getResponse("component/version/url", ComponentVersionView.class)).thenReturn(componentVersionView);
+        Mockito.when(vulnerabilityNotificationService.fetchComponentVersionView(Mockito.any())).thenReturn(componentVersionView);
 
         ResourceLink vulnerabilityResourceLink = new ResourceLink();
         vulnerabilityResourceLink.setHref("vulnerability/link/url");
@@ -39,14 +39,14 @@ class VulnerabiityProcessorTest {
         componentVersionView.setMeta(resourceMetadata);
 
         List<VulnerabilityView> vulnerabilityViews = Arrays.asList(createView("HIGH"), createView("MEDIUM"), createView("LOW"), createView("HIGH"));
-        Mockito.when(blackDuckService.getAllResponses("vulnerability/link/url", VulnerabilityView.class)).thenReturn(vulnerabilityViews);
+        Mockito.when(vulnerabilityNotificationService.fetchVulnerabilitiesForComponent(componentVersionView)).thenReturn(vulnerabilityViews);
 
         RepositoryProjectNameLookup repositoryFilter = Mockito.mock(RepositoryProjectNameLookup.class);
         RepoPath repoPath = new PluginRepoPathFactory(false).create("repo-1");
 
         Mockito.when(repositoryFilter.getRepoKeyPath(Mockito.any())).thenReturn(Optional.of(repoPath));
 
-        VulnerabilityProcessor vulnerabilityProcessor = new VulnerabilityProcessor(blackDuckService);
+        VulnerabilityProcessor vulnerabilityProcessor = new VulnerabilityProcessor(vulnerabilityNotificationService);
         VulnerabilityNotificationUserView notificationUserView = new VulnerabilityNotificationUserView();
         VulnerabilityNotificationContent content = new VulnerabilityNotificationContent();
         AffectedProjectVersion affectedProjectVersion = new AffectedProjectVersion();

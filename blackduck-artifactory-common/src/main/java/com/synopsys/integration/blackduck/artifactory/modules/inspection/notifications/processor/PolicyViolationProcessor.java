@@ -35,14 +35,15 @@ import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionS
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyViolationProcessor {
-    private final ProcessorUtil processorUtil;
+    private final PolicyNotificationService policyNotificationService;
 
-    public PolicyViolationProcessor(ProcessorUtil processorUtil) {
-        this.processorUtil = processorUtil;
+    public PolicyViolationProcessor(PolicyNotificationService policyNotificationService) {
+        this.policyNotificationService = policyNotificationService;
     }
 
     public List<ProcessedPolicyNotification> processPolicyViolationNotifications(List<RuleViolationNotificationUserView> notificationUserViews, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
@@ -61,7 +62,7 @@ public class PolicyViolationProcessor {
         if (repoKeyPath.isPresent()) {
             List<PolicySeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
             for (ComponentVersionStatus componentVersionStatus : content.getComponentVersionStatuses()) {
-                PolicySummaryStatusType policySummaryStatusType = processorUtil.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
+                PolicySummaryStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
                 PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
                 String componentName = componentVersionStatus.getComponentName();

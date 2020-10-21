@@ -27,21 +27,10 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
-import com.synopsys.integration.blackduck.api.generated.view.PolicyStatusView;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
-import com.synopsys.integration.exception.IntegrationException;
 
 public class ProcessorUtil {
-    private final BlackDuckService blackDuckService;
-
-    public ProcessorUtil(BlackDuckService blackDuckService) {
-        this.blackDuckService = blackDuckService;
-    }
-
     public static List<PolicySeverityType> convertPolicyInfo(List<PolicyInfo> policyInfos) {
         return policyInfos.stream()
                    .map(PolicyInfo::getSeverity)
@@ -53,11 +42,5 @@ public class ProcessorUtil {
                        }
                    })
                    .collect(Collectors.toList());
-    }
-
-    public PolicySummaryStatusType fetchApprovalStatus(String bomComponentVersionPolicyStatus) throws IntegrationException {
-        UriSingleResponse<PolicyStatusView> policyStatusViewUriSingleResponse = new UriSingleResponse<>(bomComponentVersionPolicyStatus, PolicyStatusView.class);
-        PolicyStatusView policyStatus = blackDuckService.getResponse(policyStatusViewUriSingleResponse);
-        return policyStatus.getApprovalStatus();
     }
 }

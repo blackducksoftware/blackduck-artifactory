@@ -34,14 +34,15 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummar
 import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyOverrideProcessor {
-    private final ProcessorUtil processorUtil;
+    private final PolicyNotificationService policyNotificationService;
 
-    public PolicyOverrideProcessor(ProcessorUtil processorUtil) {
-        this.processorUtil = processorUtil;
+    public PolicyOverrideProcessor(PolicyNotificationService policyNotificationService) {
+        this.policyNotificationService = policyNotificationService;
     }
 
     public List<ProcessedPolicyNotification> processPolicyOverrideNotifications(List<PolicyOverrideNotificationUserView> notificationUserViews, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
@@ -60,7 +61,7 @@ public class PolicyOverrideProcessor {
         Optional<RepoPath> repoKeyPath = repositoryFilter.getRepoKeyPath(content.getProjectName(), content.getProjectVersionName());
         if (repoKeyPath.isPresent()) {
             List<PolicySeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
-            PolicySummaryStatusType policySummaryStatusType = processorUtil.fetchApprovalStatus(content.getBomComponentVersionPolicyStatus());
+            PolicySummaryStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(content.getBomComponentVersionPolicyStatus());
             PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
             processedPolicyNotification = new ProcessedPolicyNotification(content.getComponentName(), content.getComponentVersionName(), policyStatusReport, Collections.singletonList(repoKeyPath.get()));

@@ -16,20 +16,21 @@ import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
 
 class PolicyViolationProcessorTest {
     @Test
     void processPolicyViolationNotifications() throws IntegrationException {
-        ProcessorUtil processorUtil = Mockito.mock(ProcessorUtil.class);
-        Mockito.when(processorUtil.fetchApprovalStatus(Mockito.any())).thenReturn(PolicySummaryStatusType.IN_VIOLATION);
+        PolicyNotificationService policyNotificationService = Mockito.mock(PolicyNotificationService.class);
+        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(PolicySummaryStatusType.IN_VIOLATION);
 
         RepositoryProjectNameLookup repositoryFilter = Mockito.mock(RepositoryProjectNameLookup.class);
         RepoPath repoPath = new PluginRepoPathFactory(false).create("repo-1");
         Mockito.when(repositoryFilter.getRepoKeyPath(Mockito.any(), Mockito.any())).thenReturn(Optional.of(repoPath));
 
-        PolicyViolationProcessor policyViolationProcessor = new PolicyViolationProcessor(processorUtil);
+        PolicyViolationProcessor policyViolationProcessor = new PolicyViolationProcessor(policyNotificationService);
 
         RuleViolationNotificationUserView notificationUserView = new RuleViolationNotificationUserView();
         RuleViolationNotificationContent content = new RuleViolationNotificationContent();
