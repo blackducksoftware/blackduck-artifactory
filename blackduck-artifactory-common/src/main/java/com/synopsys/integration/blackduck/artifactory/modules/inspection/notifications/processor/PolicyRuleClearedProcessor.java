@@ -77,8 +77,6 @@ public class PolicyRuleClearedProcessor {
                 ProcessedPolicyNotification processedNotification = new ProcessedPolicyNotification(componentName, componentVersionName, policyStatusReport, Collections.singletonList(repoKeyPath.get()));
                 processedPolicyNotifications.add(processedNotification);
             }
-        } else {
-            logger.debug(String.format("No notification content related to Artifactory projects. %s", notificationUserView.getHref().orElse("")));
         }
 
         return processedPolicyNotifications;
