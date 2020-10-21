@@ -32,20 +32,20 @@ import org.artifactory.repo.RepoPath;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.util.NameVersion;
 
-public class NotificationRepositoryFilter {
+public class RepositoryProjectNameLookup {
     private final Map<NameVersion, RepoPath> artifactoryProjects;
 
-    public static NotificationRepositoryFilter fromProperties(InspectionPropertyService inspectionPropertyService, List<RepoPath> repoKeyPaths) {
+    public static RepositoryProjectNameLookup fromProperties(InspectionPropertyService inspectionPropertyService, List<RepoPath> repoKeyPaths) {
         Map<NameVersion, RepoPath> artifactoryProjects = new HashMap<>();
         for (RepoPath repoKeyPath : repoKeyPaths) {
             inspectionPropertyService.getProjectNameVersion(repoKeyPath)
                 .ifPresent(nameVersion -> artifactoryProjects.put(nameVersion, repoKeyPath));
         }
 
-        return new NotificationRepositoryFilter(artifactoryProjects);
+        return new RepositoryProjectNameLookup(artifactoryProjects);
     }
 
-    public NotificationRepositoryFilter(Map<NameVersion, RepoPath> artifactoryProjects) {
+    public RepositoryProjectNameLookup(Map<NameVersion, RepoPath> artifactoryProjects) {
         this.artifactoryProjects = artifactoryProjects;
     }
 

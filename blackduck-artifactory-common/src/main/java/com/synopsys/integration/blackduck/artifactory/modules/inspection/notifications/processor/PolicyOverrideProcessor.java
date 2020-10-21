@@ -34,7 +34,7 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummar
 import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRepositoryFilter;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyOverrideProcessor {
@@ -44,7 +44,7 @@ public class PolicyOverrideProcessor {
         this.processorUtil = processorUtil;
     }
 
-    public List<ProcessedPolicyNotification> processPolicyOverrideNotifications(List<PolicyOverrideNotificationUserView> notificationUserViews, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
+    public List<ProcessedPolicyNotification> processPolicyOverrideNotifications(List<PolicyOverrideNotificationUserView> notificationUserViews, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
         List<ProcessedPolicyNotification> processedPolicyNotifications = new ArrayList<>();
         for (PolicyOverrideNotificationUserView notificationUserView : notificationUserViews) {
             processPolicyOverrideNotification(notificationUserView, repositoryFilter)
@@ -53,7 +53,7 @@ public class PolicyOverrideProcessor {
         return processedPolicyNotifications;
     }
 
-    private Optional<ProcessedPolicyNotification> processPolicyOverrideNotification(PolicyOverrideNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
+    private Optional<ProcessedPolicyNotification> processPolicyOverrideNotification(PolicyOverrideNotificationUserView notificationUserView, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
         ProcessedPolicyNotification processedPolicyNotification = null;
         PolicyOverrideNotificationContent content = notificationUserView.getContent();
 

@@ -37,7 +37,7 @@ import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionS
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationClearedNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationClearedNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.NotificationRepositoryFilter;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyRuleClearedProcessor {
@@ -49,7 +49,7 @@ public class PolicyRuleClearedProcessor {
         this.processorUtil = processorUtil;
     }
 
-    public List<ProcessedPolicyNotification> processPolicyRuleClearedNotifications(List<RuleViolationClearedNotificationUserView> notificationUserViews, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
+    public List<ProcessedPolicyNotification> processPolicyRuleClearedNotifications(List<RuleViolationClearedNotificationUserView> notificationUserViews, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
         List<ProcessedPolicyNotification> processedPolicyNotifications = new ArrayList<>();
         for (RuleViolationClearedNotificationUserView notificationUserView : notificationUserViews) {
             processedPolicyNotifications.addAll(processPolicyRuleClearedNotification(notificationUserView, repositoryFilter));
@@ -57,7 +57,7 @@ public class PolicyRuleClearedProcessor {
         return processedPolicyNotifications;
     }
 
-    private List<ProcessedPolicyNotification> processPolicyRuleClearedNotification(RuleViolationClearedNotificationUserView notificationUserView, NotificationRepositoryFilter repositoryFilter) throws IntegrationException {
+    private List<ProcessedPolicyNotification> processPolicyRuleClearedNotification(RuleViolationClearedNotificationUserView notificationUserView, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
         List<ProcessedPolicyNotification> processedPolicyNotifications = new ArrayList<>();
         RuleViolationClearedNotificationContent content = notificationUserView.getContent();
 

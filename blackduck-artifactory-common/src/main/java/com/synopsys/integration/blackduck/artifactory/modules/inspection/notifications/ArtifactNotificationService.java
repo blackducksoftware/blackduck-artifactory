@@ -75,18 +75,18 @@ public class ArtifactNotificationService {
 
     public void updateMetadataFromNotifications(List<RepoPath> repoKeyPaths, Date startDate, Date endDate) throws IntegrationException {
         PolicyNotifications policyNotifications = policyNotificationService.fetchPolicyNotifications(startDate, endDate);
-        NotificationRepositoryFilter notificationRepositoryFilter = NotificationRepositoryFilter.fromProperties(inspectionPropertyService, repoKeyPaths);
+        RepositoryProjectNameLookup repositoryProjectNameLookup = RepositoryProjectNameLookup.fromProperties(inspectionPropertyService, repoKeyPaths);
 
         List<PolicyAffectedArtifact> policyAffectedArtifacts = new ArrayList<>();
 
-        List<ProcessedPolicyNotification> processedOverrideNotifications = policyOverrideProcessor.processPolicyOverrideNotifications(policyNotifications.getPolicyOverrideNotificationUserViews(), notificationRepositoryFilter);
+        List<ProcessedPolicyNotification> processedOverrideNotifications = policyOverrideProcessor.processPolicyOverrideNotifications(policyNotifications.getPolicyOverrideNotificationUserViews(), repositoryProjectNameLookup);
         policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedOverrideNotifications));
 
         List<ProcessedPolicyNotification> processedRuleClearedNotifications = policyRuleClearedProcessor
-                                                                                  .processPolicyRuleClearedNotifications(policyNotifications.getRuleViolationClearedNotificationUserViews(), notificationRepositoryFilter);
+                                                                                  .processPolicyRuleClearedNotifications(policyNotifications.getRuleViolationClearedNotificationUserViews(), repositoryProjectNameLookup);
         policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedRuleClearedNotifications));
 
-        List<ProcessedPolicyNotification> processedViolationNotifications = policyViolationProcessor.processPolicyViolationNotifications(policyNotifications.getRuleViolationNotificationUserViews(), notificationRepositoryFilter);
+        List<ProcessedPolicyNotification> processedViolationNotifications = policyViolationProcessor.processPolicyViolationNotifications(policyNotifications.getRuleViolationNotificationUserViews(), repositoryProjectNameLookup);
         policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedViolationNotifications));
 
         for (PolicyAffectedArtifact affectedArtifact : policyAffectedArtifacts) {
@@ -97,7 +97,7 @@ public class ArtifactNotificationService {
         }
 
         List<VulnerabilityNotificationUserView> vulnerabilityNotificationUserViews = vulnerabilityNotificationService.fetchVulnerabilityNotifications(startDate, endDate);
-        List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications = vulnerabilityProcessor.processVulnerabilityNotifications(vulnerabilityNotificationUserViews, notificationRepositoryFilter);
+        List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications = vulnerabilityProcessor.processVulnerabilityNotifications(vulnerabilityNotificationUserViews, repositoryProjectNameLookup);
         List<VulnerablityAffectedArtifact> vulnerabilityAffectedArtifacts = findVulnerabilityAffectedArtifacts(processedVulnerabilityNotifications);
 
         for (VulnerablityAffectedArtifact affectedArtifact : vulnerabilityAffectedArtifacts) {
