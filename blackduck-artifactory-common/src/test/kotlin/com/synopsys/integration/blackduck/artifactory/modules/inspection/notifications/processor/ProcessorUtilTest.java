@@ -1,0 +1,48 @@
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
+import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
+
+class ProcessorUtilTest {
+    @Test
+    void convertPolicyInfo() {
+        List<PolicyInfo> policyInfos = Arrays.stream(PolicySeverityType.values())
+                                           .map(Enum::toString)
+                                           .map(severity -> {
+                                               PolicyInfo policyInfo = new PolicyInfo();
+                                               policyInfo.setSeverity(severity);
+                                               return policyInfo;
+                                           })
+                                           .collect(Collectors.toList());
+        // BlackDuck won't provide a severity of UNSPECIFIED, it will just be null.
+        policyInfos.add(new PolicyInfo());
+
+        List<PolicySeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(policyInfos);
+
+        Assertions.assertEquals(7, policySeverityTypes.size(), "Expected the total number of possible PolicySeverityType + 1.");
+
+        verifyAndRemove(policySeverityTypes, PolicySeverityType.BLOCKER);
+        verifyAndRemove(policySeverityTypes, PolicySeverityType.CRITICAL);
+        verifyAndRemove(policySeverityTypes, PolicySeverityType.MAJOR);
+        verifyAndRemove(policySeverityTypes, PolicySeverityType.MINOR);
+        verifyAndRemove(policySeverityTypes, PolicySeverityType.TRIVIAL);
+
+        // We do this verification twice since an UNSPECIFIED value would be in there explicitly and in the case where the severity is null.
+        verifyAndRemove(policySeverityTypes, PolicySeverityType.UNSPECIFIED);
+        verifyAndRemove(policySeverityTypes, PolicySeverityType.UNSPECIFIED);
+
+        Assertions.assertEquals(0, policySeverityTypes.size(), "A PolicySeverityType in the result was not verified.");
+    }
+
+    private void verifyAndRemove(List<PolicySeverityType> policySeverityTypes, PolicySeverityType policySeverityType) {
+        Assertions.assertTrue(policySeverityTypes.contains(policySeverityType));
+        policySeverityTypes.remove(policySeverityType);
+    }
+}
