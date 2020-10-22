@@ -22,7 +22,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.configuration
 
-import TestUtil
+import com.synopsys.integration.blackduck.artifactory.TestUtil
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
