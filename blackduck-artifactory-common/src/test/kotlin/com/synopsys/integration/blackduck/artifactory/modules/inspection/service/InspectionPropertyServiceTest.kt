@@ -178,7 +178,7 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val vulnerabilityAggregate = VulnerabilityAggregate(1, 2, 3)
+        val vulnerabilityAggregate = VulnerabilityAggregate(0, 1, 2, 3)
 
         inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate)
 

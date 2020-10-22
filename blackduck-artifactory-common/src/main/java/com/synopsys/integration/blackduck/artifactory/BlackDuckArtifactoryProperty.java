@@ -27,6 +27,7 @@ public enum BlackDuckArtifactoryProperty {
     BLACKDUCK_FORGE("forge"),
     BLACKDUCK_PROJECT_NAME("projectName"),
     BLACKDUCK_PROJECT_VERSION_NAME("projectVersionName"),
+    CRITICAL_VULNERABILITIES("criticalVulnerabilities"),
     HIGH_VULNERABILITIES("highVulnerabilities"),
     MEDIUM_VULNERABILITIES("mediumVulnerabilities"),
     LOW_VULNERABILITIES("lowVulnerabilities"),
