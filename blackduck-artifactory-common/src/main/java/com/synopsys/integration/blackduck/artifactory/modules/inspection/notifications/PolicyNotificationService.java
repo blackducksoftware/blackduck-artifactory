@@ -43,7 +43,6 @@ import com.synopsys.integration.blackduck.service.NotificationService;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyNotificationService {
-
     private final BlackDuckService blackDuckService;
     private final NotificationService notificationService;
 

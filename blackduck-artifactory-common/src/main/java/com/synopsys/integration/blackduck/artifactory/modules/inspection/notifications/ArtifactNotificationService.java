@@ -38,8 +38,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.I
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyAffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyNotifications;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerablityAffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyOverrideProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyRuleClearedProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyViolationProcessor;
@@ -50,7 +50,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.exception.IntegrationException;
 
 public class ArtifactNotificationService {
-
     private final ArtifactSearchService artifactSearchService;
     private final InspectionPropertyService inspectionPropertyService;
     private final PolicyNotificationService policyNotificationService;
@@ -82,8 +81,7 @@ public class ArtifactNotificationService {
         List<ProcessedPolicyNotification> processedOverrideNotifications = policyOverrideProcessor.processPolicyOverrideNotifications(policyNotifications.getPolicyOverrideNotificationUserViews(), repositoryProjectNameLookup);
         policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedOverrideNotifications));
 
-        List<ProcessedPolicyNotification> processedRuleClearedNotifications = policyRuleClearedProcessor
-                                                                                  .processPolicyRuleClearedNotifications(policyNotifications.getRuleViolationClearedNotificationUserViews(), repositoryProjectNameLookup);
+        List<ProcessedPolicyNotification> processedRuleClearedNotifications = policyRuleClearedProcessor.processPolicyRuleClearedNotifications(policyNotifications.getRuleViolationClearedNotificationUserViews(), repositoryProjectNameLookup);
         policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedRuleClearedNotifications));
 
         List<ProcessedPolicyNotification> processedViolationNotifications = policyViolationProcessor.processPolicyViolationNotifications(policyNotifications.getRuleViolationNotificationUserViews(), repositoryProjectNameLookup);
@@ -98,9 +96,9 @@ public class ArtifactNotificationService {
 
         List<VulnerabilityNotificationUserView> vulnerabilityNotificationUserViews = vulnerabilityNotificationService.fetchVulnerabilityNotifications(startDate, endDate);
         List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications = vulnerabilityProcessor.processVulnerabilityNotifications(vulnerabilityNotificationUserViews, repositoryProjectNameLookup);
-        List<VulnerablityAffectedArtifact> vulnerabilityAffectedArtifacts = findVulnerabilityAffectedArtifacts(processedVulnerabilityNotifications);
+        List<VulnerabilityAffectedArtifact> vulnerabilityAffectedArtifacts = findVulnerabilityAffectedArtifacts(processedVulnerabilityNotifications);
 
-        for (VulnerablityAffectedArtifact affectedArtifact : vulnerabilityAffectedArtifacts) {
+        for (VulnerabilityAffectedArtifact affectedArtifact : vulnerabilityAffectedArtifacts) {
             VulnerabilityAggregate vulnerabilityAggregate = affectedArtifact.getVulnerabilityAggregate();
             for (RepoPath repoPath : affectedArtifact.getAffectedArtifacts()) {
                 inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
@@ -134,15 +132,15 @@ public class ArtifactNotificationService {
         return affectedArtifacts;
     }
 
-    private List<VulnerablityAffectedArtifact> findVulnerabilityAffectedArtifacts(List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications) {
-        List<VulnerablityAffectedArtifact> affectedArtifacts = new ArrayList<>();
+    private List<VulnerabilityAffectedArtifact> findVulnerabilityAffectedArtifacts(List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications) {
+        List<VulnerabilityAffectedArtifact> affectedArtifacts = new ArrayList<>();
         for (ProcessedVulnerabilityNotification processedVulnerabilityNotification : processedVulnerabilityNotifications) {
             String componentName = processedVulnerabilityNotification.getComponentName();
             String componentVersionName = processedVulnerabilityNotification.getComponentVersionName();
             List<RepoPath> affectedProjects = processedVulnerabilityNotification.getAffectedRepoKeyPaths();
 
             List<RepoPath> foundArtifacts = artifactSearchService.findArtifactsUsingComponentNameVersions(componentName, componentVersionName, affectedProjects);
-            affectedArtifacts.add(new VulnerablityAffectedArtifact(foundArtifacts, processedVulnerabilityNotification.getVulnerabilityAggregate()));
+            affectedArtifacts.add(new VulnerabilityAffectedArtifact(foundArtifacts, processedVulnerabilityNotification.getVulnerabilityAggregate()));
         }
 
         return affectedArtifacts;

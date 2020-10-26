@@ -28,8 +28,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.artifactory.repo.RepoPath;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
@@ -42,8 +40,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyRuleClearedProcessor {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private final PolicyNotificationService policyNotificationService;
 
     public PolicyRuleClearedProcessor(PolicyNotificationService policyNotificationService) {

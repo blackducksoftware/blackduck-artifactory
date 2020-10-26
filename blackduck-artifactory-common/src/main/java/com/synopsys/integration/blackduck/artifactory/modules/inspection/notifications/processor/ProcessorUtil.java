@@ -31,6 +31,10 @@ import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 
 public class ProcessorUtil {
+    private ProcessorUtil() {
+        // Hiding constructor
+    }
+
     public static List<PolicySeverityType> convertPolicyInfo(List<PolicyInfo> policyInfos) {
         return policyInfos.stream()
                    .map(PolicyInfo::getSeverity)
