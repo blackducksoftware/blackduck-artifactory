@@ -182,6 +182,10 @@ class InspectionPropertyServiceTest {
 
         inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate)
 
+        val criticalVulnerabilitiesProperty = BlackDuckArtifactoryProperty.CRITICAL_VULNERABILITIES.propertyName
+        Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![criticalVulnerabilitiesProperty], "Vulnerability property $criticalVulnerabilitiesProperty is missing.")
+        Assertions.assertEquals("0", repoPathPropertyMap[repoPath]!![criticalVulnerabilitiesProperty], "The $criticalVulnerabilitiesProperty property was set incorrectly.")
+
         val highVulnerabilitiesProperty = BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![highVulnerabilitiesProperty], "Vulnerability property $highVulnerabilitiesProperty is missing.")
         Assertions.assertEquals("1", repoPathPropertyMap[repoPath]!![highVulnerabilitiesProperty], "The $highVulnerabilitiesProperty property was set incorrectly.")
