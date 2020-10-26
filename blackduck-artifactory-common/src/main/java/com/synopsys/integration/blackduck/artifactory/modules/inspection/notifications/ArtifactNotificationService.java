@@ -40,12 +40,9 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAffectedArtifact;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyOverrideProcessor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyRuleClearedProcessor;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyViolationProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.NotificationProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedPolicyNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedVulnerabilityNotification;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.VulnerabilityProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.exception.IntegrationException;
 
@@ -54,39 +51,23 @@ public class ArtifactNotificationService {
     private final InspectionPropertyService inspectionPropertyService;
     private final PolicyNotificationService policyNotificationService;
     private final VulnerabilityNotificationService vulnerabilityNotificationService;
-    private final PolicyOverrideProcessor policyOverrideProcessor;
-    private final PolicyRuleClearedProcessor policyRuleClearedProcessor;
-    private final PolicyViolationProcessor policyViolationProcessor;
-    private final VulnerabilityProcessor vulnerabilityProcessor;
+    private final NotificationProcessor notificationProcessor;
 
     public ArtifactNotificationService(ArtifactSearchService artifactSearchService, InspectionPropertyService inspectionPropertyService, PolicyNotificationService policyNotificationService,
-        VulnerabilityNotificationService vulnerabilityNotificationService, PolicyOverrideProcessor policyOverrideProcessor, PolicyRuleClearedProcessor policyRuleClearedProcessor, PolicyViolationProcessor policyViolationProcessor,
-        VulnerabilityProcessor vulnerabilityProcessor) {
+        VulnerabilityNotificationService vulnerabilityNotificationService, NotificationProcessor notificationProcessor) {
         this.artifactSearchService = artifactSearchService;
         this.inspectionPropertyService = inspectionPropertyService;
         this.policyNotificationService = policyNotificationService;
         this.vulnerabilityNotificationService = vulnerabilityNotificationService;
-        this.policyOverrideProcessor = policyOverrideProcessor;
-        this.policyRuleClearedProcessor = policyRuleClearedProcessor;
-        this.policyViolationProcessor = policyViolationProcessor;
-        this.vulnerabilityProcessor = vulnerabilityProcessor;
+        this.notificationProcessor = notificationProcessor;
     }
 
     public void updateMetadataFromNotifications(List<RepoPath> repoKeyPaths, Date startDate, Date endDate) throws IntegrationException {
-        PolicyNotifications policyNotifications = policyNotificationService.fetchPolicyNotifications(startDate, endDate);
         RepositoryProjectNameLookup repositoryProjectNameLookup = RepositoryProjectNameLookup.fromProperties(inspectionPropertyService, repoKeyPaths);
 
-        List<PolicyAffectedArtifact> policyAffectedArtifacts = new ArrayList<>();
-
-        List<ProcessedPolicyNotification> processedOverrideNotifications = policyOverrideProcessor.processPolicyOverrideNotifications(policyNotifications.getPolicyOverrideNotificationUserViews(), repositoryProjectNameLookup);
-        policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedOverrideNotifications));
-
-        List<ProcessedPolicyNotification> processedRuleClearedNotifications = policyRuleClearedProcessor.processPolicyRuleClearedNotifications(policyNotifications.getRuleViolationClearedNotificationUserViews(), repositoryProjectNameLookup);
-        policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedRuleClearedNotifications));
-
-        List<ProcessedPolicyNotification> processedViolationNotifications = policyViolationProcessor.processPolicyViolationNotifications(policyNotifications.getRuleViolationNotificationUserViews(), repositoryProjectNameLookup);
-        policyAffectedArtifacts.addAll(findPolicyAffectedArtifacts(processedViolationNotifications));
-
+        PolicyNotifications policyNotifications = policyNotificationService.fetchPolicyNotifications(startDate, endDate);
+        List<ProcessedPolicyNotification> processedPolicyNotifications = notificationProcessor.processPolicyNotifications(policyNotifications, repositoryProjectNameLookup);
+        List<PolicyAffectedArtifact> policyAffectedArtifacts = findPolicyAffectedArtifacts(processedPolicyNotifications);
         for (PolicyAffectedArtifact affectedArtifact : policyAffectedArtifacts) {
             PolicyStatusReport policyStatusReport = affectedArtifact.getPolicyStatusReport();
             for (RepoPath repoPath : affectedArtifact.getAffectedArtifacts()) {
@@ -95,9 +76,8 @@ public class ArtifactNotificationService {
         }
 
         List<VulnerabilityNotificationUserView> vulnerabilityNotificationUserViews = vulnerabilityNotificationService.fetchVulnerabilityNotifications(startDate, endDate);
-        List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications = vulnerabilityProcessor.processVulnerabilityNotifications(vulnerabilityNotificationUserViews, repositoryProjectNameLookup);
+        List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications = notificationProcessor.processVulnerabilityNotifications(vulnerabilityNotificationUserViews, repositoryProjectNameLookup);
         List<VulnerabilityAffectedArtifact> vulnerabilityAffectedArtifacts = findVulnerabilityAffectedArtifacts(processedVulnerabilityNotifications);
-
         for (VulnerabilityAffectedArtifact affectedArtifact : vulnerabilityAffectedArtifacts) {
             VulnerabilityAggregate vulnerabilityAggregate = affectedArtifact.getVulnerabilityAggregate();
             for (RepoPath repoPath : affectedArtifact.getAffectedArtifacts()) {
