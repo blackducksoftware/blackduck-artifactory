@@ -78,6 +78,7 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
     }
 
     public void setVulnerabilityProperties(RepoPath repoPath, VulnerabilityAggregate vulnerabilityAggregate) {
+        setProperty(repoPath, BlackDuckArtifactoryProperty.CRITICAL_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getCriticalSeverityCount()), logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getHighSeverityCount()), logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getMediumSeverityCount()), logger);
         setProperty(repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, String.valueOf(vulnerabilityAggregate.getLowSeverityCount()), logger);

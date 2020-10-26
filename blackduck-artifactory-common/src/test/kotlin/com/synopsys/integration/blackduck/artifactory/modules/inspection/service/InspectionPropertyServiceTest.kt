@@ -178,9 +178,13 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val vulnerabilityAggregate = VulnerabilityAggregate(1, 2, 3)
+        val vulnerabilityAggregate = VulnerabilityAggregate(0, 1, 2, 3)
 
         inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate)
+
+        val criticalVulnerabilitiesProperty = BlackDuckArtifactoryProperty.CRITICAL_VULNERABILITIES.propertyName
+        Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![criticalVulnerabilitiesProperty], "Vulnerability property $criticalVulnerabilitiesProperty is missing.")
+        Assertions.assertEquals("0", repoPathPropertyMap[repoPath]!![criticalVulnerabilitiesProperty], "The $criticalVulnerabilitiesProperty property was set incorrectly.")
 
         val highVulnerabilitiesProperty = BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![highVulnerabilitiesProperty], "Vulnerability property $highVulnerabilitiesProperty is missing.")
