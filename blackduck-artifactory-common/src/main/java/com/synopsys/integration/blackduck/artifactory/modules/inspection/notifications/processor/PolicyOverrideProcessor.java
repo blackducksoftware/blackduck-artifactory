@@ -45,20 +45,20 @@ public class PolicyOverrideProcessor {
         this.policyNotificationService = policyNotificationService;
     }
 
-    public List<ProcessedPolicyNotification> processPolicyOverrideNotifications(List<PolicyOverrideNotificationUserView> notificationUserViews, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
+    public List<ProcessedPolicyNotification> processPolicyOverrideNotifications(List<PolicyOverrideNotificationUserView> notificationUserViews, RepositoryProjectNameLookup repositoryProjectNameLookup) throws IntegrationException {
         List<ProcessedPolicyNotification> processedPolicyNotifications = new ArrayList<>();
         for (PolicyOverrideNotificationUserView notificationUserView : notificationUserViews) {
-            processPolicyOverrideNotification(notificationUserView, repositoryFilter)
+            processPolicyOverrideNotification(notificationUserView, repositoryProjectNameLookup)
                 .ifPresent(processedPolicyNotifications::add);
         }
         return processedPolicyNotifications;
     }
 
-    private Optional<ProcessedPolicyNotification> processPolicyOverrideNotification(PolicyOverrideNotificationUserView notificationUserView, RepositoryProjectNameLookup repositoryFilter) throws IntegrationException {
+    private Optional<ProcessedPolicyNotification> processPolicyOverrideNotification(PolicyOverrideNotificationUserView notificationUserView, RepositoryProjectNameLookup repositoryProjectNameLookup) throws IntegrationException {
         ProcessedPolicyNotification processedPolicyNotification = null;
         PolicyOverrideNotificationContent content = notificationUserView.getContent();
 
-        Optional<RepoPath> repoKeyPath = repositoryFilter.getRepoKeyPath(content.getProjectName(), content.getProjectVersionName());
+        Optional<RepoPath> repoKeyPath = repositoryProjectNameLookup.getRepoKeyPath(content.getProjectName(), content.getProjectVersionName());
         if (repoKeyPath.isPresent()) {
             List<PolicySeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
             PolicySummaryStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(content.getBomComponentVersionPolicyStatus());

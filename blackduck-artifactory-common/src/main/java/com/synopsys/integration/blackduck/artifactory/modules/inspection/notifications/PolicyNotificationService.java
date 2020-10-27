@@ -54,20 +54,26 @@ public class PolicyNotificationService {
     public PolicyNotifications fetchPolicyNotifications(Date startDate, Date endDate) throws IntegrationException {
         UserView currentUser = blackDuckService.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
 
-        List<RuleViolationNotificationUserView> ruleViolationNotifications = fetchNotificationsOfType(currentUser, startDate, endDate, NotificationType.RULE_VIOLATION).stream()
-                                                                                 .filter(RuleViolationNotificationUserView.class::isInstance)
-                                                                                 .map(RuleViolationNotificationUserView.class::cast)
-                                                                                 .collect(Collectors.toList());
+        List<RuleViolationNotificationUserView> ruleViolationNotifications =
+            fetchNotificationsOfType(currentUser, startDate, endDate, NotificationType.RULE_VIOLATION)
+                .stream()
+                .filter(RuleViolationNotificationUserView.class::isInstance)
+                .map(RuleViolationNotificationUserView.class::cast)
+                .collect(Collectors.toList());
 
-        List<RuleViolationClearedNotificationUserView> ruleViolationClearedNotifications = fetchNotificationsOfType(currentUser, startDate, endDate, NotificationType.RULE_VIOLATION_CLEARED).stream()
-                                                                                               .filter(RuleViolationClearedNotificationUserView.class::isInstance)
-                                                                                               .map(RuleViolationClearedNotificationUserView.class::cast)
-                                                                                               .collect(Collectors.toList());
+        List<RuleViolationClearedNotificationUserView> ruleViolationClearedNotifications =
+            fetchNotificationsOfType(currentUser, startDate, endDate, NotificationType.RULE_VIOLATION_CLEARED)
+                .stream()
+                .filter(RuleViolationClearedNotificationUserView.class::isInstance)
+                .map(RuleViolationClearedNotificationUserView.class::cast)
+                .collect(Collectors.toList());
 
-        List<PolicyOverrideNotificationUserView> policyOverrideNotifications = fetchNotificationsOfType(currentUser, startDate, endDate, NotificationType.POLICY_OVERRIDE).stream()
-                                                                                   .filter(PolicyOverrideNotificationUserView.class::isInstance)
-                                                                                   .map(PolicyOverrideNotificationUserView.class::cast)
-                                                                                   .collect(Collectors.toList());
+        List<PolicyOverrideNotificationUserView> policyOverrideNotifications =
+            fetchNotificationsOfType(currentUser, startDate, endDate, NotificationType.POLICY_OVERRIDE)
+                .stream()
+                .filter(PolicyOverrideNotificationUserView.class::isInstance)
+                .map(PolicyOverrideNotificationUserView.class::cast)
+                .collect(Collectors.toList());
 
         return new PolicyNotifications(ruleViolationNotifications, ruleViolationClearedNotifications, policyOverrideNotifications);
     }

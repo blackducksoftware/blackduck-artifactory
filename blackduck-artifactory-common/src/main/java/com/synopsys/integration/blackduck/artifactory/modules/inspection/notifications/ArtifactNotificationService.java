@@ -65,6 +65,7 @@ public class ArtifactNotificationService {
     public void updateMetadataFromNotifications(List<RepoPath> repoKeyPaths, Date startDate, Date endDate) throws IntegrationException {
         RepositoryProjectNameLookup repositoryProjectNameLookup = RepositoryProjectNameLookup.fromProperties(inspectionPropertyService, repoKeyPaths);
 
+        // TODO: The code for processing policy and vulnerability notifications looks very similar. We should add another layer of abstractions to do this work.
         PolicyNotifications policyNotifications = policyNotificationService.fetchPolicyNotifications(startDate, endDate);
         List<ProcessedPolicyNotification> processedPolicyNotifications = notificationProcessor.processPolicyNotifications(policyNotifications, repositoryProjectNameLookup);
         List<PolicyAffectedArtifact> policyAffectedArtifacts = findPolicyAffectedArtifacts(processedPolicyNotifications);
@@ -89,12 +90,12 @@ public class ArtifactNotificationService {
         allNotifications.addAll(policyNotifications.getAllNotificationUserViews());
         allNotifications.addAll(vulnerabilityNotificationUserViews);
         Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(allNotifications);
-        repoKeyPaths.forEach(repoKeyPath -> {
+        for (RepoPath repoKeyPath : repoKeyPaths) {
             inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
             inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
             // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
             inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
-        });
+        }
     }
 
     private List<PolicyAffectedArtifact> findPolicyAffectedArtifacts(List<ProcessedPolicyNotification> processedPolicyNotifications) {
