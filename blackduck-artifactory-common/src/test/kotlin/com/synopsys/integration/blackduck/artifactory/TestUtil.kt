@@ -1,3 +1,5 @@
+package com.synopsys.integration.blackduck.artifactory
+
 /**
  * blackduck-artifactory-common
  *
@@ -26,8 +28,7 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
-import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder
 import org.artifactory.repo.RepoPath
 import org.mockito.ArgumentMatchers.anyMap
@@ -79,6 +80,12 @@ object TestUtil {
 
     fun getResourceAsStream(resourcePath: String): InputStream {
         return TestUtil::class.java.getResourceAsStream(resourcePath)
+    }
+
+    fun createSpoofedInspectionPropertyService(repoPathPropertyMap: MutableMap<RepoPath, PropertiesMap>): InspectionPropertyService {
+        val dateTimeManager = DateTimeManager("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        val pluginRepoPathFactory = PluginRepoPathFactory(false);
+        return InspectionPropertyService(createMockArtifactoryPAPIService(repoPathPropertyMap), dateTimeManager, pluginRepoPathFactory, 5);
     }
 
     fun createMockArtifactoryPAPIService(repoPathPropertyMap: MutableMap<RepoPath, PropertiesMap>): ArtifactoryPAPIService {

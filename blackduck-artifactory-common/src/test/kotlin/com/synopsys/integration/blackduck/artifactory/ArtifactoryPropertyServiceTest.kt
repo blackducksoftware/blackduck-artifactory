@@ -22,12 +22,12 @@
  */
 package com.synopsys.integration.blackduck.artifactory
 
-import TestUtil.createMockArtifactoryPAPIService
-import TestUtil.createRepoPath
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
+import com.synopsys.integration.blackduck.artifactory.TestUtil.createMockArtifactoryPAPIService
+import com.synopsys.integration.blackduck.artifactory.TestUtil.createRepoPath
 import com.synopsys.integration.log.Slf4jIntLogger
 import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions

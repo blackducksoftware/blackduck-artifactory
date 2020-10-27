@@ -23,6 +23,7 @@
 package com.synopsys.integration.blackduck.artifactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.artifactory.repo.RepoPath;
 
@@ -46,6 +47,11 @@ public class ArtifactSearchService {
         setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getPropertyName(), originId);
 
         return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys.toArray(new String[0]));
+    }
+
+    public List<RepoPath> findArtifactsUsingComponentNameVersions(String componentName, String componentVersionName, List<RepoPath> repoKeyPaths) {
+        List<String> repoKeys = repoKeyPaths.stream().map(RepoPath::getRepoKey).collect(Collectors.toList());
+        return findArtifactsWithComponentNameVersion(componentName, componentVersionName, repoKeys);
     }
 
     public List<RepoPath> findArtifactsWithComponentNameVersion(String componentName, String componentVersionName, List<String> repoKeys) {

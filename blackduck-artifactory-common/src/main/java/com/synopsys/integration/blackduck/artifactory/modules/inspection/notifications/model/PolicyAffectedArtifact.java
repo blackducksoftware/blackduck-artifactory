@@ -22,22 +22,26 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model;
 
+import java.util.List;
+
 import org.artifactory.repo.RepoPath;
 
-public class AffectedArtifact<T extends BlackDuckNotification> {
-    private final RepoPath repoPath;
-    private final T blackDuckNotification;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 
-    public AffectedArtifact(RepoPath repoPath, T blackDuckNotification) {
-        this.repoPath = repoPath;
-        this.blackDuckNotification = blackDuckNotification;
+public class PolicyAffectedArtifact {
+    private final List<RepoPath> affectedArtifacts;
+    private final PolicyStatusReport policyStatusReport;
+
+    public PolicyAffectedArtifact(List<RepoPath> foundArtifacts, PolicyStatusReport policyStatusReport) {
+        this.affectedArtifacts = foundArtifacts;
+        this.policyStatusReport = policyStatusReport;
     }
 
-    public RepoPath getRepoPath() {
-        return repoPath;
+    public List<RepoPath> getAffectedArtifacts() {
+        return affectedArtifacts;
     }
 
-    public T getBlackDuckNotification() {
-        return blackDuckNotification;
+    public PolicyStatusReport getPolicyStatusReport() {
+        return policyStatusReport;
     }
 }

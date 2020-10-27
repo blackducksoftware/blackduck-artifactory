@@ -22,9 +22,9 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 
-import PropertiesMap
-import TestUtil.createMockArtifactoryPAPIService
-import TestUtil.createRepoPath
+import com.synopsys.integration.blackduck.artifactory.PropertiesMap
+import com.synopsys.integration.blackduck.artifactory.TestUtil.createMockArtifactoryPAPIService
+import com.synopsys.integration.blackduck.artifactory.TestUtil.createRepoPath
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
