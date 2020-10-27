@@ -32,6 +32,7 @@ import org.artifactory.repo.RepoPath;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.util.NameVersion;
 
+// TODO: Create a common processor with an API for handling the RepositoryProjectNameLookup. All the processors have the same logic around it.
 public class RepositoryProjectNameLookup {
     private final Map<NameVersion, RepoPath> artifactoryProjects;
 
