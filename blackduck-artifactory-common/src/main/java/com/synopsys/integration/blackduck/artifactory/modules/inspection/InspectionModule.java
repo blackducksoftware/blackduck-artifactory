@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.artifactory.exception.CancelException;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
@@ -46,6 +45,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
@@ -69,11 +69,11 @@ public class InspectionModule implements Module {
     private final RepositoryInitializationService repositoryInitializationService;
     private final ArtifactInspectionService artifactInspectionService;
     private final PolicySeverityService policySeverityService;
+    private final CancelDecider cancelDecider;
 
-    public InspectionModule(InspectionModuleConfig inspectionModuleConfig, ArtifactoryPAPIService artifactoryPAPIService, MetaDataUpdateService metaDataUpdateService,
-        ArtifactoryPropertyService artifactoryPropertyService, InspectionPropertyService inspectionPropertyService, SimpleAnalyticsCollector simpleAnalyticsCollector,
-        RepositoryInitializationService repositoryInitializationService, ArtifactInspectionService artifactInspectionService,
-        PolicySeverityService policySeverityService) {
+    public InspectionModule(InspectionModuleConfig inspectionModuleConfig, ArtifactoryPAPIService artifactoryPAPIService, MetaDataUpdateService metaDataUpdateService, ArtifactoryPropertyService artifactoryPropertyService,
+        InspectionPropertyService inspectionPropertyService, SimpleAnalyticsCollector simpleAnalyticsCollector, RepositoryInitializationService repositoryInitializationService, ArtifactInspectionService artifactInspectionService,
+        PolicySeverityService policySeverityService, CancelDecider cancelDecider) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataUpdateService = metaDataUpdateService;
@@ -83,6 +83,7 @@ public class InspectionModule implements Module {
         this.repositoryInitializationService = repositoryInitializationService;
         this.artifactInspectionService = artifactInspectionService;
         this.policySeverityService = policySeverityService;
+        this.cancelDecider = cancelDecider;
     }
 
     @Override
@@ -208,14 +209,7 @@ public class InspectionModule implements Module {
     }
 
     public void handleBeforeDownloadEvent(RepoPath repoPath) {
-        Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
-        boolean shouldCancelDownload = inspectionModuleConfig.isMetadataBlockEnabled()
-                                           && (!inspectionStatus.isPresent() || inspectionStatus.get().equals(InspectionStatus.PENDING))
-                                           && artifactInspectionService.shouldInspectArtifact(repoPath);
-
-        if (shouldCancelDownload) {
-            throw new CancelException(String.format("The Black Duck %s has prevented the download of %s because it lacks blackduck notifications", InspectionModule.class.getSimpleName(), repoPath.toPath()), 403);
-        }
+        cancelDecider.handleBeforeDownloadEvent(repoPath);
     }
 
     @Override

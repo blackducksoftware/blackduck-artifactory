@@ -43,13 +43,14 @@ public class ScanModuleConfig extends ModuleConfig {
     private final Boolean repoPathCodelocation;
     private final List<String> repos;
     private final Boolean codelocationIncludeHostname;
+    private final Boolean metadataBlockEnabled;
 
     private final File cliDirectory;
 
     private final DateTimeManager dateTimeManager;
 
     public ScanModuleConfig(Boolean enabled, String cron, String binariesDirectoryPath, String artifactCutoffDate, Boolean dryRun, List<String> namePatterns, Integer memory,
-        Boolean repoPathCodelocation, List<String> repos, Boolean codelocationIncludeHostname, File cliDirectory, DateTimeManager dateTimeManager) {
+        Boolean repoPathCodelocation, List<String> repos, Boolean codelocationIncludeHostname, Boolean metadataBlockEnabled, File cliDirectory, DateTimeManager dateTimeManager) {
         super(ScanModule.class.getSimpleName(), enabled);
         this.cron = cron;
         this.binariesDirectoryPath = binariesDirectoryPath;
@@ -60,6 +61,7 @@ public class ScanModuleConfig extends ModuleConfig {
         this.repoPathCodelocation = repoPathCodelocation;
         this.repos = repos;
         this.codelocationIncludeHostname = codelocationIncludeHostname;
+        this.metadataBlockEnabled = metadataBlockEnabled;
         this.cliDirectory = cliDirectory;
         this.dateTimeManager = dateTimeManager;
     }
@@ -75,11 +77,12 @@ public class ScanModuleConfig extends ModuleConfig {
         Integer memory = configurationPropertyManager.getIntegerProperty(ScanModuleProperty.MEMORY);
         Boolean repoPathCodelocation = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.REPO_PATH_CODELOCATION);
         List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.REPOS, ScanModuleProperty.REPOS_CSV_PATH).stream()
-                                       .filter(artifactoryPAPIService::isValidRepository)
-                                       .collect(Collectors.toList());
+                                 .filter(artifactoryPAPIService::isValidRepository)
+                                 .collect(Collectors.toList());
         Boolean codelocationIncludeHostname = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.CODELOCATION_INCLUDE_HOSTNAME);
+        Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.METADATA_BLOCK);
 
-        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, codelocationIncludeHostname, cliDirectory, dateTimeManager);
+        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, codelocationIncludeHostname, metadataBlockEnabled, cliDirectory, dateTimeManager);
     }
 
     @Override
@@ -94,12 +97,14 @@ public class ScanModuleConfig extends ModuleConfig {
         validateBoolean(propertyGroupReport, ScanModuleProperty.REPO_PATH_CODELOCATION, repoPathCodelocation);
         validateList(propertyGroupReport, ScanModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", ScanModuleProperty.REPOS.getKey(), ScanModuleProperty.REPOS_CSV_PATH.getKey()));
+        validateBoolean(propertyGroupReport, ScanModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
     }
 
     public String getCron() {
         return cron;
     }
 
+    // TODO: Why isn't this being used?
     public String getBinariesDirectoryPath() {
         return binariesDirectoryPath;
     }
@@ -134,5 +139,9 @@ public class ScanModuleConfig extends ModuleConfig {
 
     public Boolean getCodelocationIncludeHostname() {
         return codelocationIncludeHostname;
+    }
+
+    public Boolean isMetadataBlockEnabled() {
+        return metadataBlockEnabled;
     }
 }

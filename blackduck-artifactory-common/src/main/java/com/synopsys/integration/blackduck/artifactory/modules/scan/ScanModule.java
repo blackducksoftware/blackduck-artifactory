@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,12 +34,12 @@ import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ArtifactScanService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.PostScanActionsService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.RepositoryIdentificationService;
@@ -57,23 +56,24 @@ public class ScanModule implements Module {
 
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final ArtifactScanService artifactScanService;
-    private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final SimpleAnalyticsCollector simpleAnalyticsCollector;
     private final ScanPolicyService scanPolicyService;
     private final PostScanActionsService postScanActionsService;
+    private final ScanPropertyService scanPropertyService;
+    private final CancelDecider cancelDecider;
 
-    public ScanModule(ScanModuleConfig scanModuleConfig, RepositoryIdentificationService repositoryIdentificationService, ArtifactScanService artifactScanService,
-        ArtifactoryPropertyService artifactoryPropertyService, ArtifactoryPAPIService artifactoryPAPIService, SimpleAnalyticsCollector simpleAnalyticsCollector, ScanPolicyService scanPolicyService,
-        PostScanActionsService postScanActionsService) {
+    public ScanModule(ScanModuleConfig scanModuleConfig, RepositoryIdentificationService repositoryIdentificationService, ArtifactScanService artifactScanService, ArtifactoryPAPIService artifactoryPAPIService,
+        SimpleAnalyticsCollector simpleAnalyticsCollector, ScanPolicyService scanPolicyService, PostScanActionsService postScanActionsService, ScanPropertyService scanPropertyService, CancelDecider cancelDecider) {
         this.scanModuleConfig = scanModuleConfig;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactScanService = artifactScanService;
-        this.artifactoryPropertyService = artifactoryPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.simpleAnalyticsCollector = simpleAnalyticsCollector;
         this.scanPolicyService = scanPolicyService;
         this.postScanActionsService = postScanActionsService;
+        this.scanPropertyService = scanPropertyService;
+        this.cancelDecider = cancelDecider;
     }
 
     public static File setUpCliDuckDirectory(File blackDuckDirectory) throws IOException, IntegrationException {
@@ -98,10 +98,9 @@ public class ScanModule implements Module {
 
     public void addPolicyStatus() {
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths().stream()
-                                      .filter(repoPath -> {
-                                          Optional<String> property = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT);
-                                          return property.isPresent() && property.get().equals(Result.SUCCESS.name());
-                                      })
+                                      .filter(repoPath -> scanPropertyService.getScanResult(repoPath)
+                                                              .filter(Result.SUCCESS::equals)
+                                                              .isPresent())
                                       .collect(Collectors.toSet());
         scanPolicyService.populatePolicyStatuses(repoPaths);
         updateAnalyticsData();
@@ -113,34 +112,40 @@ public class ScanModule implements Module {
     }
 
     public void deleteScanProperties(Map<String, List<String>> params) {
-        scanModuleConfig.getRepos()
-            .forEach(repoKey -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger));
+        for (String repoKey : scanModuleConfig.getRepos()) {
+            scanPropertyService.deleteAllBlackDuckPropertiesFromRepo(repoKey, params, logger);
+        }
         updateAnalyticsData();
     }
 
     public void deleteScanPropertiesFromFailures(Map<String, List<String>> params) {
         List<RepoPath> repoPathsWithFailures = scanModuleConfig.getRepos().stream()
-                                                   .map(repoKey -> artifactoryPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.SCAN_RESULT))
+                                                   .map(repoKey -> scanPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.SCAN_RESULT))
                                                    .flatMap(List::stream)
-                                                   .filter(repoPath -> Optional.ofNullable(artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_RESULT)).equals(Optional.of(Result.FAILURE.toString())))
+                                                   .filter(repoPath -> scanPropertyService.getScanResult(repoPath)
+                                                                           .filter(Result.FAILURE::equals)
+                                                                           .isPresent())
                                                    .collect(Collectors.toList());
 
-        repoPathsWithFailures.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
+        repoPathsWithFailures.forEach(repoPath -> scanPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
         updateAnalyticsData();
     }
 
     public void deleteScanPropertiesFromOutOfDate(Map<String, List<String>> params) {
         List<RepoPath> repoPathsOutOfDate = scanModuleConfig.getRepos().stream()
-                                                .map(repoKey -> artifactoryPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.UPDATE_STATUS))
+                                                .map(repoKey -> scanPropertyService.getItemsContainingProperties(repoKey, BlackDuckArtifactoryProperty.UPDATE_STATUS))
                                                 .flatMap(List::stream)
-                                                .filter(repoPath -> {
-                                                    Optional<String> property = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS);
-                                                    return property.isPresent() && UpdateStatus.OUT_OF_DATE.toString().equals(property.get());
-                                                })
+                                                .filter(repoPath -> scanPropertyService.getUpdateStatus(repoPath)
+                                                                        .filter(UpdateStatus.OUT_OF_DATE::equals)
+                                                                        .isPresent())
                                                 .collect(Collectors.toList());
 
-        repoPathsOutOfDate.forEach(repoPath -> artifactoryPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
+        repoPathsOutOfDate.forEach(repoPath -> scanPropertyService.deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
         updateAnalyticsData();
+    }
+
+    public void handleBeforeDownloadEvent(RepoPath repoPath) {
+        cancelDecider.handleBeforeDownloadEvent(repoPath);
     }
 
     @Override

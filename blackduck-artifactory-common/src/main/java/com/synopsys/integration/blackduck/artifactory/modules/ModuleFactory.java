@@ -38,6 +38,10 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.InspectionCancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.ScanCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
@@ -62,6 +66,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModul
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ArtifactScanService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.PostScanActionsService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.RepositoryIdentificationService;
@@ -108,8 +113,10 @@ public class ModuleFactory {
         );
         ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckServerConfig, artifactoryPropertyService);
         PostScanActionsService postScanActionsService = new PostScanActionsService(artifactoryPropertyService, projectService);
-
-        return new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPropertyService, artifactoryPAPIService, simpleAnalyticsCollector, scanPolicyService, postScanActionsService);
+        ScanPropertyService scanPropertyService = new ScanPropertyService(artifactoryPAPIService, dateTimeManager);
+        ScanCancelDecider scanCancelDecider = new ScanCancelDecider(scanModuleConfig, scanPropertyService, artifactoryPAPIService);
+        return new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPAPIService, simpleAnalyticsCollector, scanPolicyService, postScanActionsService,
+            scanPropertyService, scanCancelDecider);
     }
 
     public InspectionModule createInspectionModule() throws IOException {
@@ -146,9 +153,10 @@ public class ModuleFactory {
         MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
         PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckService, blackDuckBOMService, projectService);
+        CancelDecider cancelDecider = new InspectionCancelDecider(inspectionModuleConfig, inspectionPropertyService, artifactInspectionService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
-            simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, policySeverityService);
+            simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, policySeverityService, cancelDecider);
     }
 
     public PolicyModule createPolicyModule() {

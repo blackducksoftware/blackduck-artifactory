@@ -186,6 +186,10 @@ public class PluginAPI implements Analyzable {
         return inspectionModuleConfig.getReinspectCron();
     }
 
+    public void handleBeforeDownloadEventScan(TriggerType triggerType, RepoPath repoPath) {
+        runMethod(scanModuleConfig, triggerType, repoPath, scanModule::handleBeforeDownloadEvent);
+    }
+
     public void handleBeforeDownloadEventInspection(TriggerType triggerType, RepoPath repoPath) {
         runMethod(inspectionModuleConfig, triggerType, repoPath, inspectionModule::handleBeforeDownloadEvent);
     }
