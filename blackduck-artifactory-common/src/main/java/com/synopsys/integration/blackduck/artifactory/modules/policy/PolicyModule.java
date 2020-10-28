@@ -22,46 +22,40 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.policy;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.artifactory.exception.CancelException;
 import org.artifactory.repo.RepoPath;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 
 public class PolicyModule implements Module {
     private final PolicyModuleConfig policyModuleConfig;
-    private final ArtifactoryPropertyService artifactoryPropertyService;
     private final FeatureAnalyticsCollector featureAnalyticsCollector;
+    private final CancelDecider cancelDecider;
 
-    public PolicyModule(PolicyModuleConfig policyModuleConfig, ArtifactoryPropertyService artifactoryPropertyService, FeatureAnalyticsCollector featureAnalyticsCollector) {
+    public PolicyModule(PolicyModuleConfig policyModuleConfig, FeatureAnalyticsCollector featureAnalyticsCollector, CancelDecider cancelDecider) {
         this.policyModuleConfig = policyModuleConfig;
-        this.artifactoryPropertyService = artifactoryPropertyService;
         this.featureAnalyticsCollector = featureAnalyticsCollector;
+        this.cancelDecider = cancelDecider;
     }
 
     public void handleBeforeDownloadEvent(RepoPath repoPath) {
-        String reason = null;
-        final boolean shouldBlock = false;
-        if (shouldCancelOnPolicyViolation(repoPath)) {
-            reason = "because it violates a policy in Black Duck.";
+        try {
+            cancelDecider.handleBeforeDownloadEvent(repoPath);
+            logFeatureHit(false);
+        } catch (CancelException cancelException) {
+            logFeatureHit(true);
+            throw cancelException;
         }
+    }
 
-        featureAnalyticsCollector.logFeatureHit("handleBeforeDownloadEvent", String.format("blocked:%s", Boolean.toString(shouldBlock)));
-
-        if (reason != null) {
-            throw new CancelException(String.format("The Black Duck %s has prevented the download of %s %s", PolicyModule.class.getSimpleName(), repoPath.toPath(), reason), 403);
-        }
+    private void logFeatureHit(boolean wasDownloadBlocked) {
+        featureAnalyticsCollector.logFeatureHit("handleBeforeDownloadEvent", String.format("blocked:%s", wasDownloadBlocked));
     }
 
     @Override
@@ -72,36 +66,5 @@ public class PolicyModule implements Module {
     @Override
     public PolicyModuleConfig getModuleConfig() {
         return policyModuleConfig;
-    }
-
-    private boolean shouldCancelOnPolicyViolation(RepoPath repoPath) {
-        if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)) {
-            // TODO: Fix in 8.0.0
-            // Currently scanned artifacts are not supported because POLICY_STATUS and OVERALL_POLICY_STATUS is used in scans and there is overlap
-            // with inspection using just POLICY_STATUS. Additional work will need to be done to sync these values and a use case for blocking
-            // scanned artifacts has yet to present itself. JM - 08/2019
-            return false;
-        }
-
-        Optional<PolicySummaryStatusType> inViolationProperty = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS)
-                                                                          .map(PolicySummaryStatusType::valueOf)
-                                                                          .filter(it -> it.equals(PolicySummaryStatusType.IN_VIOLATION));
-
-        if (inViolationProperty.isPresent()) {
-            Optional<String> severityTypes = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES);
-            if (severityTypes.isPresent()) {
-                List<PolicySeverityType> severityTypesToBlock = policyModuleConfig.getPolicySeverityTypes();
-                List<PolicySeverityType> matchingSeverityTypes = Arrays.stream(severityTypes.get().split(","))
-                                                                           .map(PolicySeverityType::valueOf)
-                                                                           .filter(severityTypesToBlock::contains)
-                                                                           .collect(Collectors.toList());
-                return !matchingSeverityTypes.isEmpty();
-            } else {
-                // The plugin should populate the severity types on artifacts automatically. But if an artifact is somehow missed, we want to be on the safe side.
-                return true;
-            }
-        } else {
-            return false;
-        }
     }
 }

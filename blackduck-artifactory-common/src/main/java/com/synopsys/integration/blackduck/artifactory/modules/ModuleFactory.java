@@ -162,8 +162,8 @@ public class ModuleFactory {
     public PolicyModule createPolicyModule() {
         PolicyModuleConfig policyModuleConfig = PolicyModuleConfig.createFromProperties(configurationPropertyManager);
         FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PolicyModule.class);
-
-        return new PolicyModule(policyModuleConfig, artifactoryPropertyService, featureAnalyticsCollector);
+        CancelDecider cancelDecider = new PolicyCancelDecider(policyModuleConfig, artifactoryPropertyService);
+        return new PolicyModule(policyModuleConfig, featureAnalyticsCollector, cancelDecider);
     }
 
     public AnalyticsModule createAnalyticsModule(AnalyticsService analyticsService, ModuleManager moduleManager) {
