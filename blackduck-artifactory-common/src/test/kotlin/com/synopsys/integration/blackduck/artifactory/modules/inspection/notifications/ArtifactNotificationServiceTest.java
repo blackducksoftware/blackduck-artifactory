@@ -73,7 +73,7 @@ class ArtifactNotificationServiceTest {
         String vulnerableComponentName = "vulnerable-component";
         String vulnerableComponentVersion = "4.0";
         RepoPath vulnerableComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), vulnerableComponentName);
-        VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(3, 2, 1);
+        VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(4, 3, 2, 1);
         ProcessedVulnerabilityNotification processedVulnerabilityNotification = new ProcessedVulnerabilityNotification(vulnerableComponentName, vulnerableComponentVersion, toBeAffectedRepoKeys, vulnerabilityAggregate);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(vulnerableComponentName, vulnerableComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(vulnerableComponentRepoPath));
@@ -107,6 +107,7 @@ class ArtifactNotificationServiceTest {
         assertPropertyValue(propertyMap, repoPath, BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, String.valueOf(expectedVulnerabilityAggregate.getLowSeverityCount()));
         assertPropertyValue(propertyMap, repoPath, BlackDuckArtifactoryProperty.MEDIUM_VULNERABILITIES, String.valueOf(expectedVulnerabilityAggregate.getMediumSeverityCount()));
         assertPropertyValue(propertyMap, repoPath, BlackDuckArtifactoryProperty.HIGH_VULNERABILITIES, String.valueOf(expectedVulnerabilityAggregate.getHighSeverityCount()));
+        assertPropertyValue(propertyMap, repoPath, BlackDuckArtifactoryProperty.CRITICAL_VULNERABILITIES, String.valueOf(expectedVulnerabilityAggregate.getCriticalSeverityCount()));
     }
 
     private void assertPolicyProperties(Map<RepoPath, Map<String, String>> propertyMap, RepoPath repoPath, PolicyStatusReport expectedPolicyStatusReport) {
