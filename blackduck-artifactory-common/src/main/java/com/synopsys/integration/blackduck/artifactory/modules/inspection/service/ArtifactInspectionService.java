@@ -34,9 +34,9 @@ import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
-import com.synopsys.integration.blackduck.api.generated.component.VersionBomOriginView;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
+import com.synopsys.integration.blackduck.api.manual.throwaway.generated.component.VersionBomOriginView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
@@ -46,9 +46,9 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.C
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
-import com.synopsys.integration.blackduck.service.ComponentService;
-import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.BlackDuckApiClient;
+import com.synopsys.integration.blackduck.service.dataservice.ComponentService;
+import com.synopsys.integration.blackduck.service.dataservice.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ComponentVersionVulnerabilities;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
@@ -65,11 +65,11 @@ public class ArtifactInspectionService {
     private final ProjectService projectService;
     private final ComponentService componentService;
     private final ExternalIdService externalIdService;
-    private final BlackDuckService blackDuckService;
+    private final BlackDuckApiClient blackDuckApiClient;
 
     public ArtifactInspectionService(ArtifactoryPAPIService artifactoryPAPIService, BlackDuckBOMService blackDuckBOMService, InspectionModuleConfig inspectionModuleConfig,
         InspectionPropertyService inspectionPropertyService, ProjectService projectService, ComponentService componentService, ExternalIdService externalIdService,
-        BlackDuckService blackDuckService) {
+        BlackDuckApiClient blackDuckApiClient) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.inspectionModuleConfig = inspectionModuleConfig;
@@ -77,7 +77,7 @@ public class ArtifactInspectionService {
         this.projectService = projectService;
         this.componentService = componentService;
         this.externalIdService = externalIdService;
-        this.blackDuckService = blackDuckService;
+        this.blackDuckApiClient = blackDuckApiClient;
     }
 
     public boolean shouldInspectArtifact(RepoPath repoPath) {
@@ -185,23 +185,23 @@ public class ArtifactInspectionService {
     }
 
     private void populateBlackDuckMetadata(RepoPath repoPath, ComponentViewWrapper componentViewWrapper) throws IntegrationException {
-        Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getVersionBomComponentView().getOrigins().stream().findFirst();
+        Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getProjectVersionComponentView().getOrigins().stream().findFirst();
 
         if (versionBomOriginView.isPresent()) {
             ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
             ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
             VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
-            PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getVersionBomComponentView(), blackDuckService);
+            PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getProjectVersionComponentView(), blackDuckApiClient);
 
             inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
             inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
-            componentVersionView.getHref().ifPresent(componentVersionUrl -> inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getVersionBomComponentView().getComponentVersion()));
+            inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getProjectVersionComponentView().getComponentVersion());
             inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
 
             String forge = versionBomOriginView.get().getExternalNamespace();
             String originId = versionBomOriginView.get().getExternalId();
-            String componentName = componentViewWrapper.getVersionBomComponentView().getComponentName();
-            String componentVersionName = componentViewWrapper.getVersionBomComponentView().getComponentVersionName();
+            String componentName = componentViewWrapper.getProjectVersionComponentView().getComponentName();
+            String componentVersionName = componentViewWrapper.getProjectVersionComponentView().getComponentVersionName();
             inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId, componentName, componentVersionName);
         } else {
             throw new FailedInspectionException(repoPath, "No OriginViews were found for component.");

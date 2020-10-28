@@ -54,7 +54,7 @@ import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatc
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanCommandOutput;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.command.ScanTarget;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
-import com.synopsys.integration.blackduck.rest.BlackDuckHttpClient;
+import com.synopsys.integration.blackduck.http.client.BlackDuckHttpClient;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuess;
 import com.synopsys.integration.blackduck.service.model.ProjectNameVersionGuesser;
 import com.synopsys.integration.exception.IntegrationException;
@@ -136,7 +136,7 @@ public class ArtifactScanService {
         boolean dryRun = scanModuleConfig.getDryRun();
         boolean useRepoPathAsCodeLocationName = scanModuleConfig.getRepoPathCodelocation();
         boolean useHostnameInCodeLocationName = scanModuleConfig.getCodelocationIncludeHostname();
-        IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
+        IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.includeSystemEnv();
         BlackDuckHttpClient blackDuckHttpClient = blackDuckServerConfig.createBlackDuckHttpClient(logger);
         ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(LoggerFactory.getLogger("SignatureScanner")), blackDuckHttpClient, intEnvironmentVariables, new NoThreadExecutorService());
         ScanBatchBuilder scanJobBuilder = new ScanBatchBuilder()

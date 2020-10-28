@@ -10,8 +10,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import com.synopsys.integration.blackduck.api.generated.component.ResourceLink;
-import com.synopsys.integration.blackduck.api.generated.component.ResourceMetadata;
+import com.synopsys.integration.blackduck.api.core.ResourceLink;
+import com.synopsys.integration.blackduck.api.core.ResourceMetadata;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.api.manual.component.AffectedProjectVersion;
@@ -22,6 +23,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.VulnerabilityNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.rest.HttpUrl;
 
 class VulnerabiityProcessorTest {
     @Test
@@ -32,7 +34,7 @@ class VulnerabiityProcessorTest {
         Mockito.when(vulnerabilityNotificationService.fetchComponentVersionView(Mockito.any())).thenReturn(componentVersionView);
 
         ResourceLink vulnerabilityResourceLink = new ResourceLink();
-        vulnerabilityResourceLink.setHref("vulnerability/link/url");
+        vulnerabilityResourceLink.setHref(new HttpUrl("vulnerability/link/url"));
         vulnerabilityResourceLink.setRel(ComponentVersionView.VULNERABILITIES_LINK);
         ResourceMetadata resourceMetadata = new ResourceMetadata();
         resourceMetadata.setLinks(Collections.singletonList(vulnerabilityResourceLink));
@@ -75,7 +77,8 @@ class VulnerabiityProcessorTest {
 
     private VulnerabilityView createView(String severity) {
         VulnerabilityView vulnerabilityView = new VulnerabilityView();
-        vulnerabilityView.setSeverity(severity);
+        ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType severityType = ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.valueOf(severity);
+        vulnerabilityView.setSeverity(severityType);
         return vulnerabilityView;
     }
 }

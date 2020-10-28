@@ -29,8 +29,8 @@ import java.util.Optional;
 
 import org.artifactory.repo.RepoPath;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
 import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionStatus;
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationClearedNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationClearedNotificationUserView;
@@ -60,12 +60,12 @@ public class PolicyRuleClearedProcessor {
 
         Optional<RepoPath> repoKeyPath = repositoryFilter.getRepoKeyPath(content.getProjectName(), content.getProjectVersionName());
         if (repoKeyPath.isPresent()) {
-            List<PolicySeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
+            List<PolicyRuleSeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
 
             List<ComponentVersionStatus> componentVersionStatuses = content.getComponentVersionStatuses();
 
             for (ComponentVersionStatus componentVersionStatus : componentVersionStatuses) {
-                PolicySummaryStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
+                PolicyStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(componentVersionStatus.getBomComponentVersionPolicyStatus());
                 PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
                 String componentName = componentVersionStatus.getComponentName();

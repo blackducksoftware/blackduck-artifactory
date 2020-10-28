@@ -25,24 +25,24 @@ package com.synopsys.integration.blackduck.artifactory.modules.policy;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class PolicyModuleConfig extends ModuleConfig {
-    private final List<PolicySeverityType> policySeverityTypes;
+    private final List<PolicyRuleSeverityType> policySeverityTypes;
 
-    public PolicyModuleConfig(Boolean enabled, List<PolicySeverityType> policySeverityTypes) {
+    public PolicyModuleConfig(Boolean enabled, List<PolicyRuleSeverityType> policySeverityTypes) {
         super(PolicyModule.class.getSimpleName(), enabled);
         this.policySeverityTypes = policySeverityTypes;
     }
 
     public static PolicyModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager) {
         Boolean enabled = configurationPropertyManager.getBooleanProperty(PolicyModuleProperty.ENABLED);
-        List<PolicySeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(PolicyModuleProperty.SEVERITY_TYPES).stream()
-                                                                 .map(PolicySeverityType::valueOf)
-                                                                 .collect(Collectors.toList());
+        List<PolicyRuleSeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(PolicyModuleProperty.SEVERITY_TYPES).stream()
+                                                               .map(PolicyRuleSeverityType::valueOf)
+                                                               .collect(Collectors.toList());
 
         return new PolicyModuleConfig(enabled, policySeverityTypes);
     }
@@ -53,7 +53,7 @@ public class PolicyModuleConfig extends ModuleConfig {
         validateList(propertyGroupReport, PolicyModuleProperty.SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
     }
 
-    public List<PolicySeverityType> getPolicySeverityTypes() {
+    public List<PolicyRuleSeverityType> getPolicySeverityTypes() {
         return policySeverityTypes;
     }
 }

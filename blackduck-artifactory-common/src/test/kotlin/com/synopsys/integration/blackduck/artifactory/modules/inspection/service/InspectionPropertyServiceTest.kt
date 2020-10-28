@@ -22,26 +22,23 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 
-import com.synopsys.integration.blackduck.artifactory.PropertiesMap
-import com.synopsys.integration.blackduck.artifactory.TestUtil.createMockArtifactoryPAPIService
-import com.synopsys.integration.blackduck.artifactory.TestUtil.createRepoPath
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType
-import com.synopsys.integration.blackduck.api.generated.component.ResourceLink
-import com.synopsys.integration.blackduck.api.generated.component.ResourceMetadata
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType
+import com.synopsys.integration.blackduck.api.core.ResourceLink
+import com.synopsys.integration.blackduck.api.core.ResourceMetadata
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
-import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService
-import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty
-import com.synopsys.integration.blackduck.artifactory.DateTimeManager
-import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory
+import com.synopsys.integration.blackduck.artifactory.*
+import com.synopsys.integration.blackduck.artifactory.TestUtil.createMockArtifactoryPAPIService
+import com.synopsys.integration.blackduck.artifactory.TestUtil.createRepoPath
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate
+import com.synopsys.integration.rest.HttpUrl
 import com.synopsys.integration.util.HostNameHelper
 import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
@@ -206,13 +203,13 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val policyStatusReport = PolicyStatusReport(PolicySummaryStatusType.IN_VIOLATION, listOf(PolicySeverityType.MAJOR, PolicySeverityType.TRIVIAL))
+        val policyStatusReport = PolicyStatusReport(PolicyStatusType.IN_VIOLATION, listOf(PolicyRuleSeverityType.MAJOR, PolicyRuleSeverityType.TRIVIAL))
 
         inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport)
 
         val policyStatusProperty = BlackDuckArtifactoryProperty.POLICY_STATUS.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property is missing.")
-        Assertions.assertEquals(PolicySummaryStatusType.IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
+        Assertions.assertEquals(PolicyStatusType.IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
 
         val severityTypesProperty = BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![severityTypesProperty], "The $severityTypesProperty property is missing.")
@@ -226,12 +223,12 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val policyStatusReport = PolicyStatusReport(PolicySummaryStatusType.NOT_IN_VIOLATION, listOf())
+        val policyStatusReport = PolicyStatusReport(PolicyStatusType.NOT_IN_VIOLATION, listOf())
         inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport)
 
         val policyStatusProperty = BlackDuckArtifactoryProperty.POLICY_STATUS.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property is missing.")
-        Assertions.assertEquals(PolicySummaryStatusType.NOT_IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
+        Assertions.assertEquals(PolicyStatusType.NOT_IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
 
         val severityTypesProperty = BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES.propertyName
         Assertions.assertNull(repoPathPropertyMap[repoPath]!![severityTypesProperty], "The $severityTypesProperty exists even though there or no PolicySeverityTypes in the PolicyStatusReport.")
@@ -466,7 +463,7 @@ class InspectionPropertyServiceTest {
         val resourceMetadata = ResourceMetadata()
         val componentsLink = ResourceLink()
         componentsLink.rel = ProjectVersionView.COMPONENTS_LINK
-        componentsLink.href = "https://synopsys.com"
+        componentsLink.href = HttpUrl("https://synopsys.com")
         resourceMetadata.links = listOf(componentsLink)
         projectVersionView.meta = resourceMetadata
         inspectionPropertyService.updateProjectUIUrl(repoPath, projectVersionView)

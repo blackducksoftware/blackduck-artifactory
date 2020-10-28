@@ -25,41 +25,38 @@ package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.EnumUtils;
-
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomPolicyRuleView;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentPolicyRulesView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
+import com.synopsys.integration.blackduck.service.BlackDuckApiClient;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyStatusReport {
-    private final PolicySummaryStatusType policySummaryStatusType;
-    private final List<PolicySeverityType> policySeverityTypes;
+    private final PolicyStatusType policyStatusType;
+    private final List<PolicyRuleSeverityType> policyRuleSeverityTypes;
 
-    public static PolicyStatusReport fromVersionBomComponentView(VersionBomComponentView versionBomComponentView, BlackDuckService blackDuckService) throws IntegrationException {
-        PolicySummaryStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
+    public static PolicyStatusReport fromVersionBomComponentView(ProjectVersionComponentView versionBomComponentView, BlackDuckApiClient blackDuckApiClient) throws IntegrationException {
+        PolicyStatusType policySummaryStatusType = versionBomComponentView.getPolicyStatus();
 
-        List<VersionBomPolicyRuleView> versionBomPolicyRuleViews = blackDuckService.getAllResponses(versionBomComponentView, VersionBomComponentView.POLICY_RULES_LINK_RESPONSE);
-        List<PolicySeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
-                                                           .map(VersionBomPolicyRuleView::getSeverity)
-                                                           .map(severity -> EnumUtils.getEnumIgnoreCase(PolicySeverityType.class, severity))
-                                                           .collect(Collectors.toList());
+        List<ComponentPolicyRulesView> versionBomPolicyRuleViews = blackDuckApiClient.getAllResponses(versionBomComponentView, ProjectVersionComponentView.POLICY_RULES_LINK_RESPONSE);
+        List<PolicyRuleSeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
+                                                               .map(ComponentPolicyRulesView::getSeverity)
+                                                               .collect(Collectors.toList());
 
         return new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
     }
 
-    public PolicyStatusReport(PolicySummaryStatusType policySummaryStatusType, List<PolicySeverityType> policySeverityTypes) {
-        this.policySummaryStatusType = policySummaryStatusType;
-        this.policySeverityTypes = policySeverityTypes;
+    public PolicyStatusReport(PolicyStatusType policyStatusType, List<PolicyRuleSeverityType> policyRuleSeverityTypes) {
+        this.policyStatusType = policyStatusType;
+        this.policyRuleSeverityTypes = policyRuleSeverityTypes;
     }
 
-    public PolicySummaryStatusType getPolicySummaryStatusType() {
-        return policySummaryStatusType;
+    public PolicyStatusType getPolicyStatusType() {
+        return policyStatusType;
     }
 
-    public List<PolicySeverityType> getPolicySeverityTypes() {
-        return policySeverityTypes;
+    public List<PolicyRuleSeverityType> getPolicyRuleSeverityTypes() {
+        return policyRuleSeverityTypes;
     }
 }

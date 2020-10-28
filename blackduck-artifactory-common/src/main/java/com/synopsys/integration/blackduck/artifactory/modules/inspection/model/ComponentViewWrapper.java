@@ -23,19 +23,19 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.VersionBomComponentView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
 
 public class ComponentViewWrapper {
-    private final VersionBomComponentView versionBomComponentView;
+    private final ProjectVersionComponentView projectVersionComponentView;
     private final ComponentVersionView componentVersionView;
 
-    public ComponentViewWrapper(VersionBomComponentView versionBomComponentView, ComponentVersionView componentVersionView) {
-        this.versionBomComponentView = versionBomComponentView;
+    public ComponentViewWrapper(ProjectVersionComponentView projectVersionComponentView, ComponentVersionView componentVersionView) {
+        this.projectVersionComponentView = projectVersionComponentView;
         this.componentVersionView = componentVersionView;
     }
 
-    public VersionBomComponentView getVersionBomComponentView() {
-        return versionBomComponentView;
+    public ProjectVersionComponentView getProjectVersionComponentView() {
+        return projectVersionComponentView;
     }
 
     public ComponentVersionView getComponentVersionView() {

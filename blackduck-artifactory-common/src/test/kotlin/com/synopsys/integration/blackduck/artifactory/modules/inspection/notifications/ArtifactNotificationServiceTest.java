@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
@@ -49,7 +49,7 @@ class ArtifactNotificationServiceTest {
         String policyOverrideComponentName = "policy-override-component";
         String policyOverrideComponentVersion = "1.0";
         RepoPath policyOverrideComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyOverrideComponentName);
-        PolicyStatusReport policyOverrideStatusReport = new PolicyStatusReport(PolicySummaryStatusType.IN_VIOLATION_OVERRIDDEN, Collections.singletonList(PolicySeverityType.BLOCKER));
+        PolicyStatusReport policyOverrideStatusReport = new PolicyStatusReport(PolicyStatusType.IN_VIOLATION_OVERRIDDEN, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
         ProcessedPolicyNotification processedPolicyOverrideNotification = new ProcessedPolicyNotification(policyOverrideComponentName, policyOverrideComponentVersion, policyOverrideStatusReport, toBeAffectedRepoKeys);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyOverrideComponentName, policyOverrideComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyOverrideComponentRepoPath));
@@ -57,7 +57,7 @@ class ArtifactNotificationServiceTest {
         String policyClearedComponentName = "policy-cleared-component";
         String policyClearedComponentVersion = "2.0";
         RepoPath policyClearedComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyClearedComponentName);
-        PolicyStatusReport policyClearedStatusReport = new PolicyStatusReport(PolicySummaryStatusType.NOT_IN_VIOLATION, Collections.emptyList());
+        PolicyStatusReport policyClearedStatusReport = new PolicyStatusReport(PolicyStatusType.NOT_IN_VIOLATION, Collections.emptyList());
         ProcessedPolicyNotification processedPolicyClearedNotification = new ProcessedPolicyNotification(policyClearedComponentName, policyClearedComponentVersion, policyClearedStatusReport, toBeAffectedRepoKeys);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyClearedComponentName, policyClearedComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyClearedComponentRepoPath));
@@ -65,7 +65,7 @@ class ArtifactNotificationServiceTest {
         String policyViolationComponentName = "policy-violation-component";
         String policyViolationComponentVersion = "3.0";
         RepoPath policyViolationComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyViolationComponentName);
-        PolicyStatusReport policyViolationStatusReport = new PolicyStatusReport(PolicySummaryStatusType.IN_VIOLATION, Collections.singletonList(PolicySeverityType.BLOCKER));
+        PolicyStatusReport policyViolationStatusReport = new PolicyStatusReport(PolicyStatusType.IN_VIOLATION, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
         ProcessedPolicyNotification processedPolicyViolationNotification = new ProcessedPolicyNotification(policyViolationComponentName, policyViolationComponentVersion, policyViolationStatusReport, toBeAffectedRepoKeys);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyViolationComponentName, policyViolationComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyViolationComponentRepoPath));
@@ -111,11 +111,11 @@ class ArtifactNotificationServiceTest {
     }
 
     private void assertPolicyProperties(Map<RepoPath, Map<String, String>> propertyMap, RepoPath repoPath, PolicyStatusReport expectedPolicyStatusReport) {
-        assertPropertyValue(propertyMap, repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, expectedPolicyStatusReport.getPolicySummaryStatusType().name());
-        if (expectedPolicyStatusReport.getPolicySeverityTypes().isEmpty()) {
+        assertPropertyValue(propertyMap, repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, expectedPolicyStatusReport.getPolicyStatusType().name());
+        if (expectedPolicyStatusReport.getPolicyRuleSeverityTypes().isEmpty()) {
             assertMissingProperty(propertyMap, repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES);
         } else {
-            String policySeverityTypes = StringUtils.join(expectedPolicyStatusReport.getPolicySeverityTypes(), ",");
+            String policySeverityTypes = StringUtils.join(expectedPolicyStatusReport.getPolicyRuleSeverityTypes(), ",");
             assertPropertyValue(propertyMap, repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, policySeverityTypes);
         }
     }

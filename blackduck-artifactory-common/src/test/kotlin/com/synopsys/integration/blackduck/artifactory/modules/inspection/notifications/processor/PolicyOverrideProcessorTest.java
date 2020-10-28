@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
@@ -23,7 +23,7 @@ class PolicyOverrideProcessorTest {
     @Test
     void processPolicyOverrideNotifications() throws IntegrationException {
         PolicyNotificationService policyNotificationService = Mockito.mock(PolicyNotificationService.class);
-        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(PolicySummaryStatusType.IN_VIOLATION);
+        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(PolicyStatusType.IN_VIOLATION);
 
         RepositoryProjectNameLookup repositoryFilter = Mockito.mock(RepositoryProjectNameLookup.class);
         RepoPath repoPath = new PluginRepoPathFactory(false).create("repo-1");
@@ -50,7 +50,7 @@ class PolicyOverrideProcessorTest {
         Assertions.assertEquals("component-name", processedPolicyNotification.getComponentName());
         Assertions.assertEquals("component-version-name-1.0", processedPolicyNotification.getComponentVersionName());
         Assertions.assertEquals(Collections.singletonList(repoPath), processedPolicyNotification.getAffectedRepoKeyPaths());
-        Assertions.assertEquals(Collections.singletonList(PolicySeverityType.UNSPECIFIED), processedPolicyNotification.getPolicyStatusReport().getPolicySeverityTypes());
-        Assertions.assertEquals(PolicySummaryStatusType.IN_VIOLATION, processedPolicyNotification.getPolicyStatusReport().getPolicySummaryStatusType());
+        Assertions.assertEquals(Collections.singletonList(PolicyRuleSeverityType.UNSPECIFIED), processedPolicyNotification.getPolicyStatusReport().getPolicyRuleSeverityTypes());
+        Assertions.assertEquals(PolicyStatusType.IN_VIOLATION, processedPolicyNotification.getPolicyStatusReport().getPolicyStatusType());
     }
 }

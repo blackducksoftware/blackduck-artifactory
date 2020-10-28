@@ -82,10 +82,10 @@ public class ComposerExternalIdExtractor {
             // Try to find an external id that contains version numbers since dev releases can also be in this list.
             for (ExternalId foundExternalId : externalIds) {
                 String[] numbers = IntStream.rangeClosed(0, 9)
-                                             .boxed()
-                                             .map(String::valueOf)
-                                             .toArray(String[]::new);
-                if (StringUtils.containsAny(foundExternalId.version, numbers) || externalId == null) {
+                                       .boxed()
+                                       .map(String::valueOf)
+                                       .toArray(String[]::new);
+                if (StringUtils.containsAny(foundExternalId.getVersion(), numbers) || externalId == null) {
                     externalId = foundExternalId;
                 }
 
@@ -103,7 +103,7 @@ public class ComposerExternalIdExtractor {
         try (ResourceStreamHandle resourceStreamHandle = artifactoryPAPIService.getArtifactContent(repoPath)) {
             InputStream inputStream = resourceStreamHandle.getInputStream();
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            JsonElement root = new JsonParser().parse(inputStreamReader);
+            JsonElement root = JsonParser.parseReader(inputStreamReader);
             Set<Map.Entry<String, JsonElement>> rootEntries = root.getAsJsonObject().get("packages").getAsJsonObject().entrySet();
             List<ComposerVersion> composerVersions = new ArrayList<>();
             for (Map.Entry<String, JsonElement> rootEntry : rootEntries) {

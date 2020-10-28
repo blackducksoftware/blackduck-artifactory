@@ -46,6 +46,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.P
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
+import com.synopsys.integration.rest.HttpUrl;
 import com.synopsys.integration.util.HostNameHelper;
 
 public class InspectionPropertyService extends ArtifactoryPropertyService {
@@ -85,13 +86,13 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
     }
 
     public void setPolicyProperties(RepoPath repoPath, PolicyStatusReport policyStatusReport) {
-        if (policyStatusReport.getPolicySeverityTypes().isEmpty()) {
+        if (policyStatusReport.getPolicyRuleSeverityTypes().isEmpty()) {
             deleteProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, logger);
         } else {
-            String policySeverityTypes = StringUtils.join(policyStatusReport.getPolicySeverityTypes(), ",");
+            String policySeverityTypes = StringUtils.join(policyStatusReport.getPolicyRuleSeverityTypes(), ",");
             setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, logger);
         }
-        setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusReport.getPolicySummaryStatusType().name(), logger);
+        setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, policyStatusReport.getPolicyStatusType().name(), logger);
     }
 
     public void setComponentVersionUrl(RepoPath repoPath, String componentVersionUrl) {
@@ -190,8 +191,8 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
     }
 
     public void updateProjectUIUrl(RepoPath repoPath, ProjectVersionView projectVersionView) {
-        Optional<String> componentsLink = projectVersionView.getFirstLink(ProjectVersionView.COMPONENTS_LINK);
-        componentsLink.ifPresent(uiUrl -> setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl, logger));
+        Optional<HttpUrl> componentsLink = projectVersionView.getFirstLinkSafely(ProjectVersionView.COMPONENTS_LINK);
+        componentsLink.ifPresent(uiUrl -> setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl.string(), logger));
     }
 
     public Optional<Date> getLastUpdate(RepoPath repoKeyPath) {

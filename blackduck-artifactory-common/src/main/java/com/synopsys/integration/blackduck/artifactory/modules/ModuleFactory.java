@@ -72,12 +72,12 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.service.PostS
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.RepositoryIdentificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ScanPolicyService;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
+import com.synopsys.integration.blackduck.service.BlackDuckApiClient;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
-import com.synopsys.integration.blackduck.service.ComponentService;
-import com.synopsys.integration.blackduck.service.NotificationService;
-import com.synopsys.integration.blackduck.service.ProjectBomService;
-import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.dataservice.ComponentService;
+import com.synopsys.integration.blackduck.service.dataservice.NotificationService;
+import com.synopsys.integration.blackduck.service.dataservice.ProjectBomService;
+import com.synopsys.integration.blackduck.service.dataservice.ProjectService;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class ModuleFactory {
@@ -123,7 +123,7 @@ public class ModuleFactory {
         InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
         SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
-        BlackDuckService blackDuckService = blackDuckServicesFactory.createBlackDuckService();
+        BlackDuckApiClient blackDuckApiClient = blackDuckServicesFactory.getBlackDuckService();
         ComponentService componentService = blackDuckServicesFactory.createComponentService();
         ProjectService projectService = blackDuckServicesFactory.createProjectService();
         ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();
@@ -133,26 +133,26 @@ public class ModuleFactory {
 
         InspectionPropertyService inspectionPropertyService = new InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, inspectionModuleConfig.getRetryCount());
 
-        PolicyNotificationService policyNotificationService = new PolicyNotificationService(blackDuckService, notificationService);
+        PolicyNotificationService policyNotificationService = new PolicyNotificationService(blackDuckApiClient, notificationService);
         PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(policyNotificationService);
         PolicyRuleClearedProcessor policyRuleClearedProcessor = new PolicyRuleClearedProcessor(policyNotificationService);
         PolicyViolationProcessor policyViolationProcessor = new PolicyViolationProcessor(policyNotificationService);
-        VulnerabilityNotificationService vulnerabilityNotificationService = new VulnerabilityNotificationService(blackDuckService, notificationService);
+        VulnerabilityNotificationService vulnerabilityNotificationService = new VulnerabilityNotificationService(blackDuckApiClient, notificationService);
         VulnerabilityProcessor vulnerabilityProcessor = new VulnerabilityProcessor(vulnerabilityNotificationService);
         NotificationProcessor notificationProcessor = new NotificationProcessor(policyOverrideProcessor, policyRuleClearedProcessor, policyViolationProcessor, vulnerabilityProcessor);
 
         ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(artifactSearchService, inspectionPropertyService, policyNotificationService, vulnerabilityNotificationService, notificationProcessor);
-        BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckService);
+        BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckApiClient);
 
         ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
         ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
         CondaExternalIdExtractor condaExternalIdExtractor = new CondaExternalIdExtractor(externalIdFactory);
         ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor, condaExternalIdExtractor);
         ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, inspectionModuleConfig, inspectionPropertyService, projectService, componentService, externalIdService,
-            blackDuckService);
+            blackDuckApiClient);
         MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
-        PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckService, blackDuckBOMService, projectService);
+        PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckApiClient, blackDuckBOMService, projectService);
         CancelDecider cancelDecider = new InspectionCancelDecider(inspectionModuleConfig, inspectionPropertyService, artifactInspectionService);
 
         return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,

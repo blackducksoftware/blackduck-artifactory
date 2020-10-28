@@ -31,12 +31,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionPhaseType;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
+import com.synopsys.integration.blackduck.api.manual.throwaway.generated.enumeration.ProjectVersionPhaseType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.codelocation.Result;
-import com.synopsys.integration.blackduck.service.ProjectService;
+import com.synopsys.integration.blackduck.service.dataservice.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
@@ -63,7 +63,7 @@ public class PostScanActionsService {
         for (String repoKey : repoKeys) {
             RepoPath repoKeyPath = RepoPathFactory.create(repoKey);
             Optional<ProjectVersionPhaseType> postScanPhase = artifactoryPropertyService.getProperty(repoKeyPath, BlackDuckArtifactoryProperty.POST_SCAN_PHASE)
-                                                                        .map(ProjectVersionPhaseType::valueOf);
+                                                                  .map(ProjectVersionPhaseType::valueOf);
             List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKey);
             if (postScanPhase.isPresent()) {
                 setProjectPhase(repoPaths, postScanPhase.get());

@@ -37,7 +37,7 @@ abstract class SpringTest {
 
     protected fun cleanupBlackDuck(repositoryKey: String) {
         val projectService = blackDuckServicesFactory.createProjectService()
-        val blackDuckService = blackDuckServicesFactory.createBlackDuckService()
+        val blackDuckService = blackDuckServicesFactory.blackDuckService
         val projectView = projectService.getProjectByName(repositoryKey)
         blackDuckService.delete(projectView.get())
     }

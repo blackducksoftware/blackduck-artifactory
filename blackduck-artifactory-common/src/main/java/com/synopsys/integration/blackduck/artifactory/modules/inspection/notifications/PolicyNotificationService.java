@@ -27,32 +27,32 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.synopsys.integration.blackduck.api.UriSingleResponse;
 import com.synopsys.integration.blackduck.api.generated.discovery.ApiDiscovery;
-import com.synopsys.integration.blackduck.api.generated.enumeration.NotificationType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicySummaryStatusType;
-import com.synopsys.integration.blackduck.api.generated.view.PolicyStatusView;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.view.ComponentPolicyStatusView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
+import com.synopsys.integration.blackduck.api.manual.enumeration.NotificationType;
 import com.synopsys.integration.blackduck.api.manual.view.NotificationUserView;
 import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationClearedNotificationUserView;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyNotifications;
-import com.synopsys.integration.blackduck.service.BlackDuckService;
-import com.synopsys.integration.blackduck.service.NotificationService;
+import com.synopsys.integration.blackduck.service.BlackDuckApiClient;
+import com.synopsys.integration.blackduck.service.dataservice.NotificationService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.rest.HttpUrl;
 
 public class PolicyNotificationService {
-    private final BlackDuckService blackDuckService;
+    private final BlackDuckApiClient blackDuckApiClient;
     private final NotificationService notificationService;
 
-    public PolicyNotificationService(BlackDuckService blackDuckService, NotificationService notificationService) {
-        this.blackDuckService = blackDuckService;
+    public PolicyNotificationService(BlackDuckApiClient blackDuckApiClient, NotificationService notificationService) {
+        this.blackDuckApiClient = blackDuckApiClient;
         this.notificationService = notificationService;
     }
 
     public PolicyNotifications fetchPolicyNotifications(Date startDate, Date endDate) throws IntegrationException {
-        UserView currentUser = blackDuckService.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
+        UserView currentUser = blackDuckApiClient.getResponse(ApiDiscovery.CURRENT_USER_LINK_RESPONSE);
 
         List<RuleViolationNotificationUserView> ruleViolationNotifications =
             fetchNotificationsOfType(currentUser, startDate, endDate, NotificationType.RULE_VIOLATION)
@@ -82,9 +82,9 @@ public class PolicyNotificationService {
         return notificationService.getFilteredUserNotifications(currentUser, startDate, endDate, Collections.singletonList(notificationType.toString()));
     }
 
-    public PolicySummaryStatusType fetchApprovalStatus(String bomComponentVersionPolicyStatus) throws IntegrationException {
-        UriSingleResponse<PolicyStatusView> policyStatusViewUriSingleResponse = new UriSingleResponse<>(bomComponentVersionPolicyStatus, PolicyStatusView.class);
-        PolicyStatusView policyStatus = blackDuckService.getResponse(policyStatusViewUriSingleResponse);
+    public PolicyStatusType fetchApprovalStatus(String bomComponentVersionPolicyStatus) throws IntegrationException {
+        HttpUrl componentPolicyStatusViewUrl = new HttpUrl(bomComponentVersionPolicyStatus);
+        ComponentPolicyStatusView policyStatus = blackDuckApiClient.getResponse(componentPolicyStatusViewUrl, ComponentPolicyStatusView.class);
         return policyStatus.getApprovalStatus();
     }
 }

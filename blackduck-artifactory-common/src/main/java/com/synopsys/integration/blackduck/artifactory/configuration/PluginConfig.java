@@ -29,9 +29,9 @@ import java.util.Set;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
-import com.synopsys.integration.blackduck.configuration.ConnectionResult;
 import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.log.SilentIntLogger;
+import com.synopsys.integration.rest.client.ConnectionResult;
 
 public class PluginConfig extends ConfigurationValidator {
     private final String dateTimePattern;

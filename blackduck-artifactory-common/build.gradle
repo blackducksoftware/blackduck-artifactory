@@ -20,7 +20,7 @@ apply plugin: 'kotlin'
 jar.finalizedBy shadowJar
 
 dependencies {
-    implementation "com.blackducksoftware.integration:blackduck-common:$blackDuckCommonVersion"
+    implementation "com.synopsys.integration:blackduck-common:$blackDuckCommonVersion"
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     compileOnly "org.artifactory:artifactory-papi:$artifactoryMinimumVersion"

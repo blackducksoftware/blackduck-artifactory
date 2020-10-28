@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.blackduck.api.enumeration.PolicySeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 
 public class ProcessorUtil {
@@ -35,14 +35,14 @@ public class ProcessorUtil {
         // Hiding constructor
     }
 
-    public static List<PolicySeverityType> convertPolicyInfo(List<PolicyInfo> policyInfos) {
+    public static List<PolicyRuleSeverityType> convertPolicyInfo(List<PolicyInfo> policyInfos) {
         return policyInfos.stream()
                    .map(PolicyInfo::getSeverity)
                    .map(severity -> {
                        if (StringUtils.isBlank(severity)) {
-                           return PolicySeverityType.UNSPECIFIED;
+                           return PolicyRuleSeverityType.UNSPECIFIED;
                        } else {
-                           return PolicySeverityType.valueOf(severity);
+                           return PolicyRuleSeverityType.valueOf(severity);
                        }
                    })
                    .collect(Collectors.toList());
