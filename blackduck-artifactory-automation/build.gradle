@@ -1,11 +1,6 @@
 buildscript {
-    ext.spring_boot_version = '2.1.0.RELEASE'
-
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-    }
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-repositories.gradle', to: buildscript
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-dependencies.gradle', to: buildscript
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#spring-support
