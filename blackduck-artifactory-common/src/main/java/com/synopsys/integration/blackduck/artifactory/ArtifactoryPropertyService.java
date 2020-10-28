@@ -39,6 +39,7 @@ import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.util.NameVersion;
 
+// TODO: Make this class abstract as each module should have a wrapper to provide a good API for setting module specific properties.
 public class ArtifactoryPropertyService {
     private final ArtifactoryPAPIService artifactoryPAPIService;
     private final DateTimeManager dateTimeManager;
@@ -103,9 +104,9 @@ public class ArtifactoryPropertyService {
 
     public void deleteAllBlackDuckPropertiesFromRepo(String repoKey, Map<String, List<String>> params, IntLogger logger) {
         List<RepoPath> repoPaths = Arrays.stream(BlackDuckArtifactoryProperty.values())
-                                             .map(artifactoryProperty -> getItemsContainingAnyProperties(repoKey, artifactoryProperty))
-                                             .flatMap(List::stream)
-                                             .collect(Collectors.toList());
+                                       .map(artifactoryProperty -> getItemsContainingAnyProperties(repoKey, artifactoryProperty))
+                                       .flatMap(List::stream)
+                                       .collect(Collectors.toList());
 
         repoPaths.forEach(repoPath -> deleteAllBlackDuckPropertiesFromRepoPath(repoPath, params, logger));
     }
@@ -119,8 +120,8 @@ public class ArtifactoryPropertyService {
 
     public void deleteAllBlackDuckPropertiesFromRepoPath(RepoPath repoPath, Map<String, List<String>> params, IntLogger logger) {
         List<BlackDuckArtifactoryProperty> properties = Arrays.stream(BlackDuckArtifactoryProperty.values())
-                                                                  .filter(property -> !isPropertyInParams(property, params))
-                                                                  .collect(Collectors.toList());
+                                                            .filter(property -> !isPropertyInParams(property, params))
+                                                            .collect(Collectors.toList());
 
         properties.forEach(property -> deleteProperty(repoPath, property, logger));
     }
@@ -135,8 +136,8 @@ public class ArtifactoryPropertyService {
 
     public List<RepoPath> getItemsContainingProperties(String repoKey, BlackDuckArtifactoryProperty... properties) {
         SetMultimap<String, String> setMultimap = Arrays.stream(properties)
-                                                            .filter(property -> property.getPropertyName() != null)
-                                                            .collect(HashMultimap::create, (multimap, property) -> multimap.put(property.getPropertyName(), "*"), (self, other) -> self.putAll(other));
+                                                      .filter(property -> property.getPropertyName() != null)
+                                                      .collect(HashMultimap::create, (multimap, property) -> multimap.put(property.getPropertyName(), "*"), (self, other) -> self.putAll(other));
 
         return getItemsContainingPropertiesAndValues(setMultimap, repoKey);
     }
