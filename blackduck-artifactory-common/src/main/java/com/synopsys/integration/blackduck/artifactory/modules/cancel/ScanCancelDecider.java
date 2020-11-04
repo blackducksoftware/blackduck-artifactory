@@ -36,7 +36,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleCon
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
 import com.synopsys.integration.blackduck.codelocation.Result;
 
-public class ScanCancelDecider extends CancelDecider {
+public class ScanCancelDecider implements CancelDecider {
     private final ScanModuleConfig scanModuleConfig;
     private final ScanPropertyService scanPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;

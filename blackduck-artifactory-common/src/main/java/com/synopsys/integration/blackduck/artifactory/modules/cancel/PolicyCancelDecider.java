@@ -36,7 +36,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 
-public class PolicyCancelDecider extends CancelDecider {
+public class PolicyCancelDecider implements CancelDecider {
     private final PolicyModuleConfig policyModuleConfig;
     private final ArtifactoryPropertyService artifactoryPropertyService;
 
@@ -46,7 +46,7 @@ public class PolicyCancelDecider extends CancelDecider {
     }
 
     @Override
-    CancelDecision getCancelDecision(RepoPath repoPath) {
+    public CancelDecision getCancelDecision(RepoPath repoPath) {
         if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)) {
             // TODO: Fix in 8.0.0
             // Currently scanned artifacts are not supported because POLICY_STATUS and OVERALL_POLICY_STATUS is used in scans and there is overlap

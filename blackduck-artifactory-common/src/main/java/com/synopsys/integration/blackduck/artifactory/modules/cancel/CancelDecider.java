@@ -26,11 +26,11 @@ import org.apache.commons.lang.StringUtils;
 import org.artifactory.exception.CancelException;
 import org.artifactory.repo.RepoPath;
 
-public abstract class CancelDecider {
-    abstract CancelDecision getCancelDecision(RepoPath repoPath);
+public interface CancelDecider {
+    CancelDecision getCancelDecision(RepoPath repoPath);
 
-    public void handleBeforeDownloadEvent(RepoPath repoPath) {
-        CancelDecision cancelDecision = this.getCancelDecision(repoPath);
+    default void handleBeforeDownloadEvent(RepoPath repoPath) {
+        CancelDecision cancelDecision = getCancelDecision(repoPath);
         if (cancelDecision.shouldCancelDownload()) {
             String cancelMessageSuffix = StringUtils.trimToEmpty(cancelDecision.getCancelReason());
             if (StringUtils.isNotBlank(cancelMessageSuffix)) {

@@ -33,7 +33,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.I
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
-public class InspectionCancelDecider extends CancelDecider {
+public class InspectionCancelDecider implements CancelDecider {
     private final InspectionModuleConfig inspectionModuleConfig;
     private final InspectionPropertyService inspectionPropertyService;
     private final ArtifactInspectionService artifactInspectionService;
