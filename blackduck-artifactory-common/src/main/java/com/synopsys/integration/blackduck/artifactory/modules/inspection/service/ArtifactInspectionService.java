@@ -35,8 +35,9 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
-import com.synopsys.integration.blackduck.api.manual.throwaway.generated.component.VersionBomOriginView;
+import com.synopsys.integration.blackduck.api.manual.throwaway.generated.view.OriginView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
@@ -185,9 +186,11 @@ public class ArtifactInspectionService {
     }
 
     private void populateBlackDuckMetadata(RepoPath repoPath, ComponentViewWrapper componentViewWrapper) throws IntegrationException {
-        Optional<VersionBomOriginView> versionBomOriginView = componentViewWrapper.getProjectVersionComponentView().getOrigins().stream().findFirst();
+        List<OriginView> originViews = blackDuckApiClient.getSomeResponses(componentViewWrapper.getProjectVersionComponentView(), ProjectVersionComponentView.ORIGINS_LINK_RESPONSE, 1);
 
-        if (versionBomOriginView.isPresent()) {
+        if (!originViews.isEmpty()) {
+            OriginView originView = originViews.get(0);
+
             ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
             ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
             VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
@@ -198,8 +201,8 @@ public class ArtifactInspectionService {
             inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getProjectVersionComponentView().getComponentVersion());
             inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
 
-            String forge = versionBomOriginView.get().getExternalNamespace();
-            String originId = versionBomOriginView.get().getExternalId();
+            String forge = originView.getOriginName();
+            String originId = originView.getOriginId();
             String componentName = componentViewWrapper.getProjectVersionComponentView().getComponentName();
             String componentVersionName = componentViewWrapper.getProjectVersionComponentView().getComponentVersionName();
             inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId, componentName, componentVersionName);
