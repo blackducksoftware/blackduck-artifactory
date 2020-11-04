@@ -32,7 +32,13 @@ public abstract class CancelDecider {
     public void handleBeforeDownloadEvent(RepoPath repoPath) {
         CancelDecision cancelDecision = this.getCancelDecision(repoPath);
         if (cancelDecision.shouldCancelDownload()) {
-            String cancelMessageSuffix = ". " + StringUtils.trimToEmpty(cancelDecision.getCancelReason());
+            String cancelMessageSuffix = StringUtils.trimToEmpty(cancelDecision.getCancelReason());
+            if (StringUtils.isNotBlank(cancelMessageSuffix)) {
+                cancelMessageSuffix = ". " + cancelMessageSuffix;
+            } else {
+                cancelMessageSuffix = ".";
+            }
+
             throw new CancelException(String.format("The Black Duck plugin has prevented the download of %s%s", repoPath.toPath(), cancelMessageSuffix), 403);
         }
     }

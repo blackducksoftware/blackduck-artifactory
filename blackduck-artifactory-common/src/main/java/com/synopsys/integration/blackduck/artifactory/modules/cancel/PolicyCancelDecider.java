@@ -73,11 +73,11 @@ public class PolicyCancelDecider extends CancelDecider {
                                                                      .collect(Collectors.toList());
             if (!matchingSeverityTypes.isEmpty()) {
                 String matchingSeverityTypeMessage = StringUtils.join(matchingSeverityTypes, ",");
-                return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact has policy severities (%s) that are blocked by the plugin: %s", matchingSeverityTypeMessage, repoPath.toPath()));
+                return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact has policy severities (%s) that are blocked by the plugin.", matchingSeverityTypeMessage));
             }
         } else {
             // The plugin should populate the severity types on artifacts automatically. But if an artifact is somehow missed, we want to be on the safe side.
-            return CancelDecision.CANCEL_DOWNLOAD(String.format("The plugin cannot find the %s property on artifact: %s", BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES.getPropertyName(), repoPath.toPath()));
+            return CancelDecision.CANCEL_DOWNLOAD(String.format("The plugin cannot find the %s property.", BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES.getPropertyName()));
         }
 
         return CancelDecision.NO_CANCELLATION();

@@ -56,7 +56,7 @@ public class InspectionCancelDecider extends CancelDecider {
         }
 
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
-            return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing %s inspection status on an artifact that should be inspected: %s", InspectionStatus.SUCCESS, repoPath.toPath()));
+            return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing %s inspection status on an artifact that should be inspected.", InspectionStatus.SUCCESS));
         }
 
         return CancelDecision.NO_CANCELLATION();
