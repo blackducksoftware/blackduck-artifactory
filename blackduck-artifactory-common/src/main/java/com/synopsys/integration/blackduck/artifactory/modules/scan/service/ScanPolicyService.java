@@ -77,7 +77,6 @@ public class ScanPolicyService {
                 ProjectVersionWrapper projectVersionWrapper = resolveProjectVersionWrapper(repoPath);
                 Optional<HttpUrl> componentsLink = projectVersionWrapper.getProjectVersionView().getFirstLinkSafely(ProjectVersionView.COMPONENTS_LINK);
                 componentsLink.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl.string(), logger));
-                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, projectVersionWrapper.getProjectVersionView().getHref().toString(), logger);
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
             } catch (IntegrationException e) {
                 Exception exception = new IntegrationException(String.format("Failed to get project version for artifact. Scan may not be finished. Cannot update policy: %s", repoPath.toPath()));
