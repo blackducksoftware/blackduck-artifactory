@@ -13,7 +13,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.3.31'
 }
 
-version = '7.3.0-SIGQA2'
+version = '7.3.0-SIGQA3'
 final String parentVersion = project.version
 
 final String artifactoryMinimumVersion = '6.1.0'
