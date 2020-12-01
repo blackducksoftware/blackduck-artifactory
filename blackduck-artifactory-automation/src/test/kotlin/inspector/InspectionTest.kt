@@ -80,8 +80,7 @@ abstract class InspectionTest : SpringTest() {
         assertNotNull(BlackDuckArtifactoryProperty.LOW_VULNERABILITIES, properties, itemProperties.uri)
         assertNotNull(BlackDuckArtifactoryProperty.POLICY_STATUS, properties, itemProperties.uri)
         assertNotNull(BlackDuckArtifactoryProperty.COMPONENT_VERSION_URL, properties, itemProperties.uri)
-        assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, properties, itemProperties.uri)
-        assertNotNull(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, properties, itemProperties.uri)
+        assertNotNull(BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION, properties, itemProperties.uri)
         if (checkPolicySeverity) {
             assertNotNull(BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, properties, itemProperties.uri)
         }
