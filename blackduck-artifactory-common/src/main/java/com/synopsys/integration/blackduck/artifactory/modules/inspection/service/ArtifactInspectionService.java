@@ -35,10 +35,9 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
-import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
-import com.synopsys.integration.blackduck.api.manual.throwaway.generated.view.OriginView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.exception.FailedInspectionException;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
@@ -186,29 +185,21 @@ public class ArtifactInspectionService {
     }
 
     private void populateBlackDuckMetadata(RepoPath repoPath, ComponentViewWrapper componentViewWrapper) throws IntegrationException {
-        List<OriginView> originViews = blackDuckApiClient.getSomeResponses(componentViewWrapper.getProjectVersionComponentView(), ProjectVersionComponentView.ORIGINS_LINK_RESPONSE, 1);
+        ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
+        ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
+        VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
+        PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getProjectVersionComponentView(), blackDuckApiClient);
 
-        if (!originViews.isEmpty()) {
-            OriginView originView = originViews.get(0);
+        inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
+        inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
+        inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getProjectVersionComponentView().getComponentVersion());
+        inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
+        inspectionPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, logger);
+        inspectionPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, logger);
 
-            ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
-            ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
-            VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
-            PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getProjectVersionComponentView(), blackDuckApiClient);
-
-            inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport);
-            inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate);
-            inspectionPropertyService.setComponentVersionUrl(repoPath, componentViewWrapper.getProjectVersionComponentView().getComponentVersion());
-            inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
-
-            String forge = originView.getOriginName();
-            String originId = originView.getOriginId();
-            String componentName = componentViewWrapper.getProjectVersionComponentView().getComponentName();
-            String componentVersionName = componentViewWrapper.getProjectVersionComponentView().getComponentVersionName();
-            inspectionPropertyService.setExternalIdProperties(repoPath, forge, originId, componentName, componentVersionName);
-        } else {
-            throw new FailedInspectionException(repoPath, "No OriginViews were found for component.");
-        }
+        String componentName = componentViewWrapper.getProjectVersionComponentView().getComponentName();
+        String componentVersionName = componentViewWrapper.getProjectVersionComponentView().getComponentVersionName();
+        inspectionPropertyService.setExternalIdProperties(repoPath, componentName, componentVersionName);
     }
 
     private boolean shouldPerformDeltaAnalysis(RepoPath repoPath) {

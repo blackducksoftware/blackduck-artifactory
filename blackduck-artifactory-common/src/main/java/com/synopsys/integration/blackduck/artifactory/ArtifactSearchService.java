@@ -41,14 +41,6 @@ public class ArtifactSearchService {
         this.artifactoryPropertyService = artifactoryPropertyService;
     }
 
-    public List<RepoPath> findArtifactsWithOriginId(String forge, String originId, List<String> repoKeys) {
-        SetMultimap<String, String> setMultimap = HashMultimap.create();
-        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), forge);
-        setMultimap.put(BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.getPropertyName(), originId);
-
-        return artifactoryPropertyService.getItemsContainingPropertiesAndValues(setMultimap, repoKeys.toArray(new String[0]));
-    }
-
     public List<RepoPath> findArtifactsUsingComponentNameVersions(String componentName, String componentVersionName, List<RepoPath> repoKeyPaths) {
         List<String> repoKeys = repoKeyPaths.stream().map(RepoPath::getRepoKey).collect(Collectors.toList());
         return findArtifactsWithComponentNameVersion(componentName, componentVersionName, repoKeys);
