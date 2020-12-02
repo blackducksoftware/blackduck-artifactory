@@ -80,7 +80,8 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=InspectionModule=true"
      *
      * This can be triggered with the following curl command for disabling multiple propertyReports (ScanModule and the PolicyModule):
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false|PolicyModule=false"
+     * Note: "%7C" is the url encoding for the pipe '|' character.
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false%7CPolicyModule=false"
      **/
     blackDuckSetModuleState() { params -> pluginAPI.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
