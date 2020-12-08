@@ -44,6 +44,7 @@ import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.util.*
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType as SeverityType
 
 
 class InspectionPropertyServiceTest {
@@ -62,23 +63,8 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = mock<ArtifactoryPAPIService>()
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        fun setReturns(hasOriginId: Boolean, hasForge: Boolean, hasComponentNameVersion: Boolean) {
-            whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.propertyName)).thenReturn(hasForge)
-            whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.propertyName)).thenReturn(hasOriginId)
-            whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.propertyName)).thenReturn(hasComponentNameVersion)
-        }
-
-        val possibleValues = listOf(true, false)
-
-        for (hasOriginId in possibleValues) {
-            for (hasForge in possibleValues) {
-                for (hasComponentNameVersion in possibleValues) {
-                    setReturns(hasOriginId, hasForge, hasComponentNameVersion)
-                    val shouldBeTrue = hasOriginId && hasForge && hasComponentNameVersion
-                    Assertions.assertEquals(shouldBeTrue, inspectionPropertyService.hasExternalIdProperties(repoPath))
-                }
-            }
-        }
+        whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.propertyName)).thenReturn(true)
+        Assertions.assertTrue(inspectionPropertyService.hasExternalIdProperties(repoPath))
     }
 
     @Test
@@ -87,22 +73,14 @@ class InspectionPropertyServiceTest {
 
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
-        val forgeProperty = BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.propertyName
-        val originIdProperty = BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID.propertyName
         val componentNameProperty = BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.propertyName
 
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
-        inspectionPropertyService.setExternalIdProperties(repoPath, "Forge", "OriginId", "ComponentName", "ComponentVersionName")
+        inspectionPropertyService.setExternalIdProperties(repoPath, "ComponentName", "ComponentVersionName")
 
         val propertyMap = repoPathPropertyMap[repoPath]!!
 
-        Assertions.assertTrue(propertyMap.containsKey(forgeProperty), "The $forgeProperty is missing from the properties.")
-        Assertions.assertTrue(propertyMap.containsKey(originIdProperty), "The $originIdProperty is missing from the properties.")
         Assertions.assertTrue(propertyMap.containsKey(componentNameProperty), "The $componentNameProperty is missing from the properties.")
-
-        Assertions.assertEquals("Forge", propertyMap[forgeProperty])
-        Assertions.assertEquals("OriginId", propertyMap[originIdProperty])
-
         Assertions.assertEquals(String.format(InspectionPropertyService.COMPONENT_NAME_VERSION_FORMAT, "ComponentName", "ComponentVersionName"), propertyMap[componentNameProperty])
     }
 
@@ -175,7 +153,14 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val vulnerabilityAggregate = VulnerabilityAggregate(0, 1, 2, 3)
+        val vulnerabilityAggregate = VulnerabilityAggregate(
+            mapOf(
+                SeverityType.CRITICAL to 0,
+                SeverityType.HIGH to 1,
+                SeverityType.MEDIUM to 2,
+                SeverityType.LOW to 3
+            )
+        )
 
         inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate)
 

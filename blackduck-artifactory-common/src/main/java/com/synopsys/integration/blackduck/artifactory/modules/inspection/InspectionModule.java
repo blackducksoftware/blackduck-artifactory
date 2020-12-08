@@ -47,7 +47,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.collecto
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
@@ -95,22 +94,8 @@ public class InspectionModule implements Module {
 
     // TODO: Remove upgrades in 9.0.0
     public void performUpgrades() {
-        performNpmForgeUpgrade();
         performComponentNameVersionUpgrade();
         performPolicySeverityUpdate();
-    }
-
-    // TODO: Remove in 9.0.0
-    public void performNpmForgeUpgrade() {
-        List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(
-            ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "npm"),
-            inspectionModuleConfig.getRepos().toArray(new String[0])
-        );
-        for (RepoPath repoPath : repoPaths) {
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, SupportedPackageType.NPM.getForge().getName(), logger);
-            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name(), logger);
-        }
-        logger.info(String.format("Updated %d artifacts with outdated npm forge.", repoPaths.size()));
     }
 
     // TODO: Remove in 9.0.0

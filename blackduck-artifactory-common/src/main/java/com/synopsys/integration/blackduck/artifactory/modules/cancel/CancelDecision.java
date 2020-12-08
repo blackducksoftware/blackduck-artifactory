@@ -34,7 +34,7 @@ public class CancelDecision {
     }
 
     public static CancelDecision NO_CANCELLATION() {
-        return new CancelDecision(true, null);
+        return new CancelDecision(false, null);
     }
 
     private CancelDecision(boolean shouldCancelDownload, @Nullable String cancelReason) {
@@ -46,7 +46,7 @@ public class CancelDecision {
         return shouldCancelDownload;
     }
 
-    @Nullable // null when getCancelDecision() is false
+    @Nullable // null when CancelDecision::shouldCancelDownload is false
     public String getCancelReason() {
         return cancelReason;
     }

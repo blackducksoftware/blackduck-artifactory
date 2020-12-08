@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
@@ -73,7 +74,14 @@ class ArtifactNotificationServiceTest {
         String vulnerableComponentName = "vulnerable-component";
         String vulnerableComponentVersion = "4.0";
         RepoPath vulnerableComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), vulnerableComponentName);
-        VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(4, 3, 2, 1);
+
+        HashMap<ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType, Integer> severityMap = new HashMap<>();
+        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.CRITICAL, 4);
+        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.HIGH, 3);
+        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.MEDIUM, 2);
+        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.LOW, 1);
+        VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(severityMap);
+
         ProcessedVulnerabilityNotification processedVulnerabilityNotification = new ProcessedVulnerabilityNotification(vulnerableComponentName, vulnerableComponentVersion, toBeAffectedRepoKeys, vulnerabilityAggregate);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(vulnerableComponentName, vulnerableComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(vulnerableComponentRepoPath));

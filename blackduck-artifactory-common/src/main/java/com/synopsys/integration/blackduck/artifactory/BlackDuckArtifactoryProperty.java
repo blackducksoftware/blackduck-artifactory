@@ -23,7 +23,9 @@
 package com.synopsys.integration.blackduck.artifactory;
 
 public enum BlackDuckArtifactoryProperty {
+    @Deprecated
     BLACKDUCK_ORIGIN_ID("originId"),
+    @Deprecated
     BLACKDUCK_FORGE("forge"),
     BLACKDUCK_PROJECT_NAME("projectName"),
     BLACKDUCK_PROJECT_VERSION_NAME("projectVersionName"),

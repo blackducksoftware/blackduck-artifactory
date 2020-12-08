@@ -62,6 +62,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
@@ -148,8 +149,9 @@ public class ModuleFactory {
         ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
         CondaExternalIdExtractor condaExternalIdExtractor = new CondaExternalIdExtractor(externalIdFactory);
         ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor, condaExternalIdExtractor);
+        ArtifactoryComponentService artifactoryComponentService = new ArtifactoryComponentService(blackDuckServicesFactory.getRequestFactory(), blackDuckApiClient);
         ArtifactInspectionService artifactInspectionService = new ArtifactInspectionService(artifactoryPAPIService, blackDuckBOMService, inspectionModuleConfig, inspectionPropertyService, projectService, componentService, externalIdService,
-            blackDuckApiClient);
+            blackDuckApiClient, artifactoryComponentService);
         MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
         PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckApiClient, blackDuckBOMService, projectService);

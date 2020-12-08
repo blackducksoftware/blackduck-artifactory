@@ -33,7 +33,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.I
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
-public class InspectionCancelDecider extends CancelDecider {
+public class InspectionCancelDecider implements CancelDecider {
     private final InspectionModuleConfig inspectionModuleConfig;
     private final InspectionPropertyService inspectionPropertyService;
     private final ArtifactInspectionService artifactInspectionService;
@@ -56,7 +56,7 @@ public class InspectionCancelDecider extends CancelDecider {
         }
 
         if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
-            return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing %s inspection status on an artifact that should be inspected: %s", InspectionStatus.SUCCESS, repoPath.toPath()));
+            return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing %s inspection status on an artifact that should be inspected.", InspectionStatus.SUCCESS));
         }
 
         return CancelDecision.NO_CANCELLATION();

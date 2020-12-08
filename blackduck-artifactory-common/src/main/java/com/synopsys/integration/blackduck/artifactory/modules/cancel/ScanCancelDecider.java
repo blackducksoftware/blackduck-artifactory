@@ -25,6 +25,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.cancel;
 import static java.lang.Boolean.FALSE;
 
 import java.io.File;
+import java.util.Optional;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.artifactory.fs.ItemInfo;
@@ -35,7 +36,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleCon
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
 import com.synopsys.integration.blackduck.codelocation.Result;
 
-public class ScanCancelDecider extends CancelDecider {
+public class ScanCancelDecider implements CancelDecider {
     private final ScanModuleConfig scanModuleConfig;
     private final ScanPropertyService scanPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
@@ -55,10 +56,10 @@ public class ScanCancelDecider extends CancelDecider {
             return CancelDecision.NO_CANCELLATION();
         }
 
-        boolean successfulScanResult = scanPropertyService.getScanResult(repoPath)
-                                           .filter(Result.SUCCESS::equals)
-                                           .isPresent();
-        if (successfulScanResult) {
+        Optional<Result> scanResult = scanPropertyService.getScanResult(repoPath);
+        if (scanResult.isPresent() && Result.FAILURE.equals(scanResult.get())) {
+            return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact was not successfully scanned. Found result %s.", Result.FAILURE));
+        } else if (scanResult.isPresent() && Result.SUCCESS.equals(scanResult.get())) {
             return CancelDecision.NO_CANCELLATION();
         }
 
@@ -67,7 +68,7 @@ public class ScanCancelDecider extends CancelDecider {
         for (String namePattern : scanModuleConfig.getNamePatterns()) {
             WildcardFileFilter wildcardFileFilter = new WildcardFileFilter(namePattern);
             if (wildcardFileFilter.accept(artifact)) {
-                return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing %s scan result on an artifact that should be scanned: %s", Result.SUCCESS, repoPath.toPath()));
+                return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing the %s scan result on an artifact that should be scanned.", Result.SUCCESS));
             }
         }
 

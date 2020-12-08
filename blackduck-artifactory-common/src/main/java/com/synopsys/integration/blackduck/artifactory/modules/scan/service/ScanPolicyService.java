@@ -30,6 +30,7 @@ import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionPolicyStatusView;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
@@ -74,8 +75,8 @@ public class ScanPolicyService {
         for (RepoPath repoPath : repoPaths) {
             try {
                 ProjectVersionWrapper projectVersionWrapper = resolveProjectVersionWrapper(repoPath);
-                HttpUrl projectVersionUIUrl = projectVersionWrapper.getProjectVersionView().getHref();
-                artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, projectVersionUIUrl.toString(), logger);
+                Optional<HttpUrl> componentsLink = projectVersionWrapper.getProjectVersionView().getFirstLinkSafely(ProjectVersionView.COMPONENTS_LINK);
+                componentsLink.ifPresent(uiUrl -> artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, uiUrl.string(), logger));
                 problemRetrievingPolicyStatus = !setPolicyStatusProperties(repoPath, projectVersionWrapper);
             } catch (IntegrationException e) {
                 Exception exception = new IntegrationException(String.format("Failed to get project version for artifact. Scan may not be finished. Cannot update policy: %s", repoPath.toPath()));
