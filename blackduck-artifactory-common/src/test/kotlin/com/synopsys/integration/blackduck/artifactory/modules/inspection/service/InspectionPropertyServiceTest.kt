@@ -44,6 +44,7 @@ import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.util.*
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType as SeverityType
 
 
 class InspectionPropertyServiceTest {
@@ -152,7 +153,14 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val vulnerabilityAggregate = VulnerabilityAggregate(0, 1, 2, 3)
+        val vulnerabilityAggregate = VulnerabilityAggregate(
+            mapOf(
+                SeverityType.CRITICAL to 0,
+                SeverityType.HIGH to 1,
+                SeverityType.MEDIUM to 2,
+                SeverityType.LOW to 3
+            )
+        )
 
         inspectionPropertyService.setVulnerabilityProperties(repoPath, vulnerabilityAggregate)
 

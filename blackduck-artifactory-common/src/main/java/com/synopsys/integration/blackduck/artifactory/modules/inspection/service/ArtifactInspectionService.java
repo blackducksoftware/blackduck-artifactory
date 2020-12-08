@@ -46,6 +46,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.C
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
 import com.synopsys.integration.blackduck.service.BlackDuckApiClient;
 import com.synopsys.integration.blackduck.service.dataservice.ComponentService;
 import com.synopsys.integration.blackduck.service.dataservice.ProjectService;
@@ -66,10 +67,11 @@ public class ArtifactInspectionService {
     private final ComponentService componentService;
     private final ExternalIdService externalIdService;
     private final BlackDuckApiClient blackDuckApiClient;
+    private final ArtifactoryComponentService artifactoryComponentService; // TODO: Remove in favor of componentService once blackduck-common uses correct mime type.
 
     public ArtifactInspectionService(ArtifactoryPAPIService artifactoryPAPIService, BlackDuckBOMService blackDuckBOMService, InspectionModuleConfig inspectionModuleConfig,
         InspectionPropertyService inspectionPropertyService, ProjectService projectService, ComponentService componentService, ExternalIdService externalIdService,
-        BlackDuckApiClient blackDuckApiClient) {
+        BlackDuckApiClient blackDuckApiClient, ArtifactoryComponentService artifactoryComponentService) {
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.blackDuckBOMService = blackDuckBOMService;
         this.inspectionModuleConfig = inspectionModuleConfig;
@@ -78,6 +80,7 @@ public class ArtifactInspectionService {
         this.componentService = componentService;
         this.externalIdService = externalIdService;
         this.blackDuckApiClient = blackDuckApiClient;
+        this.artifactoryComponentService = artifactoryComponentService;
     }
 
     public boolean shouldInspectArtifact(RepoPath repoPath) {
@@ -186,7 +189,7 @@ public class ArtifactInspectionService {
 
     private void populateBlackDuckMetadata(RepoPath repoPath, ComponentViewWrapper componentViewWrapper) throws IntegrationException {
         ComponentVersionView componentVersionView = componentViewWrapper.getComponentVersionView();
-        ComponentVersionVulnerabilities componentVersionVulnerabilities = componentService.getComponentVersionVulnerabilities(componentVersionView);
+        ComponentVersionVulnerabilities componentVersionVulnerabilities = artifactoryComponentService.getComponentVersionVulnerabilities(componentVersionView);
         VulnerabilityAggregate vulnerabilityAggregate = VulnerabilityAggregate.fromVulnerabilityViews(componentVersionVulnerabilities.getVulnerabilities());
         PolicyStatusReport policyStatusReport = PolicyStatusReport.fromVersionBomComponentView(componentViewWrapper.getProjectVersionComponentView(), blackDuckApiClient);
 
