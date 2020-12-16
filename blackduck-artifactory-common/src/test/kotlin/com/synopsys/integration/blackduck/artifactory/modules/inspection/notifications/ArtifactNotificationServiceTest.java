@@ -17,18 +17,23 @@ import org.mockito.Mockito;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType;
+import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.TestUtil;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.NotificationProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedPolicyNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedVulnerabilityNotification;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.rest.HttpUrl;
 
 class ArtifactNotificationServiceTest {
     @Test
@@ -40,6 +45,7 @@ class ArtifactNotificationServiceTest {
         PluginRepoPathFactory repoPathFactory = new PluginRepoPathFactory(false);
         RepoPath repoKeyPath1 = repoPathFactory.create("repo-1");
         RepoPath repoKeyPath2 = repoPathFactory.create("repo-2");
+        RepoPath deletedProjectRepoKeyPath = repoPathFactory.create("repo-3");
         List<RepoPath> toBeAffectedRepoKeys = Collections.singletonList(repoKeyPath1);
         Date startDate = new Date();
         Date endDate = new Date(startDate.getTime() + 1000);
@@ -93,9 +99,19 @@ class ArtifactNotificationServiceTest {
         Mockito.when(notificationProcessor.processPolicyNotifications(Mockito.any(), Mockito.any())).thenReturn(Arrays.asList(processedPolicyOverrideNotification, processedPolicyClearedNotification, processedPolicyViolationNotification));
         Mockito.when(notificationProcessor.processVulnerabilityNotifications(Mockito.any(), Mockito.any())).thenReturn(Collections.singletonList(processedVulnerabilityNotification));
 
-        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(artifactSearchService, inspectionPropertyService, policyNotificationService, vulnerabilityNotificationService, notificationProcessor);
+        ArtifactInspectionService artifactInspectionService = Mockito.mock(ArtifactInspectionService.class);
+        ProjectVersionView projectVersionView = Mockito.mock(ProjectVersionView.class);
+        Mockito.when(projectVersionView.getFirstLinkSafely(ProjectVersionView.COMPONENTS_LINK)).thenReturn(Optional.of(new HttpUrl("https://synopsys.com")));
+        ProjectVersionWrapper projectVersionWrapper = new ProjectVersionWrapper();
+        projectVersionWrapper.setProjectVersionView(projectVersionView);
+        Mockito.when(artifactInspectionService.fetchProjectVersionWrapper(repoKeyPath1.getRepoKey())).thenReturn(projectVersionWrapper);
+        Mockito.when(artifactInspectionService.fetchProjectVersionWrapper(repoKeyPath2.getRepoKey())).thenReturn(projectVersionWrapper);
+        Mockito.when(artifactInspectionService.fetchProjectVersionWrapper(deletedProjectRepoKeyPath.getRepoKey())).thenThrow(new IntegrationException("Missing project version in Black Duck."));
 
-        artifactNotificationService.updateMetadataFromNotifications(Arrays.asList(repoKeyPath1, repoKeyPath2), startDate, endDate);
+        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(artifactSearchService, inspectionPropertyService, artifactInspectionService, policyNotificationService, vulnerabilityNotificationService,
+            notificationProcessor);
+
+        artifactNotificationService.updateMetadataFromNotifications(Arrays.asList(repoKeyPath1, repoKeyPath2, deletedProjectRepoKeyPath), startDate, endDate);
 
         assertRepositoryProperties(propertyMap, repoKeyPath1);
         assertRepositoryProperties(propertyMap, repoKeyPath2);
@@ -103,6 +119,13 @@ class ArtifactNotificationServiceTest {
         assertPolicyProperties(propertyMap, policyClearedComponentRepoPath, policyClearedStatusReport);
         assertPolicyProperties(propertyMap, policyViolationComponentRepoPath, policyViolationStatusReport);
         assertVulnerabilityProperties(propertyMap, vulnerableComponentRepoPath, vulnerabilityAggregate);
+        assertPropertyValue(propertyMap, repoKeyPath1, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, "https://synopsys.com");
+        assertPropertyValue(propertyMap, repoKeyPath2, BlackDuckArtifactoryProperty.PROJECT_VERSION_UI_URL, "https://synopsys.com");
+
+        // Deleted project version
+        assertHasProperty(propertyMap, deletedProjectRepoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION);
+        assertPropertyValue(propertyMap, deletedProjectRepoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.FAILURE.name());
+        assertHasProperty(propertyMap, deletedProjectRepoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE);
     }
 
     private void assertRepositoryProperties(Map<RepoPath, Map<String, String>> propertyMap, RepoPath repoPath) {

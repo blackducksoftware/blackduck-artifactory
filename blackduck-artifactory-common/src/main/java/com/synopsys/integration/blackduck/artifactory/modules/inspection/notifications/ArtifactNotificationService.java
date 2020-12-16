@@ -43,20 +43,30 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.notific
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.NotificationProcessor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedPolicyNotification;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedVulnerabilityNotification;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
+import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class ArtifactNotificationService {
     private final ArtifactSearchService artifactSearchService;
     private final InspectionPropertyService inspectionPropertyService;
+    private final ArtifactInspectionService artifactInspectionService;
     private final PolicyNotificationService policyNotificationService;
     private final VulnerabilityNotificationService vulnerabilityNotificationService;
     private final NotificationProcessor notificationProcessor;
 
-    public ArtifactNotificationService(ArtifactSearchService artifactSearchService, InspectionPropertyService inspectionPropertyService, PolicyNotificationService policyNotificationService,
-        VulnerabilityNotificationService vulnerabilityNotificationService, NotificationProcessor notificationProcessor) {
+    public ArtifactNotificationService(
+        ArtifactSearchService artifactSearchService,
+        InspectionPropertyService inspectionPropertyService,
+        ArtifactInspectionService artifactInspectionService,
+        PolicyNotificationService policyNotificationService,
+        VulnerabilityNotificationService vulnerabilityNotificationService,
+        NotificationProcessor notificationProcessor
+    ) {
         this.artifactSearchService = artifactSearchService;
         this.inspectionPropertyService = inspectionPropertyService;
+        this.artifactInspectionService = artifactInspectionService;
         this.policyNotificationService = policyNotificationService;
         this.vulnerabilityNotificationService = vulnerabilityNotificationService;
         this.notificationProcessor = notificationProcessor;
@@ -91,10 +101,17 @@ public class ArtifactNotificationService {
         allNotifications.addAll(vulnerabilityNotificationUserViews);
         Optional<Date> lastNotificationDate = getLatestNotificationCreatedAtDate(allNotifications);
         for (RepoPath repoKeyPath : repoKeyPaths) {
-            inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
-            inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
-            // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
-            inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
+            try {
+                ProjectVersionWrapper projectVersionWrapper = artifactInspectionService.fetchProjectVersionWrapper(repoKeyPath.getRepoKey());
+                inspectionPropertyService.updateProjectUIUrl(repoKeyPath, projectVersionWrapper.getProjectVersionView());
+                inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.UP_TO_DATE);
+                inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.SUCCESS);
+                // We don't want to miss notifications, so if something goes wrong we will err on the side of caution.
+                inspectionPropertyService.setLastUpdate(repoKeyPath, lastNotificationDate.orElse(startDate));
+            } catch (IntegrationException exception) {
+                inspectionPropertyService.setUpdateStatus(repoKeyPath, UpdateStatus.OUT_OF_DATE);
+                inspectionPropertyService.setInspectionStatus(repoKeyPath, InspectionStatus.PENDING, exception.getMessage());
+            }
         }
     }
 

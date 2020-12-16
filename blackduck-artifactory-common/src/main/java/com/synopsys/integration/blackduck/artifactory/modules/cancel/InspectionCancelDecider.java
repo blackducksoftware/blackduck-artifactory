@@ -24,8 +24,6 @@ package com.synopsys.integration.blackduck.artifactory.modules.cancel;
 
 import static java.lang.Boolean.FALSE;
 
-import java.util.Optional;
-
 import org.artifactory.repo.RepoPath;
 
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
