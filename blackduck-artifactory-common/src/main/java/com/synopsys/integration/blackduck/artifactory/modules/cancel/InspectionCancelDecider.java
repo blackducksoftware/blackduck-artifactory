@@ -24,8 +24,6 @@ package com.synopsys.integration.blackduck.artifactory.modules.cancel;
 
 import static java.lang.Boolean.FALSE;
 
-import java.util.Optional;
-
 import org.artifactory.repo.RepoPath;
 
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
@@ -50,12 +48,10 @@ public class InspectionCancelDecider implements CancelDecider {
             return CancelDecision.NO_CANCELLATION();
         }
 
-        Optional<InspectionStatus> inspectionStatus = inspectionPropertyService.getInspectionStatus(repoPath);
-        if (inspectionStatus.isPresent() && inspectionStatus.get().equals(InspectionStatus.PENDING)) {
-            return CancelDecision.NO_CANCELLATION();
-        }
-
-        if (artifactInspectionService.shouldInspectArtifact(repoPath)) {
+        boolean hasSuccess = inspectionPropertyService.getInspectionStatus(repoPath)
+                                 .filter(InspectionStatus.SUCCESS::equals)
+                                 .isPresent();
+        if (!hasSuccess && artifactInspectionService.shouldInspectArtifact(repoPath)) {
             return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing %s inspection status on an artifact that should be inspected.", InspectionStatus.SUCCESS));
         }
 
