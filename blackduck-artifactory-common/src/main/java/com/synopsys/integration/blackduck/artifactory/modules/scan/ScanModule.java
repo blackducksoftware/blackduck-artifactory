@@ -75,6 +75,22 @@ public class ScanModule implements Module {
         return scanModuleConfig;
     }
 
+    public void reloadScannerDirectory(TriggerType triggerType) {
+        LogUtil.start(logger, "blackDuckReloadDirectory", triggerType);
+        File scannerDirectory = scannerDirectoryUtil.determineScannerDirectory();
+        try {
+            logger.info(String.format("Deleting scanner directory: %s", scannerDirectory.getAbsolutePath()));
+            FileUtils.deleteDirectory(scannerDirectory);
+            logger.info("Creating new scanner directory.");
+            scannerDirectory = scannerDirectoryUtil.createScannerDirectory();
+            logger.info(String.format("New scanner directory created: %s", scannerDirectory.getAbsolutePath()));
+        } catch (IntegrationException | IOException e) {
+            logger.error("Failed to properly reload the scanner directory: " + scannerDirectory.getAbsolutePath());
+        }
+
+        LogUtil.finish(logger, "blackDuckReloadDirectory", triggerType);
+    }
+
     public void triggerScan() {
         Set<RepoPath> repoPaths = repositoryIdentificationService.searchForRepoPaths();
         artifactScanService.scanArtifactPaths(repoPaths);

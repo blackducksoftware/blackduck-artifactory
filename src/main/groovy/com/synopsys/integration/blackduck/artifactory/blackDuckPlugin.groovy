@@ -37,15 +37,6 @@ executions {
     }
 
     /**
-     * This will delete, then recreate, the blackducksoftware directory which includes the cli, the cron job log, as well as all the cli logs.
-     *
-     * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
-     **/
-    blackDuckReloadDirectory() { params -> pluginService.reloadBlackDuckDirectory(TriggerType.REST_REQUEST)
-    }
-
-    /**
      * This will enabled or disable a particular module within the plugin and then reinitialize the plugin.
      * This endpoint requires parameters to be set. Each module has an enabled state of 'true' or 'false'
      * The names for the propertyReports available are:
@@ -190,6 +181,14 @@ executions {
      **/
     blackDuckDeleteScanPropertiesFromOutOfDate() { params -> pluginAPI.deleteScanPropertiesFromOutOfDate(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
+
+    /**
+     * This will delete, then recreate, the synopsys-blackduck-scanner directory which includes the cli, the cron job log, as well as all the cli logs.
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
+     **/
+    blackDuckReloadScannerDirectory() { params -> pluginAPI.reloadBlackDuckScannerDirectory(TriggerType.REST_REQUEST) }
 
     //////////////////////////////////////////////// INSPECTOR EXECUTIONS ////////////////////////////////////////////////
 

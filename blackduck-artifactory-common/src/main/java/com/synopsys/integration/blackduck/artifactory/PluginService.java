@@ -107,15 +107,6 @@ public class PluginService {
         return pluginAPI;
     }
 
-    public void reloadBlackDuckDirectory(TriggerType triggerType) throws IOException, IntegrationException {
-        LogUtil.start(logger, "blackDuckReloadDirectory", triggerType);
-
-        FileUtils.deleteDirectory(determineBlackDuckDirectory());
-        this.blackDuckDirectory = setUpBlackDuckDirectory();
-
-        LogUtil.finish(logger, "blackDuckReloadDirectory", triggerType);
-    }
-
     public String logStatusCheckMessage(TriggerType triggerType) {
         LogUtil.start(logger, "generateStatusCheckMessage", triggerType);
         ConfigValidationReport configValidationReport = configValidationService.validateConfig();

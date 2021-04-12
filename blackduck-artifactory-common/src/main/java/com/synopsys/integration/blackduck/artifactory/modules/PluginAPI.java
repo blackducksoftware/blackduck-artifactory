@@ -53,9 +53,18 @@ public class PluginAPI implements Analyzable {
     private final PolicyModuleConfig policyModuleConfig;
     private final AnalyticsModuleConfig analyticsModuleConfig;
 
-    public PluginAPI(FeatureAnalyticsCollector featureAnalyticsCollector, ModuleManager moduleManager, ScanModule scanModule, InspectionModule inspectionModule,
+    public PluginAPI(
+        FeatureAnalyticsCollector featureAnalyticsCollector,
+        ModuleManager moduleManager,
+        ScanModule scanModule,
+        InspectionModule inspectionModule,
         PolicyModule policyModule,
-        AnalyticsModule analyticsModule, ScanModuleConfig scanModuleConfig, InspectionModuleConfig inspectionModuleConfig, PolicyModuleConfig policyModuleConfig, AnalyticsModuleConfig analyticsModuleConfig) {
+        AnalyticsModule analyticsModule,
+        ScanModuleConfig scanModuleConfig,
+        InspectionModuleConfig inspectionModuleConfig,
+        PolicyModuleConfig policyModuleConfig,
+        AnalyticsModuleConfig analyticsModuleConfig
+    ) {
         this.featureAnalyticsCollector = featureAnalyticsCollector;
         this.moduleManager = moduleManager;
         this.scanModule = scanModule;
@@ -113,6 +122,10 @@ public class PluginAPI implements Analyzable {
 
     public void deleteScanPropertiesFromOutOfDate(TriggerType triggerType, Map<String, List<String>> params) {
         runMethod(scanModuleConfig, triggerType, () -> scanModule.deleteScanPropertiesFromOutOfDate(params));
+    }
+
+    public void reloadBlackDuckScannerDirectory(TriggerType triggerType) {
+        runMethod(scanModuleConfig, triggerType, () -> scanModule.reloadScannerDirectory(triggerType));
     }
 
     public String getScanCron() {
