@@ -31,6 +31,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.ScannerDirectoryUtil;
 import com.synopsys.integration.blackduck.codelocation.Result;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatch;
 import com.synopsys.integration.blackduck.codelocation.signaturescanner.ScanBatchBuilder;
@@ -55,16 +56,24 @@ public class ArtifactScanService {
 
     private final ScanModuleConfig scanModuleConfig;
     private final BlackDuckServerConfig blackDuckServerConfig;
-    private final File blackDuckDirectory;
+    private final ScannerDirectoryUtil scannerDirectoryUtil;
+    private final File scannerDirectory;
     private final RepositoryIdentificationService repositoryIdentificationService;
     private final ArtifactoryPropertyService artifactoryPropertyService;
     private final ArtifactoryPAPIService artifactoryPAPIService;
 
-    public ArtifactScanService(ScanModuleConfig scanModuleConfig, BlackDuckServerConfig blackDuckServerConfig, File blackDuckDirectory, RepositoryIdentificationService repositoryIdentificationService,
-        ArtifactoryPropertyService artifactoryPropertyService, ArtifactoryPAPIService artifactoryPAPIService) {
+    public ArtifactScanService(
+        ScanModuleConfig scanModuleConfig,
+        BlackDuckServerConfig blackDuckServerConfig,
+        ScannerDirectoryUtil scannerDirectoryUtil, File scannerDirectory,
+        RepositoryIdentificationService repositoryIdentificationService,
+        ArtifactoryPropertyService artifactoryPropertyService,
+        ArtifactoryPAPIService artifactoryPAPIService
+    ) {
         this.scanModuleConfig = scanModuleConfig;
         this.blackDuckServerConfig = blackDuckServerConfig;
-        this.blackDuckDirectory = blackDuckDirectory;
+        this.scannerDirectoryUtil = scannerDirectoryUtil;
+        this.scannerDirectory = scannerDirectory;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactoryPropertyService = artifactoryPropertyService;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -103,9 +112,11 @@ public class ArtifactScanService {
         FileLayoutInfo fileLayoutInfo = artifactoryPAPIService.getLayoutInfo(repoPath);
 
         try (ResourceStreamHandle resourceStream = artifactoryPAPIService.getContent(repoPath)) {
+            File scanTargetsDirectory = scannerDirectoryUtil.determineScannerTargetDirectory();
+            File scanTargetFile = new File(scanTargetsDirectory, repoPath.getName());
             try (
                 InputStream inputStream = resourceStream.getInputStream();
-                FileOutputStream fileOutputStream = new FileOutputStream(new File(blackDuckDirectory, repoPath.getName()))
+                FileOutputStream fileOutputStream = new FileOutputStream(scanTargetFile)
             ) {
                 IOUtils.copy(inputStream, fileOutputStream);
             } catch (IOException e) {
@@ -124,15 +135,19 @@ public class ArtifactScanService {
         IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.includeSystemEnv();
         BlackDuckHttpClient blackDuckHttpClient = blackDuckServerConfig.createBlackDuckHttpClient(logger);
         ScanBatchRunner scanBatchRunner = ScanBatchRunner.createDefault(new Slf4jIntLogger(LoggerFactory.getLogger("SignatureScanner")), blackDuckHttpClient, intEnvironmentVariables, new NoThreadExecutorService());
+        File cliInstallDirectory = scannerDirectoryUtil.createScannerCliInstallDirectory();
+        File cliOutputDirectory = scannerDirectoryUtil.createScannerOutputDirectory();
+        File cliTargetsDirectory = scannerDirectoryUtil.createScannerTargetsDirectory();
+
         ScanBatchBuilder scanJobBuilder = new ScanBatchBuilder()
                                               .fromBlackDuckServerConfig(blackDuckServerConfig)
                                               .scanMemoryInMegabytes(scanMemory)
                                               .dryRun(dryRun)
-                                              .installDirectory(scanModuleConfig.getCliDirectory())
-                                              .outputDirectory(blackDuckDirectory)
+                                              .installDirectory(cliInstallDirectory)
+                                              .outputDirectory(cliOutputDirectory)
                                               .projectAndVersionNames(projectName, projectVersionName);
 
-        File scanFile = new File(blackDuckDirectory, repoPath.getName());
+        File scanFile = new File(cliTargetsDirectory, repoPath.getName());
         String scanTargetPath = scanFile.getCanonicalPath();
 
         String codeLocationName = null;
@@ -225,7 +240,7 @@ public class ArtifactScanService {
 
     private void deletePathArtifact(String fileName) {
         try {
-            Files.delete(new File(blackDuckDirectory, fileName).toPath());
+            Files.delete(new File(scannerDirectory, fileName).toPath());
             logger.info(String.format("Successfully deleted temporary file %s", fileName));
         } catch (Exception e) {
             logger.error(String.format("Exception deleting %s", fileName), e);
