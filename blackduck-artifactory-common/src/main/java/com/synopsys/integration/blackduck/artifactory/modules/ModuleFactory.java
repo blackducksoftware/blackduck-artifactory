@@ -7,7 +7,6 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules;
 
-import java.io.File;
 import java.io.IOException;
 
 import com.google.gson.Gson;
@@ -106,11 +105,11 @@ public class ModuleFactory {
         SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         ProjectService projectService = blackDuckServicesFactory.createProjectService();
 
-        ScannerDirectoryUtil scannerDirectoryUtil = new ScannerDirectoryUtil(directoryConfig, scanModuleConfig);
-        File scannerDirectory = scannerDirectoryUtil.createScannerDirectory();
+        ScannerDirectoryUtil scannerDirectoryUtil = ScannerDirectoryUtil.createFromConfigs(directoryConfig, scanModuleConfig);
+        scannerDirectoryUtil.createDirectories();
 
         RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
-        ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, scannerDirectoryUtil, scannerDirectory, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService);
+        ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, scannerDirectoryUtil, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService);
         ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckServerConfig, artifactoryPropertyService);
         PostScanActionsService postScanActionsService = new PostScanActionsService(artifactoryPropertyService, projectService);
         ScanPropertyService scanPropertyService = new ScanPropertyService(artifactoryPAPIService, dateTimeManager);

@@ -11,67 +11,69 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class ScannerDirectoryUtil {
-    private static final String DEFAULT_BLACKDUCK_SCANNER_DIRECTORY = "synopsys-blackduck-scanner";
+    public static final String DEFAULT_BLACKDUCK_SCANNER_DIRECTORY = "synopsys-blackduck-scanner";
 
-    private final DirectoryConfig directoryConfig;
-    private final ScanModuleConfig scanModuleConfig;
+    private final File rootScannerDirectory;
+    private final File scannerCliDirectory;
+    private final File scannerOutputDirectory;
+    private final File scannerTargetsDirectory;
 
-    public ScannerDirectoryUtil(DirectoryConfig directoryConfig, ScanModuleConfig scanModuleConfig) {
-        this.directoryConfig = directoryConfig;
-        this.scanModuleConfig = scanModuleConfig;
-    }
-
-    public File createScannerDirectory() throws IntegrationException {
-        File directory = determineScannerDirectory();
-        return createDirectory(directory);
-    }
-
-    public File createScannerCliInstallDirectory() throws IntegrationException {
-        File scannerDirectory = determineScannerDirectory();
-        File directory = new File(scannerDirectory, "cli");
-        return createDirectory(directory);
-    }
-
-    public File createScannerOutputDirectory() throws IntegrationException {
-        File scannerDirectory = determineScannerDirectory();
-        File directory = new File(scannerDirectory, "cli-output");
-        return createDirectory(directory);
-    }
-
-    public File determineScannerTargetDirectory() {
-        File scannerDirectory = determineScannerDirectory();
-        return new File(scannerDirectory, "targets");
-    }
-
-    public File createScannerTargetsDirectory() throws IntegrationException {
-        File directory = determineScannerTargetDirectory();
-        return createDirectory(directory);
-    }
-
-    public File determineScannerDirectory() {
+    public static ScannerDirectoryUtil createFromConfigs(DirectoryConfig directoryConfig, ScanModuleConfig scanModuleConfig) {
         String binariesDirectoryPath = scanModuleConfig.getBinariesDirectoryPath();
-        return determineScannerDirectory(directoryConfig.getEtcDirectory(), binariesDirectoryPath);
+        String directoryPath = StringUtils.defaultIfBlank(binariesDirectoryPath, DEFAULT_BLACKDUCK_SCANNER_DIRECTORY);
+        File rootScannerDirectory = new File(directoryConfig.getEtcDirectory(), directoryPath);
+        return createDefault(rootScannerDirectory);
     }
 
-    private File determineScannerDirectory(File artifactoryEtcDirectory, @Nullable String overridePath) {
-        String directoryPath = StringUtils.defaultIfBlank(overridePath, DEFAULT_BLACKDUCK_SCANNER_DIRECTORY);
-        return new File(artifactoryEtcDirectory, directoryPath);
+    public static ScannerDirectoryUtil createDefault(File rootScannerDirectory) {
+        File scannerCliDirectory = new File(rootScannerDirectory, "cli");
+        File scannerOutputDirectory = new File(rootScannerDirectory, "cli-output");
+        File scannerTargetsDirectory = new File(rootScannerDirectory, "cli-targets");
+        return new ScannerDirectoryUtil(rootScannerDirectory, scannerCliDirectory, scannerOutputDirectory, scannerTargetsDirectory);
     }
 
-    private File createDirectory(File directory) throws IntegrationException {
+    public ScannerDirectoryUtil(File rootScannerDirectory, File scannerCliDirectory, File scannerOutputDirectory, File scannerTargetsDirectory) {
+        this.rootScannerDirectory = rootScannerDirectory;
+        this.scannerCliDirectory = scannerCliDirectory;
+        this.scannerOutputDirectory = scannerOutputDirectory;
+        this.scannerTargetsDirectory = scannerTargetsDirectory;
+    }
+
+    public void createDirectories() throws IntegrationException {
+        createDirectory(getRootScannerDirectory());
+        createDirectory(getScannerCliDirectory());
+        createDirectory(getScannerOutputDirectory());
+        createDirectory(getScannerTargetsDirectory());
+    }
+
+    public File getRootScannerDirectory() {
+        return rootScannerDirectory;
+    }
+
+    public File getScannerCliDirectory() {
+        return scannerCliDirectory;
+    }
+
+    public File getScannerOutputDirectory() {
+        return scannerOutputDirectory;
+    }
+
+    public File getScannerTargetsDirectory() {
+        return scannerTargetsDirectory;
+    }
+
+    private void createDirectory(File directory) throws IntegrationException {
         try {
             if (!directory.exists() && !directory.mkdir()) {
                 throw new IntegrationException(String.format("Failed to create directory: %s", directory.getCanonicalPath()));
             }
-            return directory;
         } catch (IOException | IntegrationException e) {
-            throw new IntegrationException(String.format("An exception occurred while setting up the %s directory", directory.getPath()), e);
+            throw new IntegrationException(String.format("An exception occurred while setting up scanner directory: %s", directory.getPath()), e);
         }
     }
 }
