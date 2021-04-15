@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
@@ -19,6 +21,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class ScanModuleConfig extends ModuleConfig {
     private final String cron;
+    @Nullable
     private final String binariesDirectoryPath;
     private final String artifactCutoffDate;
     private final Boolean dryRun;
@@ -34,7 +37,7 @@ public class ScanModuleConfig extends ModuleConfig {
     public ScanModuleConfig(
         Boolean enabled,
         String cron,
-        String binariesDirectoryPath,
+        @Nullable String binariesDirectoryPath,
         String artifactCutoffDate,
         Boolean dryRun,
         List<String> namePatterns,
@@ -84,7 +87,6 @@ public class ScanModuleConfig extends ModuleConfig {
     @Override
     public void validate(PropertyGroupReport propertyGroupReport) {
         validateCronExpression(propertyGroupReport, ScanModuleProperty.CRON, cron);
-        validateNotBlank(propertyGroupReport, ScanModuleProperty.BINARIES_DIRECTORY_PATH, binariesDirectoryPath, "Please specify a path");
         validateDate(propertyGroupReport, ScanModuleProperty.CUTOFF_DATE, artifactCutoffDate, dateTimeManager);
         validateBoolean(propertyGroupReport, ScanModuleProperty.DRY_RUN, dryRun);
         validateBoolean(propertyGroupReport, ScanModuleProperty.ENABLED, isEnabledUnverified());
@@ -99,7 +101,7 @@ public class ScanModuleConfig extends ModuleConfig {
     public String getCron() {
         return cron;
     }
-    
+
     public String getBinariesDirectoryPath() {
         return binariesDirectoryPath;
     }
