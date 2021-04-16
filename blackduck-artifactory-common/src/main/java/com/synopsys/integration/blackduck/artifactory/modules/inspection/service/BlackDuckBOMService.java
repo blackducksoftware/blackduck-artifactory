@@ -74,15 +74,15 @@ public class BlackDuckBOMService {
     // Mostly copied from the ProjectBomService in blackduck-common. Made tweaks so the component that was attempting to be added is always returned.
     private ComponentViewWrapper addComponentToProjectVersion(RepoPath repoPath, ExternalId componentExternalId, ProjectVersionView projectVersionView) throws IntegrationException {
         ComponentViewWrapper componentViewWrapper;
-
+        String externalIdString = String.format("%s:%s", componentExternalId.getForge().toString(), componentExternalId.createExternalId());
         Optional<ComponentsView> componentsView = componentService.getFirstOrEmptyResult(componentExternalId);
         if (!componentsView.isPresent()) {
-            throw new FailedInspectionException(repoPath, String.format("Failed to find component match for component %s.", componentExternalId.toString()));
+            throw new FailedInspectionException(repoPath, String.format("Failed to find component match for component '%s'.", externalIdString));
         }
 
         Optional<ComponentVersionView> componentVersionView = componentService.getComponentVersionView(componentsView.get());
         if (!componentVersionView.isPresent()) {
-            throw new FailedInspectionException(repoPath, String.format("Failed to find component version for component %s.", componentExternalId.toString()));
+            throw new FailedInspectionException(repoPath, String.format("Failed to find component version for component '%s'.", externalIdString));
         }
 
         try {
