@@ -1,0 +1,53 @@
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import com.synopsys.integration.bdio.model.externalid.ExternalId;
+import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.ComposerVersion;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.VersionSource;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
+
+class ComposerVersionSelectorTest {
+
+    @Test
+    void discoverMatchingVersion() {
+        ExternalIdFactory externalIdFactory = new ExternalIdFactory();
+        ComposerVersionSelector composerVersionSelector = new ComposerVersionSelector(externalIdFactory);
+
+        SupportedPackageType supportedPackageType = SupportedPackageType.COMPOSER;
+        String artifactHash = "12345";
+        VersionSource commonVersionSource = new VersionSource();
+        commonVersionSource.reference = artifactHash;
+
+        List<ComposerVersion> composerVersions = new ArrayList<>();
+
+        ComposerVersion devVersion = new ComposerVersion();
+        devVersion.name = "dont-pick-me";
+        devVersion.version = "some-dev-version-1.X";
+        devVersion.versionSource = commonVersionSource;
+        composerVersions.add(devVersion);
+
+        ComposerVersion devVersion2 = new ComposerVersion();
+        devVersion2.name = "dont-pick-me-2";
+        devVersion2.version = "some-dev-version-2.X";
+        devVersion2.versionSource = commonVersionSource;
+        composerVersions.add(devVersion2);
+
+        ComposerVersion actualVersion = new ComposerVersion();
+        actualVersion.name = "pick-me";
+        actualVersion.version = "1.0.0";
+        actualVersion.versionSource = commonVersionSource;
+        composerVersions.add(actualVersion);
+
+        Optional<ExternalId> externalId = composerVersionSelector.discoverMatchingVersion(supportedPackageType, artifactHash, composerVersions);
+
+        Assertions.assertTrue(externalId.isPresent());
+        Assertions.assertEquals("pick-me:1.0.0", externalId.get().createExternalId());
+    }
+}
