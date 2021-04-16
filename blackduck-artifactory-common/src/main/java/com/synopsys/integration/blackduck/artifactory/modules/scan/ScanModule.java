@@ -82,7 +82,7 @@ public class ScanModule implements Module {
     }
 
     public void reloadScannerDirectory(TriggerType triggerType) {
-        LogUtil.start(logger, "blackDuckReloadDirectory", triggerType);
+        LogUtil.start(logger, "blackDuckReloadScannerDirectory", triggerType);
 
         File scannerDirectory = scannerDirectoryUtil.getRootScannerDirectory();
         String scannerDirectoryPath = scannerDirectory.getAbsolutePath();
@@ -96,7 +96,7 @@ public class ScanModule implements Module {
             logger.error("Failed to properly reload the scanner directory: " + scannerDirectoryPath);
         }
 
-        LogUtil.finish(logger, "blackDuckReloadDirectory", triggerType);
+        LogUtil.finish(logger, "blackDuckReloadScannerDirectory", triggerType);
     }
 
     public void triggerScan() {
