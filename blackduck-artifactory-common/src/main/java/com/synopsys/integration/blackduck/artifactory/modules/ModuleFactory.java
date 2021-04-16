@@ -32,6 +32,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.Inspect
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ArtifactoryInfoExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.ExternalIdService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerExternalIdExtractor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerJsonService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerVersionSelector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.conda.CondaExternalIdExtractor;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
@@ -153,7 +155,9 @@ public class ModuleFactory {
         BlackDuckBOMService blackDuckBOMService = new BlackDuckBOMService(projectBomService, componentService, blackDuckApiClient);
 
         ArtifactoryInfoExternalIdExtractor artifactoryInfoExternalIdExtractor = new ArtifactoryInfoExternalIdExtractor(artifactoryPAPIService, externalIdFactory);
-        ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(artifactSearchService, artifactoryPAPIService, externalIdFactory, gson);
+        ComposerVersionSelector composerVersionSelector = new ComposerVersionSelector(externalIdFactory);
+        ComposerJsonService composerJsonService = new ComposerJsonService(artifactoryPAPIService, gson);
+        ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(composerVersionSelector, composerJsonService);
         CondaExternalIdExtractor condaExternalIdExtractor = new CondaExternalIdExtractor(externalIdFactory);
         ExternalIdService externalIdService = new ExternalIdService(artifactoryPAPIService, artifactoryInfoExternalIdExtractor, composerExternalIdExtractor, condaExternalIdExtractor);
         ArtifactoryComponentService artifactoryComponentService = new ArtifactoryComponentService(blackDuckServicesFactory.getRequestFactory(), blackDuckApiClient);
