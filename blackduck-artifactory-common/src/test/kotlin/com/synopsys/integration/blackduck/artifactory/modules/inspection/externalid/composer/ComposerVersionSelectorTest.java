@@ -1,10 +1,12 @@
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
@@ -47,7 +49,7 @@ class ComposerVersionSelectorTest {
 
         Optional<ExternalId> externalId = composerVersionSelector.discoverMatchingVersion(supportedPackageType, artifactHash, composerVersions);
 
-        Assertions.assertTrue(externalId.isPresent());
-        Assertions.assertEquals("pick-me:1.0.0", externalId.get().createExternalId());
+        assertTrue(externalId.isPresent());
+        assertEquals("pick-me:1.0.0", externalId.get().createExternalId());
     }
 }
