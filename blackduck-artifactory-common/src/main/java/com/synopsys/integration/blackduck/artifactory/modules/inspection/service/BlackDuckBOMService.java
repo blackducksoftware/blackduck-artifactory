@@ -49,8 +49,9 @@ public class BlackDuckBOMService {
         RepoPath repoPath = artifact.getRepoPath();
         ComponentViewWrapper componentViewWrapper;
 
-        if (artifact.getExternalId().isPresent()) {
-            ExternalId externalId = artifact.getExternalId().get();
+        Optional<ExternalId> externalIdOptional = artifact.getExternalId();
+        if (externalIdOptional.isPresent()) {
+            ExternalId externalId = externalIdOptional.get();
             try {
                 componentViewWrapper = addComponentToProjectVersion(repoPath, externalId, projectVersionView);
             } catch (BlackDuckIntegrationException e) {
