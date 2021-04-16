@@ -104,7 +104,7 @@ public class PluginService {
         logger.warn(statusCheckMessage);
 
         FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PluginAPI.class);
-        PluginAPI pluginAPI = PluginAPI.createFromModules(moduleManager, featureAnalyticsCollector, scanModule, inspectionModule, policyModule, analyticsModule);
+        PluginAPI pluginAPI = new PluginAPI(featureAnalyticsCollector, moduleManager, scanModule, inspectionModule, policyModule, analyticsModule);
         analyticsService.registerAnalyzable(pluginAPI);
 
         logger.info("...blackDuckPlugin initialized.");
