@@ -186,7 +186,7 @@ executions {
      * This will delete, then recreate, the synopsys-blackduck-scanner directory which includes the cli, the cron job log, as well as all the cli logs.
      *
      * This can be triggered with the following curl command:
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadDirectory"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckReloadScannerDirectory"
      **/
     blackDuckReloadScannerDirectory() { params -> pluginAPI.reloadBlackDuckScannerDirectory(TriggerType.REST_REQUEST) }
 
