@@ -7,7 +7,6 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules;
 
-import java.io.File;
 import java.io.IOException;
 
 import com.google.gson.Gson;
@@ -18,6 +17,7 @@ import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
+import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
@@ -53,6 +53,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModul
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
+import com.synopsys.integration.blackduck.artifactory.modules.scan.ScannerDirectoryUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.ArtifactScanService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.PostScanActionsService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.service.RepositoryIdentificationService;
@@ -75,9 +76,19 @@ public class ModuleFactory {
     private final DateTimeManager dateTimeManager;
     private final BlackDuckServicesFactory blackDuckServicesFactory;
     private final Gson gson;
+    private final DirectoryConfig directoryConfig;
 
-    public ModuleFactory(ConfigurationPropertyManager configurationPropertyManager, BlackDuckServerConfig blackDuckServerConfig, ArtifactoryPAPIService artifactoryPAPIService, ArtifactoryPropertyService artifactoryPropertyService,
-        ArtifactSearchService artifactSearchService, DateTimeManager dateTimeManager, BlackDuckServicesFactory blackDuckServicesFactory, Gson gson) {
+    public ModuleFactory(
+        ConfigurationPropertyManager configurationPropertyManager,
+        BlackDuckServerConfig blackDuckServerConfig,
+        ArtifactoryPAPIService artifactoryPAPIService,
+        ArtifactoryPropertyService artifactoryPropertyService,
+        ArtifactSearchService artifactSearchService,
+        DateTimeManager dateTimeManager,
+        BlackDuckServicesFactory blackDuckServicesFactory,
+        Gson gson,
+        DirectoryConfig directoryConfig
+    ) {
         this.configurationPropertyManager = configurationPropertyManager;
         this.blackDuckServerConfig = blackDuckServerConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
@@ -86,23 +97,35 @@ public class ModuleFactory {
         this.dateTimeManager = dateTimeManager;
         this.blackDuckServicesFactory = blackDuckServicesFactory;
         this.gson = gson;
+        this.directoryConfig = directoryConfig;
     }
 
-    public ScanModule createScanModule(File blackDuckDirectory) throws IOException, IntegrationException {
-        File cliDirectory = ScanModule.setUpCliDuckDirectory(blackDuckDirectory);
-        ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, cliDirectory, dateTimeManager);
+    public ScanModule createScanModule() throws IOException, IntegrationException {
+        ScanModuleConfig scanModuleConfig = ScanModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, dateTimeManager);
         SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
         ProjectService projectService = blackDuckServicesFactory.createProjectService();
 
+        ScannerDirectoryUtil scannerDirectoryUtil = ScannerDirectoryUtil.createFromConfigs(directoryConfig, scanModuleConfig);
+        scannerDirectoryUtil.createDirectories();
+
         RepositoryIdentificationService repositoryIdentificationService = new RepositoryIdentificationService(scanModuleConfig, dateTimeManager, artifactoryPropertyService, artifactoryPAPIService);
-        ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, blackDuckDirectory, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService
-        );
+        ArtifactScanService artifactScanService = new ArtifactScanService(scanModuleConfig, blackDuckServerConfig, scannerDirectoryUtil, repositoryIdentificationService, artifactoryPropertyService, artifactoryPAPIService);
         ScanPolicyService scanPolicyService = ScanPolicyService.createDefault(blackDuckServerConfig, artifactoryPropertyService);
         PostScanActionsService postScanActionsService = new PostScanActionsService(artifactoryPropertyService, projectService);
         ScanPropertyService scanPropertyService = new ScanPropertyService(artifactoryPAPIService, dateTimeManager);
         ScanCancelDecider scanCancelDecider = new ScanCancelDecider(scanModuleConfig, scanPropertyService, artifactoryPAPIService);
-        return new ScanModule(scanModuleConfig, repositoryIdentificationService, artifactScanService, artifactoryPAPIService, simpleAnalyticsCollector, scanPolicyService, postScanActionsService,
-            scanPropertyService, scanCancelDecider);
+        return new ScanModule(
+            scanModuleConfig,
+            repositoryIdentificationService,
+            artifactScanService,
+            artifactoryPAPIService,
+            simpleAnalyticsCollector,
+            scanPolicyService,
+            postScanActionsService,
+            scanPropertyService,
+            scannerDirectoryUtil,
+            scanCancelDecider
+        );
     }
 
     public InspectionModule createInspectionModule() throws IOException {

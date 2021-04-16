@@ -15,11 +15,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
+import com.synopsys.integration.blackduck.artifactory.LogUtil;
+import com.synopsys.integration.blackduck.artifactory.TriggerType;
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.UpdateStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
@@ -46,10 +49,21 @@ public class ScanModule implements Module {
     private final ScanPolicyService scanPolicyService;
     private final PostScanActionsService postScanActionsService;
     private final ScanPropertyService scanPropertyService;
+    private final ScannerDirectoryUtil scannerDirectoryUtil;
     private final CancelDecider cancelDecider;
 
-    public ScanModule(ScanModuleConfig scanModuleConfig, RepositoryIdentificationService repositoryIdentificationService, ArtifactScanService artifactScanService, ArtifactoryPAPIService artifactoryPAPIService,
-        SimpleAnalyticsCollector simpleAnalyticsCollector, ScanPolicyService scanPolicyService, PostScanActionsService postScanActionsService, ScanPropertyService scanPropertyService, CancelDecider cancelDecider) {
+    public ScanModule(
+        ScanModuleConfig scanModuleConfig,
+        RepositoryIdentificationService repositoryIdentificationService,
+        ArtifactScanService artifactScanService,
+        ArtifactoryPAPIService artifactoryPAPIService,
+        SimpleAnalyticsCollector simpleAnalyticsCollector,
+        ScanPolicyService scanPolicyService,
+        PostScanActionsService postScanActionsService,
+        ScanPropertyService scanPropertyService,
+        ScannerDirectoryUtil scannerDirectoryUtil,
+        CancelDecider cancelDecider
+    ) {
         this.scanModuleConfig = scanModuleConfig;
         this.repositoryIdentificationService = repositoryIdentificationService;
         this.artifactScanService = artifactScanService;
@@ -58,21 +72,31 @@ public class ScanModule implements Module {
         this.scanPolicyService = scanPolicyService;
         this.postScanActionsService = postScanActionsService;
         this.scanPropertyService = scanPropertyService;
+        this.scannerDirectoryUtil = scannerDirectoryUtil;
         this.cancelDecider = cancelDecider;
-    }
-
-    public static File setUpCliDuckDirectory(File blackDuckDirectory) throws IOException, IntegrationException {
-        File cliDirectory = new File(blackDuckDirectory, "cli");
-        if (!cliDirectory.exists() && !cliDirectory.mkdir()) {
-            throw new IntegrationException(String.format("Failed to create cliDirectory: %s", cliDirectory.getCanonicalPath()));
-        }
-
-        return cliDirectory;
     }
 
     @Override
     public ScanModuleConfig getModuleConfig() {
         return scanModuleConfig;
+    }
+
+    public void reloadScannerDirectory(TriggerType triggerType) {
+        LogUtil.start(logger, "blackDuckReloadDirectory", triggerType);
+
+        File scannerDirectory = scannerDirectoryUtil.getRootScannerDirectory();
+        String scannerDirectoryPath = scannerDirectory.getAbsolutePath();
+        try {
+            logger.info(String.format("Deleting scanner directory: %s", scannerDirectoryPath));
+            FileUtils.deleteDirectory(scannerDirectory);
+            logger.info("Creating new scanner directory.");
+            scannerDirectoryUtil.createDirectories();
+            logger.info(String.format("New scanner directory created: %s", scannerDirectoryPath));
+        } catch (IntegrationException | IOException e) {
+            logger.error("Failed to properly reload the scanner directory: " + scannerDirectoryPath);
+        }
+
+        LogUtil.finish(logger, "blackDuckReloadDirectory", triggerType);
     }
 
     public void triggerScan() {

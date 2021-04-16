@@ -7,10 +7,11 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.scan;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.jetbrains.annotations.Nullable;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
@@ -20,6 +21,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 
 public class ScanModuleConfig extends ModuleConfig {
     private final String cron;
+    @Nullable
     private final String binariesDirectoryPath;
     private final String artifactCutoffDate;
     private final Boolean dryRun;
@@ -30,12 +32,22 @@ public class ScanModuleConfig extends ModuleConfig {
     private final Boolean codelocationIncludeHostname;
     private final Boolean metadataBlockEnabled;
 
-    private final File cliDirectory;
-
     private final DateTimeManager dateTimeManager;
 
-    public ScanModuleConfig(Boolean enabled, String cron, String binariesDirectoryPath, String artifactCutoffDate, Boolean dryRun, List<String> namePatterns, Integer memory,
-        Boolean repoPathCodelocation, List<String> repos, Boolean codelocationIncludeHostname, Boolean metadataBlockEnabled, File cliDirectory, DateTimeManager dateTimeManager) {
+    public ScanModuleConfig(
+        Boolean enabled,
+        String cron,
+        @Nullable String binariesDirectoryPath,
+        String artifactCutoffDate,
+        Boolean dryRun,
+        List<String> namePatterns,
+        Integer memory,
+        Boolean repoPathCodelocation,
+        List<String> repos,
+        Boolean codelocationIncludeHostname,
+        Boolean metadataBlockEnabled,
+        DateTimeManager dateTimeManager
+    ) {
         super(ScanModule.class.getSimpleName(), enabled);
         this.cron = cron;
         this.binariesDirectoryPath = binariesDirectoryPath;
@@ -47,12 +59,14 @@ public class ScanModuleConfig extends ModuleConfig {
         this.repos = repos;
         this.codelocationIncludeHostname = codelocationIncludeHostname;
         this.metadataBlockEnabled = metadataBlockEnabled;
-        this.cliDirectory = cliDirectory;
         this.dateTimeManager = dateTimeManager;
     }
 
-    public static ScanModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager, ArtifactoryPAPIService artifactoryPAPIService, File cliDirectory, DateTimeManager dateTimeManager)
-        throws IOException {
+    public static ScanModuleConfig createFromProperties(
+        ConfigurationPropertyManager configurationPropertyManager,
+        ArtifactoryPAPIService artifactoryPAPIService,
+        DateTimeManager dateTimeManager
+    ) throws IOException {
         String cron = configurationPropertyManager.getProperty(ScanModuleProperty.CRON);
         String binariesDirectoryPath = configurationPropertyManager.getProperty(ScanModuleProperty.BINARIES_DIRECTORY_PATH);
         String artifactCutoffDate = configurationPropertyManager.getProperty(ScanModuleProperty.CUTOFF_DATE);
@@ -67,13 +81,12 @@ public class ScanModuleConfig extends ModuleConfig {
         Boolean codelocationIncludeHostname = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.CODELOCATION_INCLUDE_HOSTNAME);
         Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.METADATA_BLOCK);
 
-        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, codelocationIncludeHostname, metadataBlockEnabled, cliDirectory, dateTimeManager);
+        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, codelocationIncludeHostname, metadataBlockEnabled, dateTimeManager);
     }
 
     @Override
     public void validate(PropertyGroupReport propertyGroupReport) {
         validateCronExpression(propertyGroupReport, ScanModuleProperty.CRON, cron);
-        validateNotBlank(propertyGroupReport, ScanModuleProperty.BINARIES_DIRECTORY_PATH, binariesDirectoryPath, "Please specify a path");
         validateDate(propertyGroupReport, ScanModuleProperty.CUTOFF_DATE, artifactCutoffDate, dateTimeManager);
         validateBoolean(propertyGroupReport, ScanModuleProperty.DRY_RUN, dryRun);
         validateBoolean(propertyGroupReport, ScanModuleProperty.ENABLED, isEnabledUnverified());
@@ -89,7 +102,6 @@ public class ScanModuleConfig extends ModuleConfig {
         return cron;
     }
 
-    // TODO: Why isn't this being used?
     public String getBinariesDirectoryPath() {
         return binariesDirectoryPath;
     }
@@ -116,10 +128,6 @@ public class ScanModuleConfig extends ModuleConfig {
 
     public List<String> getRepos() {
         return repos;
-    }
-
-    public File getCliDirectory() {
-        return cliDirectory;
     }
 
     public Boolean getCodelocationIncludeHostname() {
