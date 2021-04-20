@@ -30,34 +30,40 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import lombok.SneakyThrows;
 
 class ComposerJsonServiceTest {
+    private static final String TEST_REPO_KEY = "test-repo";
+    private static final String PACKAGE_NAME = "console";
+    private static final String PACKAGE_HASH = "12345";
+    private static final String PACKAGE_EXTENSION = "zip";
+    private static final String JSON_FILE = PACKAGE_NAME + ".json";
+    private static final String JSON_FILE_PATH = String.format(".composer/p/symfony/%s", JSON_FILE);
 
     @Test
     void findJsonFiles() {
         PluginRepoPathFactory repoPathFactory = new PluginRepoPathFactory(false);
-        RepoPath repoPath = repoPathFactory.create("test-repo", "console-1ba4560dbbb9fcf5ae28b61f71f49c678086cf23.zip");
-        RepoPath jsonRepoPath = repoPathFactory.create("test-repo", ".composer/p/symfony/console.json");
+        RepoPath repoPath = repoPathFactory.create(TEST_REPO_KEY, String.format("%s-%s.%s", PACKAGE_NAME, PACKAGE_HASH, PACKAGE_EXTENSION));
+        RepoPath jsonRepoPath = repoPathFactory.create(TEST_REPO_KEY, JSON_FILE_PATH);
         List<RepoPath> jsonRepoPaths = Collections.singletonList(jsonRepoPath);
 
         ArtifactoryPAPIService artifactoryPAPIService = Mockito.mock(ArtifactoryPAPIService.class);
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         ComposerJsonService composerJsonService = new ComposerJsonService(artifactoryPAPIService, gson);
 
-        Mockito.when(artifactoryPAPIService.itemsByName("console.json", "test-repo"))
+        Mockito.when(artifactoryPAPIService.itemsByName(JSON_FILE, TEST_REPO_KEY))
             .thenReturn(jsonRepoPaths);
 
         ComposerJsonResult composerJsonResult = composerJsonService.findJsonFiles(repoPath);
 
         FileNamePieces fileNamePieces = composerJsonResult.getFileNamePieces();
-        assertEquals("console", fileNamePieces.getComponentName());
-        assertEquals("1ba4560dbbb9fcf5ae28b61f71f49c678086cf23", fileNamePieces.getHash());
-        assertEquals("zip", fileNamePieces.getExtension());
+        assertEquals(PACKAGE_NAME, fileNamePieces.getComponentName());
+        assertEquals(PACKAGE_HASH, fileNamePieces.getHash());
+        assertEquals(PACKAGE_EXTENSION, fileNamePieces.getExtension());
         assertEquals(jsonRepoPaths, composerJsonResult.getRepoPaths());
     }
 
     @Test
     void parseJson() {
         PluginRepoPathFactory repoPathFactory = new PluginRepoPathFactory(false);
-        RepoPath jsonRepoPath = repoPathFactory.create("test-repo", ".composer/p/symfony/console.json");
+        RepoPath jsonRepoPath = repoPathFactory.create(TEST_REPO_KEY, JSON_FILE_PATH);
 
         ArtifactoryPAPIService artifactoryPAPIService = Mockito.mock(ArtifactoryPAPIService.class);
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -65,7 +71,7 @@ class ComposerJsonServiceTest {
 
         Mockito.when(artifactoryPAPIService.getArtifactContent(jsonRepoPath))
             .thenReturn(new ResourceStreamHandle() {
-                final InputStream inputStream = TestUtil.INSTANCE.getResourceAsStream("/console.json");
+                final InputStream inputStream = TestUtil.INSTANCE.getResourceAsStream("/" + JSON_FILE);
 
                 @Override
                 public InputStream getInputStream() {

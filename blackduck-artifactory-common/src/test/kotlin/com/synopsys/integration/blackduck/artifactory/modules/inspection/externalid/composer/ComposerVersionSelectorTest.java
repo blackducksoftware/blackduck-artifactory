@@ -48,15 +48,17 @@ class ComposerVersionSelectorTest {
         devVersion2.versionSource = commonVersionSource;
         composerVersions.add(devVersion2);
 
-        ComposerVersion actualVersion = new ComposerVersion();
-        actualVersion.name = "pick-me";
-        actualVersion.version = "1.0.0";
-        actualVersion.versionSource = commonVersionSource;
-        composerVersions.add(actualVersion);
+        String expectedName = "pick-me";
+        String expectedVersion = "1.0.0";
+        ComposerVersion expectedComposerVersion = new ComposerVersion();
+        expectedComposerVersion.name = "pick-me";
+        expectedComposerVersion.version = expectedVersion;
+        expectedComposerVersion.versionSource = commonVersionSource;
+        composerVersions.add(expectedComposerVersion);
 
         Optional<ExternalId> externalId = composerVersionSelector.discoverMatchingVersion(supportedPackageType, artifactHash, composerVersions);
 
         assertTrue(externalId.isPresent());
-        assertEquals("pick-me:1.0.0", externalId.get().createExternalId());
+        assertEquals(String.format("%s:%s", expectedName, expectedVersion), externalId.get().createExternalId());
     }
 }
