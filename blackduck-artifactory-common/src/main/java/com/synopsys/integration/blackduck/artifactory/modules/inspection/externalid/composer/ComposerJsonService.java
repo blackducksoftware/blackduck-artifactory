@@ -61,6 +61,7 @@ public class ComposerJsonService {
         }
     }
 
+    // TODO: Create a generic filename pieces extractor. - JakeMathews 04/2021
     private FileNamePieces extractFileNamePieces(RepoPath repoPath) {
         String fullFileName = repoPath.getName();
         String[] zipExtensionPieces = fullFileName.split("\\.");
