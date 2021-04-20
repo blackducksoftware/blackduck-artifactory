@@ -28,6 +28,10 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.externa
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 
 class ComposerExternalIdExtractorTest {
+    private static final String PACKAGE_NAME = "console";
+    private static final String PACKAGE_VERSION = "1.2.3";
+    private static final String PACKAGE_HASH = "12345";
+    private static final String PACKAGE_EXTENSION = "zip";
 
     @Test
     void extractExternalId() {
@@ -36,26 +40,26 @@ class ComposerExternalIdExtractorTest {
         ComposerExternalIdExtractor composerExternalIdExtractor = new ComposerExternalIdExtractor(composerVersionSelector, composerJsonService);
 
         PluginRepoPathFactory repoPathFactory = new PluginRepoPathFactory(false);
-        RepoPath repoPath = repoPathFactory.create("test-repo", "console-12345.zip");
+        RepoPath repoPath = repoPathFactory.create("test-repo", String.format("%s-%s.%s", PACKAGE_NAME, PACKAGE_HASH, PACKAGE_EXTENSION));
 
         Mockito.when(composerJsonService.findJsonFiles(repoPath)).thenReturn(
             new ComposerJsonResult(
-                new FileNamePieces("console", "12345", "zip"),
+                new FileNamePieces(PACKAGE_NAME, PACKAGE_HASH, PACKAGE_EXTENSION),
                 Collections.singletonList(repoPath)
             )
         );
 
         ComposerVersion composerVersion = new ComposerVersion();
-        composerVersion.name = "console";
-        composerVersion.version = "1.2.3";
+        composerVersion.name = PACKAGE_NAME;
+        composerVersion.version = PACKAGE_VERSION;
         VersionSource versionSource = new VersionSource();
-        versionSource.reference = "12345";
+        versionSource.reference = PACKAGE_HASH;
         composerVersion.versionSource = versionSource;
         Mockito.when(composerJsonService.parseJson(repoPath)).thenReturn(
             Collections.singletonList(composerVersion)
         );
 
-        ExternalId externalId = new ExternalIdFactory().createNameVersionExternalId(Forge.PACKAGIST, "console", "1.2.3");
+        ExternalId externalId = new ExternalIdFactory().createNameVersionExternalId(Forge.PACKAGIST, PACKAGE_NAME, PACKAGE_VERSION);
         Mockito.when(composerVersionSelector.discoverMatchingVersion(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(
             Optional.of(externalId)
         );
