@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -48,11 +47,8 @@ public class ComposerVersionSelector {
         // Try to find an external id that contains version numbers since dev releases can also be in this list.
         ExternalId decidedExternalId = null;
         for (ExternalId foundExternalId : externalIdsMatchingHash) {
-            String[] numbers = IntStream.rangeClosed(0, 9)
-                                   .boxed()
-                                   .map(String::valueOf)
-                                   .toArray(String[]::new);
-            boolean containsNumbers = StringUtils.containsAny(foundExternalId.getVersion(), numbers);
+            boolean containsNumbers = foundExternalId.getVersion().chars()
+                                          .anyMatch(Character::isDigit);
             boolean containsDev = foundExternalId.getVersion().contains("dev");
             if ((!containsDev && containsNumbers) || decidedExternalId == null) {
                 decidedExternalId = foundExternalId;
