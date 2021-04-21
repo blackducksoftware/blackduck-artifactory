@@ -1,0 +1,27 @@
+{
+  "packages": {
+    "symfony/console": {
+      "20.0.0": {
+        "name": "symfony/console",
+        "version": "20.0.0",
+        "source": {
+          "reference": "1ba4560dbbb9fcf5ae28b61f71f49c678086cf23"
+        }
+      },
+      "40.0.0-dev": {
+        "name": "symfony/console",
+        "version": "40.0.0-dev",
+        "source": {
+          "reference": "1ba4560dbbb9fcf5ae28b61f71f49c678086cf23"
+        }
+      },
+      "40.0.0": {
+        "name": "symfony/console",
+        "version": "40.0.0",
+        "source": {
+          "reference": "1ba4560dbbb9fcf5ae28b61f71f49c678086cf23"
+        }
+      }
+    }
+  }
+}
