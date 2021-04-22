@@ -35,9 +35,14 @@ public class ScanCancelDecider implements CancelDecider {
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
         boolean metadataBlockDisabled = FALSE.equals(scanModuleConfig.isMetadataBlockEnabled());
-        boolean shouldScanRepository = !scanModuleConfig.getRepos().contains(repoPath.getRepoKey());
+        boolean shouldNotScanRepository = !scanModuleConfig.getRepos().contains(repoPath.getRepoKey()); // TODO: This should be a call to another service
+        if (metadataBlockDisabled || shouldNotScanRepository) {
+            return CancelDecision.NO_CANCELLATION();
+        }
+
+        // Getting ItemInfo from a virtual repository causes an exception resulting in failed downloads. We must verify the repository before doing this check. (IARTH-434)
         ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
-        if (metadataBlockDisabled || shouldScanRepository || itemInfo.isFolder()) {
+        if (itemInfo.isFolder()) {
             return CancelDecision.NO_CANCELLATION();
         }
 
