@@ -33,7 +33,7 @@ class ScanCancelDeciderTest {
             testDecision(false, false, true, scanResult);
             testDecision(false, true, false, scanResult);
             testDecision(false, true, true, scanResult);
-            testDecision(true, false, false, scanResult); // TODO: Don't block
+            testDecision(true, false, false, scanResult);
             testDecision(true, false, true, scanResult);
             testDecision(true, true, false, scanResult);
             testDecision(true, true, true, scanResult);

@@ -46,18 +46,17 @@ public class ScanCancelDecider implements CancelDecider {
             return CancelDecision.NO_CANCELLATION();
         }
 
-        Optional<Result> scanResult = scanPropertyService.getScanResult(repoPath);
-        if (scanResult.isPresent() && Result.FAILURE.equals(scanResult.get())) {
-            return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact was not successfully scanned. Found result %s.", Result.FAILURE));
-        } else if (scanResult.isPresent() && Result.SUCCESS.equals(scanResult.get())) {
-            return CancelDecision.NO_CANCELLATION();
-        }
-
         File artifact = new File(itemInfo.getName());
-
         for (String namePattern : scanModuleConfig.getNamePatterns()) {
             WildcardFileFilter wildcardFileFilter = new WildcardFileFilter(namePattern);
             if (wildcardFileFilter.accept(artifact)) {
+                Optional<Result> scanResult = scanPropertyService.getScanResult(repoPath);
+                if (scanResult.isPresent() && Result.FAILURE.equals(scanResult.get())) {
+                    return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact was not successfully scanned. Found result %s.", Result.FAILURE));
+                } else if (scanResult.isPresent() && Result.SUCCESS.equals(scanResult.get())) {
+                    return CancelDecision.NO_CANCELLATION();
+                }
+                // Only continues if no scan result is found.
                 return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing the %s scan result on an artifact that should be scanned.", Result.SUCCESS));
             }
         }
