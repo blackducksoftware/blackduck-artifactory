@@ -8,11 +8,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.platform.commons.util.StringUtils;
 import org.mockito.Mockito;
 
@@ -23,24 +26,27 @@ import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyS
 import com.synopsys.integration.blackduck.codelocation.Result;
 
 class ScanCancelDeciderTest {
-    @Test
-    void getCancelDecision() {
+
+    private static Stream<Arguments> provideConfigForCancelDecision() {
         List<Result> scanResults = new ArrayList<>(Arrays.asList(Result.values()));
         scanResults.add(null);
 
-        for (Result scanResult : scanResults) {
-            testDecision(false, false, false, scanResult);
-            testDecision(false, false, true, scanResult);
-            testDecision(false, true, false, scanResult);
-            testDecision(false, true, true, scanResult);
-            testDecision(true, false, false, scanResult);
-            testDecision(true, false, true, scanResult);
-            testDecision(true, true, false, scanResult);
-            testDecision(true, true, true, scanResult);
-        }
+        return scanResults.stream()
+                   .flatMap(result -> Stream.of(
+                       Arguments.of(false, false, false, result),
+                       Arguments.of(false, false, true, result),
+                       Arguments.of(false, true, false, result),
+                       Arguments.of(false, true, true, result),
+                       Arguments.of(true, false, false, result),
+                       Arguments.of(true, false, true, result),
+                       Arguments.of(true, true, false, result),
+                       Arguments.of(true, true, true, result)
+                   ));
     }
 
-    private void testDecision(boolean metadataBlockEnabled, boolean isFolder, boolean matchesExtension, @Nullable Result scanResult) {
+    @ParameterizedTest
+    @MethodSource("provideConfigForCancelDecision")
+    void testDecision(boolean metadataBlockEnabled, boolean isFolder, boolean matchesExtension, @Nullable Result scanResult) {
         CancelDecision cancelDecision = getDecision(metadataBlockEnabled, isFolder, matchesExtension, scanResult);
         if (!metadataBlockEnabled || isFolder || !matchesExtension) {
             assertFalse(cancelDecision.shouldCancelDownload());
