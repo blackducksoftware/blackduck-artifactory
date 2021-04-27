@@ -35,24 +35,28 @@ public class ScanCancelDecider implements CancelDecider {
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
         boolean metadataBlockDisabled = FALSE.equals(scanModuleConfig.isMetadataBlockEnabled());
-        boolean shouldScanRepository = !scanModuleConfig.getRepos().contains(repoPath.getRepoKey());
-        ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
-        if (metadataBlockDisabled || shouldScanRepository || itemInfo.isFolder()) {
+        boolean shouldNotScanRepository = !scanModuleConfig.getRepos().contains(repoPath.getRepoKey()); // TODO: This should be a call to another service - JM 04/2021
+        if (metadataBlockDisabled || shouldNotScanRepository) {
             return CancelDecision.NO_CANCELLATION();
         }
 
-        Optional<Result> scanResult = scanPropertyService.getScanResult(repoPath);
-        if (scanResult.isPresent() && Result.FAILURE.equals(scanResult.get())) {
-            return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact was not successfully scanned. Found result %s.", Result.FAILURE));
-        } else if (scanResult.isPresent() && Result.SUCCESS.equals(scanResult.get())) {
+        // Getting ItemInfo from a virtual repository causes an exception resulting in failed downloads. We must verify the repository before doing this check. IARTH-434 - JM 04/2021
+        ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
+        if (itemInfo.isFolder()) {
             return CancelDecision.NO_CANCELLATION();
         }
 
         File artifact = new File(itemInfo.getName());
-
         for (String namePattern : scanModuleConfig.getNamePatterns()) {
             WildcardFileFilter wildcardFileFilter = new WildcardFileFilter(namePattern);
             if (wildcardFileFilter.accept(artifact)) {
+                Optional<Result> scanResult = scanPropertyService.getScanResult(repoPath);
+                if (scanResult.isPresent() && Result.FAILURE.equals(scanResult.get())) {
+                    return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact was not successfully scanned. Found result %s.", Result.FAILURE));
+                } else if (scanResult.isPresent() && Result.SUCCESS.equals(scanResult.get())) {
+                    return CancelDecision.NO_CANCELLATION();
+                }
+                // Only continues if no scan result is found.
                 return CancelDecision.CANCEL_DOWNLOAD(String.format("Missing the %s scan result on an artifact that should be scanned.", Result.SUCCESS));
             }
         }
