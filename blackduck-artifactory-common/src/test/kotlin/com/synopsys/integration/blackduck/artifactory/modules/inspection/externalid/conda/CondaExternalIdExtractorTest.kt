@@ -11,7 +11,7 @@ import com.synopsys.integration.bdio.model.externalid.ExternalId
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType
 import org.artifactory.repo.RepoPath
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import java.util.*
@@ -26,12 +26,13 @@ class CondaExternalIdExtractorTest {
     private fun assertValidExtraction(fileName: String, expectedName: String, expectedVersion: String, architecture: String = defaultArchitecture) {
         val actualExternalId = extractExternalId(fileName, architecture)
         val expectedExternalId = externalIdFactory.createNameVersionExternalId(supportedPackageType.forge, expectedName, expectedVersion)
-        Assertions.assertEquals(expectedExternalId.createBdioId(), actualExternalId.get().createBdioId())
+        assertTrue(actualExternalId.isPresent)
+        assertEquals(expectedExternalId.createBdioId(), actualExternalId.get().createBdioId())
     }
 
     private fun assertInvalidExtraction(fileName: String, architecture: String = defaultArchitecture) {
         val actualExternalId = extractExternalId(fileName, architecture)
-        Assertions.assertFalse(actualExternalId.isPresent)
+        assertFalse(actualExternalId.isPresent)
     }
 
     private fun extractExternalId(fileName: String, architecture: String): Optional<ExternalId> {
@@ -78,6 +79,6 @@ class CondaExternalIdExtractorTest {
         mockWhen(repoPath.parent).thenReturn(null)
 
         val externalId = condaExternalIdExtractor.extractExternalId(supportedPackageType, repoPath)
-        Assertions.assertFalse(externalId.isPresent)
+        assertFalse(externalId.isPresent)
     }
 }

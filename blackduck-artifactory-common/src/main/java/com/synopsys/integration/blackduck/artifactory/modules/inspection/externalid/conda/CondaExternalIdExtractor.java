@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +35,7 @@ public class CondaExternalIdExtractor {
     }
 
     private final IntLogger logger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-    private final Pattern pattern = Pattern.compile("(.*)-(.*)-([^-|\\s]*)");
+    private final Pattern pattern = Pattern.compile("(.*)-([^-]*)-([^-]*)");
 
     private final ExternalIdFactory externalIdFactory;
 
