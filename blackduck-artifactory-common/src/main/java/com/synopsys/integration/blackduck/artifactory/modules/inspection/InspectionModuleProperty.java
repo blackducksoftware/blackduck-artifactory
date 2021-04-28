@@ -26,6 +26,10 @@ public enum InspectionModuleProperty implements ConfigurationProperty {
     PATTERNS_PYPI("patterns.pypi"),
     PATTERNS_NUGET("patterns.nuget"),
     PATTERNS_NPM("patterns.npm"),
+    POLICY_BLOCK("policy.block"),
+    POLICY_REPOS("policy.repos"),
+    POLICY_REPOS_CSV_PATH("policy.repos.csv.path"),
+    POLICY_SEVERITY_TYPES("policy.severity.types"),
     REPOS("repos"),
     REPOS_CSV_PATH("repos.csv.path"),
     RETRY_COUNT("retry.count");

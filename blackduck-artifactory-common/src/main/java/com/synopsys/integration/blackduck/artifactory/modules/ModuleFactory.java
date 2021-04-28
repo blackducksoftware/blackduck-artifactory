@@ -8,6 +8,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.google.gson.Gson;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
@@ -26,6 +27,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.InspectionCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDeciderV2;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.ScanCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
@@ -177,10 +179,20 @@ public class ModuleFactory {
         MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
         PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckApiClient, blackDuckBOMService, projectService);
-        CancelDecider cancelDecider = new InspectionCancelDecider(inspectionModuleConfig, inspectionPropertyService, artifactInspectionService);
+        CancelDecider inspectionCancelDecider = new InspectionCancelDecider(inspectionModuleConfig, inspectionPropertyService, artifactInspectionService);
+        CancelDecider policyCancelDecider = new PolicyCancelDeciderV2(artifactoryPropertyService, inspectionModuleConfig.getPolicyBlockedEnabled(), inspectionModuleConfig.getPolicyRepos(), inspectionModuleConfig.getPolicySeverityTypes());
 
-        return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
-            simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, policySeverityService, cancelDecider);
+        return new InspectionModule(inspectionModuleConfig,
+            artifactoryPAPIService,
+            metaDataUpdateService,
+            artifactoryPropertyService,
+            inspectionPropertyService,
+            simpleAnalyticsCollector,
+            repositoryInitializationService,
+            artifactInspectionService,
+            policySeverityService,
+            Arrays.asList(inspectionCancelDecider, policyCancelDecider)
+        );
     }
 
     public PolicyModule createPolicyModule() {

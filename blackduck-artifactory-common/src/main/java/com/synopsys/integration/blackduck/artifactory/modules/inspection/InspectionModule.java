@@ -53,11 +53,19 @@ public class InspectionModule implements Module {
     private final RepositoryInitializationService repositoryInitializationService;
     private final ArtifactInspectionService artifactInspectionService;
     private final PolicySeverityService policySeverityService;
-    private final CancelDecider cancelDecider;
+    private final Collection<CancelDecider> cancelDeciders;
 
-    public InspectionModule(InspectionModuleConfig inspectionModuleConfig, ArtifactoryPAPIService artifactoryPAPIService, MetaDataUpdateService metaDataUpdateService, ArtifactoryPropertyService artifactoryPropertyService,
-        InspectionPropertyService inspectionPropertyService, SimpleAnalyticsCollector simpleAnalyticsCollector, RepositoryInitializationService repositoryInitializationService, ArtifactInspectionService artifactInspectionService,
-        PolicySeverityService policySeverityService, CancelDecider cancelDecider) {
+    public InspectionModule(InspectionModuleConfig inspectionModuleConfig,
+        ArtifactoryPAPIService artifactoryPAPIService,
+        MetaDataUpdateService metaDataUpdateService,
+        ArtifactoryPropertyService artifactoryPropertyService,
+        InspectionPropertyService inspectionPropertyService,
+        SimpleAnalyticsCollector simpleAnalyticsCollector,
+        RepositoryInitializationService repositoryInitializationService,
+        ArtifactInspectionService artifactInspectionService,
+        PolicySeverityService policySeverityService,
+        Collection<CancelDecider> cancelDeciders
+    ) {
         this.inspectionModuleConfig = inspectionModuleConfig;
         this.artifactoryPAPIService = artifactoryPAPIService;
         this.metaDataUpdateService = metaDataUpdateService;
@@ -67,7 +75,7 @@ public class InspectionModule implements Module {
         this.repositoryInitializationService = repositoryInitializationService;
         this.artifactInspectionService = artifactInspectionService;
         this.policySeverityService = policySeverityService;
-        this.cancelDecider = cancelDecider;
+        this.cancelDeciders = cancelDeciders;
     }
 
     @Override
@@ -77,13 +85,13 @@ public class InspectionModule implements Module {
 
     //////////////////////// Upgrade Executions ////////////////////////
 
-    // TODO: Remove upgrades in 9.0.0
+    // TODO: Remove upgrades in 8.0.0
     public void performUpgrades() {
         performComponentNameVersionUpgrade();
         performPolicySeverityUpdate();
     }
 
-    // TODO: Remove in 9.0.0
+    // TODO: Remove in 8.0.0
     public void performComponentNameVersionUpgrade() {
         for (String repoKey : inspectionModuleConfig.getRepos()) {
             List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "*"), repoKey);
@@ -102,6 +110,7 @@ public class InspectionModule implements Module {
         }
     }
 
+    // TODO: Remove upgrades in 8.0.0
     public void performPolicySeverityUpdate() {
         inspectionModuleConfig.getRepos().forEach(policySeverityService::performPolicySeverityUpgrade);
     }
@@ -179,7 +188,7 @@ public class InspectionModule implements Module {
     }
 
     public void handleBeforeDownloadEvent(RepoPath repoPath) {
-        cancelDecider.handleBeforeDownloadEvent(repoPath);
+        cancelDeciders.forEach(cancelDecider -> cancelDecider.handleBeforeDownloadEvent(repoPath));
     }
 
     @Override

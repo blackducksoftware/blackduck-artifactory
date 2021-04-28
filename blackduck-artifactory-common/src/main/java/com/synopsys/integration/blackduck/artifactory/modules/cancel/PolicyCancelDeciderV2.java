@@ -19,24 +19,27 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSe
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 
-public class PolicyCancelDecider implements CancelDecider {
-    private final PolicyModuleConfig policyModuleConfig;
+public class PolicyCancelDeciderV2 implements CancelDecider {
     private final ArtifactoryPropertyService artifactoryPropertyService;
+    private final Boolean policyBlockedEnabled;
+    private final List<String> policyRepos;
+    private final List<PolicyRuleSeverityType> policySeverityTypes;
 
-    public PolicyCancelDecider(PolicyModuleConfig policyModuleConfig, ArtifactoryPropertyService artifactoryPropertyService) {
-        this.policyModuleConfig = policyModuleConfig;
+    public PolicyCancelDeciderV2(ArtifactoryPropertyService artifactoryPropertyService, Boolean policyBlockedEnabled, List<String> policyRepos, List<PolicyRuleSeverityType> policySeverityTypes) {
         this.artifactoryPropertyService = artifactoryPropertyService;
+        this.policyBlockedEnabled = policyBlockedEnabled;
+        this.policyRepos = policyRepos;
+        this.policySeverityTypes = policySeverityTypes;
     }
 
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
-        if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)) {
-            // TODO: Fix in 8.0.0 - IARTH-420
-            // Currently scanned artifacts are not supported because POLICY_STATUS and OVERALL_POLICY_STATUS is used in scans and there is overlap
-            // with inspection using just POLICY_STATUS. Additional work will need to be done to sync these values and a use case for blocking
-            // scanned artifacts has yet to present itself. JM - 08/2019
+        if (Boolean.FALSE.equals(policyBlockedEnabled)) {
+            return CancelDecision.NO_CANCELLATION();
+        }
+
+        if (!policyRepos.contains(repoPath.getRepoKey())) {
             return CancelDecision.NO_CANCELLATION();
         }
 
@@ -51,17 +54,16 @@ public class PolicyCancelDecider implements CancelDecider {
     private CancelDecision getDecisionBasedOnSeverity(RepoPath repoPath) {
         Optional<String> severityTypes = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES);
         if (severityTypes.isPresent()) {
-            List<PolicyRuleSeverityType> severityTypesToBlock = policyModuleConfig.getPolicySeverityTypes();
             List<PolicyRuleSeverityType> matchingSeverityTypes = Arrays.stream(severityTypes.get().split(","))
                                                                      .map(PolicyRuleSeverityType::valueOf)
-                                                                     .filter(severityTypesToBlock::contains)
+                                                                     .filter(policySeverityTypes::contains)
                                                                      .collect(Collectors.toList());
             if (!matchingSeverityTypes.isEmpty()) {
                 String matchingSeverityTypeMessage = StringUtils.join(matchingSeverityTypes, ",");
                 return CancelDecision.CANCEL_DOWNLOAD(String.format("The artifact has policy severities (%s) that are blocked by the plugin.", matchingSeverityTypeMessage));
             }
         } else {
-            // The plugin should populate the severity types on artifacts automatically. But if an artifact is somehow missed, we want to be on the safe side.
+            // The plugin should populate the severity types on artifacts automatically. But if an artifact is somehow missed, we want to err on the side of caution.
             return CancelDecision.CANCEL_DOWNLOAD(String.format("The plugin cannot find the %s property.", BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES.getPropertyName()));
         }
 
