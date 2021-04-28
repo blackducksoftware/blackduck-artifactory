@@ -42,7 +42,6 @@ executions {
      * The names for the propertyReports available are:
      *      ScanModule
      *      InspectionModule
-     *      PolicyModule
      *      AnalyticsModule
      *
      * NOTE: Enabling or disabling an endpoint via this endpoint is only persistent as long as the plugin is loaded.
@@ -55,9 +54,9 @@ executions {
      * This can be triggered with the following curl command for enabling the InspectionModule:
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=InspectionModule=true"
      *
-     * This can be triggered with the following curl command for disabling multiple propertyReports (ScanModule and the PolicyModule):
+     * This can be triggered with the following curl command for disabling multiple propertyReports (ScanModule and the InspectionModule):
      * Note: "%7C" is the url encoding for the pipe '|' character.
-     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false%7CPolicyModule=false"
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSetModuleState?params=ScanModule=false%InspectionModule=false"
      **/
     blackDuckSetModuleState() { params -> pluginAPI.setModuleState(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
     }
