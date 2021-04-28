@@ -21,7 +21,6 @@ import com.synopsys.integration.blackduck.artifactory.configuration.Configuratio
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleProperty;
 
 public class InspectionModuleConfig extends ModuleConfig {
     private final String inspectionCron;
@@ -82,7 +81,7 @@ public class InspectionModuleConfig extends ModuleConfig {
         if (policyRepos.isEmpty()) {
             policyRepos = repos;
         }
-        List<PolicyRuleSeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(PolicyModuleProperty.SEVERITY_TYPES)
+        List<PolicyRuleSeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.POLICY_SEVERITY_TYPES)
                                                                .stream()
                                                                .map(PolicyRuleSeverityType::valueOf)
                                                                .collect(Collectors.toList());
@@ -101,8 +100,8 @@ public class InspectionModuleConfig extends ModuleConfig {
         validateList(propertyGroupReport, InspectionModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
         validateInteger(propertyGroupReport, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
-        validateBoolean(propertyGroupReport, PolicyModuleProperty.ENABLED, isEnabledUnverified());
-        validateList(propertyGroupReport, PolicyModuleProperty.SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
+        validateBoolean(propertyGroupReport, InspectionModuleProperty.POLICY_BLOCK, policyBlockedEnabled);
+        validateList(propertyGroupReport, InspectionModuleProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
     }
 
     public String getInspectionCron() {
