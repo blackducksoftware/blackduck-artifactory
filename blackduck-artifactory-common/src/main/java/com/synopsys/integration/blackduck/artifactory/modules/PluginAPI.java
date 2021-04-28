@@ -24,7 +24,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzab
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -42,15 +41,13 @@ public class PluginAPI implements Analyzable {
     private final ModuleManager moduleManager;
     private final ScanModule scanModule;
     private final InspectionModule inspectionModule;
-    private final PolicyModule policyModule;
     private final AnalyticsModule analyticsModule;
 
-    public PluginAPI(FeatureAnalyticsCollector featureAnalyticsCollector, ModuleManager moduleManager, ScanModule scanModule, InspectionModule inspectionModule, PolicyModule policyModule, AnalyticsModule analyticsModule) {
+    public PluginAPI(FeatureAnalyticsCollector featureAnalyticsCollector, ModuleManager moduleManager, ScanModule scanModule, InspectionModule inspectionModule, AnalyticsModule analyticsModule) {
         this.featureAnalyticsCollector = featureAnalyticsCollector;
         this.moduleManager = moduleManager;
         this.scanModule = scanModule;
         this.inspectionModule = inspectionModule;
-        this.policyModule = policyModule;
         this.analyticsModule = analyticsModule;
     }
 
@@ -156,10 +153,6 @@ public class PluginAPI implements Analyzable {
 
     public void handleBeforeDownloadEventInspection(TriggerType triggerType, RepoPath repoPath) {
         runMethod(inspectionModule, triggerType, repoPath, inspectionModule::handleBeforeDownloadEvent);
-    }
-
-    public void handleBeforeDownloadEventPolicy(TriggerType triggerType, RepoPath repoPath) {
-        runMethod(policyModule, triggerType, repoPath, policyModule::handleBeforeDownloadEvent);
     }
 
     public String submitAnalytics(TriggerType triggerType) {

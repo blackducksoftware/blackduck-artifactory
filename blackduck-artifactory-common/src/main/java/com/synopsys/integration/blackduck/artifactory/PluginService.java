@@ -31,7 +31,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
@@ -88,10 +87,9 @@ public class PluginService {
 
         ScanModule scanModule = moduleFactory.createScanModule();
         InspectionModule inspectionModule = moduleFactory.createInspectionModule();
-        PolicyModule policyModule = moduleFactory.createPolicyModule();
         AnalyticsModule analyticsModule = moduleFactory.createAnalyticsModule(analyticsService, moduleManager);
 
-        moduleManager.registerModules(scanModule, inspectionModule, policyModule, analyticsModule);
+        moduleManager.registerModules(scanModule, inspectionModule, analyticsModule);
 
         configValidationService = new ConfigValidationService(moduleManager, pluginConfig, directoryConfig.getVersionFile());
         ConfigValidationReport configValidationReport = configValidationService.validateConfig();
@@ -104,7 +102,7 @@ public class PluginService {
         logger.warn(statusCheckMessage);
 
         FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PluginAPI.class);
-        PluginAPI pluginAPI = new PluginAPI(featureAnalyticsCollector, moduleManager, scanModule, inspectionModule, policyModule, analyticsModule);
+        PluginAPI pluginAPI = new PluginAPI(featureAnalyticsCollector, moduleManager, scanModule, inspectionModule, analyticsModule);
         analyticsService.registerAnalyzable(pluginAPI);
 
         logger.info("...blackDuckPlugin initialized.");

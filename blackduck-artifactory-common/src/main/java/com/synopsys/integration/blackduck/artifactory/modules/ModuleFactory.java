@@ -21,12 +21,10 @@ import com.synopsys.integration.blackduck.artifactory.configuration.Configuratio
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModuleConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.InspectionCancelDecider;
-import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDeciderV2;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.ScanCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
@@ -52,8 +50,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
@@ -193,13 +189,6 @@ public class ModuleFactory {
             policySeverityService,
             Arrays.asList(inspectionCancelDecider, policyCancelDecider)
         );
-    }
-
-    public PolicyModule createPolicyModule() {
-        PolicyModuleConfig policyModuleConfig = PolicyModuleConfig.createFromProperties(configurationPropertyManager);
-        FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PolicyModule.class);
-        CancelDecider cancelDecider = new PolicyCancelDecider(policyModuleConfig, artifactoryPropertyService);
-        return new PolicyModule(policyModuleConfig, featureAnalyticsCollector, cancelDecider);
     }
 
     public AnalyticsModule createAnalyticsModule(AnalyticsService analyticsService, ModuleManager moduleManager) {

@@ -413,7 +413,6 @@ download {
     //////////////////////////////////////////////// POLICY ENFORCER ////////////////////////////////////////////////
 
     beforeDownload { Request request, RepoPath repoPath ->
-        pluginAPI.handleBeforeDownloadEventPolicy(TriggerType.BEFORE_DOWNLOAD, repoPath)
         pluginAPI.handleBeforeDownloadEventInspection(TriggerType.BEFORE_DOWNLOAD, repoPath)
         pluginAPI.handleBeforeDownloadEventScan(TriggerType.BEFORE_DOWNLOAD, repoPath)
     }
