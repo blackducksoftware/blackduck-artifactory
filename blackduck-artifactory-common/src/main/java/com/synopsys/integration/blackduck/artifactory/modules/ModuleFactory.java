@@ -25,7 +25,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.collecto
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.InspectionCancelDecider;
-import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDeciderV2;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.ScanCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
@@ -176,7 +176,7 @@ public class ModuleFactory {
         RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
         PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckApiClient, blackDuckBOMService, projectService);
         CancelDecider inspectionCancelDecider = new InspectionCancelDecider(inspectionModuleConfig, inspectionPropertyService, artifactInspectionService);
-        CancelDecider policyCancelDecider = new PolicyCancelDeciderV2(artifactoryPropertyService, inspectionModuleConfig.getPolicyBlockedEnabled(), inspectionModuleConfig.getPolicyRepos(), inspectionModuleConfig.getPolicySeverityTypes());
+        CancelDecider policyCancelDecider = new PolicyCancelDecider(artifactoryPropertyService, inspectionModuleConfig.getPolicyBlockedEnabled(), inspectionModuleConfig.getPolicyRepos(), inspectionModuleConfig.getPolicySeverityTypes());
 
         return new InspectionModule(inspectionModuleConfig,
             artifactoryPAPIService,
