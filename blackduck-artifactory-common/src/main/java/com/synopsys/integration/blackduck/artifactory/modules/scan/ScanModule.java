@@ -9,6 +9,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.scan;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class ScanModule implements Module {
     private final PostScanActionsService postScanActionsService;
     private final ScanPropertyService scanPropertyService;
     private final ScannerDirectoryUtil scannerDirectoryUtil;
-    private final CancelDecider cancelDecider;
+    private final Collection<CancelDecider> cancelDeciders;
 
     public ScanModule(
         ScanModuleConfig scanModuleConfig,
@@ -62,7 +63,7 @@ public class ScanModule implements Module {
         PostScanActionsService postScanActionsService,
         ScanPropertyService scanPropertyService,
         ScannerDirectoryUtil scannerDirectoryUtil,
-        CancelDecider cancelDecider
+        Collection<CancelDecider> cancelDeciders
     ) {
         this.scanModuleConfig = scanModuleConfig;
         this.repositoryIdentificationService = repositoryIdentificationService;
@@ -73,7 +74,7 @@ public class ScanModule implements Module {
         this.postScanActionsService = postScanActionsService;
         this.scanPropertyService = scanPropertyService;
         this.scannerDirectoryUtil = scannerDirectoryUtil;
-        this.cancelDecider = cancelDecider;
+        this.cancelDeciders = cancelDeciders;
     }
 
     @Override
@@ -154,7 +155,7 @@ public class ScanModule implements Module {
     }
 
     public void handleBeforeDownloadEvent(RepoPath repoPath) {
-        cancelDecider.handleBeforeDownloadEvent(repoPath);
+        cancelDeciders.forEach(cancelDecider -> cancelDecider.handleBeforeDownloadEvent(repoPath));
     }
 
     @Override

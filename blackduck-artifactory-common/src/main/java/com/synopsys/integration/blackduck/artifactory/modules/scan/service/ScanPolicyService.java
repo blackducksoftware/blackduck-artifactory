@@ -7,13 +7,18 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.scan.service;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.artifactory.repo.RepoPath;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionPolicyStatusView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
@@ -87,12 +92,21 @@ public class ScanPolicyService {
             }
 
             ProjectVersionPolicyStatusView projectVersionPolicyStatusView = projectVersionPolicyStatusViewOptional.get();
+
             logger.debug(String.format("Policy status json for %s is: %s", repoPath.toPath(), projectVersionPolicyStatusView.getJson()));
             PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(projectVersionPolicyStatusView);
             String patchedPolicyStatusMessage = policyStatusDescription.getPolicyStatusMessage();
+            List<PolicyRuleSeverityType> severityTypes = Arrays.stream(PolicyRuleSeverityType.values())
+                                                             .filter(severityType -> {
+                                                                 int countOfSeverity = policyStatusDescription.getCountOfSeverity(severityType);
+                                                                 return countOfSeverity > 0;
+                                                             })
+                                                             .collect(Collectors.toList());
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS, patchedPolicyStatusMessage, logger);
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, projectVersionPolicyStatusView.getOverallStatus().toString(), logger);
+            artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES, StringUtils.join(severityTypes, ","), logger);
             logger.info(String.format("Updated policy status of %s: %s", repoPath.getName(), repoPath.toPath()));
+
             artifactoryPropertyService.setProperty(repoPath, BlackDuckArtifactoryProperty.UPDATE_STATUS, UpdateStatus.UP_TO_DATE.toString(), logger);
             artifactoryPropertyService.setPropertyFromDate(repoPath, BlackDuckArtifactoryProperty.LAST_UPDATE, new Date(), logger);
             success = true;

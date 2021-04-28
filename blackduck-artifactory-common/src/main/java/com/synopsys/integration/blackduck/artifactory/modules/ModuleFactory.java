@@ -114,6 +114,7 @@ public class ModuleFactory {
         PostScanActionsService postScanActionsService = new PostScanActionsService(artifactoryPropertyService, projectService);
         ScanPropertyService scanPropertyService = new ScanPropertyService(artifactoryPAPIService, dateTimeManager);
         ScanCancelDecider scanCancelDecider = new ScanCancelDecider(scanModuleConfig, scanPropertyService, artifactoryPAPIService);
+        PolicyCancelDecider policyCancelDecider = new PolicyCancelDecider(artifactoryPropertyService, scanModuleConfig.getPolicyBlockedEnabled(), scanModuleConfig.getPolicyRepos(), scanModuleConfig.getPolicySeverityTypes());
         return new ScanModule(
             scanModuleConfig,
             repositoryIdentificationService,
@@ -124,7 +125,7 @@ public class ModuleFactory {
             postScanActionsService,
             scanPropertyService,
             scannerDirectoryUtil,
-            scanCancelDecider
+            Arrays.asList(scanCancelDecider, policyCancelDecider)
         );
     }
 

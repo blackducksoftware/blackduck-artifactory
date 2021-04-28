@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
@@ -31,6 +32,9 @@ public class ScanModuleConfig extends ModuleConfig {
     private final List<String> repos;
     private final Boolean codelocationIncludeHostname;
     private final Boolean metadataBlockEnabled;
+    private final Boolean policyBlockedEnabled;
+    private final List<String> policyRepos;
+    private final List<PolicyRuleSeverityType> policySeverityTypes;
 
     private final DateTimeManager dateTimeManager;
 
@@ -46,6 +50,9 @@ public class ScanModuleConfig extends ModuleConfig {
         List<String> repos,
         Boolean codelocationIncludeHostname,
         Boolean metadataBlockEnabled,
+        Boolean policyBlockedEnabled,
+        List<String> policyRepos,
+        List<PolicyRuleSeverityType> policySeverityTypes,
         DateTimeManager dateTimeManager
     ) {
         super(ScanModule.class.getSimpleName(), enabled);
@@ -59,6 +66,9 @@ public class ScanModuleConfig extends ModuleConfig {
         this.repos = repos;
         this.codelocationIncludeHostname = codelocationIncludeHostname;
         this.metadataBlockEnabled = metadataBlockEnabled;
+        this.policyBlockedEnabled = policyBlockedEnabled;
+        this.policyRepos = policyRepos;
+        this.policySeverityTypes = policySeverityTypes;
         this.dateTimeManager = dateTimeManager;
     }
 
@@ -81,7 +91,38 @@ public class ScanModuleConfig extends ModuleConfig {
         Boolean codelocationIncludeHostname = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.CODELOCATION_INCLUDE_HOSTNAME);
         Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.METADATA_BLOCK);
 
-        return new ScanModuleConfig(enabled, cron, binariesDirectoryPath, artifactCutoffDate, dryRun, namePatterns, memory, repoPathCodelocation, repos, codelocationIncludeHostname, metadataBlockEnabled, dateTimeManager);
+        // Policy properties
+        Boolean policyBlockedEnabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.POLICY_BLOCK);
+        List<String> policyRepos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.POLICY_REPOS, ScanModuleProperty.POLICY_REPOS_CSV_PATH)
+                                       .stream()
+                                       .filter(artifactoryPAPIService::isValidRepository)
+                                       .filter(repos::contains)
+                                       .collect(Collectors.toList());
+        if (policyRepos.isEmpty()) {
+            policyRepos = repos;
+        }
+        List<PolicyRuleSeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(ScanModuleProperty.POLICY_SEVERITY_TYPES)
+                                                               .stream()
+                                                               .map(PolicyRuleSeverityType::valueOf)
+                                                               .collect(Collectors.toList());
+
+        return new ScanModuleConfig(
+            enabled,
+            cron,
+            binariesDirectoryPath,
+            artifactCutoffDate,
+            dryRun,
+            namePatterns,
+            memory,
+            repoPathCodelocation,
+            repos,
+            codelocationIncludeHostname,
+            metadataBlockEnabled,
+            policyBlockedEnabled,
+            policyRepos,
+            policySeverityTypes,
+            dateTimeManager
+        );
     }
 
     @Override
@@ -96,6 +137,8 @@ public class ScanModuleConfig extends ModuleConfig {
         validateList(propertyGroupReport, ScanModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", ScanModuleProperty.REPOS.getKey(), ScanModuleProperty.REPOS_CSV_PATH.getKey()));
         validateBoolean(propertyGroupReport, ScanModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
+        validateBoolean(propertyGroupReport, ScanModuleProperty.POLICY_BLOCK, policyBlockedEnabled);
+        validateList(propertyGroupReport, ScanModuleProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
     }
 
     public String getCron() {
@@ -120,6 +163,18 @@ public class ScanModuleConfig extends ModuleConfig {
 
     public Integer getMemory() {
         return memory;
+    }
+
+    public Boolean getPolicyBlockedEnabled() {
+        return policyBlockedEnabled;
+    }
+
+    public List<String> getPolicyRepos() {
+        return policyRepos;
+    }
+
+    public List<PolicyRuleSeverityType> getPolicySeverityTypes() {
+        return policySeverityTypes;
     }
 
     public Boolean getRepoPathCodelocation() {
