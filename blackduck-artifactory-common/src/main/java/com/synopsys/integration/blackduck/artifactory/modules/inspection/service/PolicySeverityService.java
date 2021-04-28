@@ -27,7 +27,6 @@ import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProper
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
 import com.synopsys.integration.blackduck.service.BlackDuckApiClient;
 import com.synopsys.integration.blackduck.service.dataservice.ProjectService;
 import com.synopsys.integration.blackduck.service.model.ProjectVersionWrapper;
@@ -78,7 +77,7 @@ public class PolicySeverityService {
                 logger.warn(String.format("Repo '%s' does not exist in Black Duck. Assuming initialization has not been run. Policy Severity Upgrade not applied.", repoKey));
             }
         } catch (IntegrationException e) {
-            logger.error(String.format("Failed to perform the policy severity upgrade for repo '%s'. The %s may not work as expected.", repoKey, PolicyModule.class.getSimpleName()), e);
+            logger.error(String.format("Failed to perform the policy severity upgrade for repo '%s'. Blocking downloads by policy may not work as expected.", repoKey), e);
         }
     }
 
