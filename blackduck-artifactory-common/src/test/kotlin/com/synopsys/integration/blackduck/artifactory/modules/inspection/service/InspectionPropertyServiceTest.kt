@@ -14,7 +14,8 @@ import com.nhaarman.mockitokotlin2.whenever
 import com.synopsys.integration.blackduck.api.core.ResourceLink
 import com.synopsys.integration.blackduck.api.core.ResourceMetadata
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType
+import com.synopsys.integration.blackduck.api.generated.enumeration.VulnerabilitySeverityType
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView
 import com.synopsys.integration.blackduck.artifactory.*
 import com.synopsys.integration.blackduck.artifactory.TestUtil.createMockArtifactoryPAPIService
@@ -29,15 +30,14 @@ import org.artifactory.repo.RepoPath
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.util.*
-import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType as SeverityType
 
 
 class InspectionPropertyServiceTest {
     private fun createInspectionPropertyService(
-            artifactoryPAPIService: ArtifactoryPAPIService,
-            dateTimeManager: DateTimeManager = mock(),
-            pluginRepoPathFactory: PluginRepoPathFactory = PluginRepoPathFactory(false),
-            retryCount: Int = 5
+        artifactoryPAPIService: ArtifactoryPAPIService,
+        dateTimeManager: DateTimeManager = mock(),
+        pluginRepoPathFactory: PluginRepoPathFactory = PluginRepoPathFactory(false),
+        retryCount: Int = 5
     ): InspectionPropertyService {
         return InspectionPropertyService(artifactoryPAPIService, dateTimeManager, pluginRepoPathFactory, retryCount)
     }
@@ -85,7 +85,7 @@ class InspectionPropertyServiceTest {
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         val repoPath = createRepoPath()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
+            BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
         )
 
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
@@ -100,8 +100,8 @@ class InspectionPropertyServiceTest {
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         val repoPath = createRepoPath()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.FAILURE.name,
-                BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT.propertyName to "3"
+            BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.FAILURE.name,
+            BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT.propertyName to "3"
         )
 
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
@@ -118,8 +118,8 @@ class InspectionPropertyServiceTest {
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         val repoPath = createRepoPath()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.FAILURE.name,
-                BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT.propertyName to "5"
+            BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.FAILURE.name,
+            BlackDuckArtifactoryProperty.INSPECTION_RETRY_COUNT.propertyName to "5"
         )
 
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
@@ -140,10 +140,10 @@ class InspectionPropertyServiceTest {
 
         val vulnerabilityAggregate = VulnerabilityAggregate(
             mapOf(
-                SeverityType.CRITICAL to 0,
-                SeverityType.HIGH to 1,
-                SeverityType.MEDIUM to 2,
-                SeverityType.LOW to 3
+                VulnerabilitySeverityType.CRITICAL to 0,
+                VulnerabilitySeverityType.HIGH to 1,
+                VulnerabilitySeverityType.MEDIUM to 2,
+                VulnerabilitySeverityType.LOW to 3
             )
         )
 
@@ -173,13 +173,13 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val policyStatusReport = PolicyStatusReport(PolicyStatusType.IN_VIOLATION, listOf(PolicyRuleSeverityType.MAJOR, PolicyRuleSeverityType.TRIVIAL))
+        val policyStatusReport = PolicyStatusReport(ProjectVersionComponentPolicyStatusType.IN_VIOLATION, listOf(PolicyRuleSeverityType.MAJOR, PolicyRuleSeverityType.TRIVIAL))
 
         inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport)
 
         val policyStatusProperty = BlackDuckArtifactoryProperty.POLICY_STATUS.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property is missing.")
-        Assertions.assertEquals(PolicyStatusType.IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
+        Assertions.assertEquals(ProjectVersionComponentPolicyStatusType.IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
 
         val severityTypesProperty = BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![severityTypesProperty], "The $severityTypesProperty property is missing.")
@@ -193,12 +193,12 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        val policyStatusReport = PolicyStatusReport(PolicyStatusType.NOT_IN_VIOLATION, listOf())
+        val policyStatusReport = PolicyStatusReport(ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION, listOf())
         inspectionPropertyService.setPolicyProperties(repoPath, policyStatusReport)
 
         val policyStatusProperty = BlackDuckArtifactoryProperty.POLICY_STATUS.propertyName
         Assertions.assertNotNull(repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property is missing.")
-        Assertions.assertEquals(PolicyStatusType.NOT_IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
+        Assertions.assertEquals(ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION.name, repoPathPropertyMap[repoPath]!![policyStatusProperty], "The $policyStatusProperty property was set incorrectly.")
 
         val severityTypesProperty = BlackDuckArtifactoryProperty.POLICY_SEVERITY_TYPES.propertyName
         Assertions.assertNull(repoPathPropertyMap[repoPath]!![severityTypesProperty], "The $severityTypesProperty exists even though there or no PolicySeverityTypes in the PolicyStatusReport.")
@@ -223,7 +223,7 @@ class InspectionPropertyServiceTest {
         val repoPath = createRepoPath()
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
+            BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
         )
 
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
@@ -291,7 +291,7 @@ class InspectionPropertyServiceTest {
         val repoPath = createRepoPath()
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
+            BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
         )
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
@@ -306,7 +306,7 @@ class InspectionPropertyServiceTest {
         val repoPath = createRepoPath()
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
+            BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
         )
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
@@ -323,16 +323,16 @@ class InspectionPropertyServiceTest {
         val repoPathNoProperties = createRepoPath("test/no-properties")
         val inspectionStatusProperty = BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>(
-                repoPathSuccess to mutableMapOf(
-                        inspectionStatusProperty to InspectionStatus.SUCCESS.name
-                ),
-                repoPathPending to mutableMapOf(
-                        inspectionStatusProperty to InspectionStatus.PENDING.name
-                ),
-                repoPathFailure to mutableMapOf(
-                        inspectionStatusProperty to InspectionStatus.FAILURE.name
-                ),
-                repoPathNoProperties to mutableMapOf()
+            repoPathSuccess to mutableMapOf(
+                inspectionStatusProperty to InspectionStatus.SUCCESS.name
+            ),
+            repoPathPending to mutableMapOf(
+                inspectionStatusProperty to InspectionStatus.PENDING.name
+            ),
+            repoPathFailure to mutableMapOf(
+                inspectionStatusProperty to InspectionStatus.FAILURE.name
+            ),
+            repoPathNoProperties to mutableMapOf()
         )
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
@@ -350,7 +350,7 @@ class InspectionPropertyServiceTest {
         val repoPath = createRepoPath()
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
+            BlackDuckArtifactoryProperty.INSPECTION_STATUS.propertyName to InspectionStatus.SUCCESS.name
         )
 
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
@@ -375,7 +375,7 @@ class InspectionPropertyServiceTest {
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPathWithNoName] = mutableMapOf()
         repoPathPropertyMap[repoPathWithName] = mutableMapOf(
-                BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.propertyName to "project-name"
+            BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_NAME.propertyName to "project-name"
         )
 
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
@@ -395,7 +395,7 @@ class InspectionPropertyServiceTest {
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPathWithNoVersion] = mutableMapOf()
         repoPathPropertyMap[repoPathWithVersion] = mutableMapOf(
-                BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.propertyName to "project-version-name"
+            BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME.propertyName to "project-version-name"
         )
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
@@ -446,7 +446,7 @@ class InspectionPropertyServiceTest {
         val repoPath = createRepoPath("test-repo-1")
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName to "last-update"
+            BlackDuckArtifactoryProperty.LAST_UPDATE.propertyName to "last-update"
         )
         val dateTimeManager = mock<DateTimeManager>()
         val expectedDate = Date()
@@ -465,7 +465,7 @@ class InspectionPropertyServiceTest {
         val repoPath = createRepoPath("test-repo-1")
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         repoPathPropertyMap[repoPath] = mutableMapOf(
-                BlackDuckArtifactoryProperty.LAST_INSPECTION.propertyName to "last-update"
+            BlackDuckArtifactoryProperty.LAST_INSPECTION.propertyName to "last-update"
         )
         val dateTimeManager = mock<DateTimeManager>()
         val expectedDate = Date()

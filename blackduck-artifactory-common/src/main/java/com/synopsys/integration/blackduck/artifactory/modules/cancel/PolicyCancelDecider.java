@@ -16,7 +16,7 @@ import org.apache.commons.lang.StringUtils;
 import org.artifactory.repo.RepoPath;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 
@@ -51,8 +51,8 @@ public class PolicyCancelDecider implements CancelDecider {
             policyStatusProperty = BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS;
         }
 
-        Optional<PolicyStatusType> inViolationProperty = getPolicyStatus(repoPath, policyStatusProperty);
-        if (inViolationProperty.isPresent() && PolicyStatusType.IN_VIOLATION.equals(inViolationProperty.get())) {
+        Optional<ProjectVersionComponentPolicyStatusType> inViolationProperty = getPolicyStatus(repoPath, policyStatusProperty);
+        if (inViolationProperty.isPresent() && ProjectVersionComponentPolicyStatusType.IN_VIOLATION.equals(inViolationProperty.get())) {
             return getDecisionBasedOnSeverity(repoPath);
         }
 
@@ -78,9 +78,9 @@ public class PolicyCancelDecider implements CancelDecider {
         return CancelDecision.NO_CANCELLATION();
     }
 
-    private Optional<PolicyStatusType> getPolicyStatus(RepoPath repoPath, BlackDuckArtifactoryProperty policyStatusProperty) {
+    private Optional<ProjectVersionComponentPolicyStatusType> getPolicyStatus(RepoPath repoPath, BlackDuckArtifactoryProperty policyStatusProperty) {
         return artifactoryPropertyService.getProperty(repoPath, policyStatusProperty)
-                   .map(PolicyStatusType::valueOf)
-                   .filter(it -> it.equals(PolicyStatusType.IN_VIOLATION));
+                   .map(ProjectVersionComponentPolicyStatusType::valueOf)
+                   .filter(it -> it.equals(ProjectVersionComponentPolicyStatusType.IN_VIOLATION));
     }
 }

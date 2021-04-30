@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
 import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionStatus;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationNotificationContent;
@@ -31,7 +31,7 @@ class PolicyViolationProcessorTest {
     @Test
     void processPolicyViolationNotifications() throws IntegrationException {
         PolicyNotificationService policyNotificationService = Mockito.mock(PolicyNotificationService.class);
-        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(PolicyStatusType.IN_VIOLATION);
+        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(ProjectVersionComponentPolicyStatusType.IN_VIOLATION);
 
         RepositoryProjectNameLookup repositoryFilter = Mockito.mock(RepositoryProjectNameLookup.class);
         RepoPath repoPath = new PluginRepoPathFactory(false).create("repo-1");
@@ -61,6 +61,6 @@ class PolicyViolationProcessorTest {
         Assertions.assertEquals("component-version-name-1.0", processedPolicyNotification.getComponentVersionName());
         Assertions.assertEquals(Collections.singletonList(repoPath), processedPolicyNotification.getAffectedRepoKeyPaths());
         Assertions.assertEquals(Collections.singletonList(PolicyRuleSeverityType.UNSPECIFIED), processedPolicyNotification.getPolicyStatusReport().getPolicyRuleSeverityTypes());
-        Assertions.assertEquals(PolicyStatusType.IN_VIOLATION, processedPolicyNotification.getPolicyStatusReport().getPolicyStatusType());
+        Assertions.assertEquals(ProjectVersionComponentPolicyStatusType.IN_VIOLATION, processedPolicyNotification.getPolicyStatusReport().getPolicyStatusType());
     }
 }

@@ -133,7 +133,7 @@ public class ModuleFactory {
         InspectionModuleConfig inspectionModuleConfig = InspectionModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
         SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
-        BlackDuckApiClient blackDuckApiClient = blackDuckServicesFactory.getBlackDuckService();
+        BlackDuckApiClient blackDuckApiClient = blackDuckServicesFactory.getBlackDuckApiClient();
         ComponentService componentService = blackDuckServicesFactory.createComponentService();
         ProjectService projectService = blackDuckServicesFactory.createProjectService();
         ProjectBomService projectBomService = blackDuckServicesFactory.createProjectBomService();

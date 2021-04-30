@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.VulnerabilitySeverityType;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactSearchService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
@@ -63,7 +63,7 @@ class ArtifactNotificationServiceTest {
         String policyOverrideComponentName = "policy-override-component";
         String policyOverrideComponentVersion = "1.0";
         RepoPath policyOverrideComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyOverrideComponentName);
-        PolicyStatusReport policyOverrideStatusReport = new PolicyStatusReport(PolicyStatusType.IN_VIOLATION_OVERRIDDEN, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
+        PolicyStatusReport policyOverrideStatusReport = new PolicyStatusReport(ProjectVersionComponentPolicyStatusType.IN_VIOLATION_OVERRIDDEN, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
         ProcessedPolicyNotification processedPolicyOverrideNotification = new ProcessedPolicyNotification(policyOverrideComponentName, policyOverrideComponentVersion, policyOverrideStatusReport, toBeAffectedRepoKeys);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyOverrideComponentName, policyOverrideComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyOverrideComponentRepoPath));
@@ -71,7 +71,7 @@ class ArtifactNotificationServiceTest {
         String policyClearedComponentName = "policy-cleared-component";
         String policyClearedComponentVersion = "2.0";
         RepoPath policyClearedComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyClearedComponentName);
-        PolicyStatusReport policyClearedStatusReport = new PolicyStatusReport(PolicyStatusType.NOT_IN_VIOLATION, Collections.emptyList());
+        PolicyStatusReport policyClearedStatusReport = new PolicyStatusReport(ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION, Collections.emptyList());
         ProcessedPolicyNotification processedPolicyClearedNotification = new ProcessedPolicyNotification(policyClearedComponentName, policyClearedComponentVersion, policyClearedStatusReport, toBeAffectedRepoKeys);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyClearedComponentName, policyClearedComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyClearedComponentRepoPath));
@@ -79,7 +79,7 @@ class ArtifactNotificationServiceTest {
         String policyViolationComponentName = "policy-violation-component";
         String policyViolationComponentVersion = "3.0";
         RepoPath policyViolationComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyViolationComponentName);
-        PolicyStatusReport policyViolationStatusReport = new PolicyStatusReport(PolicyStatusType.IN_VIOLATION, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
+        PolicyStatusReport policyViolationStatusReport = new PolicyStatusReport(ProjectVersionComponentPolicyStatusType.IN_VIOLATION, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
         ProcessedPolicyNotification processedPolicyViolationNotification = new ProcessedPolicyNotification(policyViolationComponentName, policyViolationComponentVersion, policyViolationStatusReport, toBeAffectedRepoKeys);
         Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyViolationComponentName, policyViolationComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyViolationComponentRepoPath));
@@ -88,11 +88,11 @@ class ArtifactNotificationServiceTest {
         String vulnerableComponentVersion = "4.0";
         RepoPath vulnerableComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), vulnerableComponentName);
 
-        HashMap<ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType, Integer> severityMap = new HashMap<>();
-        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.CRITICAL, 4);
-        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.HIGH, 3);
-        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.MEDIUM, 2);
-        severityMap.put(ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.LOW, 1);
+        HashMap<VulnerabilitySeverityType, Integer> severityMap = new HashMap<>();
+        severityMap.put(VulnerabilitySeverityType.CRITICAL, 4);
+        severityMap.put(VulnerabilitySeverityType.HIGH, 3);
+        severityMap.put(VulnerabilitySeverityType.MEDIUM, 2);
+        severityMap.put(VulnerabilitySeverityType.LOW, 1);
         VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(severityMap);
 
         ProcessedVulnerabilityNotification processedVulnerabilityNotification = new ProcessedVulnerabilityNotification(vulnerableComponentName, vulnerableComponentVersion, toBeAffectedRepoKeys, vulnerabilityAggregate);

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.synopsys.integration.blackduck.api.generated.discovery.ApiDiscovery;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentPolicyStatusView;
 import com.synopsys.integration.blackduck.api.generated.view.UserView;
 import com.synopsys.integration.blackduck.api.manual.enumeration.NotificationType;
@@ -67,7 +67,7 @@ public class PolicyNotificationService {
         return notificationService.getFilteredUserNotifications(currentUser, startDate, endDate, Collections.singletonList(notificationType.toString()));
     }
 
-    public PolicyStatusType fetchApprovalStatus(String bomComponentVersionPolicyStatus) throws IntegrationException {
+    public ProjectVersionComponentPolicyStatusType fetchApprovalStatus(String bomComponentVersionPolicyStatus) throws IntegrationException {
         HttpUrl componentPolicyStatusViewUrl = new HttpUrl(bomComponentVersionPolicyStatus);
         ComponentPolicyStatusView policyStatus = blackDuckApiClient.getResponse(componentPolicyStatusViewUrl, ComponentPolicyStatusView.class);
         return policyStatus.getApprovalStatus();

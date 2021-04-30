@@ -15,7 +15,7 @@ import java.util.Optional;
 import org.artifactory.repo.RepoPath;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
@@ -46,7 +46,7 @@ public class PolicyOverrideProcessor {
         Optional<RepoPath> repoKeyPath = repositoryProjectNameLookup.getRepoKeyPath(content.getProjectName(), content.getProjectVersionName());
         if (repoKeyPath.isPresent()) {
             List<PolicyRuleSeverityType> policySeverityTypes = ProcessorUtil.convertPolicyInfo(content.getPolicyInfos());
-            PolicyStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(content.getBomComponentVersionPolicyStatus());
+            ProjectVersionComponentPolicyStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(content.getBomComponentVersionPolicyStatus());
             PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
             processedPolicyNotification = new ProcessedPolicyNotification(content.getComponentName(), content.getComponentVersionName(), policyStatusReport, Collections.singletonList(repoKeyPath.get()));

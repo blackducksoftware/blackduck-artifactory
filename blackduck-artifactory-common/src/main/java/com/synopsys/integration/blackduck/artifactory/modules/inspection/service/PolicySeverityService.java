@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
-import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyStatusType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentPolicyRulesView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionComponentView;
 import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
@@ -61,11 +61,11 @@ public class PolicySeverityService {
             if (projectVersionWrapper.isPresent()) {
                 SetMultimap<String, String> inViolationPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
                                                                          .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
-                                                                         .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicyStatusType.IN_VIOLATION.name())
+                                                                         .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), ProjectVersionComponentPolicyStatusType.IN_VIOLATION.name())
                                                                          .build();
                 SetMultimap<String, String> overriddenPropertyMap = new ImmutableSetMultimap.Builder<String, String>()
                                                                         .put(BlackDuckArtifactoryProperty.INSPECTION_STATUS.getPropertyName(), InspectionStatus.SUCCESS.name())
-                                                                        .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), PolicyStatusType.IN_VIOLATION_OVERRIDDEN.name())
+                                                                        .put(BlackDuckArtifactoryProperty.POLICY_STATUS.getPropertyName(), ProjectVersionComponentPolicyStatusType.IN_VIOLATION_OVERRIDDEN.name())
                                                                         .build();
                 List<RepoPath> repoPathsFound = new ArrayList<>();
                 repoPathsFound.addAll(artifactoryPropertyService.getItemsContainingPropertiesAndValues(inViolationPropertyMap, repoKey));
@@ -90,7 +90,7 @@ public class PolicySeverityService {
             List<ComponentPolicyRulesView> versionBomPolicyRuleViews;
             versionBomPolicyRuleViews = blackDuckApiClient.getAllResponses(projectVersionComponentView, ProjectVersionComponentView.POLICY_RULES_LINK_RESPONSE);
 
-            PolicyStatusType policyStatus = projectVersionComponentView.getPolicyStatus();
+            ProjectVersionComponentPolicyStatusType policyStatus = projectVersionComponentView.getPolicyStatus();
             List<PolicyRuleSeverityType> policySeverityTypes = versionBomPolicyRuleViews.stream()
                                                                    .map(ComponentPolicyRulesView::getSeverity)
                                                                    .collect(Collectors.toList());

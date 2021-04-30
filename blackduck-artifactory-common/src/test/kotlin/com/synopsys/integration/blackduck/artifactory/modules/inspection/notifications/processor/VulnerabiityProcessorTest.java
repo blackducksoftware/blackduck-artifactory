@@ -19,7 +19,7 @@ import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.api.core.ResourceLink;
 import com.synopsys.integration.blackduck.api.core.ResourceMetadata;
-import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType;
+import com.synopsys.integration.blackduck.api.generated.enumeration.VulnerabilitySeverityType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
 import com.synopsys.integration.blackduck.api.manual.component.AffectedProjectVersion;
@@ -84,7 +84,7 @@ class VulnerabiityProcessorTest {
 
     private VulnerabilityView createView(String severity) {
         VulnerabilityView vulnerabilityView = new VulnerabilityView();
-        ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType severityType = ProjectVersionVulnerableBomComponentsItemsVulnerabilityWithRemediationSeverityType.valueOf(severity);
+        VulnerabilitySeverityType severityType = VulnerabilitySeverityType.valueOf(severity);
         vulnerabilityView.setSeverity(severityType);
         return vulnerabilityView;
     }
