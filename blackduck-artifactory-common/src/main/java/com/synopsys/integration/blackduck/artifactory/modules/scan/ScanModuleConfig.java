@@ -38,6 +38,7 @@ public class ScanModuleConfig extends ModuleConfig {
 
     private final DateTimeManager dateTimeManager;
 
+    // TODO: Constructing a ScanModule config is getting complicated and would likely benefit from a builder. IARTH-443 - JM 04/2021
     public ScanModuleConfig(
         Boolean enabled,
         String cron,
@@ -138,6 +139,7 @@ public class ScanModuleConfig extends ModuleConfig {
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", ScanModuleProperty.REPOS.getKey(), ScanModuleProperty.REPOS_CSV_PATH.getKey()));
         validateBoolean(propertyGroupReport, ScanModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
         validateBoolean(propertyGroupReport, ScanModuleProperty.POLICY_BLOCK, policyBlockedEnabled);
+        validateList(propertyGroupReport, ScanModuleProperty.POLICY_REPOS, policyRepos, "No valid repositories are configured for policy blocking.");
         validateList(propertyGroupReport, ScanModuleProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
     }
 

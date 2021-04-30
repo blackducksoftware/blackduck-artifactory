@@ -33,6 +33,7 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final List<String> policyRepos;
     private final List<PolicyRuleSeverityType> policySeverityTypes;
 
+    // TODO: Constructing a InspectionModuleConfig config is getting complicated and would likely benefit from a builder. IARTH-443 - JM 04/2021
     public InspectionModuleConfig(
         Boolean enabled,
         String blackDuckIdentifyArtifactsCron,
