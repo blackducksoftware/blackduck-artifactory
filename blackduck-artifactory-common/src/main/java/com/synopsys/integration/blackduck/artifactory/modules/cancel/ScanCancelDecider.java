@@ -35,7 +35,7 @@ public class ScanCancelDecider implements CancelDecider {
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
         boolean metadataBlockDisabled = FALSE.equals(scanModuleConfig.isMetadataBlockEnabled());
-        boolean shouldNotScanRepository = !scanModuleConfig.getRepos().contains(repoPath.getRepoKey()); // TODO: This should be a call to another service - JM 04/2021
+        boolean shouldNotScanRepository = !scanModuleConfig.getRepos().contains(repoPath.getRepoKey());
         if (metadataBlockDisabled || shouldNotScanRepository) {
             return CancelDecision.NO_CANCELLATION();
         }

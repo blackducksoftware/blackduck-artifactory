@@ -35,14 +35,6 @@ public class PolicyCancelDecider implements CancelDecider {
 
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
-        if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)) {
-            // TODO: Fix in 8.0.0 - IARTH-420
-            // Currently scanned artifacts are not supported because POLICY_STATUS and OVERALL_POLICY_STATUS is used in scans and there is overlap
-            // with inspection using just POLICY_STATUS. Additional work will need to be done to sync these values and a use case for blocking
-            // scanned artifacts has yet to present itself. JM - 08/2019
-            return CancelDecision.NO_CANCELLATION();
-        }
-
         if (Boolean.FALSE.equals(policyBlockedEnabled)) {
             return CancelDecision.NO_CANCELLATION();
         }
@@ -51,7 +43,15 @@ public class PolicyCancelDecider implements CancelDecider {
             return CancelDecision.NO_CANCELLATION();
         }
 
-        Optional<PolicyStatusType> inViolationProperty = getPolicyStatus(repoPath, BlackDuckArtifactoryProperty.POLICY_STATUS);
+        BlackDuckArtifactoryProperty policyStatusProperty = BlackDuckArtifactoryProperty.POLICY_STATUS;
+        if (artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_TIME)) {
+            if (!artifactoryPropertyService.hasProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)) {
+                return CancelDecision.CANCEL_DOWNLOAD("This artifact is still being scanned. The artifact will not be able to be downloaded until the scan and post-scan actions have completed.");
+            }
+            policyStatusProperty = BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS;
+        }
+
+        Optional<PolicyStatusType> inViolationProperty = getPolicyStatus(repoPath, policyStatusProperty);
         if (inViolationProperty.isPresent() && PolicyStatusType.IN_VIOLATION.equals(inViolationProperty.get())) {
             return getDecisionBasedOnSeverity(repoPath);
         }
