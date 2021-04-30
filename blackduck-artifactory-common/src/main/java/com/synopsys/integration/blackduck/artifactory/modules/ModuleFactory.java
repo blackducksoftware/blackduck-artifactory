@@ -8,6 +8,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.google.gson.Gson;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
@@ -20,7 +21,6 @@ import com.synopsys.integration.blackduck.artifactory.configuration.Configuratio
 import com.synopsys.integration.blackduck.artifactory.configuration.DirectoryConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModule;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.AnalyticsModuleConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.SimpleAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
@@ -50,8 +50,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModule;
-import com.synopsys.integration.blackduck.artifactory.modules.policy.PolicyModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
@@ -177,17 +175,20 @@ public class ModuleFactory {
         MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
         PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckApiClient, blackDuckBOMService, projectService);
-        CancelDecider cancelDecider = new InspectionCancelDecider(inspectionModuleConfig, inspectionPropertyService, artifactInspectionService);
+        CancelDecider inspectionCancelDecider = new InspectionCancelDecider(inspectionModuleConfig, inspectionPropertyService, artifactInspectionService);
+        CancelDecider policyCancelDecider = new PolicyCancelDecider(artifactoryPropertyService, inspectionModuleConfig.getPolicyBlockedEnabled(), inspectionModuleConfig.getPolicyRepos(), inspectionModuleConfig.getPolicySeverityTypes());
 
-        return new InspectionModule(inspectionModuleConfig, artifactoryPAPIService, metaDataUpdateService, artifactoryPropertyService, inspectionPropertyService,
-            simpleAnalyticsCollector, repositoryInitializationService, artifactInspectionService, policySeverityService, cancelDecider);
-    }
-
-    public PolicyModule createPolicyModule() {
-        PolicyModuleConfig policyModuleConfig = PolicyModuleConfig.createFromProperties(configurationPropertyManager);
-        FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PolicyModule.class);
-        CancelDecider cancelDecider = new PolicyCancelDecider(policyModuleConfig, artifactoryPropertyService);
-        return new PolicyModule(policyModuleConfig, featureAnalyticsCollector, cancelDecider);
+        return new InspectionModule(inspectionModuleConfig,
+            artifactoryPAPIService,
+            metaDataUpdateService,
+            artifactoryPropertyService,
+            inspectionPropertyService,
+            simpleAnalyticsCollector,
+            repositoryInitializationService,
+            artifactInspectionService,
+            policySeverityService,
+            Arrays.asList(inspectionCancelDecider, policyCancelDecider)
+        );
     }
 
     public AnalyticsModule createAnalyticsModule(AnalyticsService analyticsService, ModuleManager moduleManager) {

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
@@ -28,9 +29,22 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final Map<SupportedPackageType, List<String>> patternMap;
     private final List<String> repos;
     private final Integer retryCount;
+    private final Boolean policyBlockedEnabled;
+    private final List<String> policyRepos;
+    private final List<PolicyRuleSeverityType> policySeverityTypes;
 
-    public InspectionModuleConfig(Boolean enabled, String blackDuckIdentifyArtifactsCron, String reinspectCron, Boolean metadataBlockEnabled, Map<SupportedPackageType, List<String>> patternMap,
-        List<String> repos, int retryCount) {
+    public InspectionModuleConfig(
+        Boolean enabled,
+        String blackDuckIdentifyArtifactsCron,
+        String reinspectCron,
+        Boolean metadataBlockEnabled,
+        Map<SupportedPackageType, List<String>> patternMap,
+        List<String> repos,
+        int retryCount,
+        Boolean policyBlockedEnabled,
+        List<String> policyRepos,
+        List<PolicyRuleSeverityType> policySeverityTypes
+    ) {
         super(InspectionModule.class.getSimpleName(), enabled);
         this.inspectionCron = blackDuckIdentifyArtifactsCron;
         this.reinspectCron = reinspectCron;
@@ -38,6 +52,9 @@ public class InspectionModuleConfig extends ModuleConfig {
         this.patternMap = patternMap;
         this.repos = repos;
         this.retryCount = retryCount;
+        this.policyBlockedEnabled = policyBlockedEnabled;
+        this.policyRepos = policyRepos;
+        this.policySeverityTypes = policySeverityTypes;
     }
 
     public static InspectionModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager, ArtifactoryPAPIService artifactoryPAPIService) throws IOException {
@@ -47,14 +64,29 @@ public class InspectionModuleConfig extends ModuleConfig {
         Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
 
         Map<SupportedPackageType, List<String>> patternMap = Arrays.stream(SupportedPackageType.values())
-                                                                       .collect(Collectors.toMap(Function.identity(), supportedPackageType -> configurationPropertyManager.getPropertyAsList(supportedPackageType.getPatternProperty())));
+                                                                 .collect(Collectors.toMap(Function.identity(), supportedPackageType -> configurationPropertyManager.getPropertyAsList(supportedPackageType.getPatternProperty())));
 
         List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.REPOS, InspectionModuleProperty.REPOS_CSV_PATH).stream()
-                                       .filter(artifactoryPAPIService::isValidRepository)
-                                       .collect(Collectors.toList());
+                                 .filter(artifactoryPAPIService::isValidRepository)
+                                 .collect(Collectors.toList());
         Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, patternMap, repos, retryCount);
+        // Policy properties
+        Boolean policyBlockedEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.POLICY_BLOCK);
+        List<String> policyRepos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.POLICY_REPOS, InspectionModuleProperty.POLICY_REPOS_CSV_PATH)
+                                       .stream()
+                                       .filter(artifactoryPAPIService::isValidRepository)
+                                       .filter(repos::contains)
+                                       .collect(Collectors.toList());
+        if (policyRepos.isEmpty()) {
+            policyRepos = repos;
+        }
+        List<PolicyRuleSeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.POLICY_SEVERITY_TYPES)
+                                                               .stream()
+                                                               .map(PolicyRuleSeverityType::valueOf)
+                                                               .collect(Collectors.toList());
+
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, patternMap, repos, retryCount, policyBlockedEnabled, policyRepos, policySeverityTypes);
     }
 
     @Override
@@ -68,6 +100,8 @@ public class InspectionModuleConfig extends ModuleConfig {
         validateList(propertyGroupReport, InspectionModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
         validateInteger(propertyGroupReport, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
+        validateBoolean(propertyGroupReport, InspectionModuleProperty.POLICY_BLOCK, policyBlockedEnabled);
+        validateList(propertyGroupReport, InspectionModuleProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
     }
 
     public String getInspectionCron() {
@@ -80,6 +114,18 @@ public class InspectionModuleConfig extends ModuleConfig {
 
     public Boolean isMetadataBlockEnabled() {
         return metadataBlockEnabled;
+    }
+
+    public Boolean getPolicyBlockedEnabled() {
+        return policyBlockedEnabled;
+    }
+
+    public List<String> getPolicyRepos() {
+        return policyRepos;
+    }
+
+    public List<PolicyRuleSeverityType> getPolicySeverityTypes() {
+        return policySeverityTypes;
     }
 
     public List<String> getRepos() {
