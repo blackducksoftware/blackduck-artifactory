@@ -1,5 +1,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules.cancel;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -35,13 +37,14 @@ class InspectionCancelDeciderTest {
 
     @ParameterizedTest
     @MethodSource("provideConfigForCancelDecision")
-    void testDecision(boolean shouldCancel, boolean metadataBlockEnabled, boolean shouldInspectArtifact, @Nullable InspectionStatus inspectionStatus) {
+    public void testDecision(boolean shouldCancel, boolean metadataBlockEnabled, boolean shouldInspectArtifact, @Nullable InspectionStatus inspectionStatus) {
         InspectionPropertyService inspectionPropertyService = Mockito.mock(InspectionPropertyService.class);
         ArtifactInspectionService artifactInspectionService = Mockito.mock(ArtifactInspectionService.class);
         Mockito.when(inspectionPropertyService.getInspectionStatus(REPO_PATH)).thenReturn(Optional.ofNullable(inspectionStatus));
         Mockito.when(artifactInspectionService.shouldInspectArtifact(REPO_PATH)).thenReturn(shouldInspectArtifact);
+        List<String> metadataBlockingRepos = Collections.singletonList(REPO_PATH.getRepoKey());
 
-        CancelDecider cancelDecider = new InspectionCancelDecider(metadataBlockEnabled, inspectionPropertyService, artifactInspectionService);
+        CancelDecider cancelDecider = new InspectionCancelDecider(metadataBlockEnabled, metadataBlockingRepos, inspectionPropertyService, artifactInspectionService);
         CancelDeciderTestUtil.assertCancellationDecision(shouldCancel, REPO_PATH, cancelDecider);
     }
 }

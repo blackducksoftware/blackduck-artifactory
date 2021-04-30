@@ -176,7 +176,7 @@ public class ModuleFactory {
         MetaDataUpdateService metaDataUpdateService = new MetaDataUpdateService(inspectionPropertyService, artifactNotificationService);
         RepositoryInitializationService repositoryInitializationService = new RepositoryInitializationService(inspectionPropertyService, artifactoryPAPIService, inspectionModuleConfig, projectService);
         PolicySeverityService policySeverityService = new PolicySeverityService(artifactoryPropertyService, inspectionPropertyService, blackDuckApiClient, blackDuckBOMService, projectService);
-        CancelDecider inspectionCancelDecider = new InspectionCancelDecider(inspectionModuleConfig.isMetadataBlockEnabled(), inspectionPropertyService, artifactInspectionService);
+        CancelDecider inspectionCancelDecider = new InspectionCancelDecider(inspectionModuleConfig.isMetadataBlockEnabled(), inspectionModuleConfig.getMetadataBlockRepos(), inspectionPropertyService, artifactInspectionService);
         CancelDecider policyCancelDecider = new PolicyCancelDecider(artifactoryPropertyService, inspectionModuleConfig.getPolicyBlockedEnabled(), inspectionModuleConfig.getPolicyRepos(), inspectionModuleConfig.getPolicySeverityTypes());
 
         return new InspectionModule(inspectionModuleConfig,

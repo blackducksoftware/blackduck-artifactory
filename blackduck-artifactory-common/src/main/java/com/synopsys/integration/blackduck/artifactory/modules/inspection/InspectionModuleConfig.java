@@ -26,6 +26,7 @@ public class InspectionModuleConfig extends ModuleConfig {
     private final String inspectionCron;
     private final String reinspectCron;
     private final Boolean metadataBlockEnabled;
+    private final List<String> metadataBlockRepos;
     private final Map<SupportedPackageType, List<String>> patternMap;
     private final List<String> repos;
     private final Integer retryCount;
@@ -39,6 +40,7 @@ public class InspectionModuleConfig extends ModuleConfig {
         String blackDuckIdentifyArtifactsCron,
         String reinspectCron,
         Boolean metadataBlockEnabled,
+        List<String> metadataBlockRepos,
         Map<SupportedPackageType, List<String>> patternMap,
         List<String> repos,
         int retryCount,
@@ -50,6 +52,7 @@ public class InspectionModuleConfig extends ModuleConfig {
         this.inspectionCron = blackDuckIdentifyArtifactsCron;
         this.reinspectCron = reinspectCron;
         this.metadataBlockEnabled = metadataBlockEnabled;
+        this.metadataBlockRepos = metadataBlockRepos;
         this.patternMap = patternMap;
         this.repos = repos;
         this.retryCount = retryCount;
@@ -62,7 +65,6 @@ public class InspectionModuleConfig extends ModuleConfig {
         Boolean enabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.ENABLED);
         String blackDuckIdentifyArtifactsCron = configurationPropertyManager.getProperty(InspectionModuleProperty.CRON);
         String reinspectCron = configurationPropertyManager.getProperty(InspectionModuleProperty.REINSPECT_CRON);
-        Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
 
         Map<SupportedPackageType, List<String>> patternMap = Arrays.stream(SupportedPackageType.values())
                                                                  .collect(Collectors.toMap(Function.identity(), supportedPackageType -> configurationPropertyManager.getPropertyAsList(supportedPackageType.getPatternProperty())));
@@ -71,6 +73,17 @@ public class InspectionModuleConfig extends ModuleConfig {
                                  .filter(artifactoryPAPIService::isValidRepository)
                                  .collect(Collectors.toList());
         Integer retryCount = configurationPropertyManager.getIntegerProperty(InspectionModuleProperty.RETRY_COUNT);
+
+        // Metadata blocking
+        Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
+        List<String> metadataBlockRepos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.METADATA_BLOCK_REPOS, InspectionModuleProperty.METADATA_BLOCK_REPOS_CSV_PATH)
+                                              .stream()
+                                              .filter(artifactoryPAPIService::isValidRepository)
+                                              .filter(repos::contains)
+                                              .collect(Collectors.toList());
+        if (metadataBlockRepos.isEmpty()) {
+            metadataBlockRepos = repos;
+        }
 
         // Policy properties
         Boolean policyBlockedEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.POLICY_BLOCK);
@@ -87,7 +100,7 @@ public class InspectionModuleConfig extends ModuleConfig {
                                                                .map(PolicyRuleSeverityType::valueOf)
                                                                .collect(Collectors.toList());
 
-        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, patternMap, repos, retryCount, policyBlockedEnabled, policyRepos, policySeverityTypes);
+        return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, metadataBlockRepos, patternMap, repos, retryCount, policyBlockedEnabled, policyRepos, policySeverityTypes);
     }
 
     @Override
@@ -95,13 +108,17 @@ public class InspectionModuleConfig extends ModuleConfig {
         validateBoolean(propertyGroupReport, InspectionModuleProperty.ENABLED, isEnabledUnverified());
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.CRON, inspectionCron);
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.REINSPECT_CRON, reinspectCron);
-        validateBoolean(propertyGroupReport, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
         Arrays.stream(SupportedPackageType.values())
             .forEach(packageType -> validateList(propertyGroupReport, packageType.getPatternProperty(), getPatternsForPackageType(packageType)));
         validateList(propertyGroupReport, InspectionModuleProperty.REPOS, repos,
             String.format("No valid repositories specified. Please set the %s or %s property with valid repositories", InspectionModuleProperty.REPOS.getKey(), InspectionModuleProperty.REPOS_CSV_PATH.getKey()));
         validateInteger(propertyGroupReport, InspectionModuleProperty.RETRY_COUNT, retryCount, 0, Integer.MAX_VALUE);
+
+        validateBoolean(propertyGroupReport, InspectionModuleProperty.METADATA_BLOCK, metadataBlockEnabled);
+        validateList(propertyGroupReport, InspectionModuleProperty.METADATA_BLOCK_REPOS, metadataBlockRepos, "No valid repositories are configured for metadata blocking.");
+
         validateBoolean(propertyGroupReport, InspectionModuleProperty.POLICY_BLOCK, policyBlockedEnabled);
+        validateList(propertyGroupReport, InspectionModuleProperty.POLICY_REPOS, policyRepos, "No valid repositories are configured for policy blocking.");
         validateList(propertyGroupReport, InspectionModuleProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
     }
 
@@ -115,6 +132,10 @@ public class InspectionModuleConfig extends ModuleConfig {
 
     public Boolean isMetadataBlockEnabled() {
         return metadataBlockEnabled;
+    }
+
+    public List<String> getMetadataBlockRepos() {
+        return metadataBlockRepos;
     }
 
     public Boolean getPolicyBlockedEnabled() {

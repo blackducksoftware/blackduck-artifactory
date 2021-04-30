@@ -41,7 +41,7 @@ class VulnerabiityProcessorTest {
         Mockito.when(vulnerabilityNotificationService.fetchComponentVersionView(Mockito.any())).thenReturn(componentVersionView);
 
         ResourceLink vulnerabilityResourceLink = new ResourceLink();
-        vulnerabilityResourceLink.setHref(new HttpUrl("vulnerability/link/url"));
+        vulnerabilityResourceLink.setHref(new HttpUrl("https://blackduck-server/vulnerability/link/url"));
         vulnerabilityResourceLink.setRel(ComponentVersionView.VULNERABILITIES_LINK);
         ResourceMetadata resourceMetadata = new ResourceMetadata();
         resourceMetadata.setLinks(Collections.singletonList(vulnerabilityResourceLink));

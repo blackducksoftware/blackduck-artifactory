@@ -10,22 +10,24 @@ package com.synopsys.integration.blackduck.artifactory.modules.scan;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;
 
 public enum ScanModuleProperty implements ConfigurationProperty {
-    CRON("cron"),
     BINARIES_DIRECTORY_PATH("binaries.directory.path"),
+    CODELOCATION_INCLUDE_HOSTNAME("repo.path.codelocation.include.hostname"),
+    CRON("cron"),
     CUTOFF_DATE("cutoff.date"),
     DRY_RUN("dry.run"),
     ENABLED("enabled"),
-    NAME_PATTERNS("name.patterns"),
     MEMORY("memory"),
+    METADATA_BLOCK("metadata.block"),
+    METADATA_BLOCK_REPOS("metadata.block.repos"),
+    METADATA_BLOCK_REPOS_CSV_PATH("metadata.block.repos.csv.path"),
+    NAME_PATTERNS("name.patterns"),
     POLICY_BLOCK("policy.block"),
     POLICY_REPOS("policy.repos"),
     POLICY_REPOS_CSV_PATH("policy.repos.csv.path"),
     POLICY_SEVERITY_TYPES("policy.severity.types"),
-    REPO_PATH_CODELOCATION("repo.path.codelocation"),
     REPOS("repos"),
     REPOS_CSV_PATH("repos.csv.path"),
-    CODELOCATION_INCLUDE_HOSTNAME("repo.path.codelocation.include.hostname"),
-    METADATA_BLOCK("metadata.block");
+    REPO_PATH_CODELOCATION("repo.path.codelocation");
 
     private final String key;
 

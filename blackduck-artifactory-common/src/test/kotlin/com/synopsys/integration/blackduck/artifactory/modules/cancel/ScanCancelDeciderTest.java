@@ -65,7 +65,7 @@ class ScanCancelDeciderTest {
         ItemInfo artifactItemInfo = Mockito.mock(ItemInfo.class);
 
         Mockito.when(scanModuleConfig.isMetadataBlockEnabled()).thenReturn(metadataBlockEnabled);
-        Mockito.when(scanModuleConfig.getRepos()).thenReturn(Collections.singletonList(TEST_REPO_PATH.getRepoKey()));
+        Mockito.when(scanModuleConfig.getMetadataBlockRepos()).thenReturn(Collections.singletonList(TEST_REPO_PATH.getRepoKey()));
         Mockito.when(artifactItemInfo.isFolder()).thenReturn(isFolder);
         Mockito.when(artifactoryPAPIService.getItemInfo(ARTIFACT_REPO_PATH)).thenReturn(artifactItemInfo);
 
