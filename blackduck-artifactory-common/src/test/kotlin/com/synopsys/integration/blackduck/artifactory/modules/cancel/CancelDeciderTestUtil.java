@@ -11,13 +11,13 @@ import org.junit.platform.commons.util.StringUtils;
 
 public class CancelDeciderTestUtil {
     public static void assertCancellationDecision(boolean shouldCancelDownload, RepoPath repoPath, CancelDecider cancelDecider) {
-        String cancelMessage;
+        String assertionMessage;
         if (shouldCancelDownload) {
-            cancelMessage = "The download should have been cancelled, but was not.";
+            assertionMessage = "The download should have been cancelled, but was not.";
         } else {
-            cancelMessage = "The download should not have been cancelled, but was.";
+            assertionMessage = "The download should not have been cancelled, but was.";
         }
-        assertCancellationDecision(shouldCancelDownload, repoPath, cancelDecider, cancelMessage);
+        assertCancellationDecision(shouldCancelDownload, repoPath, cancelDecider, assertionMessage);
     }
 
     public static void assertCancellationDecision(boolean shouldCancelDownload, RepoPath repoPath, CancelDecider cancelDecider, String assertionMessage) {
