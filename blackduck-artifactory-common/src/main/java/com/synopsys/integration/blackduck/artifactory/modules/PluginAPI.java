@@ -59,10 +59,6 @@ public class PluginAPI implements Analyzable {
         LogUtil.finish(logger, functionName, triggerType);
     }
 
-    public void performPluginUpgrades(TriggerType triggerType) {
-        runMethod(inspectionModule, triggerType, inspectionModule::performUpgrades);
-    }
-
     public void triggerScan(TriggerType triggerType) {
         runMethod(scanModule, triggerType, scanModule::triggerScan);
     }
