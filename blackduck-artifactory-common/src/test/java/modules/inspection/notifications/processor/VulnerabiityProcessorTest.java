@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.api.core.ResourceLink;
 import com.synopsys.integration.blackduck.api.core.ResourceMetadata;
+import com.synopsys.integration.blackduck.api.generated.component.VulnerabilityCvss2View;
 import com.synopsys.integration.blackduck.api.generated.enumeration.VulnerabilitySeverityType;
 import com.synopsys.integration.blackduck.api.generated.view.ComponentVersionView;
 import com.synopsys.integration.blackduck.api.generated.view.VulnerabilityView;
@@ -88,6 +89,11 @@ class VulnerabiityProcessorTest {
         VulnerabilityView vulnerabilityView = new VulnerabilityView();
         VulnerabilitySeverityType severityType = VulnerabilitySeverityType.valueOf(severity);
         vulnerabilityView.setSeverity(severityType);
+        // Expect a NullPointerException if the VulnerabilityAggregate uses the wrong cvss type.
+        VulnerabilityCvss2View cvss2 = new VulnerabilityCvss2View();
+        cvss2.setSeverity(severityType);
+        vulnerabilityView.setCvss2(cvss2);
+        
         return vulnerabilityView;
     }
 }
