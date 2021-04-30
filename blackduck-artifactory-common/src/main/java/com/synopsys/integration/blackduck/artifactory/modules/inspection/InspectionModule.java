@@ -21,8 +21,6 @@ import org.artifactory.repo.RepoPath;
 import org.artifactory.repo.RepoPathFactory;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSetMultimap;
-import com.synopsys.integration.blackduck.api.generated.view.ProjectVersionView;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
@@ -37,7 +35,6 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.MetaDataUpdateService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
-import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -55,7 +52,8 @@ public class InspectionModule implements Module {
     private final PolicySeverityService policySeverityService;
     private final Collection<CancelDecider> cancelDeciders;
 
-    public InspectionModule(InspectionModuleConfig inspectionModuleConfig,
+    public InspectionModule(
+        InspectionModuleConfig inspectionModuleConfig,
         ArtifactoryPAPIService artifactoryPAPIService,
         MetaDataUpdateService metaDataUpdateService,
         ArtifactoryPropertyService artifactoryPropertyService,
@@ -83,39 +81,8 @@ public class InspectionModule implements Module {
         return inspectionModuleConfig;
     }
 
-    //////////////////////// Upgrade Executions ////////////////////////
+    //////////////////////// Cron jobs ////////////////////////
 
-    // TODO: Remove upgrades in 8.0.0
-    public void performUpgrades() {
-        performComponentNameVersionUpgrade();
-        performPolicySeverityUpdate();
-    }
-
-    // TODO: Remove in 8.0.0
-    public void performComponentNameVersionUpgrade() {
-        for (String repoKey : inspectionModuleConfig.getRepos()) {
-            List<RepoPath> repoPaths = artifactoryPropertyService.getItemsContainingPropertiesAndValues(ImmutableSetMultimap.of(BlackDuckArtifactoryProperty.BLACKDUCK_FORGE.getPropertyName(), "*"), repoKey);
-
-            try {
-                ProjectVersionView projectVersionView = artifactInspectionService.fetchProjectVersionWrapper(repoKey).getProjectVersionView();
-                for (RepoPath repoPath : repoPaths) {
-                    if (inspectionPropertyService.assertInspectionStatus(repoPath, InspectionStatus.SUCCESS) && !inspectionPropertyService.hasExternalIdProperties(repoPath)) {
-                        logger.debug(String.format("Performing componentNameVersion upgrade on artifact: %s", repoPath.toPath()));
-                        artifactInspectionService.inspectSingleArtifact(repoPath, projectVersionView);
-                    }
-                }
-            } catch (IntegrationException e) {
-                logger.debug(String.format("Failed to perform componentNameVersion upgrade for repo '%s'.", repoKey), e);
-            }
-        }
-    }
-
-    // TODO: Remove upgrades in 8.0.0
-    public void performPolicySeverityUpdate() {
-        inspectionModuleConfig.getRepos().forEach(policySeverityService::performPolicySeverityUpgrade);
-    }
-
-    //////////////////////// New cron jobs ////////////////////////
     public void initializeRepositories() {
         inspectionModuleConfig.getRepos().forEach(repositoryInitializationService::initializeRepository);
     }
@@ -126,7 +93,9 @@ public class InspectionModule implements Module {
         reinspectFromFailures(params);
     }
 
-    //////////////////////// Old cron jobs ////////////////////////
+    public void performPolicySeverityUpdate() {
+        inspectionModuleConfig.getRepos().forEach(policySeverityService::performPolicySeverityUpgrade);
+    }
 
     public void inspectAllUnknownArtifacts() {
         inspectionModuleConfig.getRepos().forEach(artifactInspectionService::inspectAllUnknownArtifacts);
