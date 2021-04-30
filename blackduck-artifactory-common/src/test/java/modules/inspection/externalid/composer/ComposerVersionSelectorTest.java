@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer;
+package modules.inspection.externalid.composer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import com.synopsys.integration.bdio.model.externalid.ExternalId;
 import com.synopsys.integration.bdio.model.externalid.ExternalIdFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerVersionSelector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.ComposerVersion;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.VersionSource;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;

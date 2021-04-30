@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor;
+package modules.inspection.notifications.processor;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +25,8 @@ import com.synopsys.integration.blackduck.api.manual.view.RuleViolationNotificat
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyViolationProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedPolicyNotification;
 import com.synopsys.integration.exception.IntegrationException;
 
 class PolicyViolationProcessorTest {

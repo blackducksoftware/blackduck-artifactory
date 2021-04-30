@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.modules.cancel;
+package cancel;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +13,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.InspectionCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;

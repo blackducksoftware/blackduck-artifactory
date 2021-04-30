@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
+package modules.inspection.notifications;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +31,9 @@ import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.TestUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ArtifactNotificationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.VulnerabilityNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.PolicyNotifications;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.NotificationProcessor;

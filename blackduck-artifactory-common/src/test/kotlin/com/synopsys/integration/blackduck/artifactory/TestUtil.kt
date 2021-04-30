@@ -136,15 +136,15 @@ object TestUtil {
 
             val matchingRepoPaths = mutableListOf<RepoPath>()
             repoPathPropertyMap.entries
-                    .filter { repoKeys == null || repoKeys.contains(it.key.repoKey) }
-                    .forEach { entry ->
-                        entry.value.entries.forEach { repoPathProperty ->
-                            val property = propertiesToLookFor[repoPathProperty.key]
-                            if (property != null && (property == "*" || repoPathProperty.value == property)) {
-                                matchingRepoPaths.add(entry.key)
-                            }
+                .filter { repoKeys == null || repoKeys.contains(it.key.repoKey) }
+                .forEach { entry ->
+                    entry.value.entries.forEach { repoPathProperty ->
+                        val property = propertiesToLookFor[repoPathProperty.key]
+                        if (property != null && (property == "*" || repoPathProperty.value == property)) {
+                            matchingRepoPaths.add(entry.key)
                         }
                     }
+                }
 
             return@doAnswer listOf<RepoPath>()
         }

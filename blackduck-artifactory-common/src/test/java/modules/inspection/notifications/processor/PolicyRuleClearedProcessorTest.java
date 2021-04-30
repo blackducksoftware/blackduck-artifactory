@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor;
+package modules.inspection.notifications.processor;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,37 +18,42 @@ import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
+import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionStatus;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
-import com.synopsys.integration.blackduck.api.manual.component.PolicyOverrideNotificationContent;
-import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotificationUserView;
+import com.synopsys.integration.blackduck.api.manual.component.RuleViolationClearedNotificationContent;
+import com.synopsys.integration.blackduck.api.manual.view.RuleViolationClearedNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.PolicyRuleClearedProcessor;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessedPolicyNotification;
 import com.synopsys.integration.exception.IntegrationException;
 
-class PolicyOverrideProcessorTest {
+class PolicyRuleClearedProcessorTest {
     @Test
-    void processPolicyOverrideNotifications() throws IntegrationException {
+    void processPolicyRuleClearedNotifications() throws IntegrationException {
         PolicyNotificationService policyNotificationService = Mockito.mock(PolicyNotificationService.class);
-        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(ProjectVersionComponentPolicyStatusType.IN_VIOLATION);
+        Mockito.when(policyNotificationService.fetchApprovalStatus(Mockito.any())).thenReturn(ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION);
 
         RepositoryProjectNameLookup repositoryFilter = Mockito.mock(RepositoryProjectNameLookup.class);
         RepoPath repoPath = new PluginRepoPathFactory(false).create("repo-1");
         Mockito.when(repositoryFilter.getRepoKeyPath(Mockito.any(), Mockito.any())).thenReturn(Optional.of(repoPath));
 
-        PolicyOverrideProcessor policyOverrideProcessor = new PolicyOverrideProcessor(policyNotificationService);
+        PolicyRuleClearedProcessor policyRuleClearedProcessor = new PolicyRuleClearedProcessor(policyNotificationService);
 
-        PolicyOverrideNotificationUserView notificationUserView = new PolicyOverrideNotificationUserView();
-        PolicyOverrideNotificationContent content = new PolicyOverrideNotificationContent();
+        RuleViolationClearedNotificationUserView notificationUserView = new RuleViolationClearedNotificationUserView();
+        RuleViolationClearedNotificationContent content = new RuleViolationClearedNotificationContent();
         content.setProjectName("project-name");
         content.setProjectVersionName("project-version-name");
         content.setPolicyInfos(Collections.singletonList(new PolicyInfo()));
-        content.setComponentName("component-name");
-        content.setComponentVersionName("component-version-name-1.0");
-        content.setBomComponentVersionPolicyStatus("https://synopsys.com/bomComponentVersionPolicyStatus");
+        ComponentVersionStatus componentVersionStatus = new ComponentVersionStatus();
+        componentVersionStatus.setComponentName("component-name");
+        componentVersionStatus.setComponentVersionName("component-version-name-1.0");
+        componentVersionStatus.setBomComponentVersionPolicyStatus("https://synopsys.com/bomComponentVersionPolicyStatus");
+        content.setComponentVersionStatuses(Collections.singletonList(componentVersionStatus));
         notificationUserView.setContent(content);
 
-        List<ProcessedPolicyNotification> processedPolicyNotifications = policyOverrideProcessor.processPolicyOverrideNotifications(Collections.singletonList(notificationUserView), repositoryFilter);
+        List<ProcessedPolicyNotification> processedPolicyNotifications = policyRuleClearedProcessor.processPolicyRuleClearedNotifications(Collections.singletonList(notificationUserView), repositoryFilter);
 
         Assertions.assertEquals(1, processedPolicyNotifications.size());
 
@@ -58,6 +63,6 @@ class PolicyOverrideProcessorTest {
         Assertions.assertEquals("component-version-name-1.0", processedPolicyNotification.getComponentVersionName());
         Assertions.assertEquals(Collections.singletonList(repoPath), processedPolicyNotification.getAffectedRepoKeyPaths());
         Assertions.assertEquals(Collections.singletonList(PolicyRuleSeverityType.UNSPECIFIED), processedPolicyNotification.getPolicyStatusReport().getPolicyRuleSeverityTypes());
-        Assertions.assertEquals(ProjectVersionComponentPolicyStatusType.IN_VIOLATION, processedPolicyNotification.getPolicyStatusReport().getPolicyStatusType());
+        Assertions.assertEquals(ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION, processedPolicyNotification.getPolicyStatusReport().getPolicyStatusType());
     }
 }

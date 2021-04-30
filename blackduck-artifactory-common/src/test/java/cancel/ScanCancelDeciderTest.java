@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.modules.cancel;
+package cancel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +17,8 @@ import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.ScanCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
 import com.synopsys.integration.blackduck.codelocation.Result;

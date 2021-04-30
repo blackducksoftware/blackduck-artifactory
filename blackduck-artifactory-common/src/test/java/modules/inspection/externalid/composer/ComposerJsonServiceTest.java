@@ -5,10 +5,11 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer;
+package modules.inspection.externalid.composer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,7 @@ import com.google.gson.GsonBuilder;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
 import com.synopsys.integration.blackduck.artifactory.TestUtil;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.ComposerJsonService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.ComposerJsonResult;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.ComposerVersion;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.externalid.composer.model.FileNamePieces;
@@ -81,13 +83,22 @@ class ComposerJsonServiceTest {
                 @SneakyThrows
                 @Override
                 public long getSize() {
-                    return inputStream.available();
+                    try {
+                        return inputStream.available();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return -1;
+                    }
                 }
 
                 @SneakyThrows
                 @Override
                 public void close() {
-                    inputStream.close();
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
 

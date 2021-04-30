@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.modules.cancel;
+package cancel;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,6 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.artifactory.exception.CancelException;
 import org.artifactory.repo.RepoPath;
 import org.junit.platform.commons.util.StringUtils;
+
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecision;
 
 public class CancelDeciderTestUtil {
     public static void assertCancellationDecision(boolean shouldCancelDownload, RepoPath repoPath, CancelDecider cancelDecider) {

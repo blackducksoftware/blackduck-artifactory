@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
+package modules.inspection.notifications;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 import com.synopsys.integration.util.NameVersion;
 

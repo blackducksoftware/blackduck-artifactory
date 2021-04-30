@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor;
+package modules.inspection.notifications.processor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.api.manual.component.PolicyInfo;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.processor.ProcessorUtil;
 
 class ProcessorUtilTest {
     @Test

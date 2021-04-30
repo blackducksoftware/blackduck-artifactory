@@ -1,4 +1,4 @@
-package com.synopsys.integration.blackduck.artifactory.modules.cancel;
+package cancel;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,6 +17,8 @@ import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSe
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPropertyService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
 import com.synopsys.integration.blackduck.artifactory.PluginRepoPathFactory;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDecider;
 
 class PolicyCancelDeciderTest {
 
