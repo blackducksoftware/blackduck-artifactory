@@ -11,25 +11,24 @@ import static java.lang.Boolean.FALSE;
 
 import org.artifactory.repo.RepoPath;
 
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.ArtifactInspectionService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.InspectionPropertyService;
 
 public class InspectionCancelDecider implements CancelDecider {
-    private final InspectionModuleConfig inspectionModuleConfig;
+    private final Boolean metadataBlockEnabled;
     private final InspectionPropertyService inspectionPropertyService;
     private final ArtifactInspectionService artifactInspectionService;
 
-    public InspectionCancelDecider(InspectionModuleConfig inspectionModuleConfig, InspectionPropertyService inspectionPropertyService, ArtifactInspectionService artifactInspectionService) {
-        this.inspectionModuleConfig = inspectionModuleConfig;
+    public InspectionCancelDecider(Boolean metadataBlockEnabled, InspectionPropertyService inspectionPropertyService, ArtifactInspectionService artifactInspectionService) {
+        this.metadataBlockEnabled = metadataBlockEnabled;
         this.inspectionPropertyService = inspectionPropertyService;
         this.artifactInspectionService = artifactInspectionService;
     }
 
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
-        if (FALSE.equals(inspectionModuleConfig.isMetadataBlockEnabled())) {
+        if (FALSE.equals(metadataBlockEnabled)) {
             return CancelDecision.NO_CANCELLATION();
         }
 
