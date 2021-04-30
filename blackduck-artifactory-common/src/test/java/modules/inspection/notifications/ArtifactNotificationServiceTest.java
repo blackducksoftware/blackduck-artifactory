@@ -134,7 +134,7 @@ class ArtifactNotificationServiceTest {
 
         // Deleted project version
         assertHasProperty(propertyMap, deletedProjectRepoKeyPath, BlackDuckArtifactoryProperty.LAST_INSPECTION);
-        assertPropertyValue(propertyMap, deletedProjectRepoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.FAILURE.name());
+        assertPropertyValue(propertyMap, deletedProjectRepoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS, InspectionStatus.PENDING.name());
         assertHasProperty(propertyMap, deletedProjectRepoKeyPath, BlackDuckArtifactoryProperty.INSPECTION_STATUS_MESSAGE);
     }
 

@@ -7,6 +7,7 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.model;
 
+// TODO: This class is overloaded. There should be different statuses for inspected artifacts and the status of the project (repo).
 public enum InspectionStatus {
     SUCCESS,
     FAILURE,
