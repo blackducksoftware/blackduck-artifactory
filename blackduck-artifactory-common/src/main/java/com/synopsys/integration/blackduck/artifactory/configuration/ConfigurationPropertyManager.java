@@ -110,7 +110,7 @@ public class ConfigurationPropertyManager {
         try {
             String propertyValue = getProperty(propertyKey);
             if (propertyValue == null) {
-                throw new IntegrationException("");
+                throw new IntegrationException("Property not set.");
             }
             value = Integer.valueOf(propertyValue);
         } catch (NumberFormatException | IntegrationException e) {
