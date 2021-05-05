@@ -30,14 +30,27 @@ class ConfigurationPropertyManagerTest {
     }
 
     @Test
+    fun getPropertiesThatWereNotSet() {
+        val emptyProperties = Properties()
+        val emptyConfigurationPropertyManager = ConfigurationPropertyManager(emptyProperties)
+
+        assertDoesNotThrow {
+            val repositoryKeysFromProperties = emptyConfigurationPropertyManager.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty)
+            assertAll("repo keys",
+                { assertEquals(0, repositoryKeysFromProperties.size) },
+                {}
+            )
+        }
+    }
+
+    @Test
     fun getRepositoryKeysFromProperties() {
         val repositoryKeysFromProperties = configurationPropertyManager!!.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty)
         assertAll("repo keys",
-                { assertEquals(2, repositoryKeysFromProperties.size) },
-                { assertTrue(repositoryKeysFromProperties.contains("ext-release-local")) },
-                { assertTrue(repositoryKeysFromProperties.contains("libs-release")) }
+            { assertEquals(2, repositoryKeysFromProperties.size) },
+            { assertTrue(repositoryKeysFromProperties.contains("ext-release-local")) },
+            { assertTrue(repositoryKeysFromProperties.contains("libs-release")) }
         )
-
     }
 
     @Test
@@ -47,8 +60,8 @@ class ConfigurationPropertyManagerTest {
 
         // TODO: Is checking the spaces here necessary?
         assertAll("repo keys",
-                { assertEquals(7, repositoryKeysFromProperties.size) },
-                { assertEquals(listOf("test-repo1", "test-repo2", " test-repo3", "test-repo4 ", "test-repo5 ", " test-repo6", "test-repo7"), repositoryKeysFromProperties) }
+            { assertEquals(7, repositoryKeysFromProperties.size) },
+            { assertEquals(listOf("test-repo1", "test-repo2", " test-repo3", "test-repo4 ", "test-repo5 ", " test-repo6", "test-repo7"), repositoryKeysFromProperties) }
         )
     }
 

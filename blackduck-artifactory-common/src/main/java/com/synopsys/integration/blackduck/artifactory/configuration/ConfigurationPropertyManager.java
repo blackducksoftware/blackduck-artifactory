@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -20,8 +21,10 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -39,19 +42,25 @@ public class ConfigurationPropertyManager {
     }
 
     public List<String> getRepositoryKeysFromProperties(ConfigurationProperty repositoryKeyListProperty, ConfigurationProperty repositoryKeyCsvProperty) throws IOException {
-        List<String> repositoryKeys;
+        List<String> repositoryKeys = new LinkedList<>();
 
         String repositoryKeyListString = getProperty(repositoryKeyListProperty);
         String repositoryKeyCsvPath = getProperty(repositoryKeyCsvProperty);
-        File repositoryKeyCsvFile = new File(repositoryKeyCsvPath);
 
-        if (repositoryKeyCsvFile.isFile()) {
-            repositoryKeys = Files.readAllLines(repositoryKeyCsvFile.toPath()).stream()
-                                 .map(line -> line.split(","))
-                                 .flatMap(Arrays::stream)
-                                 .filter(StringUtils::isNotBlank)
-                                 .collect(Collectors.toList());
-        } else {
+        if (StringUtils.isNotBlank(repositoryKeyCsvPath)) {
+            File repositoryKeyCsvFile = new File(repositoryKeyCsvPath);
+            if (repositoryKeyCsvFile.isFile()) {
+                repositoryKeys = Files.readAllLines(repositoryKeyCsvFile.toPath()).stream()
+                                     .map(line -> line.split(","))
+                                     .flatMap(Arrays::stream)
+                                     .filter(StringUtils::isNotBlank)
+                                     .collect(Collectors.toList());
+            } else {
+                logger.warn(String.format("A path to a CSV file was provided, but the value is not a file. Defaulting to value from the %s property.", repositoryKeyListProperty.getKey()));
+            }
+        }
+
+        if (repositoryKeys.isEmpty() && StringUtils.isNotBlank(repositoryKeyListString)) {
             repositoryKeys = Arrays.stream(repositoryKeyListString.split(","))
                                  .filter(StringUtils::isNotBlank)
                                  .collect(Collectors.toList());
@@ -70,32 +79,41 @@ public class ConfigurationPropertyManager {
                    .entrySet();
     }
 
+    @Nullable
     public String getProperty(ConfigurationProperty configurationProperty) {
-        return properties.getProperty(configurationProperty.getKey());
+        return getProperty(configurationProperty.getKey());
     }
 
+    @Nullable
     private String getProperty(String propertyKey) {
         return properties.getProperty(propertyKey);
     }
 
+    @Nullable
     public Boolean getBooleanProperty(ConfigurationProperty configurationProperty) {
         return getBooleanProperty(configurationProperty.getKey());
     }
 
+    @Nullable
     private Boolean getBooleanProperty(String propertyKey) {
         return BooleanUtils.toBooleanObject(getProperty(propertyKey));
     }
 
+    @Nullable
     public Integer getIntegerProperty(ConfigurationProperty configurationProperty) {
         return getIntegerProperty(configurationProperty.getKey());
     }
 
+    @Nullable
     private Integer getIntegerProperty(String propertyKey) {
         Integer value = null;
-
         try {
-            value = Integer.valueOf(getProperty(propertyKey));
-        } catch (NumberFormatException e) {
+            String propertyValue = getProperty(propertyKey);
+            if (propertyValue == null) {
+                throw new IntegrationException("");
+            }
+            value = Integer.valueOf(propertyValue);
+        } catch (NumberFormatException | IntegrationException e) {
             logger.debug(String.format("Failed to parse integer for property: %s", propertyKey), e);
         }
 
