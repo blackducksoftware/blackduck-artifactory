@@ -57,11 +57,10 @@ class ConfigurationPropertyManagerTest {
     fun getRepositoryKeysFromPropertiesCsv() {
         configurationPropertyManager!!.properties.setProperty(repositoryKeyCsvProperty.key, TestUtil.getResourceAsFilePath("/repoCSV"))
         val repositoryKeysFromProperties = configurationPropertyManager!!.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty)
-
-        // TODO: Is checking the spaces here necessary?
+        
         assertAll("repo keys",
-            { assertEquals(7, repositoryKeysFromProperties.size) },
-            { assertEquals(listOf("test-repo1", "test-repo2", " test-repo3", "test-repo4 ", "test-repo5 ", " test-repo6", "test-repo7"), repositoryKeysFromProperties) }
+            { assertEquals(4, repositoryKeysFromProperties.size) },
+            { assertEquals(listOf("test-repo1", "test-repo2", " test-repo3", "test-repo4 "), repositoryKeysFromProperties) }
         )
     }
 
