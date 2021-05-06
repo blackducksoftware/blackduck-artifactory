@@ -54,7 +54,7 @@ public class ConfigurationPropertyManager {
                                      .map(line -> line.split(","))
                                      .flatMap(Arrays::stream)
                                      .filter(StringUtils::isNotBlank)
-                                     .collect(Collectors.toList());
+                                     .collect(Collectors.toCollection(LinkedList::new));
             } else {
                 logger.warn(String.format("A path to a CSV file was provided, but the value is not a file. Defaulting to value from the %s property.", repositoryKeyListProperty.getKey()));
             }
@@ -63,7 +63,7 @@ public class ConfigurationPropertyManager {
         if (repositoryKeys.isEmpty() && StringUtils.isNotBlank(repositoryKeyListString)) {
             repositoryKeys = Arrays.stream(repositoryKeyListString.split(","))
                                  .filter(StringUtils::isNotBlank)
-                                 .collect(Collectors.toList());
+                                 .collect(Collectors.toCollection(LinkedList::new));
         }
 
         return repositoryKeys;
