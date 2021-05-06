@@ -57,10 +57,10 @@ class ConfigurationPropertyManagerTest {
     fun getRepositoryKeysFromPropertiesCsv() {
         configurationPropertyManager!!.properties.setProperty(repositoryKeyCsvProperty.key, TestUtil.getResourceAsFilePath("/repoCSV"))
         val repositoryKeysFromProperties = configurationPropertyManager!!.getRepositoryKeysFromProperties(repositoryKeyListProperty, repositoryKeyCsvProperty)
-        
+
         assertAll("repo keys",
             { assertEquals(4, repositoryKeysFromProperties.size) },
-            { assertEquals(listOf("test-repo1", "test-repo2", " test-repo3", "test-repo4 "), repositoryKeysFromProperties) }
+            { assertEquals(listOf("test-repo1", "test-repo2 ", " test-repo3", "test-repo4"), repositoryKeysFromProperties) }
         )
     }
 
