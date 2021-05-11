@@ -20,7 +20,6 @@ import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionS
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ComponentVersionIdUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
 import com.synopsys.integration.exception.IntegrationException;
@@ -53,10 +52,7 @@ public class PolicyViolationProcessor {
 
                 String componentName = componentVersionStatus.getComponentName();
                 String componentVersionName = componentVersionStatus.getComponentVersionName();
-                String componentVersionUrl = componentVersionStatus.getComponentVersion();
-                String componentVersionId = ComponentVersionIdUtil.extractComponentVersionId(componentVersionUrl);
-
-                ProcessedPolicyNotification processedNotification = new ProcessedPolicyNotification(componentName, componentVersionName, componentVersionId, policyStatusReport, Collections.singletonList(repoKeyPath.get()));
+                ProcessedPolicyNotification processedNotification = new ProcessedPolicyNotification(componentName, componentVersionName, policyStatusReport, Collections.singletonList(repoKeyPath.get()));
                 processedPolicyNotifications.add(processedNotification);
             }
         }

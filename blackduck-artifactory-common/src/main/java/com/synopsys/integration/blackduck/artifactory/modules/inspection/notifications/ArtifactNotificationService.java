@@ -103,11 +103,12 @@ public class ArtifactNotificationService {
     private List<PolicyAffectedArtifact> findPolicyAffectedArtifacts(List<ProcessedPolicyNotification> processedPolicyNotifications) {
         List<PolicyAffectedArtifact> affectedArtifacts = new ArrayList<>();
         for (ProcessedPolicyNotification processedPolicyNotification : processedPolicyNotifications) {
-            String componentVersionId = processedPolicyNotification.getComponentVersionId();
+            String componentName = processedPolicyNotification.getComponentName();
+            String componentVersionName = processedPolicyNotification.getComponentVersionName();
             PolicyStatusReport policyStatusReport = processedPolicyNotification.getPolicyStatusReport();
             List<RepoPath> affectedProjects = processedPolicyNotification.getAffectedRepoKeyPaths();
 
-            List<RepoPath> foundArtifacts = artifactSearchService.findArtifactsWithComponentVersionId(componentVersionId, affectedProjects);
+            List<RepoPath> foundArtifacts = artifactSearchService.findArtifactsUsingComponentNameVersions(componentName, componentVersionName, affectedProjects);
             affectedArtifacts.add(new PolicyAffectedArtifact(foundArtifacts, policyStatusReport));
         }
 
@@ -117,10 +118,11 @@ public class ArtifactNotificationService {
     private List<VulnerabilityAffectedArtifact> findVulnerabilityAffectedArtifacts(List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications) {
         List<VulnerabilityAffectedArtifact> affectedArtifacts = new ArrayList<>();
         for (ProcessedVulnerabilityNotification processedVulnerabilityNotification : processedVulnerabilityNotifications) {
-            String componentVersionId = processedVulnerabilityNotification.getComponentVersionId();
+            String componentName = processedVulnerabilityNotification.getComponentName();
+            String componentVersionName = processedVulnerabilityNotification.getComponentVersionName();
             List<RepoPath> affectedProjects = processedVulnerabilityNotification.getAffectedRepoKeyPaths();
 
-            List<RepoPath> foundArtifacts = artifactSearchService.findArtifactsWithComponentVersionId(componentVersionId, affectedProjects);
+            List<RepoPath> foundArtifacts = artifactSearchService.findArtifactsUsingComponentNameVersions(componentName, componentVersionName, affectedProjects);
             affectedArtifacts.add(new VulnerabilityAffectedArtifact(foundArtifacts, processedVulnerabilityNotification.getVulnerabilityAggregate()));
         }
 

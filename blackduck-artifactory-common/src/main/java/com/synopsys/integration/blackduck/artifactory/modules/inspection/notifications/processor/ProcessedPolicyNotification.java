@@ -16,14 +16,12 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.P
 public class ProcessedPolicyNotification {
     private final String componentName;
     private final String componentVersionName;
-    private final String componentVersionId;
     private final PolicyStatusReport policyStatusReport;
     private final List<RepoPath> affectedRepoKeyPaths;
 
-    public ProcessedPolicyNotification(String componentName, String componentVersionName, String componentVersionId, PolicyStatusReport policyStatusReport, List<RepoPath> affectedRepoKeyPaths) {
+    public ProcessedPolicyNotification(String componentName, String componentVersionName, PolicyStatusReport policyStatusReport, List<RepoPath> affectedRepoKeyPaths) {
         this.componentName = componentName;
         this.componentVersionName = componentVersionName;
-        this.componentVersionId = componentVersionId;
         this.policyStatusReport = policyStatusReport;
         this.affectedRepoKeyPaths = affectedRepoKeyPaths;
     }
@@ -34,10 +32,6 @@ public class ProcessedPolicyNotification {
 
     public String getComponentVersionName() {
         return componentVersionName;
-    }
-
-    public String getComponentVersionId() {
-        return componentVersionId;
     }
 
     public PolicyStatusReport getPolicyStatusReport() {
