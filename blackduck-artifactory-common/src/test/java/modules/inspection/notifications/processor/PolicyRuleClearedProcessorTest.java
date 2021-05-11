@@ -50,7 +50,6 @@ class PolicyRuleClearedProcessorTest {
         componentVersionStatus.setComponentName("component-name");
         componentVersionStatus.setComponentVersionName("component-version-name-1.0");
         componentVersionStatus.setBomComponentVersionPolicyStatus("https://synopsys.com/bomComponentVersionPolicyStatus");
-        componentVersionStatus.setComponentVersion("https://synopsys.com/api/components/08f3bea3-fbfb-4f01-97dd-3f49419f3ea9/versions/e7142eee-d1a2-4b8e-ba87-01f84ac82b1f");
         content.setComponentVersionStatuses(Collections.singletonList(componentVersionStatus));
         notificationUserView.setContent(content);
 
@@ -62,7 +61,6 @@ class PolicyRuleClearedProcessorTest {
 
         Assertions.assertEquals("component-name", processedPolicyNotification.getComponentName());
         Assertions.assertEquals("component-version-name-1.0", processedPolicyNotification.getComponentVersionName());
-        Assertions.assertEquals("e7142eee-d1a2-4b8e-ba87-01f84ac82b1f", processedPolicyNotification.getComponentVersionId());
         Assertions.assertEquals(Collections.singletonList(repoPath), processedPolicyNotification.getAffectedRepoKeyPaths());
         Assertions.assertEquals(Collections.singletonList(PolicyRuleSeverityType.UNSPECIFIED), processedPolicyNotification.getPolicyStatusReport().getPolicyRuleSeverityTypes());
         Assertions.assertEquals(ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION, processedPolicyNotification.getPolicyStatusReport().getPolicyStatusType());

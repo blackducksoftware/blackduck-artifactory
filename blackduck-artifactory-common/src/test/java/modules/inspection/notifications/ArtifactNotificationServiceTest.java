@@ -65,52 +65,30 @@ class ArtifactNotificationServiceTest {
 
         String policyOverrideComponentName = "policy-override-component";
         String policyOverrideComponentVersion = "1.0";
-        String policyOverrideComponentVersionId = "8297c696-caf9-4c03-88d7-876964b32acb";
         RepoPath policyOverrideComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyOverrideComponentName);
         PolicyStatusReport policyOverrideStatusReport = new PolicyStatusReport(ProjectVersionComponentPolicyStatusType.IN_VIOLATION_OVERRIDDEN, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
-        ProcessedPolicyNotification processedPolicyOverrideNotification = new ProcessedPolicyNotification(
-            policyOverrideComponentName,
-            policyOverrideComponentVersion,
-            policyOverrideComponentVersionId,
-            policyOverrideStatusReport,
-            toBeAffectedRepoKeys
-        );
-        Mockito.when(artifactSearchService.findArtifactsWithComponentVersionId(policyOverrideComponentVersionId, toBeAffectedRepoKeys))
+        ProcessedPolicyNotification processedPolicyOverrideNotification = new ProcessedPolicyNotification(policyOverrideComponentName, policyOverrideComponentVersion, policyOverrideStatusReport, toBeAffectedRepoKeys);
+        Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyOverrideComponentName, policyOverrideComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyOverrideComponentRepoPath));
 
         String policyClearedComponentName = "policy-cleared-component";
         String policyClearedComponentVersion = "2.0";
-        String policyClearedComponentVersionId = "1234c696-caf9-4c03-88d7-876964b32acb";
         RepoPath policyClearedComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyClearedComponentName);
         PolicyStatusReport policyClearedStatusReport = new PolicyStatusReport(ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION, Collections.emptyList());
-        ProcessedPolicyNotification processedPolicyClearedNotification = new ProcessedPolicyNotification(
-            policyClearedComponentName,
-            policyClearedComponentVersion,
-            policyClearedComponentVersionId,
-            policyClearedStatusReport,
-            toBeAffectedRepoKeys
-        );
-        Mockito.when(artifactSearchService.findArtifactsWithComponentVersionId(policyClearedComponentVersionId, toBeAffectedRepoKeys))
+        ProcessedPolicyNotification processedPolicyClearedNotification = new ProcessedPolicyNotification(policyClearedComponentName, policyClearedComponentVersion, policyClearedStatusReport, toBeAffectedRepoKeys);
+        Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyClearedComponentName, policyClearedComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyClearedComponentRepoPath));
 
         String policyViolationComponentName = "policy-violation-component";
         String policyViolationComponentVersion = "3.0";
-        String policyViolationComponentVersionId = "4321c696-caf9-4c03-88d7-876964b32acb";
         RepoPath policyViolationComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), policyViolationComponentName);
         PolicyStatusReport policyViolationStatusReport = new PolicyStatusReport(ProjectVersionComponentPolicyStatusType.IN_VIOLATION, Collections.singletonList(PolicyRuleSeverityType.BLOCKER));
-        ProcessedPolicyNotification processedPolicyViolationNotification = new ProcessedPolicyNotification(
-            policyViolationComponentName,
-            policyViolationComponentVersion,
-            policyViolationComponentVersionId,
-            policyViolationStatusReport,
-            toBeAffectedRepoKeys
-        );
-        Mockito.when(artifactSearchService.findArtifactsWithComponentVersionId(policyViolationComponentVersionId, toBeAffectedRepoKeys))
+        ProcessedPolicyNotification processedPolicyViolationNotification = new ProcessedPolicyNotification(policyViolationComponentName, policyViolationComponentVersion, policyViolationStatusReport, toBeAffectedRepoKeys);
+        Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(policyViolationComponentName, policyViolationComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(policyViolationComponentRepoPath));
 
         String vulnerableComponentName = "vulnerable-component";
         String vulnerableComponentVersion = "4.0";
-        String vulnerableComponentVersionId = "9876c696-caf9-4c03-88d7-876964b32acb";
         RepoPath vulnerableComponentRepoPath = repoPathFactory.create(repoKeyPath1.getRepoKey(), vulnerableComponentName);
 
         HashMap<VulnerabilitySeverityType, Integer> severityMap = new HashMap<>();
@@ -120,14 +98,8 @@ class ArtifactNotificationServiceTest {
         severityMap.put(VulnerabilitySeverityType.LOW, 1);
         VulnerabilityAggregate vulnerabilityAggregate = new VulnerabilityAggregate(severityMap);
 
-        ProcessedVulnerabilityNotification processedVulnerabilityNotification = new ProcessedVulnerabilityNotification(
-            vulnerableComponentName,
-            vulnerableComponentVersion,
-            vulnerableComponentVersionId,
-            toBeAffectedRepoKeys,
-            vulnerabilityAggregate
-        );
-        Mockito.when(artifactSearchService.findArtifactsWithComponentVersionId(vulnerableComponentVersionId, toBeAffectedRepoKeys))
+        ProcessedVulnerabilityNotification processedVulnerabilityNotification = new ProcessedVulnerabilityNotification(vulnerableComponentName, vulnerableComponentVersion, toBeAffectedRepoKeys, vulnerabilityAggregate);
+        Mockito.when(artifactSearchService.findArtifactsUsingComponentNameVersions(vulnerableComponentName, vulnerableComponentVersion, toBeAffectedRepoKeys))
             .thenReturn(Collections.singletonList(vulnerableComponentRepoPath));
 
         Map<RepoPath, Map<String, String>> propertyMap = new HashMap<>();
@@ -146,14 +118,8 @@ class ArtifactNotificationServiceTest {
         Mockito.when(artifactInspectionService.fetchProjectVersionWrapper(repoKeyPath2.getRepoKey())).thenReturn(projectVersionWrapper);
         Mockito.when(artifactInspectionService.fetchProjectVersionWrapper(deletedProjectRepoKeyPath.getRepoKey())).thenThrow(new IntegrationException("Missing project version in Black Duck."));
 
-        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(
-            artifactSearchService,
-            inspectionPropertyService,
-            artifactInspectionService,
-            policyNotificationService,
-            vulnerabilityNotificationService,
-            notificationProcessor
-        );
+        ArtifactNotificationService artifactNotificationService = new ArtifactNotificationService(artifactSearchService, inspectionPropertyService, artifactInspectionService, policyNotificationService, vulnerabilityNotificationService,
+            notificationProcessor);
 
         artifactNotificationService.updateMetadataFromNotifications(Arrays.asList(repoKeyPath1, repoKeyPath2, deletedProjectRepoKeyPath), startDate, endDate);
 
