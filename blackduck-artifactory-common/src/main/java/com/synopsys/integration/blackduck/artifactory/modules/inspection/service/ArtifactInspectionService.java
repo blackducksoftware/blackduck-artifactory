@@ -30,6 +30,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.A
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.deleteme.ComponentVersionIdUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
 import com.synopsys.integration.blackduck.service.BlackDuckApiClient;
@@ -184,10 +185,11 @@ public class ArtifactInspectionService {
         inspectionPropertyService.setInspectionStatus(repoPath, InspectionStatus.SUCCESS);
         inspectionPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_FORGE, logger);
         inspectionPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_ORIGIN_ID, logger);
+        inspectionPropertyService.deleteProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION, logger);
 
-        String componentName = componentViewWrapper.getProjectVersionComponentView().getComponentName();
-        String componentVersionName = componentViewWrapper.getProjectVersionComponentView().getComponentVersionName();
-        inspectionPropertyService.setExternalIdProperties(repoPath, componentName, componentVersionName);
+        String componentVersionUrl = componentViewWrapper.getProjectVersionComponentView().getComponentVersion();
+        String componentVersionId = ComponentVersionIdUtil.extractComponentVersionId(componentVersionUrl);
+        inspectionPropertyService.setExternalIdProperties(repoPath, componentVersionId);
     }
 
     private boolean shouldPerformDeltaAnalysis(RepoPath repoPath) {

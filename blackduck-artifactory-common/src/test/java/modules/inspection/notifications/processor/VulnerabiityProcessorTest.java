@@ -67,7 +67,7 @@ class VulnerabiityProcessorTest {
         content.setAffectedProjectVersions(Collections.singletonList(affectedProjectVersion));
         content.setComponentName("component-name");
         content.setComponentVersion("component/version/url");
-
+        content.setComponentVersion("https://synopsys.com/api/components/08f3bea3-fbfb-4f01-97dd-3f49419f3ea9/versions/e7142eee-d1a2-4b8e-ba87-01f84ac82b1f");
         notificationUserView.setContent(content);
 
         List<ProcessedVulnerabilityNotification> processedVulnerabilityNotifications = vulnerabilityProcessor.processVulnerabilityNotifications(Collections.singletonList(notificationUserView), repositoryFilter);
@@ -78,6 +78,7 @@ class VulnerabiityProcessorTest {
 
         Assertions.assertEquals("component-name", processedVulnerabilityNotification.getComponentName());
         Assertions.assertEquals("component-version-name-1.0", processedVulnerabilityNotification.getComponentVersionName());
+        Assertions.assertEquals("e7142eee-d1a2-4b8e-ba87-01f84ac82b1f", processedVulnerabilityNotification.getComponentVersionId());
         Assertions.assertEquals(Collections.singletonList(repoPath), processedVulnerabilityNotification.getAffectedRepoKeyPaths());
         VulnerabilityAggregate aggregate = processedVulnerabilityNotification.getVulnerabilityAggregate();
         Assertions.assertEquals(2, aggregate.getHighSeverityCount());
@@ -93,7 +94,7 @@ class VulnerabiityProcessorTest {
         VulnerabilityCvss2View cvss2 = new VulnerabilityCvss2View();
         cvss2.setSeverity(severityType);
         vulnerabilityView.setCvss2(cvss2);
-        
+
         return vulnerabilityView;
     }
 }

@@ -21,6 +21,7 @@ import com.synopsys.integration.blackduck.api.manual.view.PolicyOverrideNotifica
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.deleteme.ComponentVersionIdUtil;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyOverrideProcessor {
@@ -49,7 +50,10 @@ public class PolicyOverrideProcessor {
             ProjectVersionComponentPolicyStatusType policySummaryStatusType = policyNotificationService.fetchApprovalStatus(content.getBomComponentVersionPolicyStatus());
             PolicyStatusReport policyStatusReport = new PolicyStatusReport(policySummaryStatusType, policySeverityTypes);
 
-            processedPolicyNotification = new ProcessedPolicyNotification(content.getComponentName(), content.getComponentVersionName(), policyStatusReport, Collections.singletonList(repoKeyPath.get()));
+            String componentVersionUrl = content.getComponentVersion();
+            String componentVersionId = ComponentVersionIdUtil.extractComponentVersionId(componentVersionUrl);
+
+            processedPolicyNotification = new ProcessedPolicyNotification(content.getComponentName(), content.getComponentVersionName(), componentVersionId, policyStatusReport, Collections.singletonList(repoKeyPath.get()));
         }
 
         return Optional.ofNullable(processedPolicyNotification);

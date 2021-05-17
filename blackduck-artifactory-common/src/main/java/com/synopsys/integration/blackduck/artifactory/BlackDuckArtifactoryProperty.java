@@ -21,7 +21,9 @@ public enum BlackDuckArtifactoryProperty {
     POLICY_STATUS("policyStatus"),
     POLICY_SEVERITY_TYPES("policySeverityTypes"),
     COMPONENT_VERSION_URL("componentVersionUrl"),
+    @Deprecated
     COMPONENT_NAME_VERSION("componentNameVersion"),
+    COMPONENT_VERSION_ID("componentVersionId"),
     PROJECT_VERSION_UI_URL("uiUrl"),
     OVERALL_POLICY_STATUS("overallPolicyStatus"),
     LAST_INSPECTION("lastInspection"),

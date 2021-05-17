@@ -48,7 +48,7 @@ class InspectionPropertyServiceTest {
         val artifactoryPAPIService = mock<ArtifactoryPAPIService>()
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
 
-        whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.propertyName)).thenReturn(true)
+        whenever(artifactoryPAPIService.hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_ID.propertyName)).thenReturn(true)
         Assertions.assertTrue(inspectionPropertyService.hasExternalIdProperties(repoPath))
     }
 
@@ -58,15 +58,16 @@ class InspectionPropertyServiceTest {
 
         val repoPathPropertyMap = mutableMapOf<RepoPath, PropertiesMap>()
         val artifactoryPAPIService = createMockArtifactoryPAPIService(repoPathPropertyMap)
-        val componentNameProperty = BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION.propertyName
+        val componentVersionIdProperty = BlackDuckArtifactoryProperty.COMPONENT_VERSION_ID.propertyName
+        val componentVersionId = "9876c696-caf9-4c03-88d7-876964b32acb";
 
         val inspectionPropertyService = createInspectionPropertyService(artifactoryPAPIService)
-        inspectionPropertyService.setExternalIdProperties(repoPath, "ComponentName", "ComponentVersionName")
+        inspectionPropertyService.setExternalIdProperties(repoPath, componentVersionId)
 
         val propertyMap = repoPathPropertyMap[repoPath]!!
 
-        Assertions.assertTrue(propertyMap.containsKey(componentNameProperty), "The $componentNameProperty is missing from the properties.")
-        Assertions.assertEquals(String.format(InspectionPropertyService.COMPONENT_NAME_VERSION_FORMAT, "ComponentName", "ComponentVersionName"), propertyMap[componentNameProperty])
+        Assertions.assertTrue(propertyMap.containsKey(componentVersionIdProperty), "The $componentVersionIdProperty is missing from the properties.")
+        Assertions.assertEquals(componentVersionId, propertyMap[componentVersionIdProperty])
     }
 
     @Test

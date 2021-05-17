@@ -48,11 +48,11 @@ public class InspectionPropertyService extends ArtifactoryPropertyService {
     }
 
     public boolean hasExternalIdProperties(RepoPath repoPath) {
-        return hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION);
+        return hasProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_ID);
     }
 
-    public void setExternalIdProperties(RepoPath repoPath, String componentName, String componentVersionName) {
-        setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_NAME_VERSION, String.format(COMPONENT_NAME_VERSION_FORMAT, componentName, componentVersionName), logger);
+    public void setExternalIdProperties(RepoPath repoPath, String componentVersionId) {
+        setProperty(repoPath, BlackDuckArtifactoryProperty.COMPONENT_VERSION_ID, componentVersionId, logger);
     }
 
     public boolean shouldRetryInspection(RepoPath repoPath) {
