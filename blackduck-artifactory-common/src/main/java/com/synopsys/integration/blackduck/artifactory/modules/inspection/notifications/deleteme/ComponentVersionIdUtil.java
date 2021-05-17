@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications;
+package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.deleteme;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

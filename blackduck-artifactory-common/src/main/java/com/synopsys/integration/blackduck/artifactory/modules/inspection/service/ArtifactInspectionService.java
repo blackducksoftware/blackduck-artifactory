@@ -30,7 +30,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.A
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.ComponentViewWrapper;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.InspectionStatus;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ComponentVersionIdUtil;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.deleteme.ComponentVersionIdUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.model.VulnerabilityAggregate;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
 import com.synopsys.integration.blackduck.service.BlackDuckApiClient;

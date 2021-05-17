@@ -20,9 +20,9 @@ import com.synopsys.integration.blackduck.api.manual.component.ComponentVersionS
 import com.synopsys.integration.blackduck.api.manual.component.RuleViolationNotificationContent;
 import com.synopsys.integration.blackduck.api.manual.view.RuleViolationNotificationUserView;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.PolicyStatusReport;
-import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.ComponentVersionIdUtil;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.PolicyNotificationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.RepositoryProjectNameLookup;
+import com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.deleteme.ComponentVersionIdUtil;
 import com.synopsys.integration.exception.IntegrationException;
 
 public class PolicyViolationProcessor {
