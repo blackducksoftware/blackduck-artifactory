@@ -7,23 +7,20 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.inspection.notifications.deleteme;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Arrays;
 
-import com.synopsys.integration.blackduck.api.generated.discovery.BlackDuckMediaTypeDiscovery;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.rest.HttpUrl;
 
+// TODO: blackduck-common:55.0.0 will support parsing UUIDs from BlackDuckUrls and should be used in the next release of blackduck-artifactory. - JM 05/2021
 public class ComponentVersionIdUtil {
-    private static final Pattern COMPONENT_VERSION_ID_PATTERN = Pattern.compile(String.format(".*/components/%s/versions/(%s).*", BlackDuckMediaTypeDiscovery.UUID_REGEX, BlackDuckMediaTypeDiscovery.UUID_REGEX));
 
     private ComponentVersionIdUtil() {}
 
     public static String extractComponentVersionId(String componentVersionUrl) throws IntegrationException {
-        Matcher matcher = COMPONENT_VERSION_ID_PATTERN.matcher(componentVersionUrl);
-        if (matcher.matches()) {
-            return matcher.group(1);
-        } else {
-            throw new IntegrationException(String.format("Component Version URL does not match pattern %s", COMPONENT_VERSION_ID_PATTERN.pattern()));
-        }
+        TempBlackDuckUrl tempBlackDuckUrl = new TempBlackDuckUrl(new HttpUrl(componentVersionUrl));
+        return tempBlackDuckUrl.parseId(Arrays.asList(TempBlackDuckUrlSearchTerm.COMPONENTS, TempBlackDuckUrlSearchTerm.VERSIONS));
     }
+
 }
+
