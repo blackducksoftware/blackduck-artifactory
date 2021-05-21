@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
@@ -23,6 +26,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.model.SupportedPackageType;
 
 public class InspectionModuleConfig extends ModuleConfig {
+    private static final Logger logger = LoggerFactory.getLogger(InspectionModuleConfig.class);
+
     private final String inspectionCron;
     private final String reinspectCron;
     private final Boolean metadataBlockEnabled;
@@ -78,10 +83,11 @@ public class InspectionModuleConfig extends ModuleConfig {
         Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.METADATA_BLOCK);
         List<String> metadataBlockRepos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.METADATA_BLOCK_REPOS, InspectionModuleProperty.METADATA_BLOCK_REPOS_CSV_PATH)
                                               .stream()
-                                              .filter(artifactoryPAPIService::isValidRepository)
-                                              .filter(repos::contains)
+                                              .filter(repoKey -> shouldIncludeValidRepository(repos, repoKey))
                                               .collect(Collectors.toList());
+        String noReposMessage = "None of the repositories set to be blocked were a valid subset of the inspected repositories. Defaulting to all inspected repositories.";
         if (metadataBlockRepos.isEmpty()) {
+            logger.info("Metadata Blocking: {}", noReposMessage);
             metadataBlockRepos = repos;
         }
 
@@ -89,10 +95,10 @@ public class InspectionModuleConfig extends ModuleConfig {
         Boolean policyBlockedEnabled = configurationPropertyManager.getBooleanProperty(InspectionModuleProperty.POLICY_BLOCK);
         List<String> policyRepos = configurationPropertyManager.getRepositoryKeysFromProperties(InspectionModuleProperty.POLICY_REPOS, InspectionModuleProperty.POLICY_REPOS_CSV_PATH)
                                        .stream()
-                                       .filter(artifactoryPAPIService::isValidRepository)
-                                       .filter(repos::contains)
+                                       .filter(repoKey -> shouldIncludeValidRepository(repos, repoKey))
                                        .collect(Collectors.toList());
         if (policyRepos.isEmpty()) {
+            logger.info("Policy Blocking: {}", noReposMessage);
             policyRepos = repos;
         }
         List<PolicyRuleSeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(InspectionModuleProperty.POLICY_SEVERITY_TYPES)
@@ -101,6 +107,14 @@ public class InspectionModuleConfig extends ModuleConfig {
                                                                .collect(Collectors.toList());
 
         return new InspectionModuleConfig(enabled, blackDuckIdentifyArtifactsCron, reinspectCron, metadataBlockEnabled, metadataBlockRepos, patternMap, repos, retryCount, policyBlockedEnabled, policyRepos, policySeverityTypes);
+    }
+
+    private static boolean shouldIncludeValidRepository(List<String> repos, String repoKey) {
+        if (!repos.contains(repoKey)) {
+            logger.warn("Excluding configured repository {} from blocking because it not configured to be inspected.", repoKey);
+            return false;
+        }
+        return true;
     }
 
     @Override

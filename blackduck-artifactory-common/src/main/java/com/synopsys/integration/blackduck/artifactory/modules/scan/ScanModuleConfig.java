@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.api.generated.enumeration.PolicyRuleSeverityType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
@@ -22,6 +24,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleProperty;
 
 public class ScanModuleConfig extends ModuleConfig {
+    private static final Logger logger = LoggerFactory.getLogger(ScanModuleConfig.class);
+
     private final String cron;
     @Nullable
     private final String binariesDirectoryPath;
@@ -99,10 +103,11 @@ public class ScanModuleConfig extends ModuleConfig {
         Boolean metadataBlockEnabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.METADATA_BLOCK);
         List<String> metadataBlockRepos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.METADATA_BLOCK_REPOS, ScanModuleProperty.METADATA_BLOCK_REPOS_CSV_PATH)
                                               .stream()
-                                              .filter(artifactoryPAPIService::isValidRepository)
-                                              .filter(repos::contains)
+                                              .filter(repoKey -> shouldIncludeValidRepository(repos, repoKey))
                                               .collect(Collectors.toList());
+        String noReposMessage = "None of the repositories set to be blocked were a valid subset of the scanned repositories. Defaulting to all scanned repositories.";
         if (metadataBlockRepos.isEmpty()) {
+            logger.info("Metadata Blocking: {}", noReposMessage);
             metadataBlockRepos = repos;
         }
 
@@ -110,10 +115,10 @@ public class ScanModuleConfig extends ModuleConfig {
         Boolean policyBlockedEnabled = configurationPropertyManager.getBooleanProperty(ScanModuleProperty.POLICY_BLOCK);
         List<String> policyRepos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanModuleProperty.POLICY_REPOS, ScanModuleProperty.POLICY_REPOS_CSV_PATH)
                                        .stream()
-                                       .filter(artifactoryPAPIService::isValidRepository)
-                                       .filter(repos::contains)
+                                       .filter(repoKey -> shouldIncludeValidRepository(repos, repoKey))
                                        .collect(Collectors.toList());
         if (policyRepos.isEmpty()) {
+            logger.info("Policy Blocking: {}", noReposMessage);
             policyRepos = repos;
         }
         List<PolicyRuleSeverityType> policySeverityTypes = configurationPropertyManager.getPropertyAsList(ScanModuleProperty.POLICY_SEVERITY_TYPES)
@@ -141,6 +146,14 @@ public class ScanModuleConfig extends ModuleConfig {
         );
     }
 
+    private static boolean shouldIncludeValidRepository(List<String> repos, String repoKey) {
+        if (!repos.contains(repoKey)) {
+            logger.warn("Excluding configured repository {} from blocking because it not configured to be scanned.", repoKey);
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void validate(PropertyGroupReport propertyGroupReport) {
         validateCronExpression(propertyGroupReport, ScanModuleProperty.CRON, cron);
@@ -159,6 +172,17 @@ public class ScanModuleConfig extends ModuleConfig {
         validateBoolean(propertyGroupReport, ScanModuleProperty.POLICY_BLOCK, policyBlockedEnabled);
         validateList(propertyGroupReport, ScanModuleProperty.POLICY_REPOS, policyRepos, "No valid repositories are configured for policy blocking.");
         validateList(propertyGroupReport, ScanModuleProperty.POLICY_SEVERITY_TYPES, policySeverityTypes, "No severity types were provided to block on.");
+    }
+
+    private static boolean includeValidRepository(ArtifactoryPAPIService artifactoryPAPIService, List<String> repos, String repoKey) {
+        if (!repos.contains(repoKey)) {
+            logger.warn("Excluding configured repository {} from blocking because it not configured to be inspected.", repoKey);
+            return false;
+        } else if (!artifactoryPAPIService.isValidRepository(repoKey)) {
+            logger.warn("Excluding configured repository {} from blocking because it is not a valid repository.", repoKey);
+            return false;
+        }
+        return true;
     }
 
     public String getCron() {
