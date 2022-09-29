@@ -1,7 +1,7 @@
 /*
  * blackduck-artifactory-common
  *
- * Copyright (c) 2021 Synopsys, Inc.
+ * Copyright (c) 2022 Synopsys, Inc.
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
@@ -24,6 +24,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzab
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -42,13 +43,15 @@ public class PluginAPI implements Analyzable {
     private final ScanModule scanModule;
     private final InspectionModule inspectionModule;
     private final AnalyticsModule analyticsModule;
+    private final ScanAsAServiceModule scanAsAServiceModule;
 
-    public PluginAPI(FeatureAnalyticsCollector featureAnalyticsCollector, ModuleManager moduleManager, ScanModule scanModule, InspectionModule inspectionModule, AnalyticsModule analyticsModule) {
+    public PluginAPI(FeatureAnalyticsCollector featureAnalyticsCollector, ModuleManager moduleManager, ScanModule scanModule, InspectionModule inspectionModule, AnalyticsModule analyticsModule, ScanAsAServiceModule scanAsAServiceModule) {
         this.featureAnalyticsCollector = featureAnalyticsCollector;
         this.moduleManager = moduleManager;
         this.scanModule = scanModule;
         this.inspectionModule = inspectionModule;
         this.analyticsModule = analyticsModule;
+        this.scanAsAServiceModule = scanAsAServiceModule;
     }
 
     public void setModuleState(TriggerType triggerType, Map<String, List<String>> params) {

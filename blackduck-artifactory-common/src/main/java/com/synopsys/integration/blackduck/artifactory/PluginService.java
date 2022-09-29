@@ -1,7 +1,7 @@
 /*
  * blackduck-artifactory-common
  *
- * Copyright (c) 2021 Synopsys, Inc.
+ * Copyright (c) 2022 Synopsys, Inc.
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
@@ -31,6 +31,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;
@@ -88,8 +89,9 @@ public class PluginService {
         ScanModule scanModule = moduleFactory.createScanModule();
         InspectionModule inspectionModule = moduleFactory.createInspectionModule();
         AnalyticsModule analyticsModule = moduleFactory.createAnalyticsModule(analyticsService, moduleManager);
+        ScanAsAServiceModule scanAsAServiceModule = moduleFactory.createScanAsAServiceModule();
 
-        moduleManager.registerModules(scanModule, inspectionModule, analyticsModule);
+        moduleManager.registerModules(scanModule, inspectionModule, analyticsModule, scanAsAServiceModule);
 
         configValidationService = new ConfigValidationService(moduleManager, pluginConfig, directoryConfig.getVersionFile());
         ConfigValidationReport configValidationReport = configValidationService.validateConfig();
@@ -102,7 +104,7 @@ public class PluginService {
         logger.warn(statusCheckMessage);
 
         FeatureAnalyticsCollector featureAnalyticsCollector = new FeatureAnalyticsCollector(PluginAPI.class);
-        PluginAPI pluginAPI = new PluginAPI(featureAnalyticsCollector, moduleManager, scanModule, inspectionModule, analyticsModule);
+        PluginAPI pluginAPI = new PluginAPI(featureAnalyticsCollector, moduleManager, scanModule, inspectionModule, analyticsModule, scanAsAServiceModule);
         analyticsService.registerAnalyzable(pluginAPI);
 
         logger.info("...blackDuckPlugin initialized.");

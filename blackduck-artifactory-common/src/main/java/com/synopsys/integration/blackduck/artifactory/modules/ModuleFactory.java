@@ -1,7 +1,7 @@
 /*
  * blackduck-artifactory-common
  *
- * Copyright (c) 2021 Synopsys, Inc.
+ * Copyright (c) 2022 Synopsys, Inc.
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
@@ -50,6 +50,8 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
@@ -197,5 +199,10 @@ public class ModuleFactory {
         SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
         return new AnalyticsModule(analyticsModuleConfig, analyticsService, simpleAnalyticsCollector, moduleManager);
+    }
+
+    public ScanAsAServiceModule createScanAsAServiceModule() {
+        ScanAsAServiceModuleConfig scanAsAServiceModuleConfig = ScanAsAServiceModuleConfig.createFromProperties();
+        return new ScanAsAServiceModule(scanAsAServiceModuleConfig);
     }
 }
