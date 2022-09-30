@@ -201,8 +201,8 @@ public class ModuleFactory {
         return new AnalyticsModule(analyticsModuleConfig, analyticsService, simpleAnalyticsCollector, moduleManager);
     }
 
-    public ScanAsAServiceModule createScanAsAServiceModule() {
-        ScanAsAServiceModuleConfig scanAsAServiceModuleConfig = ScanAsAServiceModuleConfig.createFromProperties();
+    public ScanAsAServiceModule createScanAsAServiceModule() throws IOException {
+        ScanAsAServiceModuleConfig scanAsAServiceModuleConfig = ScanAsAServiceModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService);
         return new ScanAsAServiceModule(scanAsAServiceModuleConfig);
     }
 }

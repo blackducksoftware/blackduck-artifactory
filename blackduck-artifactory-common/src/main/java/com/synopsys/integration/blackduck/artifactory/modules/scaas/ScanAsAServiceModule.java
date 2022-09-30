@@ -12,7 +12,6 @@ import java.util.List;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
-import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
