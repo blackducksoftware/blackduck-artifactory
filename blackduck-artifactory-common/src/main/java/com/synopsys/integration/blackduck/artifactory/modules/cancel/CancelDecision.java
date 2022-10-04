@@ -35,4 +35,20 @@ public class CancelDecision {
     public String getCancelReason() {
         return cancelReason;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof CancelDecision)) {
+            return false;
+        }
+
+        CancelDecision c = (CancelDecision) o;
+        return shouldCancelDownload == c.shouldCancelDownload
+                && ((cancelReason == null && c.cancelReason == null)
+                    || (cancelReason != null && cancelReason.equals(c.cancelReason)));
+    }
 }

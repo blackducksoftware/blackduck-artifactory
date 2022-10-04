@@ -68,6 +68,10 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         return moduleConfig.build();
     }
 
+    public ScanAsAServiceBlockingStrategy getBlockingStrategy() {
+        return this.blockingStrategy;
+    }
+
     @Override
     public void validate(PropertyGroupReport propertyGroupReport) {
         if (isEnabled()) {

@@ -10,11 +10,13 @@ package com.synopsys.integration.blackduck.artifactory.modules;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
+import org.artifactory.request.Request;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.LogUtil;
@@ -159,6 +161,10 @@ public class PluginAPI implements Analyzable {
         return success == null ? "AnalyticsModule disabled" : success.toString();
     }
 
+    public void handleBeforeDownloadEventScanAsAService(TriggerType triggerType, Request request, RepoPath repoPath) {
+        runMethod(scanAsAServiceModule, triggerType, request, repoPath, scanAsAServiceModule::handleBeforeDownloadEvent);
+    }
+
     /**
      * Below are utility methods to help reuse the code for logging and analytics
      */
@@ -166,6 +172,13 @@ public class PluginAPI implements Analyzable {
     private <T> void runMethod(Module module, TriggerType triggerType, T consumable, Consumer<T> consumer) {
         if (startMethodRun(module, triggerType)) {
             consumer.accept(consumable);
+            finishMethodRun(module, triggerType, triggerType);
+        }
+    }
+
+    private <R, T> void runMethod(Module module, TriggerType triggerType, R consumable1, T consumable2, BiConsumer<R, T> consumer) {
+        if (startMethodRun(module, triggerType)) {
+            consumer.accept(consumable1, consumable2);
             finishMethodRun(module, triggerType, triggerType);
         }
     }

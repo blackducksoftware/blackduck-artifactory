@@ -36,7 +36,8 @@ public enum BlackDuckArtifactoryProperty {
     SCAN_RESULT_MESSAGE("scanResultMessage"),
     POST_SCAN_ACTION_STATUS("postScanActionStatus"),
     POST_SCAN_PHASE("postScanPhase"),
-    INSPECTION_RETRY_COUNT("inspectionRetryCount");
+    INSPECTION_RETRY_COUNT("inspectionRetryCount"),
+    SCAN_STATUS("scanStatus");
 
     private final String propertyName;
     private final String timeName;

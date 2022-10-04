@@ -412,6 +412,7 @@ download {
     beforeDownload { Request request, RepoPath repoPath ->
         pluginAPI.handleBeforeDownloadEventInspection(TriggerType.BEFORE_DOWNLOAD, repoPath)
         pluginAPI.handleBeforeDownloadEventScan(TriggerType.BEFORE_DOWNLOAD, repoPath)
+        pluginAPI.handleBeforeDownloadEventScanAsAService(TriggerType.BEFORE_DOWNLOAD, request, repoPath)
     }
 }
 

@@ -7,12 +7,16 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.scaas;
 
+import java.util.Collection;
 import java.util.List;
 
+import org.artifactory.repo.RepoPath;
+import org.artifactory.request.Request;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.modules.Module;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -21,8 +25,12 @@ public class ScanAsAServiceModule implements Module {
 
     private final ScanAsAServiceModuleConfig scanAsAServiceModuleConfig;
 
-    public ScanAsAServiceModule(ScanAsAServiceModuleConfig scanAsAServiceModuleConfig) {
+    private final Collection<CancelDecider> cancelDeciders;
+
+    public ScanAsAServiceModule(ScanAsAServiceModuleConfig scanAsAServiceModuleConfig,
+            Collection<CancelDecider> cancelDeciders) {
         this.scanAsAServiceModuleConfig = scanAsAServiceModuleConfig;
+        this.cancelDeciders = cancelDeciders;
     }
 
     @Override
@@ -33,5 +41,9 @@ public class ScanAsAServiceModule implements Module {
     @Override
     public List<AnalyticsCollector> getAnalyticsCollectors() {
         return null;
+    }
+
+    public void handleBeforeDownloadEvent(Request request, RepoPath repoPath) {
+        cancelDeciders.forEach(cancelDecider -> cancelDecider.handleBeforeDownloadEvent(repoPath));
     }
 }
