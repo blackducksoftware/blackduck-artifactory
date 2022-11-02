@@ -46,7 +46,7 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
         }
 
         ScanAsAServiceBlockingStrategy blockingStrategy = moduleConfig.getBlockingStrategy();
-        Optional<ProjectVersionComponentPolicyStatusType> policyViolationStatus = propertyService.getOverallPolicyStatus(repoPath);
+        Optional<ProjectVersionComponentPolicyStatusType> policyViolationStatus = propertyService.getPolicyStatus(repoPath);
         return propertyService.getScanStatusProperty(repoPath).map(
                         scanStatus -> {
                             CancelDecision dec;

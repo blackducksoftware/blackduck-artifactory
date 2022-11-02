@@ -98,7 +98,7 @@ public class ScanAsAServiceCancelDeciderTest {
     public void testGetCancelDecision(String description, ScanAsAServiceBlockingStrategy blockingStrategy, ScanAsAServiceScanStatus scanStatus, ProjectVersionComponentPolicyStatusType policyViolationStatus, CancelDecision expectedResult) {
         Mockito.when(scanAsAServiceModuleConfig.getBlockingStrategy()).thenReturn(blockingStrategy);
         Mockito.when(scanAsAServicePropertyService.getScanStatusProperty(artifactPath)).thenReturn(Optional.ofNullable(scanStatus));
-        Mockito.when(scanAsAServicePropertyService.getOverallPolicyStatus(artifactPath)).thenReturn(Optional.ofNullable(policyViolationStatus));
+        Mockito.when(scanAsAServicePropertyService.getPolicyStatus(artifactPath)).thenReturn(Optional.ofNullable(policyViolationStatus));
         Mockito.when(artifactoryPAPIService.getItemInfo(artifactPath)).thenReturn(new ItemInfo() {
             @Override public long getId() {
                 return 0;

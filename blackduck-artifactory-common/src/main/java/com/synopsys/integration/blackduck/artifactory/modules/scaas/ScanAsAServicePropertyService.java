@@ -24,12 +24,12 @@ public class ScanAsAServicePropertyService extends ArtifactoryPropertyService {
     }
 
     public Optional<ScanAsAServiceScanStatus> getScanStatusProperty(RepoPath repoPath) {
-        return getProperty(repoPath, BlackDuckArtifactoryProperty.SCAN_STATUS)
+        return getProperty(repoPath, BlackDuckArtifactoryProperty.SCAAAS_SCAN_STATUS)
                 .map(ScanAsAServiceScanStatus::getValue);
     }
 
-    public Optional<ProjectVersionComponentPolicyStatusType> getOverallPolicyStatus(RepoPath repoPath) {
-        return getProperty(repoPath, BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS)
+    public Optional<ProjectVersionComponentPolicyStatusType> getPolicyStatus(RepoPath repoPath) {
+        return getProperty(repoPath, BlackDuckArtifactoryProperty.SCAAAS_POLICY_STATUS)
                 .map(ProjectVersionComponentPolicyStatusType::valueOf);
     }
 }
