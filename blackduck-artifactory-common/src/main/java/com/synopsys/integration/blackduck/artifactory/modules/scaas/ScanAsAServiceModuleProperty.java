@@ -1,15 +1,10 @@
 /*
- * Copyright (C) 2022 Synopsys Inc.
- * http://www.synopsys.com/
- * All rights reserved.
+ * blackduck-artifactory-common
  *
- * This software is the confidential and proprietary information of
- * Synopsys ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Synopsys.
+ * Copyright (c) 2022 Synopsys, Inc.
+ *
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-
 package com.synopsys.integration.blackduck.artifactory.modules.scaas;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationProperty;

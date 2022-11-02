@@ -1,7 +1,7 @@
 /*
  * blackduck-artifactory-common
  *
- * Copyright (c) 2021 Synopsys, Inc.
+ * Copyright (c) 2022 Synopsys, Inc.
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
@@ -37,7 +37,7 @@ public enum BlackDuckArtifactoryProperty {
     POST_SCAN_ACTION_STATUS("postScanActionStatus"),
     POST_SCAN_PHASE("postScanPhase"),
     INSPECTION_RETRY_COUNT("inspectionRetryCount"),
-    SCAN_STATUS("scanStatus");
+    SCAN_STATUS("scaas.inspectionStatus");
 
     private final String propertyName;
     private final String timeName;

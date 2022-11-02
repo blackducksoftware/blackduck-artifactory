@@ -1,25 +1,18 @@
 /*
- * Copyright (C) 2022 Synopsys Inc.
- * http://www.synopsys.com/
- * All rights reserved.
+ * blackduck-artifactory-common
  *
- * This software is the confidential and proprietary information of
- * Synopsys ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Synopsys.
+ * Copyright (c) 2022 Synopsys, Inc.
+ *
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-
 package com.synopsys.integration.blackduck.artifactory.modules.scaas;
 
 import javax.annotation.Nullable;
 
 public enum ScanAsAServiceScanStatus {
-    SCAN_IN_PROGRESS("Scanning currently in progress."),
-    SUCCESS_NO_POLICY_VIOLATION(null),
-    SUCCESS_POLICY_VIOLATION("Scan successfully complete, but policy violations were detected."),
+    PROCESSING("Artifact identified and Scanner notified."),
+    SUCCESS("Scan successful"),
     FAILED("Scan failed"),
-    UNKNOWN(""),
     ;
 
     private final String message;
@@ -38,6 +31,6 @@ public enum ScanAsAServiceScanStatus {
             if (val.name().equals(value))
                 return val;
         }
-        return ScanAsAServiceScanStatus.UNKNOWN;
+        throw new IllegalArgumentException(String.format("Unable to find suitable ScanAsAServiceScanStatus; Value: %s", value));
     }
 }
