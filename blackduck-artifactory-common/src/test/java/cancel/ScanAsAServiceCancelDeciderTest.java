@@ -15,6 +15,7 @@ package cancel;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -52,14 +53,18 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ScanAsAServiceCancelDeciderTest {
     private static String TEST_REPO_PATH = "test-repo";
+
+    private static String TEST_OUTSIDE_REPO_PATH = "test-outside-repo";
+
     private static String TEST_ARTIFACT_NAME = "test-artifact.jar";
 
     private static String DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
     private static Stream<Arguments> providerValuesForGetCancelDecision() {
-        // Description, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, String(lastUpdated), String(cutoffDate), CancelDecision
+        // Description, ArtifactRepoPath, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, String(lastUpdated), String(cutoffDate), CancelDecision
         return Stream.of(
                 arguments("No Blocking; Scan Success with Policy Violations",
+                        artifactPath,
                         BLOCK_NONE,
                         SUCCESS,
                         IN_VIOLATION,
@@ -67,6 +72,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Scan Success with No Policy Violations",
+                        artifactPath,
                         BLOCK_NONE,
                         SUCCESS,
                         NOT_IN_VIOLATION,
@@ -74,6 +80,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Scan in progress",
+                        artifactPath,
                         BLOCK_NONE,
                         PROCESSING,
                         null,
@@ -81,6 +88,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Scan Failed",
+                        artifactPath,
                         BLOCK_NONE,
                         FAILED,
                         null,
@@ -88,6 +96,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", FAILED.getMessage(), artifactPath))),
                 arguments("Blocking; Scan Success with No Policy Violations",
+                        artifactPath,
                         BLOCK_ALL,
                         SUCCESS,
                         NOT_IN_VIOLATION,
@@ -95,6 +104,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Scan Success with Policy Violations",
+                        artifactPath,
                         BLOCK_ALL,
                         SUCCESS,
                         IN_VIOLATION,
@@ -102,6 +112,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("Blocking; Scan in progress",
+                        artifactPath,
                         BLOCK_ALL,
                         PROCESSING,
                         null,
@@ -109,6 +120,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", PROCESSING.getMessage(), artifactPath))),
                 arguments("Blocking; Scan Failed",
+                        artifactPath,
                         BLOCK_ALL,
                         FAILED,
                         null,
@@ -116,6 +128,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", FAILED.getMessage(), artifactPath))),
                 arguments("No Blocking; Last updated prior to cutoff",
+                        artifactPath,
                         BLOCK_ALL,
                         SUCCESS,
                         IN_VIOLATION, // The combination of these will cause blocking if the cutoff logic fails
@@ -123,6 +136,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Last updated same as cutoff",
+                        artifactPath,
                         BLOCK_ALL,
                         SUCCESS,
                         IN_VIOLATION, // The combination of these will cause blocking if the cutoff logic fails
@@ -130,12 +144,21 @@ public class ScanAsAServiceCancelDeciderTest {
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; In violation; Provide null cutoff time",
+                        artifactPath,
                         BLOCK_ALL,
                         SUCCESS,
                         IN_VIOLATION,
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(3).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         null,
-                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath)))
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
+                arguments("No Blocking; Repo path not in blocking repos",
+                        outsideArtifactPath,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        IN_VIOLATION, // The combination of these will cause blocking if the blocking repos check fails
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.NO_CANCELLATION())
         );
     }
 
@@ -150,9 +173,9 @@ public class ScanAsAServiceCancelDeciderTest {
 
     private static PluginRepoPathFactory pluginRepoPathFactory;
 
-    private static RepoPath repoPath;
-
     private static RepoPath artifactPath;
+
+    private static RepoPath outsideArtifactPath;
 
     private static DateTimeManager dateTimeManager;
 
@@ -161,8 +184,10 @@ public class ScanAsAServiceCancelDeciderTest {
     @BeforeAll
     public static void beforeAll() {
         pluginRepoPathFactory = new PluginRepoPathFactory(false);
-        repoPath = pluginRepoPathFactory.create(TEST_REPO_PATH);
+        RepoPath repoPath = pluginRepoPathFactory.create(TEST_REPO_PATH);
         artifactPath = pluginRepoPathFactory.create(repoPath.getRepoKey(), TEST_ARTIFACT_NAME);
+        RepoPath outsideRepoPath = pluginRepoPathFactory.create(TEST_OUTSIDE_REPO_PATH);
+        outsideArtifactPath = pluginRepoPathFactory.create(outsideRepoPath.getRepoKey(), TEST_ARTIFACT_NAME);
         dateTimeManager = new DateTimeManager(DATETIME_PATTERN);
     }
 
@@ -174,6 +199,7 @@ public class ScanAsAServiceCancelDeciderTest {
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("providerValuesForGetCancelDecision")
     public void testGetCancelDecision(String description,
+            RepoPath repoPath,
             ScanAsAServiceBlockingStrategy blockingStrategy,
             ScanAsAServiceScanStatus scanStatus,
             ProjectVersionComponentPolicyStatusType policyViolationStatus,
@@ -181,17 +207,18 @@ public class ScanAsAServiceCancelDeciderTest {
             String cutoffDate,
             CancelDecision expectedResult) {
         Mockito.when(scanAsAServiceModuleConfig.getBlockingStrategy()).thenReturn(blockingStrategy);
+        Mockito.when(scanAsAServiceModuleConfig.getBlockingRepos()).thenReturn(List.of(TEST_REPO_PATH));
         Mockito.when(scanAsAServiceModuleConfig.getDateTimeManager()).thenReturn(dateTimeManager);
         Mockito.when(scanAsAServiceModuleConfig.getCutoffDateString()).thenReturn(Optional.ofNullable(cutoffDate));
-        Mockito.when(scanAsAServicePropertyService.getScanStatusProperty(artifactPath)).thenReturn(Optional.ofNullable(scanStatus));
-        Mockito.when(scanAsAServicePropertyService.getPolicyStatus(artifactPath)).thenReturn(Optional.ofNullable(policyViolationStatus));
-        Mockito.when(artifactoryPAPIService.getItemInfo(artifactPath)).thenReturn(new ItemInfo() {
+        Mockito.when(scanAsAServicePropertyService.getScanStatusProperty(repoPath)).thenReturn(Optional.ofNullable(scanStatus));
+        Mockito.when(scanAsAServicePropertyService.getPolicyStatus(repoPath)).thenReturn(Optional.ofNullable(policyViolationStatus));
+        Mockito.when(artifactoryPAPIService.getItemInfo(repoPath)).thenReturn(new ItemInfo() {
             @Override public long getId() {
                 return 0;
             }
 
             @Override public RepoPath getRepoPath() {
-                return null;
+                return repoPath;
             }
 
             @Override public boolean isFolder() {
@@ -203,7 +230,7 @@ public class ScanAsAServiceCancelDeciderTest {
             }
 
             @Override public String getRepoKey() {
-                return null;
+                return repoPath.getRepoKey();
             }
 
             @Override public String getRelPath() {
@@ -238,7 +265,7 @@ public class ScanAsAServiceCancelDeciderTest {
                 return 0;
             }
         });
-        CancelDecision actualResult = sut.getCancelDecision(artifactPath);
+        CancelDecision actualResult = sut.getCancelDecision(repoPath);
         assertEquals(expectedResult, actualResult);
     }
 }

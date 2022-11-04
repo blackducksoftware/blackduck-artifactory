@@ -41,6 +41,10 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
 
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
+        if (!moduleConfig.getBlockingRepos().contains(repoPath.getRepoKey())) {
+            return CancelDecision.NO_CANCELLATION();
+        }
+
         ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
         if (itemInfo.isFolder()) {
             return CancelDecision.NO_CANCELLATION();

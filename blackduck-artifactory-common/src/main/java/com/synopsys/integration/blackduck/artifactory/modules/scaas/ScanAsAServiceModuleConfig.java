@@ -27,7 +27,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
     private final ScanAsAServiceBlockingStrategy blockingStrategy;
 
-    private final List<String> repos;
+    private final List<String> blockingRepos;
 
     private final String cutoffDateString;
 
@@ -37,7 +37,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
     protected ScanAsAServiceModuleConfig(Builder builder) {
         super(ScanAsAServiceModule.class.getSimpleName(), builder.enabled);
         this.blockingStrategy = builder.blockingStrategy;
-        this.repos = new ArrayList<>(builder.repos);
+        this.blockingRepos = new ArrayList<>(builder.blockingRepos);
         this.cutoffDateString = builder.cutoffDateString;
         this.dateTimeManager = builder.dateTimeManager;
     }
@@ -66,7 +66,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
                     .filter(artifactoryPAPIService::isValidRepository)
                     .collect(Collectors.toList());
             if (!repos.isEmpty()) {
-                moduleConfig.withRepos(repos);
+                moduleConfig.withBlockingRepos(repos);
             }
             String cutoffDateString;
             if ((cutoffDateString = configurationPropertyManager.getProperty(ScanAsAServiceModuleProperty.CUTOFF_DATE)) != null) {
@@ -79,6 +79,10 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
     public ScanAsAServiceBlockingStrategy getBlockingStrategy() {
         return this.blockingStrategy;
+    }
+
+    public List<String> getBlockingRepos() {
+        return this.blockingRepos;
     }
 
     public Optional<String> getCutoffDateString() {
@@ -94,7 +98,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         if (isEnabled()) {
             // Only generate property report if module is enabled
             validateNotNull(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_STRATEGY, this.blockingStrategy);
-            validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_REPOS, this.repos,
+            validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_REPOS, this.blockingRepos,
                     String.format("No valid repositories specified. Please set the %s property with valid repositories", ScanAsAServiceModuleProperty.BLOCKING_REPOS.getKey()));
             getCutoffDateString().ifPresentOrElse(cutoffDateString ->
                 validateDate(propertyGroupReport, ScanAsAServiceModuleProperty.CUTOFF_DATE, cutoffDateString, dateTimeManager),
@@ -105,7 +109,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
     public static class Builder {
         private Boolean enabled;
         private ScanAsAServiceBlockingStrategy blockingStrategy;
-        private List<String> repos = new ArrayList<>();
+        private List<String> blockingRepos = new ArrayList<>();
         private String cutoffDateString;
 
         private DateTimeManager dateTimeManager;
@@ -124,8 +128,8 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
             return this;
         }
 
-        public Builder withRepos(List<String> repos) {
-            this.repos.addAll(repos);
+        public Builder withBlockingRepos(List<String> repos) {
+            this.blockingRepos.addAll(repos);
             return this;
         }
 
