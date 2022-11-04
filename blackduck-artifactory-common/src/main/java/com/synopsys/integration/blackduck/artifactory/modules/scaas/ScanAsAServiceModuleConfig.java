@@ -10,12 +10,14 @@ package com.synopsys.integration.blackduck.artifactory.modules.scaas;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
+import com.synopsys.integration.blackduck.artifactory.DateTimeManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
@@ -27,17 +29,25 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
     private final List<String> repos;
 
+    private final String cutoffDateString;
+
+    private final DateTimeManager dateTimeManager;
+
 
     protected ScanAsAServiceModuleConfig(Builder builder) {
         super(ScanAsAServiceModule.class.getSimpleName(), builder.enabled);
         this.blockingStrategy = builder.blockingStrategy;
         this.repos = new ArrayList<>(builder.repos);
+        this.cutoffDateString = builder.cutoffDateString;
+        this.dateTimeManager = builder.dateTimeManager;
     }
 
-    public static ScanAsAServiceModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager, ArtifactoryPAPIService artifactoryPAPIService)
+    public static ScanAsAServiceModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager,
+            ArtifactoryPAPIService artifactoryPAPIService,
+            DateTimeManager dateTimeManager)
             throws IOException {
         Boolean enabled = configurationPropertyManager.getBooleanProperty(ScanAsAServiceModuleProperty.ENABLED);
-        ScanAsAServiceModuleConfig.Builder moduleConfig = ScanAsAServiceModuleConfig.Builder.newInstance(enabled);
+        ScanAsAServiceModuleConfig.Builder moduleConfig = ScanAsAServiceModuleConfig.Builder.newInstance(enabled, dateTimeManager);
         logger.debug("blackDuckPlugin: ScanAsAService: property: {}; value: {}", ScanAsAServiceModuleProperty.ENABLED.getKey(), enabled);
         if (Boolean.TRUE.equals(enabled)) {
             // Only parse properties if the module is enabled
@@ -58,6 +68,10 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
             if (!repos.isEmpty()) {
                 moduleConfig.withRepos(repos);
             }
+            String cutoffDateString;
+            if ((cutoffDateString = configurationPropertyManager.getProperty(ScanAsAServiceModuleProperty.CUTOFF_DATE)) != null) {
+                moduleConfig.withCutoffDateString(cutoffDateString);
+            }
         }
 
         return moduleConfig.build();
@@ -67,6 +81,14 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         return this.blockingStrategy;
     }
 
+    public Optional<String> getCutoffDateString() {
+        return Optional.ofNullable(this.cutoffDateString);
+    }
+
+    public DateTimeManager getDateTimeManager() {
+        return this.dateTimeManager;
+    }
+
     @Override
     public void validate(PropertyGroupReport propertyGroupReport) {
         if (isEnabled()) {
@@ -74,6 +96,9 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
             validateNotNull(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_STRATEGY, this.blockingStrategy);
             validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_REPOS, this.repos,
                     String.format("No valid repositories specified. Please set the %s property with valid repositories", ScanAsAServiceModuleProperty.BLOCKING_REPOS.getKey()));
+            getCutoffDateString().ifPresentOrElse(cutoffDateString ->
+                validateDate(propertyGroupReport, ScanAsAServiceModuleProperty.CUTOFF_DATE, cutoffDateString, dateTimeManager),
+                    () -> logger.info(String.format("No SCA-as-a-Service cutoff date supplied; Blocking Strategy %s applied to all items", getBlockingStrategy())));
         }
     }
 
@@ -81,13 +106,17 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         private Boolean enabled;
         private ScanAsAServiceBlockingStrategy blockingStrategy;
         private List<String> repos = new ArrayList<>();
+        private String cutoffDateString;
 
-        private Builder(Boolean enabled) {
+        private DateTimeManager dateTimeManager;
+
+        private Builder(Boolean enabled, DateTimeManager dateTimeManager) {
             this.enabled = enabled;
+            this.dateTimeManager = dateTimeManager;
         }
 
-        public static Builder newInstance(Boolean enabled) {
-            return new Builder(enabled);
+        public static Builder newInstance(Boolean enabled, DateTimeManager dateTimeManager) {
+            return new Builder(enabled, dateTimeManager);
         }
 
         public Builder withBlockingStrategy(ScanAsAServiceBlockingStrategy blockingStrategy) {
@@ -97,6 +126,11 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
         public Builder withRepos(List<String> repos) {
             this.repos.addAll(repos);
+            return this;
+        }
+
+        public Builder withCutoffDateString(String cutoffDateString) {
+            this.cutoffDateString = cutoffDateString;
             return this;
         }
 

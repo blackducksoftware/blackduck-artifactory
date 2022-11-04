@@ -8,6 +8,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules.cancel;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
@@ -42,6 +43,20 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
     public CancelDecision getCancelDecision(RepoPath repoPath) {
         ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
         if (itemInfo.isFolder()) {
+            return CancelDecision.NO_CANCELLATION();
+        }
+
+        AtomicBoolean isBeforeCutoffTime = new AtomicBoolean(false);
+        moduleConfig.getCutoffDateString().ifPresent(cutoffDateString ->
+                {
+                    long cutoffTime = moduleConfig.getDateTimeManager().getTimeFromString(cutoffDateString);
+                    if (itemInfo.getLastUpdated() <= cutoffTime) {
+                        logger.info(String.format("Item last updated prior to cutoff time; No Blocking Strategy applied; repo: %s", repoPath));
+                        isBeforeCutoffTime.set(true);
+                    }
+                }
+        );
+        if (isBeforeCutoffTime.get()) {
             return CancelDecision.NO_CANCELLATION();
         }
 

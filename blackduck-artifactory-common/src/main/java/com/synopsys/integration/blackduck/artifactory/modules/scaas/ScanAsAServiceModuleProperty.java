@@ -14,6 +14,7 @@ public enum ScanAsAServiceModuleProperty implements ConfigurationProperty {
     BLOCKING_STRATEGY("blocking.strategy"),
     BLOCKING_REPOS("blocking.repos"),
     BLOCKING_REPOS_CSV_PATH("blocking.repos.csv.path"),
+    CUTOFF_DATE("cutoff.date"),
     ;
 
     private static final String SCAN_AS_A_SERVICE_MODULE_PROPERTY_PREFIX = "blackduck.artifactory.scaas.";
