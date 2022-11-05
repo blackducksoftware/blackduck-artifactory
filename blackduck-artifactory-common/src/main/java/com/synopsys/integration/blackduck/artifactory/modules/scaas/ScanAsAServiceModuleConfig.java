@@ -94,7 +94,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModules) {
         if (isEnabled()) {
             // Only generate property report if module is enabled
             validateNotNull(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_STRATEGY, this.blockingStrategy);

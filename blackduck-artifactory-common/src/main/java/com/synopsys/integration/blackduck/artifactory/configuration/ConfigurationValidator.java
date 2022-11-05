@@ -17,7 +17,7 @@ import com.synopsys.integration.blackduck.artifactory.configuration.model.Proper
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyValidationResult;
 
 public abstract class ConfigurationValidator {
-    public abstract void validate(PropertyGroupReport propertyGroupReport);
+    public abstract void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModuleNames);
 
     protected void validateDate(PropertyGroupReport statusReport, ConfigurationProperty property, String date, DateTimeManager dateTimeManager) {
         if (StringUtils.isNotBlank(date) && dateTimeManager != null) {

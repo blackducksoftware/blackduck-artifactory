@@ -93,6 +93,13 @@ public class PluginService {
 
         moduleManager.registerModules(scanModule, inspectionModule, analyticsModule, scanAsAServiceModule);
 
+        if (scanAsAServiceModule.getModuleConfig().isEnabled()) {
+            logger.info(String.format("%s module enabled. Disabling %s and %s modules",
+                    scanAsAServiceModule.getModuleConfig().getModuleName(), scanModule.getModuleConfig().getModuleName(), inspectionModule.getModuleConfig().getModuleName()));
+            scanModule.getModuleConfig().setEnabled(false);
+            inspectionModule.getModuleConfig().setEnabled(false);
+        }
+
         configValidationService = new ConfigValidationService(moduleManager, pluginConfig, directoryConfig.getVersionFile());
         ConfigValidationReport configValidationReport = configValidationService.validateConfig();
         if (configValidationReport.getGeneralPropertyReport().hasError()) {

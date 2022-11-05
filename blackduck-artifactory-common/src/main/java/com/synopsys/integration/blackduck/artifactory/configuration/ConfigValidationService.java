@@ -24,6 +24,7 @@ import com.synopsys.integration.blackduck.artifactory.configuration.model.Proper
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyValidationResult;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
 import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -48,13 +49,14 @@ public class ConfigValidationService {
     public ConfigValidationReport validateConfig() {
         BuilderStatus generalBuilderStatus = new BuilderStatus();
         PropertyGroupReport generalPropertyReport = new PropertyGroupReport("General Settings", generalBuilderStatus);
-        pluginConfig.validate(generalPropertyReport);
+        List<String> enabedModules = moduleManager.getAllEnabledModules();
+        pluginConfig.validate(generalPropertyReport, enabedModules);
 
         List<PropertyGroupReport> propertyGroupReports = new ArrayList<>();
         for (ModuleConfig moduleConfig : moduleManager.getAllModuleConfigs()) {
             BuilderStatus propertyGroupBuilderStatus = new BuilderStatus();
             PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), propertyGroupBuilderStatus);
-            moduleConfig.validate(propertyGroupReport);
+            moduleConfig.validate(propertyGroupReport, enabedModules);
             propertyGroupReports.add(propertyGroupReport);
         }
 

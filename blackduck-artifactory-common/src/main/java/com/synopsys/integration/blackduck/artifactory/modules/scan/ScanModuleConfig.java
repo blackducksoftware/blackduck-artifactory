@@ -155,7 +155,7 @@ public class ScanModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport, List<String> enabeledModules) {
         validateCronExpression(propertyGroupReport, ScanModuleProperty.CRON, cron);
         validateDate(propertyGroupReport, ScanModuleProperty.CUTOFF_DATE, artifactCutoffDate, dateTimeManager);
         validateBoolean(propertyGroupReport, ScanModuleProperty.DRY_RUN, dryRun);

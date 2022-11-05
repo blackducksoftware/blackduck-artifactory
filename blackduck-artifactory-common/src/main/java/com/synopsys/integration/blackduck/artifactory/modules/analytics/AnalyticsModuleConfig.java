@@ -7,6 +7,8 @@
  */
 package com.synopsys.integration.blackduck.artifactory.modules.analytics;
 
+import java.util.List;
+
 import com.synopsys.integration.blackduck.artifactory.configuration.ConfigurationPropertyManager;
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
@@ -23,7 +25,7 @@ public class AnalyticsModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModules) {
         validateBoolean(propertyGroupReport, AnalyticsModuleProperty.ENABLED, isEnabledUnverified());
     }
 }
