@@ -1,7 +1,7 @@
 /*
  * blackduck-artifactory-common
  *
- * Copyright (c) 2021 Synopsys, Inc.
+ * Copyright (c) 2022 Synopsys, Inc.
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
@@ -26,6 +26,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.CancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.InspectionCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.PolicyCancelDecider;
+import com.synopsys.integration.blackduck.artifactory.modules.cancel.ScanAsAServiceCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.cancel.ScanCancelDecider;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModuleConfig;
@@ -50,6 +51,9 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServicePropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
@@ -197,5 +201,13 @@ public class ModuleFactory {
         SimpleAnalyticsCollector simpleAnalyticsCollector = new SimpleAnalyticsCollector();
 
         return new AnalyticsModule(analyticsModuleConfig, analyticsService, simpleAnalyticsCollector, moduleManager);
+    }
+
+    public ScanAsAServiceModule createScanAsAServiceModule() throws IOException {
+        ScanAsAServiceModuleConfig scanAsAServiceModuleConfig = ScanAsAServiceModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, dateTimeManager);
+        ScanAsAServicePropertyService scanAsAServicePropertyService = new ScanAsAServicePropertyService(artifactoryPAPIService, dateTimeManager);
+        ScanAsAServiceCancelDecider scanAsAServiceCancelDecider = new ScanAsAServiceCancelDecider(scanAsAServiceModuleConfig, scanAsAServicePropertyService, artifactoryPAPIService);
+        return new ScanAsAServiceModule(scanAsAServiceModuleConfig,
+                Arrays.asList(scanAsAServiceCancelDecider));
     }
 }

@@ -8,10 +8,12 @@
 package com.synopsys.integration.blackduck.artifactory.configuration;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyGroupReport;
+import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfigBuilder;
 import com.synopsys.integration.builder.BuilderStatus;
@@ -48,7 +50,7 @@ public class PluginConfig extends ConfigurationValidator {
     }
 
     @Override
-    public void validate(PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModules) {
         boolean dateTimePatternExists = validateNotBlank(propertyGroupReport, GeneralProperty.DATE_TIME_PATTERN, dateTimePattern);
 
         if (dateTimePatternExists) {
@@ -59,27 +61,31 @@ public class PluginConfig extends ConfigurationValidator {
             }
         }
 
-        validateNotBlank(propertyGroupReport, GeneralProperty.URL, blackDuckUrl);
+        // The following config should not be validated if ScanAsAService is enabled
+        // as they are not used and may not be set
+        if (!enabledModules.contains(ScanAsAServiceModule.class.getSimpleName())) {
+            validateNotBlank(propertyGroupReport, GeneralProperty.URL, blackDuckUrl);
 
-        validateInteger(propertyGroupReport, GeneralProperty.TIMEOUT, timeout);
-        validateBoolean(propertyGroupReport, GeneralProperty.TRUST_CERT, trustCert);
+            validateInteger(propertyGroupReport, GeneralProperty.TIMEOUT, timeout);
+            validateBoolean(propertyGroupReport, GeneralProperty.TRUST_CERT, trustCert);
 
-        BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = getBlackDuckServerConfigBuilder();
-        BuilderStatus blackDuckServerConfigBuilderStatus = blackDuckServerConfigBuilder.validateAndGetBuilderStatus();
+            BlackDuckServerConfigBuilder blackDuckServerConfigBuilder = getBlackDuckServerConfigBuilder();
+            BuilderStatus blackDuckServerConfigBuilderStatus = blackDuckServerConfigBuilder.validateAndGetBuilderStatus();
 
-        if (blackDuckServerConfigBuilderStatus.isValid()) {
-            BlackDuckServerConfig blackDuckServerConfig = blackDuckServerConfigBuilder.build();
-            ConnectionResult connectionResult = blackDuckServerConfig.attemptConnection(new SilentIntLogger());
+            if (blackDuckServerConfigBuilderStatus.isValid()) {
+                BlackDuckServerConfig blackDuckServerConfig = blackDuckServerConfigBuilder.build();
+                ConnectionResult connectionResult = blackDuckServerConfig.attemptConnection(new SilentIntLogger());
 
-            if (connectionResult.isFailure()) {
-                blackDuckServerConfigBuilderStatus.addErrorMessage("Failed to connect to Black Duck.");
-                if (connectionResult.getFailureMessage().isPresent()) {
-                    blackDuckServerConfigBuilderStatus.addErrorMessage(connectionResult.getFailureMessage().get());
+                if (connectionResult.isFailure()) {
+                    blackDuckServerConfigBuilderStatus.addErrorMessage("Failed to connect to Black Duck.");
+                    if (connectionResult.getFailureMessage().isPresent()) {
+                        blackDuckServerConfigBuilderStatus.addErrorMessage(connectionResult.getFailureMessage().get());
+                    }
                 }
             }
-        }
 
-        propertyGroupReport.getBuilderStatus().addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
+            propertyGroupReport.getBuilderStatus().addAllErrorMessages(blackDuckServerConfigBuilderStatus.getErrorMessages());
+        }
     }
 
     public String getDateTimePattern() {

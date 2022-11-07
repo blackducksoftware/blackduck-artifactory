@@ -1,7 +1,7 @@
 /*
  * blackduck-artifactory
  *
- * Copyright (c) 2021 Synopsys, Inc.
+ * Copyright (c) 2022 Synopsys, Inc.
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
@@ -412,6 +412,7 @@ download {
     beforeDownload { Request request, RepoPath repoPath ->
         pluginAPI.handleBeforeDownloadEventInspection(TriggerType.BEFORE_DOWNLOAD, repoPath)
         pluginAPI.handleBeforeDownloadEventScan(TriggerType.BEFORE_DOWNLOAD, repoPath)
+        pluginAPI.handleBeforeDownloadEventScanAsAService(TriggerType.BEFORE_DOWNLOAD, request, repoPath)
     }
 }
 
@@ -421,7 +422,8 @@ private void initialize(final TriggerType triggerType) {
     final File etcDirectory = ctx.artifactoryHome.etcDir
     final File homeDirectory = ctx.artifactoryHome.homeDir
     final File pluginsDirectory = ctx.artifactoryHome.pluginsDir
-    final String thirdPartyVersion = ctx?.versionProvider?.running?.versionName?.toString()
+    // Used to be 'versionProvider.running', but that is no longer available, 'originalHomeVersion' is the closest substitute
+    final String thirdPartyVersion = ctx?.versionProvider?.originalHomeVersion?.versionName?.toString()
     final DirectoryConfig pluginConfig = DirectoryConfig.createDefault(homeDirectory, etcDirectory, pluginsDirectory, thirdPartyVersion, propertiesFilePathOverride)
 
     pluginService = new PluginService(pluginConfig, repositories, searches)

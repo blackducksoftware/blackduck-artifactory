@@ -17,14 +17,19 @@ import com.synopsys.integration.blackduck.artifactory.configuration.model.Proper
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyValidationResult;
 
 public abstract class ConfigurationValidator {
-    public abstract void validate(PropertyGroupReport propertyGroupReport);
+    public abstract void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModuleNames);
 
     protected void validateDate(PropertyGroupReport statusReport, ConfigurationProperty property, String date, DateTimeManager dateTimeManager) {
         if (StringUtils.isNotBlank(date) && dateTimeManager != null) {
+            boolean passed = true;
             try {
                 dateTimeManager.getDateFromString(date);
             } catch (DateTimeParseException ignored) {
                 statusReport.addErrorMessage(property, String.format("Property %s is set to %s which does not match the format %s", property.getKey(), date, dateTimeManager.getDateTimePattern()));
+                passed = false;
+            }
+            if (passed) {
+                statusReport.addPropertyValidationReport(new PropertyValidationResult(property));
             }
         } else if (StringUtils.isBlank(date)) {
             statusReport.addErrorMessage(property, String.format("Property %s is not set", property.getKey()));

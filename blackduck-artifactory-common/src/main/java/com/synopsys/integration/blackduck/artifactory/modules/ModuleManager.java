@@ -57,7 +57,7 @@ public class ModuleManager {
         ModuleConfig moduleConfig = module.getModuleConfig();
         BuilderStatus builderStatus = new BuilderStatus();
         PropertyGroupReport propertyGroupReport = new PropertyGroupReport(moduleConfig.getModuleName(), builderStatus);
-        moduleConfig.validate(propertyGroupReport);
+        moduleConfig.validate(propertyGroupReport, getAllEnabledModules());
 
         allModules.add(module);
         if (!propertyGroupReport.hasError()) {
@@ -106,5 +106,12 @@ public class ModuleManager {
 
     public void setAllModulesEnabledState(boolean isModuleEnabled) {
         getAllModuleConfigs().forEach(moduleConfig -> moduleConfig.setEnabled(isModuleEnabled));
+    }
+
+    public List<String> getAllEnabledModules() {
+        return getModuleConfigs().stream()
+                .filter(ModuleConfig::isEnabled)
+                .map(ModuleConfig::getModuleName)
+                .collect(Collectors.toList());
     }
 }

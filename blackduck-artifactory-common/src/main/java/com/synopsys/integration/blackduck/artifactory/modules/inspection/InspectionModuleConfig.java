@@ -118,7 +118,7 @@ public class InspectionModuleConfig extends ModuleConfig {
     }
 
     @Override
-    public void validate(PropertyGroupReport propertyGroupReport) {
+    public void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModules) {
         validateBoolean(propertyGroupReport, InspectionModuleProperty.ENABLED, isEnabledUnverified());
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.CRON, inspectionCron);
         validateCronExpression(propertyGroupReport, InspectionModuleProperty.REINSPECT_CRON, reinspectCron);

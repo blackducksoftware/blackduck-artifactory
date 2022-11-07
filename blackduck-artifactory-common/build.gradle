@@ -10,6 +10,7 @@ plugins {
 
 apply plugin: 'com.synopsys.integration.simple'
 apply plugin: 'kotlin'
+apply plugin: 'java-library'
 
 jar.finalizedBy shadowJar
 
