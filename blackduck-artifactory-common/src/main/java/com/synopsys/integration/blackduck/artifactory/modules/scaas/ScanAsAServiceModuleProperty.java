@@ -17,7 +17,7 @@ public enum ScanAsAServiceModuleProperty implements ConfigurationProperty {
     CUTOFF_DATE("cutoff.date"),
     ;
 
-    private static final String SCAN_AS_A_SERVICE_MODULE_PROPERTY_PREFIX = "blackduck.artifactory.scaas.";
+    private static final String SCAN_AS_A_SERVICE_MODULE_PROPERTY_PREFIX = "blackduck.artifactory.scaaas.";
     private final String key;
 
     ScanAsAServiceModuleProperty(String key) {
