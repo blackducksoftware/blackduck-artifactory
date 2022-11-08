@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType;
 import com.synopsys.integration.blackduck.artifactory.ArtifactoryPAPIService;
 import com.synopsys.integration.blackduck.artifactory.BlackDuckArtifactoryProperty;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceBlockingStrategy;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModuleConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServicePropertyService;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceBlockingStrategy;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServicePropertyService;
 
 public class ScanAsAServiceCancelDecider implements CancelDecider {
     private final Logger logger = LoggerFactory.getLogger(ScanAsAServiceCancelDecider.class);

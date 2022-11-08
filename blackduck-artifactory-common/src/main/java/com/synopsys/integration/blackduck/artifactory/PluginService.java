@@ -31,7 +31,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analytic
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.service.AnalyticsService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.configuration.BlackDuckServerConfig;
 import com.synopsys.integration.blackduck.service.BlackDuckServicesFactory;

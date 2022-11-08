@@ -51,9 +51,9 @@ import com.synopsys.integration.blackduck.artifactory.modules.inspection.service
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.PolicySeverityService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.RepositoryInitializationService;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.service.util.ArtifactoryComponentService;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModuleConfig;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServicePropertyService;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceModule;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceModuleConfig;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServicePropertyService;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanPropertyService;
