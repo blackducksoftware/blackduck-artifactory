@@ -24,7 +24,6 @@ import com.synopsys.integration.blackduck.artifactory.configuration.model.Proper
 import com.synopsys.integration.blackduck.artifactory.configuration.model.PropertyValidationResult;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleConfig;
 import com.synopsys.integration.blackduck.artifactory.modules.ModuleManager;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
 import com.synopsys.integration.builder.BuilderStatus;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;

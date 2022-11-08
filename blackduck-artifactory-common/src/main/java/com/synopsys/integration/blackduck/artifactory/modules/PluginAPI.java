@@ -26,7 +26,7 @@ import com.synopsys.integration.blackduck.artifactory.modules.analytics.Analyzab
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.AnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.analytics.collector.FeatureAnalyticsCollector;
 import com.synopsys.integration.blackduck.artifactory.modules.inspection.InspectionModule;
-import com.synopsys.integration.blackduck.artifactory.modules.scaas.ScanAsAServiceModule;
+import com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceModule;
 import com.synopsys.integration.blackduck.artifactory.modules.scan.ScanModule;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
