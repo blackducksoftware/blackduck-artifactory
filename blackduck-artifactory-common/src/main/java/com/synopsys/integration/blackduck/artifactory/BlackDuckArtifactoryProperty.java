@@ -37,7 +37,7 @@ public enum BlackDuckArtifactoryProperty {
     POST_SCAN_ACTION_STATUS("postScanActionStatus"),
     POST_SCAN_PHASE("postScanPhase"),
     INSPECTION_RETRY_COUNT("inspectionRetryCount"),
-    SCAAAS_SCAN_STATUS("scaaas.inspectionStatus"),
+    SCAAAS_SCAN_STATUS("scaaas.scanStatus"),
     SCAAAS_POLICY_STATUS("scaaas.policyStatus");
 
     private final String propertyName;
