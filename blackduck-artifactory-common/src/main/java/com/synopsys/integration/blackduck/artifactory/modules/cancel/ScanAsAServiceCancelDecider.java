@@ -71,7 +71,12 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                             CancelDecision dec;
                             switch (scanStatus) {
                             case FAILED:
-                                dec = CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", scanStatus.getMessage(), repoPath));
+                                if (ScanAsAServiceBlockingStrategy.BLOCK_OFF == blockingStrategy) {
+                                    logger.info("Download NOT blocked; Blocking Strategy: {}; Download would have been blocked; {}; repo: {}", ScanAsAServiceBlockingStrategy.BLOCK_OFF, scanStatus.getMessage(), repoPath);
+                                    dec = CancelDecision.NO_CANCELLATION();
+                                } else {
+                                    dec = CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", scanStatus.getMessage(), repoPath));
+                                }
                                 break;
                             case PROCESSING:
                                 switch (blockingStrategy) {
@@ -79,6 +84,10 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                                     dec = CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", scanStatus.getMessage(), repoPath));
                                     break;
                                 case BLOCK_NONE:
+                                    dec = CancelDecision.NO_CANCELLATION();
+                                    break;
+                                case BLOCK_OFF:
+                                    logger.info("Download NOT Blocked; Blocking Strategy: {}; {}; repo: {}", ScanAsAServiceBlockingStrategy.BLOCK_OFF, scanStatus.getMessage(), repoPath);
                                     dec = CancelDecision.NO_CANCELLATION();
                                     break;
                                 default:
@@ -93,12 +102,25 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                                         dec = CancelDecision.NO_CANCELLATION();
                                         break;
                                     case IN_VIOLATION:
-                                        dec = CancelDecision.CANCEL_DOWNLOAD(
-                                                String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", scanStatus.getMessage(), policyViolationStatus.get(), repoPath));
+                                        if (ScanAsAServiceBlockingStrategy.BLOCK_OFF == blockingStrategy) {
+                                            logger.info("Download NOT blocked; Blocking Strategy: {}; {}; repo: {}", ScanAsAServiceBlockingStrategy.BLOCK_OFF, scanStatus.getMessage(), repoPath);
+                                            dec = CancelDecision.NO_CANCELLATION();
+                                        } else {
+                                            dec = CancelDecision.CANCEL_DOWNLOAD(
+                                                    String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", scanStatus.getMessage(),
+                                                            policyViolationStatus.get(), repoPath));
+                                        }
                                         break;
                                     default:
-                                        dec = CancelDecision.CANCEL_DOWNLOAD(
-                                                String.format("Download blocked; %s; Unknown policy violation status: %s; repo: %s", scanStatus.getMessage(), policyViolationStatus.get(), repoPath));
+                                        if (ScanAsAServiceBlockingStrategy.BLOCK_OFF == blockingStrategy) {
+                                            logger.info("Download NOT blocked; Blocking Strategy: {}; {}; Unknown policy violation status: {}; repo: {}",
+                                                    ScanAsAServiceBlockingStrategy.BLOCK_OFF, scanStatus.getMessage(), policyViolationStatus.get(), repoPath);
+                                            dec = CancelDecision.NO_CANCELLATION();
+                                        } else {
+                                            dec = CancelDecision.CANCEL_DOWNLOAD(
+                                                    String.format("Download blocked; %s; Unknown policy violation status: %s; repo: %s",
+                                                            scanStatus.getMessage(), policyViolationStatus.get(), repoPath));
+                                        }
                                     }
                                 } else {
                                     logger.warn(String.format("%s; %s property not present; Using block strategy: %s; repo: %s", scanStatus.getMessage(),
@@ -109,6 +131,7 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                                             String.format("Download blocked; %s; %s not present; block strategy: %s; repo: %s", scanStatus.getMessage(), BlackDuckArtifactoryProperty.OVERALL_POLICY_STATUS, blockingStrategy, repoPath));
                                         break;
                                     case BLOCK_NONE:
+                                    case BLOCK_OFF:
                                         dec = CancelDecision.NO_CANCELLATION();
                                         break;
                                     default:
@@ -119,7 +142,13 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                                 break;
                             default:
                                 logger.warn(String.format("Unknown scan status detected: %s", scanStatus));
-                                dec = CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; Unknown ScanStatusProperty: %s; repo: %s", scanStatus, repoPath));
+                                if (ScanAsAServiceBlockingStrategy.BLOCK_OFF == blockingStrategy) {
+                                    logger.info("Download NOT blocked; Blocking Strategy: {}; Unknown ScanStatusProperty: {}; repo: {}", ScanAsAServiceBlockingStrategy.BLOCK_OFF, scanStatus, repoPath);
+                                    dec = CancelDecision.NO_CANCELLATION();
+                                } else {
+                                    dec = CancelDecision.CANCEL_DOWNLOAD(
+                                            String.format("Download blocked; Unknown ScanStatusProperty: %s; repo: %s", scanStatus, repoPath));
+                                }
                             }
                             return dec;
                         })
@@ -129,6 +158,9 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                                 return CancelDecision.CANCEL_DOWNLOAD(
                                         String.format("Download blocked; Scan not scheduled and blocking strategy: %s; repo: %s", blockingStrategy, repoPath));
                             case BLOCK_NONE:
+                                return CancelDecision.NO_CANCELLATION();
+                            case BLOCK_OFF:
+                                logger.info("Download NOT blocked; Blocking Strategy: {}; Scan not scheduled; repo: {}", ScanAsAServiceBlockingStrategy.BLOCK_OFF, repoPath);
                                 return CancelDecision.NO_CANCELLATION();
                             default:
                                 return CancelDecision.CANCEL_DOWNLOAD(
