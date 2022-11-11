@@ -44,6 +44,7 @@ import static com.synopsys.integration.blackduck.api.generated.enumeration.Proje
 import static com.synopsys.integration.blackduck.api.generated.enumeration.ProjectVersionComponentPolicyStatusType.NOT_IN_VIOLATION;
 import static com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceBlockingStrategy.BLOCK_ALL;
 import static com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceBlockingStrategy.BLOCK_NONE;
+import static com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceBlockingStrategy.BLOCK_OFF;
 import static com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceScanStatus.FAILED;
 import static com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceScanStatus.PROCESSING;
 import static com.synopsys.integration.blackduck.artifactory.modules.scaaas.ScanAsAServiceScanStatus.SUCCESS;
@@ -158,7 +159,63 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION, // The combination of these will cause blocking if the blocking repos check fails
                         Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
                         Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
-                        CancelDecision.NO_CANCELLATION())
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Scan in progress",
+                        artifactPath,
+                        BLOCK_OFF,
+                        PROCESSING,
+                        null,
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; No Policy violations",
+                        artifactPath,
+                        BLOCK_OFF,
+                        SUCCESS,
+                        NOT_IN_VIOLATION,
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Policy violations",
+                        artifactPath,
+                        BLOCK_OFF,
+                        SUCCESS,
+                        IN_VIOLATION,
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; scan failed",
+                        artifactPath,
+                        BLOCK_OFF,
+                        FAILED,
+                        null,
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; No scan status",
+                        artifactPath,
+                        BLOCK_OFF,
+                        null,
+                        null,
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; No scan status",
+                        artifactPath,
+                        BLOCK_NONE,
+                        null,
+                        null,
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; No scan status",
+                        artifactPath,
+                        BLOCK_ALL,
+                        null,
+                        null,
+                        Instant.now().atOffset(ZoneOffset.UTC).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        Instant.now().atOffset(ZoneOffset.UTC).minusYears(1).toLocalDate().atStartOfDay().format(DateTimeFormatter.ofPattern(DATETIME_PATTERN)),
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; Scan not scheduled and blocking strategy: %s; repo: %s", BLOCK_ALL, artifactPath)))
         );
     }
 
