@@ -10,4 +10,5 @@ package com.synopsys.integration.blackduck.artifactory.modules.scaaas;
 public enum ScanAsAServiceBlockingStrategy {
     BLOCK_ALL,
     BLOCK_NONE,
+    BLOCK_OFF,
 }
