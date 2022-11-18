@@ -208,6 +208,8 @@ public class ModuleFactory {
         ScanAsAServicePropertyService scanAsAServicePropertyService = new ScanAsAServicePropertyService(artifactoryPAPIService, dateTimeManager);
         ScanAsAServiceCancelDecider scanAsAServiceCancelDecider = new ScanAsAServiceCancelDecider(scanAsAServiceModuleConfig, scanAsAServicePropertyService, artifactoryPAPIService);
         return new ScanAsAServiceModule(scanAsAServiceModuleConfig,
+                artifactoryPropertyService,
+                artifactoryPAPIService,
                 Arrays.asList(scanAsAServiceCancelDecider));
     }
 }
