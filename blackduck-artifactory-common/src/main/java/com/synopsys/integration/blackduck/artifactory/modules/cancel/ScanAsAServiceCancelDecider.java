@@ -79,12 +79,21 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                                 CancelDecision dec;
                                 switch (scanStatus) {
                                 case FAILED:
-                                    if (ScanAsAServiceBlockingStrategy.BLOCK_OFF == blockingStrategy) {
+                                    switch (blockingStrategy) {
+                                    case BLOCK_ALL:
+                                        dec = CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", scanStatus.getMessage(), repoPath));
+                                        break;
+                                    case BLOCK_NONE:
+                                        logger.info("Download NOT blocked; Blocking Strategy: {}; {}; repo: {}", blockingStrategy, scanStatus.getMessage(), repoPath);
+                                        dec = CancelDecision.NO_CANCELLATION();
+                                        break;
+                                    case BLOCK_OFF:
                                         logger.info("Download NOT blocked; Blocking Strategy: {}; Download would have been blocked; {}; repo: {}",
                                                 ScanAsAServiceBlockingStrategy.BLOCK_OFF, scanStatus.getMessage(), repoPath);
                                         dec = CancelDecision.NO_CANCELLATION();
-                                    } else {
-                                        dec = CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", scanStatus.getMessage(), repoPath));
+                                        break;
+                                    default:
+                                        dec = CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; Unknown blocking strategy: %s; repo: %s", blockingStrategy, repoPath));
                                     }
                                     break;
                                 case PROCESSING:
