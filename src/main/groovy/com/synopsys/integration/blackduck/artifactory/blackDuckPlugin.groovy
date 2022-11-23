@@ -314,6 +314,19 @@ executions {
      * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckSubmitAnalytics"*/
     blackDuckSubmitAnalytics(httpMethod: 'POST') { params -> message = pluginAPI.submitAnalytics(TriggerType.REST_REQUEST)
     }
+
+    //////////////////////////////////////////////// SCA-AS-A-SERVICE EXECUTIONS ////////////////////////////////////////////////
+
+    /**
+     * Removes all properties that were populated by the SCA-as-a-Service function for the repositories listed in the "repos" parameter as long as
+     * those repos also exist in the blackduck.artifactory.scaaas.blocking.repos property.
+     * If the property blackduck.scaaas.resultsUrl is set on an artifact, the file it points to will be deleted
+     *
+     * This can be triggered with the following curl command:
+     * curl -X POST -u admin:password "http://ARTIFACTORY_SERVER/artifactory/api/plugins/execute/blackDuckDeleteScanAsAServicePropertiesOnRepos?params=repos=repo1[,repo2 ...]
+     */
+    blackDuckDeleteScanAsAServicePropertiesOnRepos(httpMethod: 'POST') { params -> message = pluginAPI.performDeleteScanAsAServicePropertiesOnRepos(TriggerType.REST_REQUEST, (Map<String, List<String>>) params)
+    }
 }
 
 jobs {

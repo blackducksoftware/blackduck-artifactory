@@ -165,6 +165,10 @@ public class PluginAPI implements Analyzable {
         runMethod(scanAsAServiceModule, triggerType, request, repoPath, scanAsAServiceModule::handleBeforeDownloadEvent);
     }
 
+    public String performDeleteScanAsAServicePropertiesOnRepos(TriggerType triggerType, Map<String, List<String>> params) {
+        return runMethod(scanAsAServiceModule, triggerType, () -> scanAsAServiceModule.deleteScanAsAServicePropertiesOnRepos(params));
+    }
+
     /**
      * Below are utility methods to help reuse the code for logging and analytics
      */

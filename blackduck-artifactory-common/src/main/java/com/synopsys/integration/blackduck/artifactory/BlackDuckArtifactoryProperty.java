@@ -7,6 +7,10 @@
  */
 package com.synopsys.integration.blackduck.artifactory;
 
+import java.util.Set;
+
+import org.apache.commons.collections.set.UnmodifiableSet;
+
 public enum BlackDuckArtifactoryProperty {
     @Deprecated
     BLACKDUCK_ORIGIN_ID("originId"),
@@ -38,10 +42,24 @@ public enum BlackDuckArtifactoryProperty {
     POST_SCAN_PHASE("postScanPhase"),
     INSPECTION_RETRY_COUNT("inspectionRetryCount"),
     SCAAAS_SCAN_STATUS("scaaas.scanStatus"),
-    SCAAAS_POLICY_STATUS("scaaas.policyStatus");
+    SCAAAS_POLICY_STATUS("scaaas.policyStatus"),
+    SCAAAS_FAILED_COUNT("scaaas.scanFailedCount"),
+    SCAAAS_LAST_UPDATE("scaaas.lastUpdate"),
+    SCAAAS_RESULTS_URL("scaaas.resultsUrl"),
+    SCAAAS_SCAN_FAILURE_MESSAGE("scaaas.scanFailureMessage"),
+    SCAAAS_VIOLATING_POLICY_RULES("scaaas.violatingPolicyRules");
 
     private final String propertyName;
     private final String timeName;
+
+    private static final Set<BlackDuckArtifactoryProperty> scaaasProperties = Set.of(
+            SCAAAS_SCAN_STATUS,
+            SCAAAS_POLICY_STATUS,
+            SCAAAS_FAILED_COUNT,
+            SCAAAS_LAST_UPDATE,
+            SCAAAS_RESULTS_URL,
+            SCAAAS_SCAN_FAILURE_MESSAGE,
+            SCAAAS_VIOLATING_POLICY_RULES);
 
     BlackDuckArtifactoryProperty(String suffix) {
         propertyName = "blackduck." + suffix;
@@ -54,5 +72,9 @@ public enum BlackDuckArtifactoryProperty {
 
     public String getTimeName() {
         return timeName;
+    }
+
+    public static Set<BlackDuckArtifactoryProperty> getScanAsAServiceProperties() {
+        return scaaasProperties;
     }
 }
