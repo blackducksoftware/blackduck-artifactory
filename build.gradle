@@ -117,7 +117,8 @@ build.finalizedBy createFinalZip
 configure(subprojects) { project ->
     group = 'com.synopsys.integration'
     version = parentVersion
-    sourceCompatibility = 11
+    sourceCompatibility = 9
+    targetCompatibility = 9
     dependencies {
         ext.artifactoryMinimumVersion = artifactoryMinimumVersion
         ext.blackDuckCommonVersion = blackDuckCommonVersion

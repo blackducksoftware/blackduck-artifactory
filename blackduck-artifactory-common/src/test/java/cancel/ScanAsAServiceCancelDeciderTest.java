@@ -88,7 +88,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         BLOCK_NONE,
                         FAILED,
                         null,
-                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", FAILED.getMessage(), artifactPath)))
+                        CancelDecision.NO_CANCELLATION())
         );
     }
 
