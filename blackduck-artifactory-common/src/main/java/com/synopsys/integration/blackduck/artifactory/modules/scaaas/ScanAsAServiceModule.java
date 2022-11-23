@@ -79,15 +79,13 @@ public class ScanAsAServiceModule implements Module {
     }
 
     public String deleteScanAsAServicePropertiesOnRepos(Map<String, List<String>> params) {
-        // A list pf repos should be provided in the params. If no repos provided, send error message
+        // A list of repos should be provided in the params. If no repos provided, send error message
         if (!params.containsKey("repos")) {
             return "Unable to execute. Please check that a list of repos is provided.";
         }
-        List<String> configuredRepos = scanAsAServiceModuleConfig.getBlockingRepos();
-        List<String> requestedRepos = params.get("repos");
-        List<String> reposToCheck = requestedRepos.stream().filter(configuredRepos::contains).collect(Collectors.toList());
+        List<String> reposToCheck = params.get("repos");
         if (reposToCheck.isEmpty()) {
-            return "Unable to execute. Provided repo list not a subset of " + ScanAsAServiceModuleProperty.BLOCKING_REPOS.getKey();
+            return "Unable to execute; Empty repos list";
         }
         Set<RepoPath> finalRepoPathSet = new HashSet<>();
         for (String repo : reposToCheck) {
