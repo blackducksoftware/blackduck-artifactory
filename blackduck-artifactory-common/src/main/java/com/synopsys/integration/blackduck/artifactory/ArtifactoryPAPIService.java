@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.artifactory.common.StatusHolder;
 import org.artifactory.fs.FileLayoutInfo;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.md.Properties;
@@ -137,5 +138,9 @@ public class ArtifactoryPAPIService {
 
     public ResourceStreamHandle getArtifactContent(RepoPath repoPath) {
         return repositories.getContent(repoPath);
+    }
+
+    public StatusHolder deleteItem(RepoPath repoPath) {
+        return repositories.delete(repoPath);
     }
 }
