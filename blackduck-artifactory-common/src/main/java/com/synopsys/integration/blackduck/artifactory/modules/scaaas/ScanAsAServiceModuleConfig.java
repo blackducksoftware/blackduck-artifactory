@@ -33,6 +33,10 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
     private final DateTimeManager dateTimeManager;
 
+    private final List<String> allowedFileNamePatterns;
+
+    private final List<String> excludedFileNamePatterns;
+
 
     protected ScanAsAServiceModuleConfig(Builder builder) {
         super(ScanAsAServiceModule.class.getSimpleName(), builder.enabled);
@@ -40,6 +44,8 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         this.blockingRepos = new ArrayList<>(builder.blockingRepos);
         this.cutoffDateString = builder.cutoffDateString;
         this.dateTimeManager = builder.dateTimeManager;
+        this.allowedFileNamePatterns = builder.allowedFileNamePatterns.isEmpty() ? null : new ArrayList<>(builder.allowedFileNamePatterns);
+        this.excludedFileNamePatterns = builder.excludedFileNamePatterns.isEmpty() ? null : new ArrayList<>(builder.excludedFileNamePatterns);
     }
 
     public static ScanAsAServiceModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager,
@@ -72,6 +78,14 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
             if ((cutoffDateString = configurationPropertyManager.getProperty(ScanAsAServiceModuleProperty.CUTOFF_DATE)) != null) {
                 moduleConfig.withCutoffDateString(cutoffDateString);
             }
+            List<String> allowedFileNamePatterns = configurationPropertyManager.getPropertyAsList(ScanAsAServiceModuleProperty.ALLOWED_FILE_PATTERNS);
+            if (!allowedFileNamePatterns.isEmpty()) {
+                moduleConfig.withAllowedFileNamePatters(allowedFileNamePatterns);
+            }
+            List<String> excludedFileNamePatterns = configurationPropertyManager.getPropertyAsList(ScanAsAServiceModuleProperty.EXCLUDED_FILE_PATTERNS);
+            if(!excludedFileNamePatterns.isEmpty()) {
+                moduleConfig.withExcludedFileNamePatterns(excludedFileNamePatterns);
+            }
         }
 
         return moduleConfig.build();
@@ -93,6 +107,14 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         return this.dateTimeManager;
     }
 
+    public Optional<List<String>> getAllowedFileNamePatterns() {
+        return Optional.ofNullable(this.allowedFileNamePatterns);
+    }
+
+    public Optional<List<String>> getExcludedFileNamePatterns() {
+        return Optional.ofNullable(this.excludedFileNamePatterns);
+    }
+
     @Override
     public void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModules) {
         if (isEnabled()) {
@@ -111,8 +133,9 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         private ScanAsAServiceBlockingStrategy blockingStrategy;
         private List<String> blockingRepos = new ArrayList<>();
         private String cutoffDateString;
-
         private DateTimeManager dateTimeManager;
+        private List<String> allowedFileNamePatterns = new ArrayList<>();
+        private List<String> excludedFileNamePatterns = new ArrayList<>();
 
         private Builder(Boolean enabled, DateTimeManager dateTimeManager) {
             this.enabled = enabled;
@@ -135,6 +158,16 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
         public Builder withCutoffDateString(String cutoffDateString) {
             this.cutoffDateString = cutoffDateString;
+            return this;
+        }
+
+        public Builder withAllowedFileNamePatters(List<String> allowedFileNamePatterns) {
+            this.allowedFileNamePatterns.addAll(allowedFileNamePatterns);
+            return this;
+        }
+
+        public Builder withExcludedFileNamePatterns(List<String> excludedFileNamePatterns) {
+            this.excludedFileNamePatterns.addAll(excludedFileNamePatterns);
             return this;
         }
 
