@@ -209,17 +209,28 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
      */
     private boolean applyBlockingStrategyBasedOnFilePattern(List<String> allowedPatterns, List<String> excludedPatterns, File file) {
         AtomicBoolean ret = new AtomicBoolean(true);
+        AtomicBoolean awcp = new AtomicBoolean(false);
+        AtomicBoolean awcm = new AtomicBoolean(false);
+        AtomicBoolean ewcp = new AtomicBoolean(false);
+        AtomicBoolean ewcm = new AtomicBoolean(false);
 
         Optional<WildcardFileFilter> allowedWildCardFilter = Optional.ofNullable(allowedPatterns == null ? null : new WildcardFileFilter(allowedPatterns));
         Optional<WildcardFileFilter> excludedWildCardFilter = Optional.ofNullable(excludedPatterns == null ? null : new WildcardFileFilter(excludedPatterns));
 
+        logger.debug("File: [{}]; Using allowed wildcard filter: [{}]", file.getName(), allowedWildCardFilter.orElse(null));
+        logger.debug("File: [{}]; Using excluded wildcard filter: [{}]", file.getName(), excludedWildCardFilter.orElse(null));
+
         // Check to see if there are include file patterns to check against
         allowedWildCardFilter.ifPresentOrElse(allowedFilter -> {
+            awcp.set(true);
             if (allowedFilter.accept(file)) {
                 // Matches an include pattern set so now check if there are exclude patterns to check against
+                awcm.set(true);
                 excludedWildCardFilter.ifPresent(excludeFilter -> {
+                    ewcp.set(true);
                     if (excludeFilter.accept(file)) {
                         // Exclude pattern matched, do NOT apply blocking strategy
+                        ewcm.set(true);
                         ret.set(false);
                     }
                 });
@@ -230,12 +241,16 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
         }, () -> {
             // There are no include patterns so check if there are exclude patterns
             excludedWildCardFilter.ifPresent(excludeFilter -> {
+                ewcp.set(true);
                 if (excludeFilter.accept(file)) {
                     // Exclude pattern matched, do NOT apply blocking strategy
+                    ewcm.set(true);
                     ret.set(false);
                 }
             });
         });
+        logger.debug("File: [{}]; Allowed Filter Evaluated: [{}]; Allowed Filter Matched: [{}]; Exclude Filter Evaluated: [{}]; Exclude Filter Matched: [{}]; Return Value: [{}]",
+                file.getName(), awcp, awcm, ewcp, ewcm, ret);
         return ret.get();
     }
 }
