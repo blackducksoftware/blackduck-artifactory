@@ -56,6 +56,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class ScanAsAServiceCancelDeciderTest {
     private static String TEST_REPO_PATH = "test-repo";
 
+    private static String TEST_REPO_BRANCH_PATH = "test-repo/branch";
+
     private static String TEST_OUTSIDE_REPO_PATH = "test-outside-repo";
 
     private static String TEST_ARTIFACT_NAME = "test-artifact.jar";
@@ -206,6 +208,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION, // The combination of these will cause blocking if the blocking repos check fails
                         null,
                         null,
+                        TEST_REPO_PATH,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern not specified; Exclude File Pattern not specified",
                         artifactPath,
@@ -214,6 +217,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION,
                         null,
                         null,
+                        TEST_REPO_PATH,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Allowed File Pattern not specified; Exclude File Pattern matched",
                         artifactPath,
@@ -222,6 +226,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
                         null,
                         List.of("*fact.jar"),
+                        TEST_REPO_PATH,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern not specified; Exclude File Pattern not matched",
                         artifactPath,
@@ -230,6 +235,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION,
                         null,
                         List.of("*fact.war"),
+                        TEST_REPO_PATH,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("Blocking; Allowed File Pattern matched; Exclude File Pattern not specified",
                         artifactPath,
@@ -238,6 +244,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION,
                         List.of("*.war", "*.jar"),
                         null,
+                        TEST_REPO_PATH,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Allowed File Pattern matched; Exclude File Pattern matched",
                         artifactPath,
@@ -246,6 +253,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
                         List.of("*.war", "*.jar"),
                         List.of("*fact.jar"),
+                        TEST_REPO_PATH,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern matched; Exclude File Pattern not matched",
                         artifactPath,
@@ -254,6 +262,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION,
                         List.of("*.war", "*.jar"),
                         List.of("*fact.war"),
+                        TEST_REPO_PATH,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Allowed File Pattern not matched",
                         artifactPath,
@@ -262,7 +271,35 @@ public class ScanAsAServiceCancelDeciderTest {
                         IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
                         List.of("*.war", "*.tgz"),
                         null,
-                        CancelDecision.NO_CANCELLATION())
+                        TEST_REPO_PATH,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; In repo but not branch",
+                        artifactPath,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
+                        null,
+                        null,
+                        TEST_REPO_BRANCH_PATH,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; In repo branch",
+                        artifactBranchPath,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
+                        null,
+                        null,
+                        TEST_REPO_BRANCH_PATH,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactBranchPath))),
+                arguments("Blocking; In repo branch child",
+                        artifactBranchChildPath,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
+                        null,
+                        null,
+                        TEST_REPO_BRANCH_PATH,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactBranchChildPath)))
         );
     }
 
@@ -279,6 +316,10 @@ public class ScanAsAServiceCancelDeciderTest {
 
     private static RepoPath artifactPath;
 
+    private static RepoPath artifactBranchPath;
+
+    private static RepoPath artifactBranchChildPath;
+
     private static RepoPath outsideArtifactPath;
 
     private static DateTimeManager dateTimeManager;
@@ -292,6 +333,8 @@ public class ScanAsAServiceCancelDeciderTest {
         pluginRepoPathFactory = new PluginRepoPathFactory(false);
         RepoPath repoPath = pluginRepoPathFactory.create(TEST_REPO_PATH);
         artifactPath = pluginRepoPathFactory.create(repoPath.getRepoKey(), TEST_ARTIFACT_NAME);
+        artifactBranchPath = pluginRepoPathFactory.create(TEST_REPO_PATH, "branch/" + TEST_ARTIFACT_NAME);
+        artifactBranchChildPath = pluginRepoPathFactory.create(TEST_REPO_PATH, "branch/child/" + TEST_ARTIFACT_NAME);
         RepoPath outsideRepoPath = pluginRepoPathFactory.create(TEST_OUTSIDE_REPO_PATH);
         outsideArtifactPath = pluginRepoPathFactory.create(outsideRepoPath.getRepoKey(), TEST_ARTIFACT_NAME);
         dateTimeManager = new DateTimeManager(DATETIME_PATTERN);
@@ -321,7 +364,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getLeft(),
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
-                null);
+                null,
+                TEST_REPO_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -340,7 +384,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getLeft(),
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
-                null);
+                null,
+                TEST_REPO_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -359,7 +404,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getLeft(),
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
-                null);
+                null,
+                TEST_REPO_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -378,7 +424,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getLeft(),
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
-                null);
+                null,
+                TEST_REPO_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -396,7 +443,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedTime,
                 cutoffTime,
                 null,
-                null);
+                null,
+                TEST_REPO_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -409,6 +457,7 @@ public class ScanAsAServiceCancelDeciderTest {
             ProjectVersionComponentPolicyStatusType policyViolationStatus,
             List<String> allowedFilePatterns,
             List<String> excludedFilePatterns,
+            String blockingRepo,
             CancelDecision expectedResult) {
         CancelDecision actualResult = getCancelDecisionRunner(repoPath,
                 blockingStrategy,
@@ -417,7 +466,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getLeft(),
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 allowedFilePatterns,
-                excludedFilePatterns);
+                excludedFilePatterns,
+                blockingRepo);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -428,9 +478,10 @@ public class ScanAsAServiceCancelDeciderTest {
             String lastUpdated,
             String cutoffDate,
             List<String> allowedFilePatterns,
-            List<String> excludedFilePatterns) {
+            List<String> excludedFilePatterns,
+            String blockingRepo) {
         Mockito.when(scanAsAServiceModuleConfig.getBlockingStrategy()).thenReturn(blockingStrategy);
-        Mockito.when(scanAsAServiceModuleConfig.getBlockingRepos()).thenReturn(List.of(TEST_REPO_PATH));
+        Mockito.when(scanAsAServiceModuleConfig.getBlockingRepos()).thenReturn(List.of(blockingRepo));
         Mockito.when(scanAsAServiceModuleConfig.getDateTimeManager()).thenReturn(dateTimeManager);
         Mockito.when(scanAsAServiceModuleConfig.getCutoffDateString()).thenReturn(Optional.ofNullable(cutoffDate));
         Mockito.when(scanAsAServicePropertyService.getScanStatusProperty(repoPath)).thenReturn(Optional.ofNullable(scanStatus));
