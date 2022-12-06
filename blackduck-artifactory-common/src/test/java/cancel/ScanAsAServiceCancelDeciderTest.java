@@ -60,7 +60,7 @@ public class ScanAsAServiceCancelDeciderTest {
 
     private static String TEST_OUTSIDE_REPO_PATH = "test-outside-repo";
 
-    private static String TEST_ARTIFACT_NAME = "test-artifact.jar";
+    private static String TEST_ARTIFACT_NAME = "test-artifact-2.1.jar";
 
     private static String DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
@@ -225,7 +225,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         SUCCESS,
                         IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
                         null,
-                        List.of("*fact.jar"),
+                        List.of("*fact*.jar"),
                         TEST_REPO_PATH,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern not specified; Exclude File Pattern not matched",
@@ -234,7 +234,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         SUCCESS,
                         IN_VIOLATION,
                         null,
-                        List.of("*fact.war"),
+                        List.of("*fact*.war"),
                         TEST_REPO_PATH,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("Blocking; Allowed File Pattern matched; Exclude File Pattern not specified",
@@ -252,7 +252,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         SUCCESS,
                         IN_VIOLATION, // The combination of these will cause blocking if the allowed file pattern check fails
                         List.of("*.war", "*.jar"),
-                        List.of("*fact.jar"),
+                        List.of("*fact*.jar"),
                         TEST_REPO_PATH,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern matched; Exclude File Pattern not matched",
@@ -261,7 +261,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         SUCCESS,
                         IN_VIOLATION,
                         List.of("*.war", "*.jar"),
-                        List.of("*fact.war"),
+                        List.of("*fact*.war"),
                         TEST_REPO_PATH,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Allowed File Pattern not matched",
