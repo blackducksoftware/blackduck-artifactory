@@ -4,10 +4,7 @@ buildscript {
     ext.blackDuckCommonVersion = '54.2.1'
 
     apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-repositories.gradle', to: buildscript
-    ////////// START BUILDSCRIPT DEPENDENCY //////////
-dependencies { classpath "com.synopsys.integration:common-gradle-plugin:1.12.0" }
-
-////////// END BUILDSCRIPT DEPENDENCY //////////
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-dependencies.gradle', to: buildscript
 }
 
 plugins {
@@ -16,7 +13,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.3.31'
 }
 
-version = '9.0.0'
+version = '9.0.1-SNAPSHOT'
 final String parentVersion = project.version
 
 final String artifactoryMinimumVersion = '6.1.0'
