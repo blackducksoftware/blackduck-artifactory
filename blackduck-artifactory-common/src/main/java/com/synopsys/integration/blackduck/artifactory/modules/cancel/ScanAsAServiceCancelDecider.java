@@ -59,9 +59,9 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                     } else if (block.contains("/")) {
                         // If block includes a branch, need to check against repo and path
                         String wholePath = repoPath.toPath();
-                        String repoAndPath = wholePath.substring(0, wholePath.lastIndexOf("/"));
                         // Not equal check since need to validate when block=repo/branch and repoAndPath=repo/branch/child
-                        if (repoAndPath.contains(block)) {
+                        String regex = "^" + block + "/.*";
+                        if (wholePath.matches(regex)) {
                             return true;
                         }
                     }
