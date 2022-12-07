@@ -14,6 +14,7 @@ plugins {
 }
 
 version = '9.0.1-SNAPSHOT'
+
 final String parentVersion = project.version
 
 final String artifactoryMinimumVersion = '6.1.0'
