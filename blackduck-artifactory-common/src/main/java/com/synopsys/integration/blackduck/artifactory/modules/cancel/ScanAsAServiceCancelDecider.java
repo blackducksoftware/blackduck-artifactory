@@ -44,12 +44,30 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
 
     @Override
     public CancelDecision getCancelDecision(RepoPath repoPath) {
-        if (!moduleConfig.getBlockingRepos().contains(repoPath.getRepoKey())) {
-            return CancelDecision.NO_CANCELLATION();
-        }
 
         ItemInfo itemInfo = artifactoryPAPIService.getItemInfo(repoPath);
         if (itemInfo.isFolder()) {
+            return CancelDecision.NO_CANCELLATION();
+        }
+
+        if (!moduleConfig.getBlockingRepos().stream()
+                .anyMatch(block -> {
+                    // If any blocking repo matches these predicates then continue validation
+                    // If no blocking repo matches then we can short circuit with no-cancellation
+                    if (!block.contains("/") && block.equals(repoPath.getRepoKey())) {
+                        return true;
+                    } else if (block.contains("/")) {
+                        // If block includes a branch, need to check against repo and path
+                        String wholePath = repoPath.toPath();
+                        // Not equal check since need to validate when block=repo/branch and repoAndPath=repo/branch/child
+                        String regex = "^" + block + "/.*";
+                        if (wholePath.matches(regex)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }))
+        {
             return CancelDecision.NO_CANCELLATION();
         }
 

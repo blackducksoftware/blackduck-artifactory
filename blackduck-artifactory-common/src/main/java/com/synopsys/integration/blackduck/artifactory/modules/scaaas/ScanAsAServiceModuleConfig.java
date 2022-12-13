@@ -10,9 +10,11 @@ package com.synopsys.integration.blackduck.artifactory.modules.scaaas;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,22 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
             moduleConfig.withBlockingStrategy(blockingStrategy);
             List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_REPOS, ScanAsAServiceModuleProperty.BLOCKING_REPOS_CSV_PATH)
                     .stream()
-                    .filter(artifactoryPAPIService::isValidRepository)
+                    .map(repo -> {
+                        String cleaned = StringUtils.deleteWhitespace(repo);
+                        if (cleaned.endsWith("/")) {
+                            cleaned = cleaned.substring(0, cleaned.lastIndexOf("/"));
+                        }
+                        if (cleaned.startsWith("/")) {
+                            cleaned = cleaned.substring(1);
+                        }
+
+                        String[] split = cleaned.split("/");
+                        if (split.length == 0 || !artifactoryPAPIService.isValidRepository(split[0])) {
+                            return null;
+                        }
+                        return cleaned;
+                    })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             if (!repos.isEmpty()) {
                 moduleConfig.withBlockingRepos(repos);
