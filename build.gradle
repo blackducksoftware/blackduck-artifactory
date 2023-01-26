@@ -13,7 +13,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.3.31'
 }
 
-version = '9.0.1-SIGQA1'
+version = '9.0.1-SIGQA2-SNAPSHOT'
 
 final String parentVersion = project.version
 
