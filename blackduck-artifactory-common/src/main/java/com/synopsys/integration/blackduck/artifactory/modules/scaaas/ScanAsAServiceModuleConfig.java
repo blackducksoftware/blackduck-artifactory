@@ -39,6 +39,8 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
     private final List<String> excludedFileNamePatterns;
 
+    private final List<String>  blockingDockerRepos;
+
 
     protected ScanAsAServiceModuleConfig(Builder builder) {
         super(ScanAsAServiceModule.class.getSimpleName(), builder.enabled);
@@ -48,6 +50,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         this.dateTimeManager = builder.dateTimeManager;
         this.allowedFileNamePatterns = builder.allowedFileNamePatterns.isEmpty() ? null : new ArrayList<>(builder.allowedFileNamePatterns);
         this.excludedFileNamePatterns = builder.excludedFileNamePatterns.isEmpty() ? null : new ArrayList<>(builder.excludedFileNamePatterns);
+        this.blockingDockerRepos = builder.blockingDockerRepos.isEmpty() ? null : new ArrayList<>(builder.blockingDockerRepos);
     }
 
     public static ScanAsAServiceModuleConfig createFromProperties(ConfigurationPropertyManager configurationPropertyManager,
@@ -71,21 +74,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
             moduleConfig.withBlockingStrategy(blockingStrategy);
             List<String> repos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_REPOS, ScanAsAServiceModuleProperty.BLOCKING_REPOS_CSV_PATH)
                     .stream()
-                    .map(repo -> {
-                        String cleaned = StringUtils.deleteWhitespace(repo);
-                        if (cleaned.endsWith("/")) {
-                            cleaned = cleaned.substring(0, cleaned.lastIndexOf("/"));
-                        }
-                        if (cleaned.startsWith("/")) {
-                            cleaned = cleaned.substring(1);
-                        }
-
-                        String[] split = cleaned.split("/");
-                        if (split.length == 0 || !artifactoryPAPIService.isValidRepository(split[0])) {
-                            return null;
-                        }
-                        return cleaned;
-                    })
+                    .map(repo -> cleanRepoName(repo, artifactoryPAPIService))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             if (!repos.isEmpty()) {
@@ -102,6 +91,14 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
             List<String> excludedFileNamePatterns = configurationPropertyManager.getPropertyAsList(ScanAsAServiceModuleProperty.EXCLUDED_FILE_PATTERNS);
             if(!excludedFileNamePatterns.isEmpty()) {
                 moduleConfig.withExcludedFileNamePatterns(excludedFileNamePatterns);
+            }
+            List<String> dockerRepos = configurationPropertyManager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS, ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS_CSV_PATH)
+                    .stream()
+                    .map(repo -> ScanAsAServiceModuleConfig.cleanRepoName(repo, artifactoryPAPIService))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            if (!dockerRepos.isEmpty()) {
+                moduleConfig.withBlockingDockerRepos(dockerRepos);
             }
         }
 
@@ -132,6 +129,10 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         return Optional.ofNullable(this.excludedFileNamePatterns);
     }
 
+    public Optional<List<String>> getBlockingDockerRepos() {
+        return Optional.ofNullable(this.blockingDockerRepos);
+    }
+
     @Override
     public void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModules) {
         if (isEnabled()) {
@@ -145,6 +146,22 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         }
     }
 
+    private static String cleanRepoName(String repo, ArtifactoryPAPIService artifactoryPAPIService) {
+        String cleaned = StringUtils.deleteWhitespace(repo);
+        if (cleaned.endsWith("/")) {
+            cleaned = cleaned.substring(0, cleaned.lastIndexOf("/"));
+        }
+        if (cleaned.startsWith("/")) {
+            cleaned = cleaned.substring(1);
+        }
+
+        String[] split = cleaned.split("/");
+        if (split.length == 0 || !artifactoryPAPIService.isValidRepository(split[0])) {
+            return null;
+        }
+        return cleaned;
+    }
+
     public static class Builder {
         private Boolean enabled;
         private ScanAsAServiceBlockingStrategy blockingStrategy;
@@ -153,6 +170,7 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
         private DateTimeManager dateTimeManager;
         private List<String> allowedFileNamePatterns = new ArrayList<>();
         private List<String> excludedFileNamePatterns = new ArrayList<>();
+        private List<String> blockingDockerRepos = new ArrayList<>();
 
         private Builder(Boolean enabled, DateTimeManager dateTimeManager) {
             this.enabled = enabled;
@@ -185,6 +203,11 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
         public Builder withExcludedFileNamePatterns(List<String> excludedFileNamePatterns) {
             this.excludedFileNamePatterns.addAll(excludedFileNamePatterns);
+            return this;
+        }
+
+        public Builder withBlockingDockerRepos(List<String> repos) {
+            this.blockingDockerRepos.addAll(repos);
             return this;
         }
 

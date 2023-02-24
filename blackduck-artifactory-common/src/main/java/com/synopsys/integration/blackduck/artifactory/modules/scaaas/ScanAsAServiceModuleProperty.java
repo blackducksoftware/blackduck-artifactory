@@ -17,6 +17,8 @@ public enum ScanAsAServiceModuleProperty implements ConfigurationProperty {
     CUTOFF_DATE("cutoff.date"),
     ALLOWED_FILE_PATTERNS("allowed.patterns"),
     EXCLUDED_FILE_PATTERNS("excluded.patterns"),
+    BLOCKING_DOCKER_REPOS("blocking.docker.repos"),
+    BLOCKING_DOCKER_REPOS_CSV_PATH("blocking.docker.repos.csv.path"),
     ;
 
     private static final String SCAN_AS_A_SERVICE_MODULE_PROPERTY_PREFIX = "blackduck.artifactory.scaaas.";

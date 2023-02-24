@@ -1,6 +1,7 @@
 package com.synopsys.integration.blackduck.artifactory.modules.scaaas;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -33,17 +34,21 @@ class ScanAsAServiceModuleConfigTest {
     @Test
     void createFromProperties() throws IOException {
         String repo = "repo-local-1";
+        String dockerRepo = "docker-repo-local-1";
         String blockStrategy = ScanAsAServiceBlockingStrategy.BLOCK_OFF.name();
         Mockito.when(manager.getBooleanProperty(ScanAsAServiceModuleProperty.ENABLED)).thenReturn(true);
         Mockito.when(manager.getProperty(ScanAsAServiceModuleProperty.BLOCKING_STRATEGY)).thenReturn(blockStrategy);
         Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_REPOS, ScanAsAServiceModuleProperty.BLOCKING_REPOS_CSV_PATH))
                 .thenReturn(List.of(repo));
+        Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS, ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS_CSV_PATH))
+                .thenReturn(List.of(dockerRepo));
         Mockito.when(service.isValidRepository(Mockito.anyString())).thenReturn(true);
 
         ScanAsAServiceModuleConfig config = ScanAsAServiceModuleConfig.createFromProperties(manager, service, timeManager);
 
         Assertions.assertEquals(blockStrategy, config.getBlockingStrategy().name());
         Assertions.assertEquals(List.of(repo), config.getBlockingRepos());
+        Assertions.assertEquals(List.of(dockerRepo), config.getBlockingDockerRepos().orElse(null));
     }
 
     @Test
@@ -76,5 +81,21 @@ class ScanAsAServiceModuleConfigTest {
 
         Mockito.verify(service).isValidRepository(repo);
         Assertions.assertEquals(List.of(repo + "/" + branch), config.getBlockingRepos());
+    }
+
+    @Test
+    void createFromPropertiesNoDockerRepos() throws IOException {
+        String repo = "repo-local-1";
+        String blockingStrategy = ScanAsAServiceBlockingStrategy.BLOCK_OFF.name();
+        Mockito.when(manager.getBooleanProperty(ScanAsAServiceModuleProperty.ENABLED)).thenReturn(true);
+        Mockito.when(manager.getProperty(ScanAsAServiceModuleProperty.BLOCKING_STRATEGY)).thenReturn(blockingStrategy);
+        Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_REPOS, ScanAsAServiceModuleProperty.BLOCKING_REPOS_CSV_PATH))
+                .thenReturn(List.of(repo));
+        Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS, ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS_CSV_PATH))
+                .thenReturn(Collections.emptyList());
+
+        ScanAsAServiceModuleConfig config = ScanAsAServiceModuleConfig.createFromProperties(manager, service, timeManager);
+
+        Assertions.assertFalse(config.getBlockingDockerRepos().isPresent());
     }
 }
