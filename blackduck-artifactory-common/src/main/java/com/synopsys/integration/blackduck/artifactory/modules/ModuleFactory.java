@@ -206,7 +206,8 @@ public class ModuleFactory {
     public ScanAsAServiceModule createScanAsAServiceModule() throws IOException {
         ScanAsAServiceModuleConfig scanAsAServiceModuleConfig = ScanAsAServiceModuleConfig.createFromProperties(configurationPropertyManager, artifactoryPAPIService, dateTimeManager);
         ScanAsAServicePropertyService scanAsAServicePropertyService = new ScanAsAServicePropertyService(artifactoryPAPIService, dateTimeManager);
-        ScanAsAServiceCancelDecider scanAsAServiceCancelDecider = new ScanAsAServiceCancelDecider(scanAsAServiceModuleConfig, scanAsAServicePropertyService, artifactoryPAPIService);
+        PluginRepoPathFactory pluginRepoPathFactory = new PluginRepoPathFactory();
+        ScanAsAServiceCancelDecider scanAsAServiceCancelDecider = new ScanAsAServiceCancelDecider(scanAsAServiceModuleConfig, scanAsAServicePropertyService, pluginRepoPathFactory, artifactoryPAPIService);
         return new ScanAsAServiceModule(scanAsAServiceModuleConfig,
                 artifactoryPropertyService,
                 artifactoryPAPIService,

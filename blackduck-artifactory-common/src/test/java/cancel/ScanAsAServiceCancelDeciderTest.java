@@ -15,6 +15,7 @@ package cancel;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -23,9 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.artifactory.fs.ItemInfo;
 import org.artifactory.repo.RepoPath;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -64,31 +63,111 @@ public class ScanAsAServiceCancelDeciderTest {
 
     private static String TEST_ARTIFACT_NAME = "test-artifact-2.1.jar";
 
+    private static String TEST_DOCKER_PATH = "test-docker-path";
+
+    private static String TEST_DOCKER_IMAGE = "test-docker-image";
+
+    private static String TEST_DOCKER_TAG = "test-docker-tag";
+
+    private static String TEST_DOCKER_FILE = "manifest.json";
+
     private static String DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
     private static Stream<Arguments> providerValuesForBlockNoneGetCancelDecisionTests() {
-        // Description, ArtifactRepoPath, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
+        // Description, ArtifactRepoPath, isFolder, isFileInDockerRepo, ScanAsAServiceBlockingStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
         return Stream.of(
                 arguments("Blocking; Blocking Strategy BLOCK_NONE; Scan Success with Policy Violations",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_NONE,
                         SUCCESS,
                         IN_VIOLATION,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan Success with No Policy Violations",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_NONE,
                         SUCCESS,
                         NOT_IN_VIOLATION,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan in progress",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_NONE,
                         PROCESSING,
                         null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan Failed",
                         artifactPath,
+                        false,
+                        false,
+                        BLOCK_NONE,
+                        FAILED,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; Blocking Strategy BLOCK_NONE; Scan Success with Policy Violations (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_NONE,
+                        SUCCESS,
+                        IN_VIOLATION,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactDockerPath))),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan Success with No Policy Violations (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_NONE,
+                        SUCCESS,
+                        NOT_IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan in progress (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_NONE,
+                        PROCESSING,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan Failed (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_NONE,
+                        FAILED,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; Blocking Strategy BLOCK_NONE; Scan Success with Policy Violations (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_NONE,
+                        SUCCESS,
+                        IN_VIOLATION,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactDockerFilePath.getId().substring(0, artifactDockerFilePath.getId().lastIndexOf("/"))))),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan Success with No Policy Violations (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_NONE,
+                        SUCCESS,
+                        NOT_IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan in progress (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_NONE,
+                        PROCESSING,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; Scan Failed (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
                         BLOCK_NONE,
                         FAILED,
                         null,
@@ -97,62 +176,207 @@ public class ScanAsAServiceCancelDeciderTest {
     }
 
     private static Stream<Arguments> providerValuesForBlockAllGetCancelDecisionTests() {
-        // Description, ArtifactRepoPath, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
+        // Description, ArtifactRepoPath, isFolder, isFileInDockerRepo, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
         return Stream.of(
-                arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan Success with No Policy Violations",
+                arguments("No Blocking; Blocking Strategy BLOCK_ALL; Scan Success with No Policy Violations",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_ALL,
                         SUCCESS,
                         NOT_IN_VIOLATION,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan Success with Policy Violations",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_ALL,
                         SUCCESS,
                         IN_VIOLATION,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan in progress",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_ALL,
                         PROCESSING,
                         null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", PROCESSING.getMessage(), artifactPath))),
                 arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan Failed",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_ALL,
                         FAILED,
                         null,
-                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", FAILED.getMessage(), artifactPath)))
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", FAILED.getMessage(), artifactPath))),
+                arguments("No Blocking; Blocking Strategy BLOCK_ALL; Scan Success with No Policy Violations (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        NOT_IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan Success with Policy Violations (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        IN_VIOLATION,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactDockerPath))),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan in progress (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_ALL,
+                        PROCESSING,
+                        null,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", PROCESSING.getMessage(), artifactDockerPath))),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan Failed (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_ALL,
+                        FAILED,
+                        null,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", FAILED.getMessage(), artifactDockerPath))),
+                arguments("No Blocking; Blocking Strategy BLOCK_ALL; Scan Success with No Policy Violations (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        NOT_IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan Success with Policy Violations (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_ALL,
+                        SUCCESS,
+                        IN_VIOLATION,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactDockerFilePath.getId().substring(0, artifactDockerFilePath.getId().lastIndexOf("/"))))),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan in progress (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_ALL,
+                        PROCESSING,
+                        null,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", PROCESSING.getMessage(), artifactDockerFilePath.getId().substring(0, artifactDockerFilePath.getId().lastIndexOf("/"))))),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; Scan Failed (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_ALL,
+                        FAILED,
+                        null,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; repo: %s", FAILED.getMessage(), artifactDockerFilePath.getId().substring(0, artifactDockerFilePath.getId().lastIndexOf("/")))))
         );
     }
 
     private static Stream<Arguments> providerValuesForBlockOffGetCancelDecisionTests() {
-        // Description, ArtifactRepoPath, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
+        // Description, ArtifactRepoPath, isFolder, isFileInDockerRepo, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
         return Stream.of(
                 arguments("No Blocking; Blocking Strategy BLOCK_OFF; Scan in progress",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_OFF,
                         PROCESSING,
                         null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Blocking Strategy BLOCK_OFF; No Policy violations",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_OFF,
                         SUCCESS,
                         NOT_IN_VIOLATION,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Blocking Strategy BLOCK_OFF; Policy violations",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_OFF,
                         SUCCESS,
                         IN_VIOLATION,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; Blocking Strategy BLOCK_OFF; scan failed",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_OFF,
                         FAILED,
                         null,
-                        CancelDecision.NO_CANCELLATION())        );
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Scan in progress (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_OFF,
+                        PROCESSING,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; No Policy Violations (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_OFF,
+                        SUCCESS,
+                        NOT_IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Policy violations (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_OFF,
+                        SUCCESS,
+                        IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Scan Failed (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_OFF,
+                        FAILED,
+                        null,
+                        CancelDecision.NO_CANCELLATION()), //////
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Scan in progress (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_OFF,
+                        PROCESSING,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; No Policy Violations (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_OFF,
+                        SUCCESS,
+                        NOT_IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Policy violations (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_OFF,
+                        SUCCESS,
+                        IN_VIOLATION,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; Scan Failed (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_OFF,
+                        FAILED,
+                        null,
+                        CancelDecision.NO_CANCELLATION())
+        );
     }
 
     private static Stream<Arguments> providerValuesForCutoffGetCancelDecisionTests() {
@@ -177,22 +401,76 @@ public class ScanAsAServiceCancelDeciderTest {
     }
 
     private static Stream<Arguments> providerValuesForNoScanStatusGetCancelDecisionTests() {
-        // Description, ArtifactRepoPath, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
+        // Description, ArtifactRepoPath, isFolder, isFileInDockerRepo, ScanAsAServiceBlockinStrategy, ScanAsAServiceScanStatus, ProjectVersionComponentPolicyStatusType, CancelDecision
         return Stream.of(
                 arguments("No Blocking; Blocking Strategy BLOCK_NONE; No scan status",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_NONE,
                         null,
                         null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Blocking Strategy BLOCK_ALL; No scan status",
                         artifactPath,
+                        false,
+                        false,
                         BLOCK_ALL,
                         null,
                         null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; Scan not scheduled and blocking strategy: %s; repo: %s", BLOCK_ALL, artifactPath))),
                 arguments("No Blocking; Blocking Strategy BLOCK_OFF; No scan status",
                         artifactPath,
+                        false,
+                        false,
+                        BLOCK_OFF,
+                        null,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; No scan status (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_NONE,
+                        null,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; No scan status (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_ALL,
+                        null,
+                        null,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; Scan not scheduled and blocking strategy: %s; repo: %s", BLOCK_ALL, artifactDockerPath))),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; No scan status (Docker Repo - Directory)",
+                        artifactDockerPath,
+                        true,
+                        false,
+                        BLOCK_OFF,
+                        null,
+                        null,
+                        CancelDecision.NO_CANCELLATION()), ///////
+                arguments("No Blocking; Blocking Strategy BLOCK_NONE; No scan status (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_NONE,
+                        null,
+                        null,
+                        CancelDecision.NO_CANCELLATION()),
+                arguments("Blocking; Blocking Strategy BLOCK_ALL; No scan status (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
+                        BLOCK_ALL,
+                        null,
+                        null,
+                        CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; Scan not scheduled and blocking strategy: %s; repo: %s", BLOCK_ALL, artifactDockerFilePath.getId().substring(0, artifactDockerFilePath.getId().lastIndexOf("/"))))),
+                arguments("No Blocking; Blocking Strategy BLOCK_OFF; No scan status (Docker Repo - File)",
+                        artifactDockerFilePath,
+                        false,
+                        true,
                         BLOCK_OFF,
                         null,
                         null,
@@ -211,6 +489,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         null,
                         null,
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern not specified; Exclude File Pattern not specified",
                         artifactPath,
@@ -220,6 +499,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         null,
                         null,
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Allowed File Pattern not specified; Exclude File Pattern matched",
                         artifactPath,
@@ -229,6 +509,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         null,
                         List.of("*fact*.jar"),
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern not specified; Exclude File Pattern not matched",
                         artifactPath,
@@ -238,6 +519,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         null,
                         List.of("*fact*.war"),
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("Blocking; Allowed File Pattern matched; Exclude File Pattern not specified",
                         artifactPath,
@@ -247,6 +529,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         List.of("*.war", "*.jar"),
                         null,
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Allowed File Pattern matched; Exclude File Pattern matched",
                         artifactPath,
@@ -256,6 +539,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         List.of("*.war", "*.jar"),
                         List.of("*fact*.jar"),
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; Allowed File Pattern matched; Exclude File Pattern not matched",
                         artifactPath,
@@ -265,6 +549,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         List.of("*.war", "*.jar"),
                         List.of("*fact*.war"),
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactPath))),
                 arguments("No Blocking; Allowed File Pattern not matched",
                         artifactPath,
@@ -274,6 +559,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         List.of("*.war", "*.tgz"),
                         null,
                         TEST_REPO_PATH,
+                        null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("No Blocking; In repo but not branch",
                         artifactPath,
@@ -283,6 +569,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         null,
                         null,
                         TEST_REPO_BRANCH_PATH,
+                        null,
                         CancelDecision.NO_CANCELLATION()),
                 arguments("Blocking; In repo branch",
                         artifactBranchPath,
@@ -292,6 +579,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         null,
                         null,
                         TEST_REPO_BRANCH_PATH,
+                        null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactBranchPath))),
                 arguments("Blocking; In repo branch child",
                         artifactBranchChildPath,
@@ -301,6 +589,7 @@ public class ScanAsAServiceCancelDeciderTest {
                         null,
                         null,
                         TEST_REPO_BRANCH_PATH,
+                        null,
                         CancelDecision.CANCEL_DOWNLOAD(String.format("Download blocked; %s; Policy Violation Status: %s; repo: %s", SUCCESS.getMessage(), IN_VIOLATION.name(), artifactBranchChildPath)))
         );
     }
@@ -322,6 +611,10 @@ public class ScanAsAServiceCancelDeciderTest {
 
     private static RepoPath artifactBranchChildPath;
 
+    private static RepoPath artifactDockerPath;
+
+    private static RepoPath artifactDockerFilePath;
+
     private static RepoPath outsideArtifactPath;
 
     private static DateTimeManager dateTimeManager;
@@ -335,8 +628,10 @@ public class ScanAsAServiceCancelDeciderTest {
         pluginRepoPathFactory = new PluginRepoPathFactory(false);
         RepoPath repoPath = pluginRepoPathFactory.create(TEST_REPO_PATH);
         artifactPath = pluginRepoPathFactory.create(repoPath.getRepoKey(), TEST_ARTIFACT_NAME);
-        artifactBranchPath = pluginRepoPathFactory.create(TEST_REPO_PATH, "branch/" + TEST_ARTIFACT_NAME);
-        artifactBranchChildPath = pluginRepoPathFactory.create(TEST_REPO_PATH, "branch/child/" + TEST_ARTIFACT_NAME);
+        artifactBranchPath = pluginRepoPathFactory.create(TEST_REPO_PATH, String.join("/", "branch", TEST_ARTIFACT_NAME));
+        artifactBranchChildPath = pluginRepoPathFactory.create(TEST_REPO_PATH, String.join("/", "branch", "child", TEST_ARTIFACT_NAME));
+        artifactDockerPath = pluginRepoPathFactory.create(TEST_DOCKER_PATH, String.join("/", TEST_DOCKER_IMAGE, TEST_DOCKER_TAG));
+        artifactDockerFilePath = pluginRepoPathFactory.create(TEST_DOCKER_PATH, String.join("/", TEST_DOCKER_IMAGE, TEST_DOCKER_TAG, TEST_DOCKER_FILE));
         RepoPath outsideRepoPath = pluginRepoPathFactory.create(TEST_OUTSIDE_REPO_PATH);
         outsideArtifactPath = pluginRepoPathFactory.create(outsideRepoPath.getRepoKey(), TEST_ARTIFACT_NAME);
         dateTimeManager = new DateTimeManager(DATETIME_PATTERN);
@@ -348,18 +643,22 @@ public class ScanAsAServiceCancelDeciderTest {
 
     public ScanAsAServiceCancelDeciderTest() {
         initMocks(this);
-        sut = new ScanAsAServiceCancelDecider(scanAsAServiceModuleConfig, scanAsAServicePropertyService, artifactoryPAPIService);
+        sut = new ScanAsAServiceCancelDecider(scanAsAServiceModuleConfig, scanAsAServicePropertyService, pluginRepoPathFactory, artifactoryPAPIService);
     }
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("providerValuesForBlockNoneGetCancelDecisionTests")
     public void testGetCancelDecisionWithBlockNoneStrategy(String description,
             RepoPath repoPath,
+            boolean isFolder,
+            boolean isFileInDockerRepo,
             ScanAsAServiceBlockingStrategy blockingStrategy,
             ScanAsAServiceScanStatus scanStatus,
             ProjectVersionComponentPolicyStatusType policyViolationStatus,
             CancelDecision expectedResult) {
         CancelDecision actualResult = getCancelDecisionRunner(repoPath,
+                isFolder,
+                isFileInDockerRepo,
                 blockingStrategy,
                 scanStatus,
                 policyViolationStatus,
@@ -367,7 +666,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
                 null,
-                TEST_REPO_PATH);
+                TEST_REPO_PATH,
+                TEST_DOCKER_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -375,11 +675,15 @@ public class ScanAsAServiceCancelDeciderTest {
     @MethodSource("providerValuesForBlockAllGetCancelDecisionTests")
     public void testGetCancelDecisionWithBlockAllStrategy(String description,
             RepoPath repoPath,
+            boolean isFolder,
+            boolean isFileInDockerRepo,
             ScanAsAServiceBlockingStrategy blockingStrategy,
             ScanAsAServiceScanStatus scanStatus,
             ProjectVersionComponentPolicyStatusType policyViolationStatus,
             CancelDecision expectedResult) {
         CancelDecision actualResult = getCancelDecisionRunner(repoPath,
+                isFolder,
+                isFileInDockerRepo,
                 blockingStrategy,
                 scanStatus,
                 policyViolationStatus,
@@ -387,7 +691,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
                 null,
-                TEST_REPO_PATH);
+                TEST_REPO_PATH,
+                TEST_DOCKER_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -395,11 +700,15 @@ public class ScanAsAServiceCancelDeciderTest {
     @MethodSource("providerValuesForBlockOffGetCancelDecisionTests")
     public void testGetCancelDecisionWithBlockingOffStrategy(String description,
             RepoPath repoPath,
+            boolean isFolder,
+            boolean isFileInDockerRepo,
             ScanAsAServiceBlockingStrategy blockingStrategy,
             ScanAsAServiceScanStatus scanStatus,
             ProjectVersionComponentPolicyStatusType policyViolationStatus,
             CancelDecision expectedResult) {
         CancelDecision actualResult = getCancelDecisionRunner(repoPath,
+                isFolder,
+                isFileInDockerRepo,
                 blockingStrategy,
                 scanStatus,
                 policyViolationStatus,
@@ -407,7 +716,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
                 null,
-                TEST_REPO_PATH);
+                TEST_REPO_PATH,
+                TEST_DOCKER_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -415,11 +725,15 @@ public class ScanAsAServiceCancelDeciderTest {
     @MethodSource("providerValuesForNoScanStatusGetCancelDecisionTests")
     public void testGetCancelDecisionWithNoScanStatus(String description,
             RepoPath repoPath,
+            boolean isFolder,
+            boolean isFileInDockerRepo,
             ScanAsAServiceBlockingStrategy blockingStrategy,
             ScanAsAServiceScanStatus scanStatus,
             ProjectVersionComponentPolicyStatusType policyViolationStatus,
             CancelDecision expectedResult) {
         CancelDecision actualResult = getCancelDecisionRunner(repoPath,
+                isFolder,
+                isFileInDockerRepo,
                 blockingStrategy,
                 scanStatus,
                 policyViolationStatus,
@@ -427,7 +741,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 null,
                 null,
-                TEST_REPO_PATH);
+                TEST_REPO_PATH,
+                TEST_DOCKER_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -439,6 +754,8 @@ public class ScanAsAServiceCancelDeciderTest {
             String cutoffTime,
             CancelDecision expectedResult) {
         CancelDecision actualResult = getCancelDecisionRunner(repoPath,
+                false,
+                false,
                 BLOCK_ALL,
                 SUCCESS,
                 IN_VIOLATION, // The combination of these will cause blocking if the cutoff logic fails
@@ -446,7 +763,8 @@ public class ScanAsAServiceCancelDeciderTest {
                 cutoffTime,
                 null,
                 null,
-                TEST_REPO_PATH);
+                TEST_REPO_PATH,
+                TEST_DOCKER_PATH);
         assertEquals(expectedResult, actualResult);
     }
 
@@ -460,8 +778,11 @@ public class ScanAsAServiceCancelDeciderTest {
             List<String> allowedFilePatterns,
             List<String> excludedFilePatterns,
             String blockingRepo,
+            String blockingDockerRepo,
             CancelDecision expectedResult) {
         CancelDecision actualResult = getCancelDecisionRunner(repoPath,
+                false,
+                false,
                 blockingStrategy,
                 scanStatus,
                 policyViolationStatus,
@@ -469,11 +790,14 @@ public class ScanAsAServiceCancelDeciderTest {
                 lastUpdatedLaterThanCutoffTime.getRight(),
                 allowedFilePatterns,
                 excludedFilePatterns,
-                blockingRepo);
+                blockingRepo,
+                blockingDockerRepo);
         assertEquals(expectedResult, actualResult);
     }
 
     private CancelDecision getCancelDecisionRunner(RepoPath repoPath,
+            boolean isFolder,
+            boolean isFileInDockerRepo,
             ScanAsAServiceBlockingStrategy blockingStrategy,
             ScanAsAServiceScanStatus scanStatus,
             ProjectVersionComponentPolicyStatusType policyViolationStatus,
@@ -481,9 +805,11 @@ public class ScanAsAServiceCancelDeciderTest {
             String cutoffDate,
             List<String> allowedFilePatterns,
             List<String> excludedFilePatterns,
-            String blockingRepo) {
+            String blockingRepo,
+            String blockingDockerRepo) {
         Mockito.when(scanAsAServiceModuleConfig.getBlockingStrategy()).thenReturn(blockingStrategy);
         Mockito.when(scanAsAServiceModuleConfig.getBlockingRepos()).thenReturn(List.of(blockingRepo));
+        Mockito.when(scanAsAServiceModuleConfig.getBlockingDockerRepos()).thenReturn(Optional.ofNullable(blockingDockerRepo != null ? List.of(blockingDockerRepo) : Collections.emptyList()));
         Mockito.when(scanAsAServiceModuleConfig.getDateTimeManager()).thenReturn(dateTimeManager);
         Mockito.when(scanAsAServiceModuleConfig.getCutoffDateString()).thenReturn(Optional.ofNullable(cutoffDate));
         Mockito.when(scanAsAServicePropertyService.getScanStatusProperty(repoPath)).thenReturn(Optional.ofNullable(scanStatus));
@@ -500,7 +826,7 @@ public class ScanAsAServiceCancelDeciderTest {
             }
 
             @Override public boolean isFolder() {
-                return false;
+                return isFolder;
             }
 
             @Override public String getName() {
@@ -512,7 +838,7 @@ public class ScanAsAServiceCancelDeciderTest {
             }
 
             @Override public String getRelPath() {
-                return null;
+                return repoPath.getPath();
             }
 
             @Override public long getCreated() {
@@ -543,6 +869,64 @@ public class ScanAsAServiceCancelDeciderTest {
                 return 0;
             }
         });
+        if (isFileInDockerRepo) {
+            RepoPath imageTagRepoPath = pluginRepoPathFactory.create(repoPath.getRepoKey(), repoPath.getPath().substring(0, repoPath.getPath().lastIndexOf("/")));
+            Mockito.when(scanAsAServicePropertyService.getScanStatusProperty(imageTagRepoPath)).thenReturn(Optional.ofNullable(scanStatus));
+            Mockito.when(scanAsAServicePropertyService.getPolicyStatus(imageTagRepoPath)).thenReturn(Optional.ofNullable(policyViolationStatus));
+            Mockito.when(artifactoryPAPIService.getItemInfo(imageTagRepoPath)).thenReturn(new ItemInfo() {
+                @Override public long getId() {
+                    return 0;
+                }
+
+                @Override public RepoPath getRepoPath() {
+                    return imageTagRepoPath;
+                }
+
+                @Override public boolean isFolder() {
+                    return true;
+                }
+
+                @Override public String getName() {
+                    return imageTagRepoPath.getName();
+                }
+
+                @Override public String getRepoKey() {
+                    return imageTagRepoPath.getRepoKey();
+                }
+
+                @Override public String getRelPath() {
+                    return imageTagRepoPath.getPath();
+                }
+
+                @Override public long getCreated() {
+                    return 0;
+                }
+
+                @Override public long getLastModified() {
+                    return 0;
+                }
+
+                @Override public String getModifiedBy() {
+                    return null;
+                }
+
+                @Override public String getCreatedBy() {
+                    return null;
+                }
+
+                @Override public long getLastUpdated() {
+                    return 0;
+                }
+
+                @Override public boolean isIdentical(ItemInfo info) {
+                    return false;
+                }
+
+                @Override public int compareTo(@NotNull ItemInfo o) {
+                    return 0;
+                }
+            });
+        }
         return sut.getCancelDecision(repoPath);
     }
 }
