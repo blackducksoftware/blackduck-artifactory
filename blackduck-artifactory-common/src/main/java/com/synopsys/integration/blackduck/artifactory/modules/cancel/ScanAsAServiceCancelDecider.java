@@ -124,6 +124,7 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
                     if (isManagedDockerRepo.get()) {
                         // Look for the manifest in the repoPathToImagePath
                         RepoPath itemInfoRepoPath = repoPathFactory.create(repoPathToQuery.getRepoKey(), String.join("/", repoPathToQuery.getPath(), "manifest.json"));
+                        logger.debug(String.format("Using the following to look for managed docker repo last update time. repo: %s", itemInfoRepoPath));
                         try {
                             itemInfoToQuery = Optional.of(artifactoryPAPIService.getItemInfo(itemInfoRepoPath));
                         } catch (Exception e) {
