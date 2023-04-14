@@ -98,4 +98,39 @@ class ScanAsAServiceModuleConfigTest {
 
         Assertions.assertFalse(config.getBlockingDockerRepos().isPresent());
     }
+
+    @Test
+    void createFromPropertiesNoBlockingRepos() throws IOException {
+        String dockerRepo = "repo-docker-1";
+        String blockingStrategy = ScanAsAServiceBlockingStrategy.BLOCK_OFF.name();
+        Mockito.when(manager.getBooleanProperty(ScanAsAServiceModuleProperty.ENABLED)).thenReturn(true);
+        Mockito.when(manager.getProperty(ScanAsAServiceModuleProperty.BLOCKING_STRATEGY)).thenReturn(blockingStrategy);
+        Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_REPOS, ScanAsAServiceModuleProperty.BLOCKING_REPOS_CSV_PATH))
+                .thenReturn(Collections.emptyList());
+        Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS, ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS_CSV_PATH))
+                .thenReturn(List.of(dockerRepo));
+        Mockito.when(service.isValidRepository(Mockito.anyString())).thenReturn(true);
+
+        ScanAsAServiceModuleConfig config = ScanAsAServiceModuleConfig.createFromProperties(manager, service, timeManager);
+
+        Assertions.assertTrue(config.getBlockingDockerRepos().isPresent());
+        Assertions.assertTrue(config.getBlockingRepos().isEmpty());
+    }
+
+    @Test
+    void createFromPropertiesNoRepos() throws IOException {
+        String blockingStrategy = ScanAsAServiceBlockingStrategy.BLOCK_OFF.name();
+        Mockito.when(manager.getBooleanProperty(ScanAsAServiceModuleProperty.ENABLED)).thenReturn(true);
+        Mockito.when(manager.getProperty(ScanAsAServiceModuleProperty.BLOCKING_STRATEGY)).thenReturn(blockingStrategy);
+        Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_REPOS, ScanAsAServiceModuleProperty.BLOCKING_REPOS_CSV_PATH))
+                .thenReturn(Collections.emptyList());
+        Mockito.when(manager.getRepositoryKeysFromProperties(ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS, ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS_CSV_PATH))
+                .thenReturn(Collections.emptyList());
+        Mockito.when(service.isValidRepository(Mockito.anyString())).thenReturn(true);
+
+        ScanAsAServiceModuleConfig config = ScanAsAServiceModuleConfig.createFromProperties(manager, service, timeManager);
+
+        Assertions.assertFalse(config.getBlockingDockerRepos().isPresent());
+        Assertions.assertTrue(config.getBlockingRepos().isEmpty());
+    }
 }
