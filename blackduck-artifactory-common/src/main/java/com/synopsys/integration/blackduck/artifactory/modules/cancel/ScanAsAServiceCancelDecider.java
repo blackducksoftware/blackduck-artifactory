@@ -101,26 +101,6 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
             return CancelDecision.NO_CANCELLATION();
         }
 
-        if (!isManagedDockerRepo.get()) {
-            AtomicBoolean isBeforeCutoffTime = new AtomicBoolean(false);
-            moduleConfig.getCutoffDateString().ifPresent(cutoffDateString ->
-                    {
-                        long cutoffTime = moduleConfig.getDateTimeManager().getTimeFromString(cutoffDateString);
-                        if (itemInfo.getLastUpdated() <= cutoffTime) {
-                            logger.info(String.format("Item last updated prior to cutoff time; No Blocking Strategy applied; repo: %s", repoPath));
-                            isBeforeCutoffTime.set(true);
-                        }
-                    }
-            );
-            if (isBeforeCutoffTime.get()) {
-                return CancelDecision.NO_CANCELLATION();
-            }
-        }
-
-        File file = (isManagedDockerRepo.get() ? null : new File(itemInfo.getName()));
-        Optional<List<String>> allowedNamePatterns = moduleConfig.getAllowedFileNamePatterns();
-        Optional<List<String>> excludedNamePatterns = moduleConfig.getExcludedFileNamePatterns();
-
         // If this is Docker Repo, set the repoPath so annotations are read from the directory, not the file
         RepoPath repoPathToImageTag = null;
         if (isManagedDockerRepo.get()) {
@@ -134,6 +114,42 @@ public class ScanAsAServiceCancelDecider implements CancelDecider {
             }
         }
         final RepoPath repoPathToQuery = isManagedDockerRepo.get() ? repoPathToImageTag : repoPath;
+
+        AtomicBoolean isBeforeCutoffTime = new AtomicBoolean(false);
+        moduleConfig.getCutoffDateString().ifPresent(cutoffDateString ->
+                {
+                    long cutoffTime = moduleConfig.getDateTimeManager().getTimeFromString(cutoffDateString);
+
+                    Optional<ItemInfo> itemInfoToQuery;
+                    if (isManagedDockerRepo.get()) {
+                        // Look for the manifest in the repoPathToImagePath
+                        RepoPath itemInfoRepoPath = repoPathFactory.create(repoPathToQuery.getRepoKey(), String.join("/", repoPathToQuery.getPath(), "manifest.json"));
+                        logger.debug(String.format("Using the following to look for managed docker repo last update time. repo: %s", itemInfoRepoPath));
+                        try {
+                            itemInfoToQuery = Optional.of(artifactoryPAPIService.getItemInfo(itemInfoRepoPath));
+                        } catch (Exception e) {
+                            logger.debug(String.format("Could not find manifest.json. Is repo really of type Docker: repoPathToImageTag: %s", repoPathToQuery));
+                            itemInfoToQuery = Optional.empty();
+                        }
+                    } else {
+                        itemInfoToQuery = Optional.of(itemInfo);
+                    }
+
+                    itemInfoToQuery.ifPresentOrElse(ii -> {
+                        if (ii.getLastUpdated() <= cutoffTime) {
+                            logger.info(String.format("Item last updated prior to cutoff time; No Blocking Strategy applied; repo: %s", repoPath));
+                            isBeforeCutoffTime.set(true);
+                        }
+                    }, () -> logger.info(String.format("Item last update could not be determined; Blocking strategy will be applied; repo: %s", repoPath)));
+                }
+        );
+        if (isBeforeCutoffTime.get()) {
+            return CancelDecision.NO_CANCELLATION();
+        }
+
+        File file = (isManagedDockerRepo.get() ? null : new File(itemInfo.getName()));
+        Optional<List<String>> allowedNamePatterns = moduleConfig.getAllowedFileNamePatterns();
+        Optional<List<String>> excludedNamePatterns = moduleConfig.getExcludedFileNamePatterns();
 
         if (isManagedDockerRepo.get() || applyBlockingStrategyBasedOnFilePattern(allowedNamePatterns.orElse(null), excludedNamePatterns.orElse(null), file)) {
             ScanAsAServiceBlockingStrategy blockingStrategy = moduleConfig.getBlockingStrategy();
