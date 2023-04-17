@@ -9,6 +9,7 @@ package com.synopsys.integration.blackduck.artifactory.modules.scaaas;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -135,11 +136,24 @@ public class ScanAsAServiceModuleConfig extends ModuleConfig {
 
     @Override
     public void validate(PropertyGroupReport propertyGroupReport, List<String> enabledModules) {
-        if (isEnabled()) {
+        if (Boolean.TRUE.equals(isEnabledUnverified())) {
             // Only generate property report if module is enabled
             validateNotNull(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_STRATEGY, this.blockingStrategy);
-            validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_REPOS, this.blockingRepos,
-                    String.format("No valid repositories specified. Please set the %s property with valid repositories", ScanAsAServiceModuleProperty.BLOCKING_REPOS.getKey()));
+            // Validate that either blockingRepos or blockingDockerRepos is valid
+            if ((this.blockingRepos == null || this.blockingRepos.isEmpty()) &&
+                    (this.blockingDockerRepos == null || this.blockingDockerRepos.isEmpty())) {
+                // Neither one is valid. Add validation error messages
+                String message = String.format("One of %s or %s must be present and valid.", ScanAsAServiceModuleProperty.BLOCKING_REPOS.getKey(), ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS.getKey());
+                validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_REPOS, this.blockingRepos, message);
+                validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS, getBlockingDockerRepos().orElse(Collections.emptyList()), message);
+            } else {
+                if (!(this.blockingRepos  == null || this.blockingRepos.isEmpty())) {
+                    validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_REPOS, this.blockingRepos);
+                }
+                if (!(this.blockingDockerRepos == null || this.blockingDockerRepos.isEmpty())) {
+                    validateList(propertyGroupReport, ScanAsAServiceModuleProperty.BLOCKING_DOCKER_REPOS, getBlockingDockerRepos().orElse(Collections.emptyList()));
+                }
+            }
             getCutoffDateString().ifPresentOrElse(cutoffDateString ->
                 validateDate(propertyGroupReport, ScanAsAServiceModuleProperty.CUTOFF_DATE, cutoffDateString, dateTimeManager),
                     () -> logger.info(String.format("No SCA-as-a-Service cutoff date supplied; Blocking Strategy %s applied to all items", getBlockingStrategy())));
