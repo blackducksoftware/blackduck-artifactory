@@ -21,6 +21,8 @@ public enum ScanModuleProperty implements ConfigurationProperty {
     METADATA_BLOCK_REPOS("metadata.block.repos"),
     METADATA_BLOCK_REPOS_CSV_PATH("metadata.block.repos.csv.path"),
     NAME_PATTERNS("name.patterns"),
+    OVERRIDE_PROJECT("override.project"),
+    OVERRIDE_VERSION("override.version"),
     POLICY_BLOCK("policy.block"),
     POLICY_REPOS("policy.repos"),
     POLICY_REPOS_CSV_PATH("policy.repos.csv.path"),
