@@ -41,6 +41,8 @@ public class ScanModuleConfig extends ModuleConfig {
     private final Boolean policyBlockedEnabled;
     private final List<String> policyRepos;
     private final List<PolicyRuleSeverityType> policySeverityTypes;
+    private final String overrideProject;
+    private final String overrideVersion;
 
     private final DateTimeManager dateTimeManager;
 
@@ -61,7 +63,9 @@ public class ScanModuleConfig extends ModuleConfig {
         Boolean policyBlockedEnabled,
         List<String> policyRepos,
         List<PolicyRuleSeverityType> policySeverityTypes,
-        DateTimeManager dateTimeManager
+        DateTimeManager dateTimeManager,
+        String overrideProject,
+        String overrideVersion
     ) {
         super(ScanModule.class.getSimpleName(), enabled);
         this.cron = cron;
@@ -79,6 +83,8 @@ public class ScanModuleConfig extends ModuleConfig {
         this.policyRepos = policyRepos;
         this.policySeverityTypes = policySeverityTypes;
         this.dateTimeManager = dateTimeManager;
+        this.overrideProject = overrideProject;
+        this.overrideVersion = overrideVersion;
     }
 
     public static ScanModuleConfig createFromProperties(
@@ -126,6 +132,16 @@ public class ScanModuleConfig extends ModuleConfig {
                                                                .map(PolicyRuleSeverityType::valueOf)
                                                                .collect(Collectors.toList());
 
+        String overrideProject = configurationPropertyManager.getProperty(ScanModuleProperty.OVERRIDE_PROJECT);
+        if (overrideProject != null && !overrideProject.isEmpty()) {
+            logger.info(String.format("Found project override property for scans. Project override: %s", overrideProject));
+        }
+
+        String overrideVersion = configurationPropertyManager.getProperty(ScanModuleProperty.OVERRIDE_VERSION);
+        if (overrideVersion != null && !overrideVersion.isEmpty()) {
+            logger.info(String.format("Found version override property for scans. Version override: %s", overrideVersion));
+        }
+
         return new ScanModuleConfig(
             enabled,
             cron,
@@ -142,7 +158,9 @@ public class ScanModuleConfig extends ModuleConfig {
             policyBlockedEnabled,
             policyRepos,
             policySeverityTypes,
-            dateTimeManager
+            dateTimeManager,
+            overrideProject,
+            overrideVersion
         );
     }
 
@@ -239,5 +257,13 @@ public class ScanModuleConfig extends ModuleConfig {
 
     public List<String> getMetadataBlockRepos() {
         return metadataBlockRepos;
+    }
+
+    public String getOverrideProject() {
+        return overrideProject;
+    }
+
+    public String getOverrideVersion() {
+        return overrideVersion;
     }
 }

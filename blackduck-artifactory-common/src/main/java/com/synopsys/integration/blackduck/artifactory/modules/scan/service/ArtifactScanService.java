@@ -186,6 +186,18 @@ public class ArtifactScanService {
         String version = artifactoryPropertyService.getProperty(repoPath, BlackDuckArtifactoryProperty.BLACKDUCK_PROJECT_VERSION_NAME)
                              .orElse(fileLayoutInfo.getBaseRevision());
 
+        String overrideProject = scanModuleConfig.getOverrideProject();
+        if (overrideProject != null && !overrideProject.isEmpty()) {
+            logger.info(String.format("Overriding project. Original project: %s, Override project: %s", project, overrideProject));
+            project = overrideProject;
+        }
+
+        String overrideVersion = scanModuleConfig.getOverrideVersion();
+        if (overrideVersion != null && !overrideVersion.isEmpty()) {
+            logger.info(String.format("Overriding version. Original version: %s, Override version: %s", version, overrideVersion));
+            version = overrideVersion;
+        }
+
         boolean missingProjectName = StringUtils.isBlank(project);
         boolean missingProjectVersionName = StringUtils.isBlank(version);
         if (missingProjectName || missingProjectVersionName) {
